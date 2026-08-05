@@ -3430,7 +3430,7 @@ async function cloudLoad(){
         "id",
         currentUser.id
       )
-      .single();
+     .maybeSingle();
 
     if(error){
       if(error.code === 'PGRST116'){
@@ -3441,6 +3441,16 @@ async function cloudLoad(){
       return;
     }
 
+if(!data){
+
+  console.log(
+    "No cloud data found for user."
+  );
+
+  return;
+
+}
+    
     if(data?.data){
 
       Object.assign(
