@@ -1792,7 +1792,27 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
       document.getElementById("userEmailDisplay").textContent = currentUser.email;
     }
     loadData();
-    cloudLoad();
+
+cloudLoad().then(() => {
+
+  if(
+    !budgetData.settings ||
+    !budgetData.settings.onboardingComplete
+  ){
+
+    showPage(
+      "setupWizard",
+      null
+    );
+
+    return;
+
+  }
+
+  renderAll();
+
+});
+    
   } else {
     currentUser = null;
     document.getElementById("authOverlay").style.display = "flex";
