@@ -3523,6 +3523,16 @@ if(!data){
         data.data
       );
 
+if(!budgetData.settings){
+  budgetData.settings = {};
+}
+
+if(
+  budgetData.settings.onboardingComplete === undefined
+){
+  budgetData.settings.onboardingComplete = false;
+}
+      
       renderAll();
 
       console.log(
