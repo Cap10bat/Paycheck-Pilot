@@ -698,6 +698,57 @@ textarea{
 
 </div>
 
+<!-- SETUP WIZARD -->
+
+<div id="setupWizard" class="page">
+
+<h1 class="page-title">
+🚀 Welcome to Paycheck Pilot
+</h1>
+
+<p class="page-subtitle">
+Let's get your budget set up in under 2 minutes.
+</p>
+
+<div class="card">
+
+<div class="form-grid">
+
+<div class="input-group">
+<label>Checking Balance</label>
+<input id="setupChecking" type="number" placeholder="0">
+</div>
+
+<div class="input-group">
+<label>Savings Balance</label>
+<input id="setupSavings" type="number" placeholder="0">
+</div>
+
+<div class="input-group">
+<label>Paycheck Amount</label>
+<input id="setupPayAmount" type="number" placeholder="0">
+</div>
+
+<div class="input-group">
+<label>Next Payday</label>
+<input id="setupPayDate" type="date">
+</div>
+
+</div>
+
+<br>
+
+<button
+class="btn"
+onclick="completeSetupWizard()"
+>
+Launch Dashboard
+</button>
+
+</div>
+
+</div>
+  
 <!-- DASHBOARD -->
 
 <div id="dashboard" class="page active">
@@ -1672,11 +1723,12 @@ const budgetData = {
     savings:0
   },
 
-  settings:{
-    currentView:"Household",
-    currentMode:"NOW",
-    forecastBuffer:0
-  },
+ settings:{
+  currentView:"Household",
+  currentMode:"NOW",
+  forecastBuffer:0,
+  onboardingComplete:false
+},
 
   goals:[],
 
@@ -1709,8 +1761,21 @@ async function checkAuth(){
     document.getElementById("authOverlay").style.display = "none";
     document.getElementById("appMain").style.display = "flex";
     document.getElementById("userEmailDisplay").textContent = currentUser.email;
-    loadData();
-    await cloudLoad();
+  loadData();
+await cloudLoad();
+
+if(
+  !budgetData.settings
+    .onboardingComplete
+){
+
+  showPage(
+    "setupWizard"
+  );
+
+  return;
+
+}
   } else {
     document.getElementById("authOverlay").style.display = "flex";
     document.getElementById("appMain").style.display = "none";
@@ -3601,6 +3666,89 @@ document
   }
 );
 
+function completeSetupWizard(){
+
+  const checking =
+    Number(
+      document.getElementById(
+        "setupChecking"
+      ).value
+    ) || 0;
+
+  const savings =
+    Number(
+      document.getElementById(
+        "setupSavings"
+      ).value
+    ) || 0;
+
+  const amount =
+    Number(
+      document.getElementById(
+        "setupPayAmount"
+      ).value
+    ) || 0;
+
+  const payDate =
+    document.getElementById(
+      "setupPayDate"
+    ).value;
+
+  budgetData.accounts.checking =
+    checking;
+
+  budgetData.accounts.savings =
+    savings;
+
+  if(
+    amount > 0 &&
+    payDate
+  ){
+
+    budgetData.timeline.push({
+
+      id:
+        "starter-paycheck",
+
+      owner:
+        "Household",
+
+      type:
+        "income",
+
+      desc:
+        "Primary Paycheck",
+
+      amount:
+        amount,
+
+      date:
+        payDate,
+
+      completed:
+        false
+
+    });
+
+  }
+
+  budgetData.settings.onboardingComplete =
+    true;
+
+  addActivity(
+    "Setup Wizard Completed"
+  );
+
+  saveData();
+
+  renderAll();
+
+  showPage(
+    "dashboard"
+  );
+
+}
+  
 /* =========================
    STARTUP
 ========================= */
