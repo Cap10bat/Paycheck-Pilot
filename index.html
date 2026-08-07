@@ -1873,8 +1873,20 @@ async function checkAuth(){
   const { data: { session } } = await supabaseClient.auth.getSession();
   if(session && session.user){
     currentUser = session.user;
-    document.getElementById("authOverlay").style.display = "none";
-    document.getElementById("appMain").style.display = "flex";
+   const authOverlay =
+  document.getElementById("authOverlay");
+
+const appMain =
+  document.getElementById("appMain");
+
+if(authOverlay){
+  authOverlay.style.display = "none";
+}
+
+if(appMain){
+  appMain.style.display = "flex";
+}
+
    if(document.getElementById("userEmailDisplay")){
   document.getElementById("userEmailDisplay").textContent =
     currentUser.email;
