@@ -1872,9 +1872,9 @@ function showAuthView(view){
 async function checkAuth(){
   const { data: { session } } = await supabaseClient.auth.getSession();
   if(session && session.user){
-    currentUser = session.user;
-   const authOverlay =
-  const authOverlay =
+   currentUser = session.user;
+
+const authOverlay =
   document.getElementById("authOverlay");
 
 if(authOverlay){
@@ -1886,10 +1886,6 @@ const appMain =
 
 if(appMain){
   appMain.style.display = "flex";
-}
-
-if(authOverlay){
-  authOverlay.style.display = "none";
 }
 
    if(document.getElementById("userEmailDisplay")){
