@@ -10,6 +10,9 @@
 
 <link rel="icon" type="image/png" href="paycheck-pilot-hero.png">
 
+<link rel="preconnect" hrefm
+<link rel="preconnect" hreflink href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500play=swap
+  
 <style>
   
 :root{
@@ -30,7 +33,7 @@
   margin:0;
   padding:0;
   box-sizing:border-box;
-  font-family:"Segoe UI",sans-serif;
+  font-family:'Inter',sans-serif;
 }
 
 body{
@@ -125,16 +128,17 @@ body{
 /* SIDEBAR */
 
 .sidebar{
-  width:220px;
-  background:#111827;
-  border-right:1px solid var(--border);
-  padding:20px;
+  width:260px;
+  background:#091225;
+  border-right:1px solid rgba(255,255,255,.08);
+  padding:24px;
   overflow-y:auto;
+  box-shadow:0 0 25px rgba(0,0,0,.25);
 }
 
 .logo{
   text-align:center;
-  margin-bottom:25px;
+  margin-bottom:40px;
 }
 
 .logo h1{
@@ -152,11 +156,7 @@ body{
   font-size:.85rem;
 }
 
-.logo img#appLogo {
-  max-width: 40px;
-  max-height: 40px;
-  object-fit: contain;
-}
+logo img#appLogo {
 
 .nav-section{
   margin-bottom:22px;
@@ -252,11 +252,24 @@ body{
 }
 
 .card{
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:18px;
-  padding:18px;
+  background:linear-gradient(
+    180deg,
+    rgba(30,41,59,1) 0%,
+    rgba(24,34,49,1) 100%
+  );
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:20px;
+  padding:20px;
   overflow:hidden;
+  box-shadow:
+    0 8px 24px rgba(0,0,0,.25);
+  transition:.2s ease;
+}
+``
+  .card:hover{
+  transform:translateY(-2px);
+  box-shadow:
+    0 12px 30px rgba(0,0,0,.35);
 }
 
 .card h3{
@@ -830,10 +843,33 @@ Launch Dashboard
 
 <div id="dashboard" class="page">
 
-<h1 class="page-title">🏠 Dashboard</h1>
+<h1 class="page-title">
+🏠 Dashboard
+</h1>
+
 <p class="page-subtitle">
-Financial snapshot of your budget.
+Welcome back to Paycheck Pilot. Here's what matters most right now.
 </p>
+
+<div class="card" style="margin-bottom:20px;">
+
+<h3>
+🚀 What Should I Do Next?
+</h3>
+
+<div id="nextSteps">
+
+<p>✅ Complete setup if you haven't already.</p>
+
+<p>✅ Add upcoming bills.</p>
+
+<p>✅ Verify your account balances.</p>
+
+<p>✅ Review your Paycheck To Paycheck forecast.</p>
+
+</div>
+
+</div>
 
 <div class="dashboard-grid">
 
