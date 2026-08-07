@@ -1907,8 +1907,19 @@ if(
 
 }
   } else {
-   document.getElementById("authOverlay").style.display = "flex";
-document.getElementById("appMain").style.display = "none";
+const authOverlay =
+  document.getElementById("authOverlay");
+
+const appMain =
+  document.getElementById("appMain");
+
+if(authOverlay){
+  authOverlay.style.display = "flex";
+}
+
+if(appMain){
+  appMain.style.display = "none";
+}
     showAuthView('login');
   }
 }
