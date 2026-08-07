@@ -1955,18 +1955,17 @@ if(appMain){
 cloudLoad().then(() => {
 
   if(
-    !budgetData.settings ||
-    !budgetData.settings.onboardingComplete
-  ){
+  !budgetData.settings ||
+  !budgetData.settings.onboardingComplete
+){
 
-    showPage(
-      "setupWizard",
-      null
-    );
+  document
+    .getElementById("setupWizard")
+    .classList.add("active");
 
-    return;
+  return;
 
-  }
+}
 
   renderAll();
 
