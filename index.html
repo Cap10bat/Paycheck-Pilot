@@ -1875,7 +1875,10 @@ async function checkAuth(){
     currentUser = session.user;
     document.getElementById("authOverlay").style.display = "none";
     document.getElementById("appMain").style.display = "flex";
-    document.getElementById("userEmailDisplay").textContent = currentUser.email;
+   if(document.getElementById("userEmailDisplay")){
+  document.getElementById("userEmailDisplay").textContent =
+    currentUser.email;
+}
   loadData();
 await cloudLoad();
 
