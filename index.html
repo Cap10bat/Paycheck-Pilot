@@ -3924,8 +3924,30 @@ budgetData.setupBills.forEach(bill => {
     amount:
       bill.amount,
 
-   date:
-  `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2,"0")}-${String(bill.day).padStart(2,"0")}`,
+  date:(() => {
+
+  const today = new Date();
+
+  let year =
+    today.getFullYear();
+
+  let month =
+    today.getMonth() + 1;
+
+  if(
+    bill.day < today.getDate()
+  ){
+    month++;
+
+    if(month > 12){
+      month = 1;
+      year++;
+    }
+  }
+
+  return `${year}-${String(month).padStart(2,"0")}-${String(bill.day).padStart(2,"0")}`;
+
+})(),
 
     completed:
       false
