@@ -1,2386 +1,1650 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="en" class="h-full bg-slate-950 text-slate-100 dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Paycheck Pilot - Navigate Every Payday</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Paycheck Pilot — Navigate Every Payday</title>
   
-  <link rel="icon" type="image/png" href="paycheck-pilot-hero.png">
+  <!-- Inter Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   
-  <style>
-    :root {
-      --bg: #0b1120;
-      --sidebar-bg: #070d19;
-      --card: #1e293b;
-      --card2: #334155;
-      --accent: #8b5cf6;
-      --accent-hover: #7c3aed;
-      --accent2: #a855f7;
-      --success: #22c55e;
-      --warning: #f59e0b;
-      --danger: #ef4444;
-      --text: #f8fafc;
-      --muted: #94a3b8;
-      --border: #334155;
-      --border-light: rgba(255, 255, 255, 0.08);
-      --radius: 16px;
-      --shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
-    }
-
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-
-    /* BRAND LOGO COMMON STYLES */
-    .brand-logo-img {
-      width: 100%;
-      max-width: 180px;
-      height: auto;
-      object-fit: contain;
-      display: block;
-      margin: 0 auto 16px auto;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(139, 92, 246, 0.25);
-      transition: transform 0.3s ease;
-    }
-
-    .brand-logo-img:hover {
-      transform: scale(1.02);
-    }
-
-    /* AUTH & ONBOARDING OVERLAY */
-    .auth-overlay {
-      position: fixed;
-      top: 0; 
-      left: 0; 
-      width: 100vw; 
-      height: 100vh;
-      background: rgba(11, 17, 32, 0.92);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
-      padding: 20px;
-      overflow-y: auto;
-    }
-
-    .auth-card {
-      background: var(--card);
-      border: 1px solid var(--border-light);
-      padding: 36px 32px;
-      border-radius: 24px;
-      width: 100%;
-      max-width: 440px;
-      box-shadow: var(--shadow);
-      animation: fadeIn 0.3s ease-out;
-    }
-
-    .auth-card .brand-logo-img {
-      max-width: 160px;
-      margin-bottom: 20px;
-    }
-
-    .auth-card h2 {
-      color: var(--text);
-      margin-bottom: 6px;
-      font-size: 1.6rem;
-      font-weight: 700;
-      text-align: center;
-    }
-
-    .auth-card p.subtitle {
-      color: var(--muted);
-      font-size: 0.9rem;
-      margin-bottom: 24px;
-      text-align: center;
-      line-height: 1.4;
-    }
-
-    .auth-card .form-group {
-      margin-bottom: 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .auth-card label {
-      color: var(--muted);
-      font-size: 0.85rem;
-      font-weight: 500;
-    }
-
-    .auth-card input, 
-    .auth-card select {
-      background: var(--card2);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 12px 16px;
-      border-radius: 12px;
-      font-size: 0.95rem;
-      outline: none;
-      transition: all 0.2s ease;
-    }
-
-    .auth-card input:focus, 
-    .auth-card select:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
-    }
-
-    .auth-card .btn-block {
-      width: 100%;
-      padding: 14px;
-      margin-top: 10px;
-      font-size: 1rem;
-      font-weight: 600;
-    }
-
-    .auth-toggle {
-      margin-top: 20px;
-      text-align: center;
-      font-size: 0.88rem;
-      color: var(--muted);
-      line-height: 1.6;
-    }
-
-    .auth-toggle a {
-      color: var(--accent2);
-      text-decoration: none;
-      font-weight: 600;
-      cursor: pointer;
-      transition: color 0.2s;
-    }
-
-    .auth-toggle a:hover {
-      color: var(--accent);
-      text-decoration: underline;
-    }
-
-    /* MAIN APP LAYOUT */
-    .app {
-      display: none; /* Controlled via JS */
-      min-height: 100vh;
-      flex-direction: row;
-    }
-
-    /* SIDEBAR */
-    .sidebar {
-      width: 280px;
-      background: var(--sidebar-bg);
-      border-right: 1px solid var(--border-light);
-      padding: 28px 20px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      flex-shrink: 0;
-    }
-
-    .sidebar .logo {
-      text-align: center;
-      margin-bottom: 32px;
-    }
-
-    .sidebar .logo h1 {
-      color: var(--text);
-      font-size: 1.35rem;
-      font-weight: 700;
-      margin-bottom: 4px;
-      letter-spacing: -0.02em;
-    }
-
-    .sidebar .logo p {
-      color: var(--muted);
-      font-size: 0.82rem;
-      font-weight: 500;
-      letter-spacing: 0.02em;
-    }
-
-    .nav-section {
-      margin-bottom: 24px;
-    }
-
-    .nav-title {
-      color: var(--muted);
-      font-size: 0.72rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1.2px;
-      margin-bottom: 12px;
-      padding-left: 8px;
-    }
-
-    .nav-btn {
-      width: 100%;
-      background: transparent;
-      color: var(--muted);
-      border: none;
-      text-align: left;
-      padding: 12px 16px;
-      margin-bottom: 4px;
-      border-radius: 12px;
-      cursor: pointer;
-      font-size: 0.95rem;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      transition: all 0.2s ease;
-    }
-
-    .nav-btn:hover {
-      background: rgba(255, 255, 255, 0.05);
-      color: var(--text);
-    }
-
-    .nav-btn.active {
-      background: var(--accent);
-      color: #ffffff;
-      font-weight: 600;
-      box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
-    }
-
-    /* MAIN CONTAINER */
-    .main {
-      flex: 1;
-      padding: 28px 36px;
-      overflow-y: auto;
-      max-width: 1400px;
-    }
-
-    /* TOP BAR */
-    .topbar {
-      display: flex;
-      justify-content: flex-start;
-      gap: 16px;
-      flex-wrap: wrap;
-      margin-bottom: 28px;
-    }
-
-    .top-card {
-      background: var(--card);
-      border: 1px solid var(--border-light);
-      padding: 12px 18px;
-      border-radius: 14px;
-      min-width: 180px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-
-    .top-card label {
-      display: block;
-      color: var(--muted);
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      margin-bottom: 6px;
-    }
-
-    .top-card select {
-      width: 100%;
-      background: var(--card2);
-      color: var(--text);
-      border: 1px solid var(--border);
-      padding: 8px 12px;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      outline: none;
-      cursor: pointer;
-    }
-
-    /* PAGE TITLES */
-    .page-title {
-      font-size: 2rem;
-      font-weight: 800;
-      margin-bottom: 8px;
-      letter-spacing: -0.03em;
-    }
-
-    .page-subtitle {
-      color: var(--muted);
-      font-size: 0.95rem;
-      margin-bottom: 28px;
-      line-height: 1.5;
-    }
-
-    /* DASHBOARD GRID & CARDS */
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 20px;
-    }
-
-    .card {
-      background: linear-gradient(180deg, var(--card) 0%, #172033 100%);
-      border: 1px solid var(--border-light);
-      border-radius: var(--radius);
-      padding: 24px;
-      position: relative;
-      overflow: hidden;
-      box-shadow: var(--shadow);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
-    }
-
-    .card h3 {
-      font-size: 0.88rem;
-      color: var(--muted);
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 12px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .card-value {
-      font-size: 2.2rem;
-      font-weight: 800;
-      word-break: break-word;
-      letter-spacing: -0.02em;
-      margin-bottom: 6px;
-    }
-
-    .card p {
-      color: var(--muted);
-      font-size: 0.85rem;
-      line-height: 1.4;
-    }
-
-    /* VALUE COLOR VARIANTS */
-    .green { color: var(--success); }
-    .red { color: var(--danger); }
-    .orange { color: var(--warning); }
-    .purple { color: var(--accent2); }
-
-    /* PAGE CONTAINERS */
-    .page {
-      display: none;
-      width: 100%;
-      animation: fadeIn 0.25s ease-in-out;
-    }
-
-    .page.active {
-      display: block !important;
-    }
-
-    /* TABLES */
-    .table-wrap {
-      background: var(--card);
-      border-radius: var(--radius);
-      overflow: hidden;
-      border: 1px solid var(--border-light);
-      width: 100%;
-      box-shadow: var(--shadow);
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      text-align: left;
-    }
-
-    th {
-      background: #151f30;
-      color: var(--muted);
-      font-size: 0.8rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      padding: 16px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    td {
-      padding: 16px;
-      border-top: 1px solid var(--border-light);
-      color: var(--text);
-      font-size: 0.92rem;
-    }
-
-    tr:hover {
-      background: rgba(255, 255, 255, 0.02);
-    }
-
-    /* CHECKBOX */
-    .big-check {
-      width: 20px;
-      height: 20px;
-      accent-color: var(--accent);
-      cursor: pointer;
-    }
-
-    /* BUTTONS */
-    .btn {
-      background: var(--accent);
-      border: none;
-      color: #ffffff;
-      padding: 12px 20px;
-      border-radius: 12px;
-      font-weight: 600;
-      font-size: 0.92rem;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-
-    .btn:hover {
-      background: var(--accent-hover);
-      transform: translateY(-1px);
-    }
-
-    .btn-secondary { background: var(--card2); }
-    .btn-secondary:hover { background: #475569; }
-
-    .btn-success { background: var(--success); }
-    .btn-success:hover { background: #16a34a; }
-
-    .btn-danger { background: var(--danger); }
-    .btn-danger:hover { background: #dc2626; }
-
-    /* FORMS */
-    .form-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 16px;
-    }
-
-    .input-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .input-group label {
-      color: var(--muted);
-      font-size: 0.85rem;
-      font-weight: 500;
-    }
-
-    .input-group input,
-    .input-group select,
-    .input-group textarea {
-      background: var(--card2);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 12px 14px;
-      border-radius: 10px;
-      font-size: 0.95rem;
-      outline: none;
-      transition: border 0.2s;
-    }
-
-    .input-group input:focus,
-    .input-group select:focus,
-    .input-group textarea:focus {
-      border-color: var(--accent);
-    }
-
-    textarea {
-      min-height: 120px;
-      resize: vertical;
-    }
-
-    /* FORECASTS */
-    .forecast-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 24px;
-    }
-
-    .forecast-box {
-      background: var(--card);
-      border-radius: var(--radius);
-      padding: 24px;
-      border: 1px solid var(--border-light);
-      box-shadow: var(--shadow);
-    }
-
-    .forecast-box h2 {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: var(--accent2);
-      margin-bottom: 16px;
-      letter-spacing: 0.5px;
-    }
-
-    /* KPI LIST */
-    .kpi {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 0;
-      border-bottom: 1px solid var(--border-light);
-      font-size: 0.95rem;
-    }
-
-    .kpi span:first-child {
-      color: var(--muted);
-    }
-
-    .kpi span:last-child {
-      font-weight: 700;
-      color: var(--text);
-    }
-
-    /* ACTIVITY LOG & GOALS */
-    .activity-item {
-      background: var(--card);
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 12px;
-      border: 1px solid var(--border-light);
-      line-height: 1.5;
-    }
-
-    .goal-card {
-      background: var(--card);
-      border-radius: var(--radius);
-      padding: 20px;
-      margin-bottom: 16px;
-      border: 1px solid var(--border-light);
-    }
-
-    /* HELP CENTER */
-    .help-block {
-      background: var(--card);
-      margin-bottom: 18px;
-      padding: 20px 24px;
-      border-radius: var(--radius);
-      border: 1px solid var(--border-light);
-    }
-
-    .help-block h3 {
-      color: var(--accent2);
-      font-size: 1.1rem;
-      margin-bottom: 8px;
-    }
-
-    .help-block p {
-      color: var(--muted);
-      line-height: 1.6;
-      font-size: 0.92rem;
-    }
-
-    #timelineContainer {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 16px;
-      align-items: start;
-    }
-
-    /* HERO SETUP WIZARD */
-    .hero-wizard-img {
-      width: 100%;
-      max-width: 360px;
-      display: block;
-      margin: 20px auto 28px auto;
-      border-radius: 16px;
-      border: 2px solid var(--accent);
-      box-shadow: 0 0 30px rgba(139, 92, 246, 0.35);
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* RESPONSIVE MEDIA QUERIES */
-    @media (max-width: 1000px) {
-      .app {
-        flex-direction: column;
-      }
-
-      .sidebar {
-        width: 100%;
-        border-right: none;
-        border-bottom: 1px solid var(--border-light);
-        padding: 20px;
-      }
-
-      .main {
-        padding: 20px 16px;
-      }
-
-      .dashboard-grid, 
-      .forecast-grid, 
-      .form-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .card-value {
-        font-size: 1.8rem;
-      }
-
-      table {
-        font-size: 0.85rem;
-      }
-
-      td, th {
-        padding: 10px 12px;
-      }
-    }
-  </style>
-</head>
-
-<body>
-
-<!-- AUTH OVERLAY -->
-<div id="authOverlay" class="auth-overlay">
-  <!-- LOGIN FORM -->
-  <div id="loginForm" class="auth-card">
-    <img src="paycheck-pilot-hero.png" alt="Paycheck Pilot Logo" class="brand-logo-img">
-    <h2>Paycheck Pilot</h2>
-    <p class="subtitle">Navigate Every Payday</p>
-    
-    <div class="form-group">
-      <label for="loginEmail">Email</label>
-      <input type="email" id="loginEmail" placeholder="you@example.com">
-    </div>
-    
-    <div class="form-group">
-      <label for="loginPassword">Password</label>
-      <input type="password" id="loginPassword" placeholder="••••••••">
-    </div>
-    
-    <button class="btn btn-block" onclick="handleLogin()">Sign In</button>
-    
-    <div class="auth-toggle">
-      Don't have an account? <a onclick="showAuthView('signup')">Sign Up</a><br><br>
-      <a onclick="showAuthView('forgot')">Forgot Password?</a>
-    </div>
-  </div>
-
-  <!-- SIGN UP FORM -->
-  <div id="signupForm" class="auth-card" style="display:none;">
-    <img src="paycheck-pilot-hero.png" alt="Paycheck Pilot Logo" class="brand-logo-img">
-    <h2>Create Account</h2>
-    <p class="subtitle">Start taking control of your paychecks</p>
-    
-    <div class="form-group">
-      <label for="signupEmail">Email</label>
-      <input type="email" id="signupEmail" placeholder="you@example.com">
-    </div>
-    
-    <div class="form-group">
-      <label for="signupPassword">Password</label>
-      <input type="password" id="signupPassword" placeholder="••••••••">
-    </div>
-    
-    <button class="btn btn-block" onclick="handleSignUp()">Sign Up</button>
-    
-    <div class="auth-toggle">
-      Already have an account? <a onclick="showAuthView('login')">Sign In</a>
-    </div>
-  </div>
-
-  <!-- FORGOT PASSWORD FORM -->
-  <div id="forgotForm" class="auth-card" style="display:none;">
-    <img src="paycheck-pilot-hero.png" alt="Paycheck Pilot Logo" class="brand-logo-img">
-    <h2>Reset Password</h2>
-    <p class="subtitle">Enter your email to receive instructions</p>
-    
-    <div class="form-group">
-      <label for="forgotEmail">Email</label>
-      <input type="email" id="forgotEmail" placeholder="you@example.com">
-    </div>
-    
-    <button class="btn btn-block" onclick="handleForgotPassword()">Reset Password</button>
-    
-    <div class="auth-toggle">
-      Back to <a onclick="showAuthView('login')">Sign In</a>
-    </div>
-  </div>
-
-  <!-- ONBOARDING FORM -->
-  <div id="onboardingForm" class="auth-card" style="display:none; max-width:520px;">
-    <img src="paycheck-pilot-hero.png" alt="Paycheck Pilot Logo" class="brand-logo-img">
-    <h2>Welcome to Paycheck Pilot!</h2>
-    <p class="subtitle">Let's set up your starting budget.</p>
-    
-    <div class="form-group">
-      <label for="onboardChecking">Checking Balance ($)</label>
-      <input type="number" id="onboardChecking" value="0">
-    </div>
-    
-    <div class="form-group">
-      <label for="onboardSavings">Savings Balance ($)</label>
-      <input type="number" id="onboardSavings" value="0">
-    </div>
-
-    <div class="form-group">
-      <label for="onboardPaycheckAmount">Paycheck Amount ($)</label>
-      <input type="number" id="onboardPaycheckAmount" placeholder="2000">
-    </div>
-
-    <div class="form-group">
-      <label for="onboardPaycheckFreq">Paycheck Frequency</label>
-      <select id="onboardPaycheckFreq">
-        <option value="biweekly">Bi-Weekly (Every 2 Weeks)</option>
-        <option value="monthly">Monthly (1st of month)</option>
-        <option value="semimonthly">Semi-Monthly (15th & Last day)</option>
-      </select>
-    </div>
-
-    <div class="form-group">
-      <label for="onboardPaycheckStart">First Payday Date</label>
-      <input type="date" id="onboardPaycheckStart">
-    </div>
-
-    <div class="form-group">
-      <label>Recurring Bill (Optional - Name, Amount, Due Day)</label>
-      <div style="display:flex; gap:8px;">
-        <input type="text" id="onboardBillDesc" placeholder="Rent" style="flex:2;">
-        <input type="number" id="onboardBillAmount" placeholder="1200" style="flex:1;">
-        <input type="number" id="onboardBillDay" placeholder="1" min="1" max="31" style="flex:1;">
-      </div>
-    </div>
-
-    <button class="btn btn-block btn-success" onclick="handleOnboardingSubmit()">Complete Setup</button>
-  </div>
-</div>
-
-<!-- MAIN APP CONTENT -->
-<div class="app" id="appMain">
-
-  <!-- SIDEBAR -->
-  <div class="sidebar">
-    <div class="logo">
-      <img id="appLogo" src="paycheck-pilot-hero.png" alt="Paycheck Pilot Logo" class="brand-logo-img">
-      <h1>Paycheck Pilot</h1>
-      <p>Navigate Every Payday</p>
-    </div>
-
-    <div class="nav-section">
-      <div class="nav-title">Main</div>
-      <button class="nav-btn active" onclick="showPage('dashboard', event)">🏠 Dashboard</button>
-      <button class="nav-btn" onclick="showPage('comingUp', event)">📌 Coming Up</button>
-      <button class="nav-btn" onclick="showPage('paychecks', event)">💰 Paychecks</button>
-      <button class="nav-btn" onclick="showPage('forecasts', event)">📈 Forecasts</button>
-      <button class="nav-btn" onclick="showPage('summary', event)">📊 Monthly Summary</button>
-      <button class="nav-btn" onclick="showPage('timeline', event)">📅 Timeline</button>
-      <button class="nav-btn" onclick="showPage('ledger', event)">📖 Ledger</button>
-      <button class="nav-btn" onclick="showPage('goals', event)">🎯 Goals</button>
-      <button class="nav-btn" onclick="showPage('reconcile', event)">✅ Reconcile</button>
-      <button class="nav-btn" onclick="showPage('activity', event)">📜 Activity Log</button>
-      <button class="nav-btn" onclick="showPage('netyear', event)">📊 Net Year Analysis</button>
-      <button class="nav-btn" onclick="showPage('settings', event)">⚙️ Settings</button>
-      <button class="nav-btn" onclick="showPage('help', event)">❓ Help Center</button>
-    </div>
-  </div>
-
-  <!-- MAIN VIEW CONTAINER -->
-  <div class="main">
-
-    <!-- TOP CONTROL BAR -->
-    <div class="topbar">
-      <div class="top-card">
-        <label for="viewSelector">View</label>
-        <select id="viewSelector">
-          <option value="Household">Household</option>
-        </select>
-      </div>
-
-      <div class="top-card">
-        <label for="modeSelector">Mode</label>
-        <select id="modeSelector">
-          <option value="NOW">NOW</option>
-          <option value="PROJECTED">PROJECTED</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- SETUP WIZARD PAGE -->
-    <div id="setupWizard" class="page">
-      <h1 class="page-title">🚀 Welcome to Paycheck Pilot</h1>
-      
-      <img src="paycheck-pilot-hero.png" alt="Paycheck Pilot Logo" class="hero-wizard-img">
-
-      <p class="page-subtitle">Let's get your budget set up in under 2 minutes.</p>
-
-      <div class="card">
-        <div class="form-grid">
-          <div class="input-group">
-            <label for="setupChecking">Checking Balance</label>
-            <input id="setupChecking" type="number" placeholder="0">
-          </div>
-
-          <div class="input-group">
-            <label for="setupSavings">Savings Balance</label>
-            <input id="setupSavings" type="number" placeholder="0">
-          </div>
-
-          <div class="input-group">
-            <label for="setupPayAmount">Paycheck Amount</label>
-            <input id="setupPayAmount" type="number" placeholder="0">
-          </div>
-
-          <div class="input-group">
-            <label for="setupPayDate">Next Payday</label>
-            <input id="setupPayDate" type="date">
-          </div>
-        </div>
-
-        <br>
-        <h3>Recurring Bills</h3>
-
-        <div class="form-grid">
-          <div class="input-group">
-            <label for="billName">Bill Name</label>
-            <input id="billName" type="text" placeholder="e.g., Rent, Electric">
-          </div>
-
-          <div class="input-group">
-            <label for="billAmount">Amount</label>
-            <input id="billAmount" type="number" placeholder="0">
-          </div>
-
-          <div class="input-group">
-            <label for="billDay">Due Day</label>
-            <input id="billDay" type="number" min="1" max="31" placeholder="15">
-          </div>
-        </div>
-
-        <br>
-        <button class="btn btn-secondary" onclick="addWizardBill()">+ Add Bill</button>
-
-        <br><br>
-        <div id="wizardBills"></div>
-
-        <br>
-        <button class="btn" onclick="completeSetupWizard()">Launch Dashboard</button>
-      </div>
-    </div>
-      
-    <!-- DASHBOARD PAGE -->
-    <div id="dashboard" class="page">
-      <h1 class="page-title">🏠 Dashboard</h1>
-      <p class="page-subtitle">Welcome back to Paycheck Pilot. Here's what matters most right now.</p>
-
-      <div class="card" style="margin-bottom:20px;">
-        <h3>🚀 What Should I Do Next?</h3>
-        <div id="nextSteps">
-          <p style="margin-bottom:6px;">💰 Check your Safe Spend amount before making purchases.</p>
-          <p style="margin-bottom:6px;">📅 Review upcoming bills in the Coming Up page.</p>
-          <p style="margin-bottom:6px;">✅ Reconcile balances regularly for accurate forecasting.</p>
-          <p>🚀 Track your Paycheck To Paycheck number to stay ahead.</p>
-        </div>
-      </div>
-
-      <div class="dashboard-grid">
-        <div class="card">
-          <h3>💰 Available To Spend</h3>
-          <div class="card-value green" id="availableToSpend">$0</div>
-          <p id="financialHealth">Reviewing...</p>
-          <p id="cashRunway">Calculating...</p>
-          <p id="bufferStatus">Buffer Status</p>
-        </div>
-
-        <div class="card">
-          <h3>⚠️ Due Before Next Paycheck</h3>
-          <div class="card-value orange" id="dueBeforeIncome">$0</div>
-        </div>
-
-        <div class="card">
-          <h3>🏦 Combined Cash</h3>
-          <div class="card-value purple" id="combinedCash">$0</div>
-        </div>
-
-        <div class="card">
-          <h3>🛡️ Safe Spend</h3>
-          <div class="card-value" id="safeSpend">$0</div>
-          <p id="safeSpendDetails">Available: $0 | Buffer: $0</p>
-        </div>
-
-        <div class="card">
-          <h3>✅ Bills Paid</h3>
-          <div class="card-value green" id="billsPaid">0</div>
-        </div>
-
-        <div class="card">
-          <h3>💵 Income Received</h3>
-          <div class="card-value green" id="incomeReceived">0</div>
-        </div>
-
-        <div class="card">
-          <h3>💰 Next Income</h3>
-          <div class="card-value green" id="nextIncomeAmount" style="font-size:1.6rem;">$0</div>
-          <p id="nextIncomeDate">No income scheduled</p>
-        </div>
-          
-        <div class="card">
-          <h3>💰 Paycheck To Paycheck</h3>
-          <div class="card-value green" id="paycheckToPaycheck">$0</div>
-          <p>Cash after next paycheck & bills before following paycheck</p>
-        </div>
-
-        <div class="card">
-          <h3>🕒 Last Updated</h3>
-          <div class="card-value" id="lastUpdated" style="font-size:1.1rem;">Never</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- COMING UP PAGE -->
-    <div id="comingUp" class="page">
-      <h1 class="page-title">📌 Coming Up</h1>
-      <p class="page-subtitle">Next 30 days of bills and income.</p>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Status</th>
-              <th>Date</th>
-              <th>Description</th>
-              <th>Scope</th>
-              <th>Amount</th>
-            </tr>
-          </thead>
-          <tbody id="comingUpTable"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- PAYCHECKS PAGE -->
-    <div id="paychecks" class="page">
-      <h1 class="page-title">💰 Paychecks</h1>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Received</th>
-              <th>Date</th>
-              <th>Scope</th>
-              <th>Description</th>
-              <th>Amount</th>
-            </tr>
-          </thead>
-          <tbody id="paycheckTable"></tbody>
-        </table>
-      </div>
-
-      <br>
-
-      <div class="card" id="paycheckDetails">
-        <h3>Paycheck Details</h3>
-        <p>Select a paycheck to view details.</p>
-      </div>
-    </div>
-
-    <!-- FORECASTS PAGE -->
-    <div id="forecasts" class="page">
-      <h1 class="page-title">📈 Forecasts</h1>
-
-      <div class="forecast-grid">
-        <div class="forecast-box">
-          <h2>CURRENT MONTH</h2>
-          <div class="kpi"><span>Current Cash</span><span id="nowCash">$0</span></div>
-          <div class="kpi"><span>Income Remaining</span><span id="nowIncome">$0</span></div>
-          <div class="kpi"><span>Expenses Remaining</span><span id="nowExpenses">$0</span></div>
-          <div class="kpi"><span>Net Flow</span><span id="nowFlow">$0</span></div>
-          <div class="kpi"><span>Month End</span><span id="nowMonthEnd">$0</span></div>
-        </div>
-
-        <div class="forecast-box">
-          <h2>PROJECTED</h2>
-          <div class="kpi"><span>Current Cash</span><span id="projCash">$0</span></div>
-          <div class="kpi"><span>Income Remaining</span><span id="projIncome">$0</span></div>
-          <div class="kpi"><span>Expenses Remaining</span><span id="projExpenses">$0</span></div>
-          <div class="kpi"><span>Net Flow</span><span id="projFlow">$0</span></div>
-          <div class="kpi"><span>Year End Projection</span><span id="projMonthEnd">$0</span></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- MONTHLY SUMMARY PAGE -->
-    <div id="summary" class="page">
-      <h1 class="page-title">📊 Monthly Summary</h1>
-
-      <div class="dashboard-grid">
-        <div class="card">
-          <h3>✅ Income Received</h3>
-          <div class="card-value" id="summaryIncomeReceived">$0</div>
-        </div>
-
-        <div class="card">
-          <h3>⏳ Income Remaining</h3>
-          <div class="card-value" id="summaryIncomeRemaining">$0</div>
-        </div>
-
-        <div class="card">
-          <h3>✅ Bills Paid</h3>
-          <div class="card-value" id="summaryBillsPaid">$0</div>
-        </div>
-
-        <div class="card">
-          <h3>⏳ Bills Remaining</h3>
-          <div class="card-value" id="summaryBillsRemaining">$0</div>
-        </div>
-
-        <div class="card">
-          <h3>💰 Net Remaining</h3>
-          <div class="card-value" id="summaryNetRemaining">$0</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- TIMELINE PAGE -->
-    <div id="timeline" class="page">
-      <h1 class="page-title">📅 Timeline</h1>
-      <div id="timelineContainer"></div>
-    </div>
-
-    <!-- LEDGER PAGE -->
-    <div id="ledger" class="page">
-      <h1 class="page-title">📖 Ledger</h1>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Description</th>
-              <th>Scope</th>
-              <th>Amount</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody id="ledgerTable"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- GOALS PAGE -->
-    <div id="goals" class="page">
-      <h1 class="page-title">🎯 Goals</h1>
-
-      <div class="card">
-        <div class="form-grid">
-          <div class="input-group">
-            <label for="goalName">Goal Name</label>
-            <input id="goalName" type="text" placeholder="Emergency Fund">
-          </div>
-
-          <div class="input-group">
-            <label for="goalCurrent">Current Amount</label>
-            <input id="goalCurrent" type="number" placeholder="500">
-          </div>
-
-          <div class="input-group">
-            <label for="goalTarget">Target Amount</label>
-            <input id="goalTarget" type="number" placeholder="2000">
-          </div>
-        </div>
-
-        <br>
-        <button class="btn" onclick="addGoal()">Add Goal</button>
-      </div>
-
-      <br>
-      <div id="goalContainer"></div>
-    </div>
-
-    <!-- RECONCILE PAGE -->
-    <div id="reconcile" class="page">
-      <h1 class="page-title">✅ Reconcile</h1>
-
-      <div class="card">
-        <div class="form-grid">
-          <div class="input-group">
-            <label for="checkingInput">Checking Account Balance ($)</label>
-            <input id="checkingInput" type="number">
-          </div>
-
-          <div class="input-group">
-            <label for="savingsInput">Savings Account Balance ($)</label>
-            <input id="savingsInput" type="number">
-          </div>
-        </div>
-
-        <br>
-        <button class="btn" onclick="updateBalances()">Update Balances</button>
-
-        <br><br>
-        <div id="reconcileSummary">
-          <div class="kpi"><span>Total Cash</span><span id="reconcileTotal">$0</span></div>
-          <div class="kpi"><span>Checking Balance</span><span id="reconcileChecking">$0</span></div>
-          <div class="kpi"><span>Savings Balance</span><span id="reconcileSavings">$0</span></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ACTIVITY LOG PAGE -->
-    <div id="activity" class="page">
-      <h1 class="page-title">📜 Activity Log</h1>
-      <p class="page-subtitle">Track every change made inside Paycheck Pilot.</p>
-
-      <div id="activityContainer">
-        <div class="activity-item">Activity will appear here.</div>
-      </div>
-    </div>
-
-    <!-- NET YEAR ANALYSIS PAGE -->
-    <div id="netyear" class="page">
-      <h1 class="page-title">📊 Net Year Analysis</h1>
-      <p class="page-subtitle">Review income growth, expense changes, and projected year-end finances.</p>
-
-      <div class="card">
-        <button class="btn" id="generateYearBtn">Generate Net Year Analysis</button>
-
-        <br><br>
-        <div id="yearAnalysisResults">
-          <div class="kpi"><span>Income Changes</span><span id="yearIncomeChange">$0</span></div>
-          <div class="kpi"><span>Expense Changes</span><span id="yearExpenseChange">$0</span></div>
-          <div class="kpi"><span>New Bills Added</span><span id="yearNewBills">0</span></div>
-          <div class="kpi"><span>Removed Bills</span><span id="yearRemovedBills">0</span></div>
-          <div class="kpi"><span>Largest Expense</span><span id="yearLargestExpense">-</span></div>
-          <div class="kpi"><span>Projected Year End</span><span id="yearProjectedEnd">$0</span></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- SETTINGS PAGE -->
-    <div id="settings" class="page">
-      <h1 class="page-title">⚙️ Settings</h1>
-
-      <div class="dashboard-grid">
-        <div class="card">
-          <h3>👤 Profile</h3>
-          <p style="margin-bottom:12px;">Logged in as: <strong id="userEmailDisplay">-</strong></p>
-          <button class="btn btn-danger" onclick="handleLogout()">Logout</button>
-        </div>
-
-        <div class="card">
-          <h3>🔒 Change Password</h3>
-          <div class="input-group" style="margin-bottom:12px;">
-            <label for="newPasswordInput">New Password</label>
-            <input type="password" id="newPasswordInput" placeholder="••••••••">
-          </div>
-          <button class="btn" onclick="handleChangePassword()">Update Password</button>
-        </div>
-
-        <div class="card">
-          <h3>📤 Export Budget</h3>
-          <p>Create a portable backup and sync file.</p>
-          <br>
-          <button class="btn" onclick="exportBudget()">Export Budget</button>
-        </div>
-
-        <div class="card">
-          <h3>🔄 Merge Budget</h3>
-          <p>Merge updates without replacing existing data.</p>
-          <br>
-          <input type="file" id="importFile" onchange="importBudget(event)">
-        </div>
-
-        <div class="card">
-          <h3>📥 Restore Budget</h3>
-          <p>Replace all current data with a backup file.</p>
-          <br>
-          <input type="file" accept=".json" onchange="restoreBudget(event)">
-        </div>
-
-        <div class="card">
-          <h3>🔮 Forecast Buffer</h3>
-          <div class="input-group">
-            <select id="forecastBuffer">
-              <option value="0">$0</option>
-              <option value="250">$250</option>
-              <option value="500">$500</option>
-              <option value="1000">$1000</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="card">
-          <h3>🎨 Theme</h3>
-          <div class="input-group">
-            <select disabled>
-              <option>Purple Dark (Default)</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="card">
-          <h3>ℹ️ About</h3>
-          <img src="paycheck-pilot-hero.png" alt="Paycheck Pilot Logo" class="brand-logo-img" style="max-width:120px; margin-bottom:10px;">
-          <p><strong>Paycheck Pilot</strong></p>
-          <p>Navigate Every Payday</p>
-        </div>
-
-        <div class="card">
-          <h3>☁️ Cloud Sync</h3>
-          <p style="margin-bottom:12px;">Download latest budget from cloud storage.</p>
-          <button class="btn" onclick="cloudLoad()">☁️ Sync Now</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- HELP CENTER PAGE -->
-    <div id="help" class="page">
-      <h1 class="page-title">❓ Help Center</h1>
-
-      <div class="help-block">
-        <h3>💜 What Number Should I Watch?</h3>
-        <p>For day-to-day decisions, focus on <strong>Paycheck To Paycheck</strong>. This number shows what should remain after the next paycheck arrives and the bills tied to that paycheck have been paid.</p>
-      </div>
-        
-      <div class="help-block">
-        <h3>🏠 Dashboard</h3>
-        <p>Dashboard provides a live paycheck-to-paycheck snapshot of finances. Available To Spend shows current cash after bills due before the next paycheck. Safe Spend applies any selected buffer. Paycheck To Paycheck shows what should remain after the next paycheck arrives and bills before the following paycheck are paid.</p>
-      </div>
-
-      <div class="help-block">
-        <h3>📌 Coming Up</h3>
-        <p>Displays unpaid bills and unreceived income expected during the next 30 days.</p>
-      </div>
-
-      <div class="help-block">
-        <h3>💰 Paychecks</h3>
-        <p>Shows all scheduled paychecks for the year. Marking income as received updates forecasts, balances, and reports.</p>
-      </div>
-
-      <div class="help-block">
-        <h3>📈 Forecasts</h3>
-        <p><strong>NOW</strong> focuses on current finances and remaining activity for the active budget period. <strong>PROJECTED</strong> includes all future scheduled income and expenses to estimate long-term financial outcomes.</p>
-      </div>
-
-      <div class="help-block">
-        <h3>📊 Monthly Summary</h3>
-        <p>Provides a summary of income received, income remaining, bills paid, and bills still due. Use this page to review overall progress during the current budgeting cycle.</p>
-      </div>
-
-      <div class="help-block">
-        <h3>📅 Timeline</h3>
-        <p>Displays upcoming future financial events in chronological order.</p>
-      </div>
-
-      <div class="help-block">
-        <h3>📖 Ledger</h3>
-        <p>Permanent historical record of completed income and expense activity.</p>
-      </div>
-
-      <div class="help-block">
-        <h3>🎯 Goals</h3>
-        <p>Goals are informational only and never affect forecasting calculations.</p>
-      </div>
-
-      <div class="help-block">
-        <h3>✅ Reconcile</h3>
-        <p>Update actual checking and savings balances from your bank accounts. Accurate balances improve forecasts, available spending calculations, and dashboard insights.</p>
-      </div>
-
-      <div class="help-block">
-        <h3>📜 Activity Log</h3>
-        <p>Automatically records major events including bills paid, income received, imports, exports, and balance updates.</p>
-      </div>
-
-      <div class="help-block">
-        <h3>☁️ Cloud Sync</h3>
-        <p>Budget data is automatically backed up to cloud storage when changes are saved. Use Sync Now to manually load the latest budget from the cloud.</p>
-      </div>
-
-      <div class="help-block">
-        <h3>🛡️ Safe Spend</h3>
-        <p>Safe Spend shows how much cash is available after subtracting bills due before the next paycheck and applying your selected buffer. This is the safest number to use when deciding whether extra spending is affordable.</p>
-      </div>
-
-      <div class="help-block">
-        <h3>💰 Paycheck To Paycheck</h3>
-        <p>Paycheck To Paycheck estimates how much cash should remain after the next paycheck arrives and the bills between that paycheck and the following paycheck are paid. This is one of the most useful indicators for short-term financial planning.</p>
-      </div>
-
-      <div class="help-block">
-        <h3>📈 Forecast Types</h3>
-        <p><strong>CURRENT MONTH</strong> shows expected income, expenses, and projected cash position for the remainder of the current month.<br><strong>PROJECTED</strong> shows all remaining scheduled income and expenses through the end of the budget timeline and includes the Year End Projection value.</p>
-      </div>
-    </div>  
-
-  </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<script>
-/* =========================
-   NAVIGATION & PAGE SWITCHING
-========================= */
-function showPage(pageId, evt) {
-  document.querySelectorAll('.page').forEach(page => {
-    page.classList.remove('active');
-  });
-
-  const targetPage = document.getElementById(pageId);
-  if(targetPage) {
-    targetPage.classList.add('active');
-  }
-
-  document.querySelectorAll('.nav-btn').forEach(btn => {
-    btn.classList.remove('active');
-  });
-
-  if (evt && evt.target) {
-    evt.target.classList.add('active');
-  }
-}
-
-/* =========================
-   BUDGET DATA & SUPABASE SETUP
-========================= */
-const SUPABASE_URL = "https://zsfcqymmlzpfaapygmlu.supabase.co";
-const SUPABASE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
-
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-let currentUser = null;
-
-const budgetData = {
-  accounts: {
-    checking: 0,
-    savings: 0
-  },
-  setupBills: [],
-  settings: {
-    currentView: "Household",
-    currentMode: "NOW",
-    forecastBuffer: 0,
-    onboardingComplete: false,
-    lastUpdated: "Never"
-  },
-  goals: [],
-  activityLog: [],
-  timeline: []
-};
-
-/* =========================
-   AUTHENTICATION & ONBOARDING
-========================= */
-function showAuthView(view) {
-  document.getElementById("loginForm").style.display = "none";
-  document.getElementById("signupForm").style.display = "none";
-  document.getElementById("forgotForm").style.display = "none";
-  document.getElementById("onboardingForm").style.display = "none";
-
-  if (view === 'login') document.getElementById("loginForm").style.display = "block";
-  if (view === 'signup') document.getElementById("signupForm").style.display = "block";
-  if (view === 'forgot') document.getElementById("forgotForm").style.display = "block";
-  if (view === 'onboarding') document.getElementById("onboardingForm").style.display = "block";
-}
-
-async function checkAuth() {
-  const { data: { session } } = await supabaseClient.auth.getSession();
-  if (session && session.user) {
-    currentUser = session.user;
-
-    const authOverlay = document.getElementById("authOverlay");
-    if (authOverlay) authOverlay.style.display = "none";
-
-    const appMain = document.getElementById("appMain");
-    if (appMain) appMain.style.display = "flex";
-
-    if (document.getElementById("userEmailDisplay")) {
-      document.getElementById("userEmailDisplay").textContent = currentUser.email;
-    }
-    
-    loadData();
-    await cloudLoad();
-
-    if (!budgetData.settings || !budgetData.settings.onboardingComplete) {
-      showPage("setupWizard");
-      return;
-    }
-  } else {
-    const authOverlay = document.getElementById("authOverlay");
-    const appMain = document.getElementById("appMain");
-
-    if (authOverlay) authOverlay.style.display = "flex";
-    if (appMain) appMain.style.display = "none";
-    
-    showAuthView('login');
-  }
-}
-
-supabaseClient.auth.onAuthStateChange((event, session) => {
-  if (session && session.user) {
-    currentUser = session.user;
-    
-    const authOverlay = document.getElementById("authOverlay");
-    const appMain = document.getElementById("appMain");
-
-    if (authOverlay) authOverlay.style.display = "none";
-    if (appMain) appMain.style.display = "flex";
-
-    if (document.getElementById("userEmailDisplay")) {
-      document.getElementById("userEmailDisplay").textContent = currentUser.email;
-    }
-    
-    loadData();
-
-    cloudLoad().then(() => {
-      if (!budgetData.settings || !budgetData.settings.onboardingComplete) {
-        showPage("setupWizard");
-        return;
-      }
-      renderAll();
-    });
-  } else {
-    currentUser = null;
-    const authOverlay = document.getElementById("authOverlay");
-    const appMain = document.getElementById("appMain");
-
-    if (authOverlay) authOverlay.style.display = "flex";
-    if (appMain) appMain.style.display = "none";
-    
-    showAuthView('login');
-  }
-});
-
-async function handleLogin() {
-  const email = document.getElementById("loginEmail").value.trim();
-  const password = document.getElementById("loginPassword").value.trim();
-  if (!email || !password) return alert("Please enter email and password.");
-
-  const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-  if (error) alert(error.message);
-}
-
-async function handleSignUp() {
-  const email = document.getElementById("signupEmail").value.trim();
-  const password = document.getElementById("signupPassword").value.trim();
-  if (!email || !password) return alert("Please enter email and password.");
-
-  const { data, error } = await supabaseClient.auth.signUp({ email, password });
-  if (error) {
-    alert(error.message);
-  } else {
-    alert("Signup successful! Please log in.");
-    showAuthView('login');
-  }
-}
-
-async function handleForgotPassword() {
-  const email = document.getElementById("forgotEmail").value.trim();
-  if (!email) return alert("Please enter your email.");
-
-  const { error } = await supabaseClient.auth.resetPasswordForEmail(email);
-  if (error) alert(error.message);
-  else alert("Password reset instructions sent to your email.");
-}
-
-async function handleLogout() {
-  await supabaseClient.auth.signOut();
-  localStorage.removeItem("paycheckPilot");
-  window.location.reload();
-}
-
-async function handleChangePassword() {
-  const newPassword = document.getElementById("newPasswordInput").value.trim();
-  if (!newPassword) return alert("Please enter a new password.");
-  const { error } = await supabaseClient.auth.updateUser({ password: newPassword });
-  if (error) alert(error.message);
-  else {
-    alert("Password updated successfully!");
-    document.getElementById("newPasswordInput").value = "";
-  }
-}
-
-function handleOnboardingSubmit() {
-  const chk = Number(document.getElementById("onboardChecking").value) || 0;
-  const sav = Number(document.getElementById("onboardSavings").value) || 0;
-  const paycheckAmt = Number(document.getElementById("onboardPaycheckAmount").value) || 0;
-  const freq = document.getElementById("onboardPaycheckFreq").value;
-  const startDate = document.getElementById("onboardPaycheckStart").value;
-
-  const billDesc = document.getElementById("onboardBillDesc").value.trim();
-  const billAmt = Number(document.getElementById("onboardBillAmount").value) || 0;
-  const billDay = Number(document.getElementById("onboardBillDay").value) || 1;
-
-  budgetData.accounts.checking = chk;
-  budgetData.accounts.savings = sav;
-
-  if (paycheckAmt > 0 && startDate) {
-    let dt = new Date(startDate);
-    for (let i = 0; i < 12; i++) {
-      let dateStr = dt.toISOString().split("T")[0];
-      budgetData.timeline.push({
-        id: `income-${i}-${Date.now()}`,
-        owner: "Household",
-        type: "income",
-        desc: "Paycheck",
-        amount: paycheckAmt,
-        date: dateStr,
-        completed: false
-      });
-      if (freq === 'biweekly') dt.setDate(dt.getDate() + 14);
-      else if (freq === 'monthly') dt.setMonth(dt.getMonth() + 1);
-      else if (freq === 'semimonthly') dt.setDate(dt.getDate() + 15);
-    }
-  }
-
-  if (billDesc && billAmt > 0) {
-    for (let m = 1; m <= 12; m++) {
-      let mm = String(m).padStart(2, '0');
-      let dd = String(billDay).padStart(2, '0');
-      budgetData.timeline.push({
-        id: `bill-${m}-${Date.now()}`,
-        owner: "Household",
-        type: "expense",
-        desc: billDesc,
-        amount: billAmt,
-        date: `2026-${mm}-${dd}`,
-        completed: false
-      });
-    }
-  }
-
-  budgetData.settings.onboardingComplete = true;
-  addActivity("Onboarding completed and budget initialized.");
-  saveData();
-
-  document.getElementById("authOverlay").style.display = "none";
-  document.getElementById("appMain").style.display = "flex";
-  showPage("dashboard");
-  renderAll();
-}
-
-/* =========================
-   UTILITIES & CALCULATIONS
-========================= */
-function money(value) {
-  return (value || 0).toLocaleString("en-US", {
-    style: "currency",
-    currency: "USD"
-  });
-}
-
-function addActivity(message) {
-  const now = new Date();
-  const timestamp = now.toLocaleDateString() + " " + now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-
-  budgetData.activityLog.unshift({
-    date: timestamp,
-    message
-  });
-
-  budgetData.settings.lastUpdated = timestamp;
-}
-
-function getCombinedCash() {
-  return (budgetData.accounts.checking || 0) + (budgetData.accounts.savings || 0);
-}
-
-function getIncomeReceived() {
-  return budgetData.timeline
-    .filter(x => x.type === "income" && x.completed)
-    .reduce((a, b) => a + b.amount, 0);
-}
-
-function getBillsPaid() {
-  return budgetData.timeline
-    .filter(x => x.type === "expense" && x.completed)
-    .reduce((a, b) => a + b.amount, 0);
-}
-
-function getRemainingExpenses() {
-  return getVisibleItems()
-    .filter(item => item.type === "expense" && !item.completed)
-    .reduce((sum, item) => sum + item.amount, 0);
-}
-
-function getRemainingIncome() {
-  return getVisibleItems()
-    .filter(item => item.type === "income" && !item.completed)
-    .reduce((sum, item) => sum + item.amount, 0);
-}
-
-function getDueBeforeNextIncome() {
-  const incomes = getVisibleItems()
-    .filter(item => item.type === "income" && !item.completed)
-    .sort((a, b) => new Date(a.date) - new Date(b.date));
-
-  if (incomes.length === 0) return 0;
-
-  const nextIncomeDate = new Date(incomes[0].date);
-
-  return getVisibleItems()
-    .filter(item => item.type === "expense" && !item.completed && new Date(item.date) < nextIncomeDate)
-    .reduce((sum, item) => sum + item.amount, 0);
-}
-
-function getNextIncome() {
-  const incomes = getVisibleItems()
-    .filter(item => item.type === "income" && !item.completed)
-    .sort((a, b) => new Date(a.date) - new Date(b.date));
-
-  return incomes[0] || null;
-}
-
-function getPaycheckToPaycheck() {
-  const incomes = getVisibleItems()
-    .filter(item => item.type === "income" && !item.completed)
-    .sort((a, b) => new Date(a.date) - new Date(b.date));
-
-  if (incomes.length === 0) {
-    return getCurrentCash();
-  }
-
-  const nextIncome = incomes[0];
-  const followingIncome = incomes[1];
-  let expenses = 0;
-
-  if (followingIncome) {
-    expenses = getVisibleItems()
-      .filter(item =>
-        item.type === "expense" &&
-        !item.completed &&
-        new Date(item.date) >= new Date(nextIncome.date) &&
-        new Date(item.date) < new Date(followingIncome.date)
-      )
-      .reduce((sum, item) => sum + item.amount, 0);
-  }
-
-  return getCurrentCash() + nextIncome.amount - expenses;
-}
-
-function getCurrentCash() {
-  return getCombinedCash();
-}
-
-function getAvailableToSpend() {
-  return getCurrentCash() - getRemainingExpenses();
-}
-
-function getVisibleItems() {
-  return budgetData.timeline;
-}
-
-/* =========================
-   DASHBOARD RENDER
-========================= */
-function renderDashboard() {
-  const combinedCash = getCurrentCash();
-  const isProjected = budgetData.settings.currentMode === "PROJECTED";
-
-  const remainingExpenses = isProjected ? getRemainingExpenses() : getMonthBillsRemaining();
-  const remainingIncome = isProjected ? getRemainingIncome() : getMonthIncomeRemaining();
-  
-  const nextIncome = getNextIncome();
-  const dueBeforeIncome = getDueBeforeNextIncome();
-  const available = combinedCash - dueBeforeIncome;
-  const safeSpend = Math.max(0, available - Number(budgetData.settings.forecastBuffer || 0));
-
-  const healthStatus = combinedCash >= 2000 ? "✅ Strong" : combinedCash >= 500 ? "🟡 Stable" : combinedCash >= 0 ? "⚠️ Tight" : "🔴 Deficit";
-  const bufferGap = isProjected ? available - Number(budgetData.settings.forecastBuffer || 0) : available;
-
-  document.getElementById("bufferStatus").textContent = bufferGap >= 0 ? `✅ ${money(bufferGap)} Above Buffer` : `⚠️ ${money(Math.abs(bufferGap))} Below Buffer`;
-  document.getElementById("combinedCash").textContent = money(combinedCash);
-
-  const dueBeforeIncomeElement = document.getElementById("dueBeforeIncome");
-  dueBeforeIncomeElement.textContent = money(dueBeforeIncome);
-  dueBeforeIncomeElement.className = "card-value " + (dueBeforeIncome >= 3000 ? "red" : dueBeforeIncome >= 1000 ? "orange" : "green");
-
-  const availableElement = document.getElementById("availableToSpend");
-  availableElement.textContent = money(available);
-  availableElement.className = "card-value " + (available >= 2000 ? "green" : available >= 500 ? "purple" : available >= 0 ? "orange" : "red");
-
-  const safeSpendElement = document.getElementById("safeSpend");
-  safeSpendElement.textContent = money(safeSpend);
-  safeSpendElement.className = "card-value " + (safeSpend >= 2000 ? "green" : safeSpend >= 500 ? "purple" : safeSpend >= 0 ? "orange" : "red");
-
-  document.getElementById("safeSpendDetails").textContent = "Available: " + money(available) + " | Buffer: " + money(Number(budgetData.settings.forecastBuffer || 0));
-  document.getElementById("financialHealth").textContent = healthStatus;
-
-  document.getElementById("cashRunway").textContent = dueBeforeIncome <= combinedCash ? "✅ Covered Until Next Paycheck" : "⚠️ Need " + money(dueBeforeIncome - combinedCash) + " Before Payday";
-
-  document.getElementById("incomeReceived").textContent = money(getIncomeReceived());
-  document.getElementById("billsPaid").textContent = money(getBillsPaid());
-  document.getElementById("lastUpdated").textContent = budgetData.settings.lastUpdated || "Never";
-
-  document.getElementById("nextIncomeAmount").textContent = nextIncome ? money(nextIncome.amount) : "$0";
-  document.getElementById("nextIncomeDate").textContent = nextIncome ? `${nextIncome.owner} • ${nextIncome.date}` : "No income scheduled";
-
-  document.getElementById("paycheckToPaycheck").textContent = money(getPaycheckToPaycheck());
-}
-
-/* =========================
-   COMING UP RENDER
-========================= */
-function renderComingUp() {
-  const table = document.getElementById("comingUpTable");
-  if (!table) return;
-
-  table.innerHTML = "";
-
-  const items = getVisibleItems()
-    .filter(item => !item.completed)
-    .sort((a, b) => new Date(a.date) - new Date(b.date));
-
-  if (items.length === 0) {
-    table.innerHTML = `<tr><td colspan="5" style="text-align:center;">No upcoming transactions for the next period.</td></tr>`;
-    return;
-  }
-
-  items.forEach(item => {
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>
-        <input type="checkbox" class="big-check" onchange="toggleItem('${item.id}')">
-      </td>
-      <td>${item.date}</td>
-      <td>${item.desc}</td>
-      <td>${item.owner}</td>
-      <td class="${item.type === 'expense' ? 'red' : 'green'}">
-        ${item.type === "expense" ? "-" : "+"} ${money(item.amount)}
-      </td>
-    `;
-    table.appendChild(row);
-  });
-}
-
-/* =========================
-   PAYCHECKS RENDER
-========================= */
-function showPaycheckDetails(item) {
-  const card = document.getElementById("paycheckDetails");
-  if (!card) return;
-
-  card.innerHTML = `
-    <h3>Paycheck Details</h3>
-    <p><strong>Scope:</strong> ${item.owner}</p>
-    <p><strong>Date:</strong> ${item.date}</p>
-    <p><strong>Description:</strong> ${item.desc}</p>
-    <p><strong>Amount:</strong> ${money(item.amount)}</p>
-    <p><strong>Status:</strong> ${item.completed ? "Received" : "Pending"}</p>
-  `;
-}
-
-function renderPaychecks() {
-  const table = document.getElementById("paycheckTable");
-  if (!table) return;
-
-  table.innerHTML = "";
-
-  const checks = getVisibleItems()
-    .filter(item => item.type === "income")
-    .sort((a, b) => new Date(a.date) - new Date(b.date));
-
-  if (checks.length === 0) {
-    table.innerHTML = `<tr><td colspan="5" style="text-align:center;">No paychecks scheduled.</td></tr>`;
-    return;
-  }
-
-  checks.forEach(item => {
-    const row = document.createElement("tr");
-    row.style.cursor = "pointer";
-    row.onclick = () => showPaycheckDetails(item);
-
-    row.innerHTML = `
-      <td>
-        <input type="checkbox" class="big-check" ${item.completed ? "checked" : ""} onchange="toggleItem('${item.id}')">
-      </td>
-      <td>${item.date}</td>
-      <td>${item.owner}</td>
-      <td>${item.desc}</td>
-      <td class="green">${money(item.amount)}</td>
-    `;
-    table.appendChild(row);
-  });
-}
-
-/* =========================
-   TIMELINE RENDER
-========================= */
-function renderTimeline() {
-  const container = document.getElementById("timelineContainer");
-  if (!container) return;
-
-  container.innerHTML = "";
-
-  const items = getVisibleItems()
-    .filter(item => !item.completed)
-    .sort((a, b) => new Date(a.date) - new Date(b.date));
-
-  if (items.length === 0) {
-    container.innerHTML = `<div class="card"><p>No upcoming events in timeline.</p></div>`;
-    return;
-  }
-
-  items.forEach(item => {
-    const card = document.createElement("div");
-    card.className = "activity-item";
-    card.innerHTML = `
-      <strong style="color:var(--accent2);">${item.date}</strong><br>
-      <strong>${item.desc}</strong> (${item.owner})<br>
-      <span class="${item.type === 'expense' ? 'red' : 'green'}">${money(item.amount)}</span>
-    `;
-    container.appendChild(card);
-  });
-}
-
-/* =========================
-   LEDGER RENDER
-========================= */
-function renderLedger() {
-  const table = document.getElementById("ledgerTable");
-  if (!table) return;
-
-  table.innerHTML = "";
-
-  const completedItems = getVisibleItems().filter(item => item.completed);
-
-  if (completedItems.length === 0) {
-    table.innerHTML = `<tr><td colspan="5" style="text-align:center;">No completed transactions yet.</td></tr>`;
-    return;
-  }
-
-  completedItems.forEach(item => {
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${item.date}</td>
-      <td>${item.desc}</td>
-      <td>${item.owner}</td>
-      <td class="${item.type === 'expense' ? 'red' : 'green'}">${money(item.amount)}</td>
-      <td>✅ Complete</td>
-    `;
-    table.appendChild(row);
-  });
-}
-
-/* =========================
-   TOGGLE TRANSACTION ITEM
-========================= */
-function toggleItem(id) {
-  const item = budgetData.timeline.find(x => x.id === id);
-  if (!item) return;
-
-  item.completed = !item.completed;
-  addActivity(`${item.desc} marked ${item.completed ? "completed" : "pending"}`);
-
-  saveData();
-  generateNetYearAnalysis();
-  renderAll();
-}
-
-/* =========================
-   FORECAST ENGINE
-========================= */
-function renderForecasts() {
-  const currentCash = getCurrentCash();
-  const nowIncome = getMonthIncomeRemaining();
-  const nowExpenses = getMonthBillsRemaining();
-  const nowFlow = nowIncome - nowExpenses;
-  const nowMonthEnd = currentCash + nowFlow;
-
-  const projectedIncome = getRemainingIncome();
-  const projectedExpenses = getRemainingExpenses();
-  const projectedFlow = projectedIncome - projectedExpenses;
-  const projectedEnd = currentCash + projectedFlow;
-
-  document.getElementById("nowCash").textContent = money(currentCash);
-  document.getElementById("nowIncome").textContent = money(nowIncome);
-  document.getElementById("nowExpenses").textContent = money(nowExpenses);
-  document.getElementById("nowFlow").textContent = money(nowFlow);
-  document.getElementById("nowMonthEnd").textContent = money(nowMonthEnd);
-
-  document.getElementById("projCash").textContent = money(currentCash);
-  document.getElementById("projIncome").textContent = money(projectedIncome);
-  document.getElementById("projExpenses").textContent = money(projectedExpenses);
-  document.getElementById("projFlow").textContent = money(projectedFlow);
-  document.getElementById("projMonthEnd").textContent = money(projectedEnd);
-}
-
-function renderActivityLog() {
-  const container = document.getElementById("activityContainer");
-  if (!container) return;
-
-  container.innerHTML = "";
-
-  if (budgetData.activityLog.length === 0) {
-    container.innerHTML = `<div class="activity-item">No activity recorded yet.</div>`;
-    return;
-  }
-
-  budgetData.activityLog.forEach(item => {
-    const div = document.createElement("div");
-    div.className = "activity-item";
-    div.innerHTML = `<strong>${item.date}</strong><br>${item.message}`;
-    container.appendChild(div);
-  });
-}
-
-/* =========================
-   MONTHLY SUMMARY CALCULATIONS
-========================= */
-function getBudgetMonth() {
-  return new Date().getMonth() + 1;
-}
-
-function getCurrentMonthItems() {
-  const currentMonth = getBudgetMonth();
-  const currentYear = new Date().getFullYear();
-
-  return getVisibleItems().filter(item => {
-    const itemDate = new Date(item.date);
-    return (itemDate.getMonth() + 1) === currentMonth && itemDate.getFullYear() === currentYear;
-  });
-}
-
-function getMonthIncomeReceived() {
-  return getCurrentMonthItems()
-    .filter(item => item.type === "income" && item.completed)
-    .reduce((sum, item) => sum + item.amount, 0);
-}
-
-function getMonthIncomeRemaining() {
-  return getCurrentMonthItems()
-    .filter(item => item.type === "income" && !item.completed)
-    .reduce((sum, item) => sum + item.amount, 0);
-}
-
-function getMonthBillsPaid() {
-  return getCurrentMonthItems()
-    .filter(item => item.type === "expense" && item.completed)
-    .reduce((sum, item) => sum + item.amount, 0);
-}
-
-function getMonthBillsRemaining() {
-  return getCurrentMonthItems()
-    .filter(item => item.type === "expense" && !item.completed)
-    .reduce((sum, item) => sum + item.amount, 0);
-}
-
-function renderMonthlySummary() {
-  const incomeReceived = getMonthIncomeReceived();
-  const billsPaid = getMonthBillsPaid();
-  const incomeRemaining = getMonthIncomeRemaining();
-  const billsRemaining = getMonthBillsRemaining();
-  const netRemaining = incomeRemaining - billsRemaining;
-
-  document.getElementById("summaryIncomeReceived").textContent = money(incomeReceived);
-  document.getElementById("summaryIncomeRemaining").textContent = money(incomeRemaining);
-  document.getElementById("summaryBillsPaid").textContent = money(billsPaid);
-  document.getElementById("summaryBillsRemaining").textContent = money(billsRemaining);
-  document.getElementById("summaryNetRemaining").textContent = money(netRemaining);
-}
-
-/* =========================
-   GOALS RENDER & CONTROLS
-========================= */
-function deleteGoal(name) {
-  budgetData.goals = budgetData.goals.filter(goal => goal.name !== name);
-  addActivity(`Goal Deleted: ${name}`);
-  saveData();
-  renderAll();
-}
-
-function addGoal() {
-  const name = document.getElementById("goalName").value.trim();
-  const current = Number(document.getElementById("goalCurrent").value) || 0;
-  const target = Number(document.getElementById("goalTarget").value) || 0;
-
-  if (!name) return alert("Please enter a goal name.");
-
-  budgetData.goals.push({
-    name,
-    current,
-    target,
-    notes: ""
-  });
-
-  addActivity(`Goal Added: ${name}`);
-  document.getElementById("goalName").value = "";
-  document.getElementById("goalCurrent").value = "";
-  document.getElementById("goalTarget").value = "";
-
-  saveData();
-  renderAll();
-}
-
-function renderGoals() {
-  const container = document.getElementById("goalContainer");
-  if (!container) return;
-
-  container.innerHTML = "";
-
-  if (budgetData.goals.length === 0) {
-    container.innerHTML = `<div class="goal-card"><p>No goals created yet.</p></div>`;
-    return;
-  }
-
-  budgetData.goals.forEach(goal => {
-    const percent = goal.target > 0 ? Math.min(100, Math.round((goal.current / goal.target) * 100)) : 0;
-    const progressColor = percent >= 100 ? "#22c55e" : percent >= 75 ? "#3b82f6" : percent >= 50 ? "#f59e0b" : "#ef4444";
-
-    const div = document.createElement("div");
-    div.className = "goal-card";
-    div.innerHTML = `
-      <h3>${goal.name}</h3>
-      <p>Current: ${money(goal.current)}</p>
-      <p>Target: ${money(goal.target)}</p>
-      <p>Progress: ${percent}%</p>
-      <div style="width:100%; background:#334155; border-radius:10px; overflow:hidden; margin:10px 0;">
-        <div style="width:${percent}%; background:${progressColor}; height:12px;"></div>
-      </div>
-      <button class="btn btn-danger" onclick="deleteGoal('${goal.name}')">Delete Goal</button>
-    `;
-    container.appendChild(div);
-  });
-}
-
-/* =========================
-   RECONCILIATION
-========================= */
-function updateBalances() {
-  const oldChecking = budgetData.accounts.checking;
-  const oldSavings = budgetData.accounts.savings;
-
-  budgetData.accounts.checking = Number(document.getElementById("checkingInput").value) || 0;
-  budgetData.accounts.savings = Number(document.getElementById("savingsInput").value) || 0;
-
-  addActivity(`Balances Reconciled | Checking: ${money(oldChecking)} → ${money(budgetData.accounts.checking)} | Savings: ${money(oldSavings)} → ${money(budgetData.accounts.savings)}`);
-  saveData();
-  renderAll();
-}
-
-function renderReconcile() {
-  const checking = document.getElementById("checkingInput");
-  const savings = document.getElementById("savingsInput");
-
-  if (!checking) return;
-
-  checking.value = budgetData.accounts.checking;
-  savings.value = budgetData.accounts.savings;
-
-  document.getElementById("reconcileTotal").textContent = money(budgetData.accounts.checking + budgetData.accounts.savings);
-  document.getElementById("reconcileChecking").textContent = money(budgetData.accounts.checking);
-  document.getElementById("reconcileSavings").textContent = money(budgetData.accounts.savings);
-}
-
-/* =========================
-   EXPORT / IMPORT / RESTORE
-========================= */
-function importBudget(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      const imported = JSON.parse(e.target.result);
-
-      if (imported.accounts) budgetData.accounts = imported.accounts;
-      if (imported.goals) budgetData.goals = imported.goals;
-      if (imported.activityLog) budgetData.activityLog = imported.activityLog;
-
-      if (imported.timeline) {
-        imported.timeline.forEach(incoming => {
-          const exists = budgetData.timeline.some(current => current.id === incoming.id);
-          if (!exists) budgetData.timeline.push(incoming);
-        });
-      }
-
-      addActivity("Budget Imported");
-      saveData();
-      renderAll();
-      alert("Budget merged successfully!");
-    } catch(err) {
-      alert("Invalid JSON file format.");
-    }
-  };
-  reader.readAsText(file);
-}
-
-function restoreBudget(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      const imported = JSON.parse(e.target.result);
-
-      budgetData.accounts = imported.accounts || { checking: 0, savings: 0 };
-      budgetData.settings = imported.settings || { currentView: "Household", currentMode: "NOW", forecastBuffer: 0, onboardingComplete: true };
-      budgetData.goals = imported.goals || [];
-      budgetData.activityLog = imported.activityLog || [];
-      budgetData.timeline = imported.timeline || [];
-
-      addActivity("Budget Restored");
-      saveData();
-      renderAll();
-      alert("Budget restored successfully!");
-    } catch(err) {
-      alert("Invalid backup file.");
-    }
-  };
-  reader.readAsText(file);
-}
-
-function exportBudget() {
-  const data = JSON.stringify(budgetData, null, 2);
-  const blob = new Blob([data], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-
-  a.href = url;
-  a.download = "paycheck-pilot-backup.json";
-  a.click();
-  URL.revokeObjectURL(url);
-
-  addActivity("Budget Exported");
-}
-
-function generateNetYearAnalysis() {
-  const income = getRemainingIncome();
-  const expenses = getRemainingExpenses();
-
-  const largestExpense = budgetData.timeline
-    .filter(item => item.type === "expense")
-    .sort((a, b) => b.amount - a.amount)[0];
-
-  document.getElementById("yearIncomeChange").textContent = money(income);
-  document.getElementById("yearExpenseChange").textContent = money(expenses);
-  document.getElementById("yearNewBills").textContent = budgetData.timeline.filter(item => item.type === "expense").length;
-  document.getElementById("yearRemovedBills").textContent = "0";
-
-  document.getElementById("yearLargestExpense").textContent = largestExpense ? `${largestExpense.desc} (${money(largestExpense.amount)})` : "-";
-  document.getElementById("yearProjectedEnd").textContent = money(getCurrentCash() + income - expenses - Number(budgetData.settings.forecastBuffer || 0));
-}
-
-/* =========================
-   CLOUD SYNC (SUPABASE)
-========================= */
-async function cloudSave() {
-  if (!currentUser) return;
-
-  try {
-    const { data, error } = await supabaseClient
-      .from("budget_sync")
-      .upsert({
-        id: currentUser.id,
-        data: budgetData,
-        updated_at: new Date().toISOString()
-      })
-      .select();
-
-    if (error) console.error("Cloud Save Error:", error);
-  } catch (error) {
-    console.error("Cloud Save Failed", error);
-  }
-}
-
-async function cloudLoad() {
-  if (!currentUser) return;
-
-  try {
-    const { data, error } = await supabaseClient
-      .from("budget_sync")
-      .select("*")
-      .eq("id", currentUser.id)
-      .maybeSingle();
-
-    if (error) {
-      if (error.code === 'PGRST116') showAuthView('onboarding');
-      else console.error(error);
-      return;
-    }
-
-    if (data?.data) {
-      Object.assign(budgetData, data.data);
-
-      if (!budgetData.settings) budgetData.settings = {};
-      if (budgetData.settings.onboardingComplete === undefined) {
-        budgetData.settings.onboardingComplete = false;
-      }
-
-      renderAll();
-    }
-  } catch (error) {
-    console.error("Cloud Load Failed", error);
-  }
-}
-
-/* =========================
-   LOCAL DATA PERSISTENCE
-========================= */
-function saveData() {
-  localStorage.setItem("paycheckPilot", JSON.stringify(budgetData));
-  cloudSave();
-}
-
-function loadData() {
-  const saved = localStorage.getItem("paycheckPilot");
-  if (saved) {
-    const data = JSON.parse(saved);
-    Object.assign(budgetData, data);
-
-    document.getElementById("modeSelector").value = budgetData.settings.currentMode || "NOW";
-    document.getElementById("viewSelector").value = budgetData.settings.currentView || "Household";
-    document.getElementById("forecastBuffer").value = budgetData.settings.forecastBuffer || 0;
-  }
-}
-
-/* =========================
-   SETUP WIZARD LOGIC
-========================= */
-function addWizardBill() {
-  const name = document.getElementById("billName").value.trim();
-  const amount = Number(document.getElementById("billAmount").value);
-  const day = Number(document.getElementById("billDay").value);
-
-  if (!name || !amount || !day) return alert("Please fill in bill name, amount, and due day.");
-
-  budgetData.setupBills.push({ name, amount, day });
-  renderWizardBills();
-
-  document.getElementById("billName").value = "";
-  document.getElementById("billAmount").value = "";
-  document.getElementById("billDay").value = "";
-}
-
-function renderWizardBills() {
-  const container = document.getElementById("wizardBills");
-  if (!container) return;
-
-  container.innerHTML = "";
-
-  budgetData.setupBills.forEach((bill, index) => {
-    const div = document.createElement("div");
-    div.className = "activity-item";
-    div.innerHTML = `
-      <strong>${bill.name}</strong><br>
-      ${money(bill.amount)} | Due Day: ${bill.day}<br><br>
-      <button class="btn btn-danger" onclick="deleteWizardBill(${index})">Delete</button>
-    `;
-    container.appendChild(div);
-  });
-}
-
-function deleteWizardBill(index) {
-  budgetData.setupBills.splice(index, 1);
-  renderWizardBills();
-}
-
-function completeSetupWizard() {
-  const checking = Number(document.getElementById("setupChecking").value) || 0;
-  const savings = Number(document.getElementById("setupSavings").value) || 0;
-  const amount = Number(document.getElementById("setupPayAmount").value) || 0;
-  const payDate = document.getElementById("setupPayDate").value;
-
-  budgetData.accounts.checking = checking;
-  budgetData.accounts.savings = savings;
-
-  if (amount > 0 && payDate) {
-    budgetData.timeline.push({
-      id: "starter-paycheck",
-      owner: "Household",
-      type: "income",
-      desc: "Primary Paycheck",
-      amount: amount,
-      date: payDate,
-      completed: false
-    });
-  }
-
-  budgetData.setupBills.forEach(bill => {
-    budgetData.timeline.push({
-      id: "bill-" + Date.now() + Math.random(),
-      owner: "Household",
-      type: "expense",
-      desc: bill.name,
-      amount: bill.amount,
-      date: (() => {
-        const today = new Date();
-        let year = today.getFullYear();
-        let month = today.getMonth() + 1;
-        if (bill.day < today.getDate()) {
-          month++;
-          if (month > 12) {
-            month = 1;
-            year++;
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              400: '#34d399',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              900: '#064e3b',
+              accent: '#3b82f6',
+              dark: '#0b1329',
+              card: '#131f37',
+              border: '#1e2d4a'
+            }
           }
         }
-        return `${year}-${String(month).padStart(2, "0")}-${String(bill.day).padStart(2, "0")}`;
-      })(),
-      completed: false
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- Supabase JS Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    /* Custom Scrollbar & Utility Polish */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0b1329; }
+    ::-webkit-scrollbar-thumb { background: #1e2d4a; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #34d399; }
+    
+    .glass-card {
+      background: rgba(19, 31, 55, 0.75);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+    
+    .glass-card-hover {
+      transition: all 0.2s ease-in-out;
+    }
+    .glass-card-hover:hover {
+      border-color: rgba(52, 211, 153, 0.3);
+      transform: translateY(-2px);
+    }
+    
+    .glow-emerald {
+      box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.25);
+    }
+    
+    /* Hide views by default */
+    .view-screen { display: none; }
+    .view-screen.active { display: block; }
+  </style>
+</head>
+<body class="h-full bg-[#070c18] text-slate-100 font-sans antialiased selection:bg-brand-500 selection:text-white">
+
+  <!-- ========================================== -->
+  <!-- AUTHENTICATION SCREEN -->
+  <!-- ========================================== -->
+  <div id="screen-auth" class="view-screen active min-h-screen flex items-center justify-center p-4 sm:p-6 md:p-8 bg-gradient-to-br from-[#070c18] via-[#0b1329] to-[#041226]">
+    <div class="w-full max-w-md space-y-8 glass-card p-8 rounded-3xl shadow-2xl border border-slate-800/80 relative overflow-hidden">
+      <!-- Glow Accent -->
+      <div class="absolute -top-24 -right-24 w-48 h-48 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
+      
+      <!-- Brand Header -->
+      <div class="text-center space-y-3">
+        <div class="flex justify-center items-center gap-3">
+          <img src="paycheck-pilot-hero.png" alt="Paycheck Pilot Logo" class="h-12 w-auto object-contain drop-shadow-lg" onerror="this.src='https://placehold.co/120x120/10b981/ffffff?text=PP'; this.classList.add('rounded-xl');" />
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Paycheck Pilot</h1>
+        <p class="text-xs uppercase tracking-widest text-brand-400 font-semibold">Navigate Every Payday</p>
+      </div>
+
+      <!-- Auth Tabs -->
+      <div class="flex bg-slate-900/80 p-1 rounded-xl border border-slate-800 text-xs font-semibold">
+        <button id="auth-tab-login" onclick="switchAuthTab('login')" class="flex-1 py-2.5 rounded-lg text-slate-300 transition-all bg-brand-600 text-white shadow-md">Sign In</button>
+        <button id="auth-tab-signup" onclick="switchAuthTab('signup')" class="flex-1 py-2.5 rounded-lg text-slate-400 hover:text-slate-200 transition-all">Create Account</button>
+      </div>
+
+      <!-- Form Container -->
+      <form id="auth-form" onsubmit="handleAuthSubmit(event)" class="space-y-5">
+        <div>
+          <label class="block text-xs font-semibold uppercase text-slate-400 mb-1.5">Email Address</label>
+          <div class="relative">
+            <i data-lucide="mail" class="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"></i>
+            <input type="email" id="auth-email" required class="w-full bg-slate-900/90 border border-slate-700/80 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 rounded-xl pl-11 pr-4 py-3 text-sm text-slate-100 placeholder-slate-500 transition-all outline-none" placeholder="name@domain.com" />
+          </div>
+        </div>
+
+        <div>
+          <div class="flex justify-between items-center mb-1.5">
+            <label class="text-xs font-semibold uppercase text-slate-400">Password</label>
+            <button type="button" id="forgot-pw-link" onclick="handleForgotPassword()" class="text-xs text-brand-400 hover:underline">Forgot?</button>
+          </div>
+          <div class="relative">
+            <i data-lucide="lock" class="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"></i>
+            <input type="password" id="auth-password" required class="w-full bg-slate-900/90 border border-slate-700/80 focus:border-brand-500 focus:ring-1 focus:ring-brand-500 rounded-xl pl-11 pr-4 py-3 text-sm text-slate-100 placeholder-slate-500 transition-all outline-none" placeholder="••••••••" />
+          </div>
+        </div>
+
+        <button type="submit" id="auth-submit-btn" class="w-full py-3.5 px-4 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl shadow-lg glow-emerald transition-all transform active:scale-[0.98] flex items-center justify-center gap-2">
+          <span>Sign In to Pilot</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </button>
+      </form>
+
+      <!-- Demo Account Quick Sign-in -->
+      <div class="pt-2 border-t border-slate-800/80 text-center">
+        <button onclick="loginAsDemo()" class="text-xs text-slate-400 hover:text-brand-400 transition-colors inline-flex items-center gap-1.5 py-1">
+          <i data-lucide="play-circle" class="w-4 h-4 text-brand-400"></i>
+          <span>Continue with Offline Demo Mode</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ========================================== -->
+  <!-- MULTI-STEP ONBOARDING WIZARD -->
+  <!-- ========================================== -->
+  <div id="screen-onboarding" class="view-screen min-h-screen bg-[#070c18] flex flex-col justify-between p-4 sm:p-8">
+    <div class="max-w-2xl mx-auto w-full flex-1 flex flex-col justify-center my-auto py-8">
+      
+      <!-- Top Brand Header -->
+      <div class="flex items-center justify-center gap-3 mb-8">
+        <img src="paycheck-pilot-hero.png" alt="Logo" class="h-10 w-auto object-contain" onerror="this.src='https://placehold.co/100x100/10b981/ffffff?text=PP'; this.classList.add('rounded-lg');" />
+        <span class="font-bold text-xl text-white tracking-wide">Paycheck Pilot</span>
+      </div>
+
+      <!-- Stepper Header -->
+      <div class="mb-8">
+        <div class="flex justify-between items-center mb-3 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+          <span id="onboard-step-indicator">Step 1 of 4</span>
+          <span id="onboard-step-title" class="text-brand-400">Accounts & Cash</span>
+        </div>
+        <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+          <div id="onboard-progress-bar" class="bg-brand-500 h-full w-1/4 transition-all duration-300"></div>
+        </div>
+      </div>
+
+      <!-- Card Container -->
+      <div class="glass-card rounded-3xl p-6 sm:p-8 border border-slate-800 shadow-2xl relative">
+        
+        <!-- STEP 1: ACCOUNTS -->
+        <div id="onboard-step-1" class="onboard-step-content space-y-6">
+          <div>
+            <h2 class="text-2xl font-bold text-white mb-2">Connect Your Accounts</h2>
+            <p class="text-sm text-slate-400">Add your liquid cash balances (checking, savings) and credit cards to calculate your real-time Safe Spend.</p>
+          </div>
+
+          <div id="onboard-accounts-list" class="space-y-3 max-h-60 overflow-y-auto pr-1">
+            <!-- Account items rendered via JS -->
+          </div>
+
+          <button onclick="addAccountPrompt()" class="w-full py-3 border border-dashed border-slate-700 hover:border-brand-500 text-slate-300 hover:text-brand-400 rounded-xl flex items-center justify-center gap-2 text-sm font-medium transition-all">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i> Add Cash or Credit Account
+          </button>
+        </div>
+
+        <!-- STEP 2: INCOME & PAYDAY -->
+        <div id="onboard-step-2" class="onboard-step-content space-y-6 hidden">
+          <div>
+            <h2 class="text-2xl font-bold text-white mb-2">Income & Payday Schedule</h2>
+            <p class="text-sm text-slate-400">When do you get paid? Paycheck Pilot builds your budget around your actual deposit timing.</p>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Paycheck Amount (Take-Home)</label>
+              <input type="number" id="onboard-paycheck-amount" step="0.01" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-lg font-bold text-brand-400 focus:border-brand-500 outline-none" placeholder="2500.00" />
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Pay Frequency</label>
+                <select id="onboard-pay-frequency" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-3 text-sm text-slate-200 outline-none">
+                  <option value="biweekly">Every 2 Weeks (Bi-Weekly)</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="semimonthly">Twice a Month (1st & 15th)</option>
+                  <option value="monthly">Monthly</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Next Payday Date</label>
+                <input type="date" id="onboard-next-payday" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-3 text-sm text-slate-200 outline-none" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 3: RECURRING BILLS -->
+        <div id="onboard-step-3" class="onboard-step-content space-y-6 hidden">
+          <div>
+            <h2 class="text-2xl font-bold text-white mb-2">Recurring Bills & Subscriptions</h2>
+            <p class="text-sm text-slate-400">List fixed obligations due every month so we can reserve cash before payday.</p>
+          </div>
+
+          <div id="onboard-bills-list" class="space-y-3 max-h-60 overflow-y-auto pr-1">
+            <!-- Bill items rendered via JS -->
+          </div>
+
+          <button onclick="addBillPrompt()" class="w-full py-3 border border-dashed border-slate-700 hover:border-brand-500 text-slate-300 hover:text-brand-400 rounded-xl flex items-center justify-center gap-2 text-sm font-medium transition-all">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i> Add Recurring Bill
+          </button>
+        </div>
+
+        <!-- STEP 4: FINISH & PILOT READY -->
+        <div id="onboard-step-4" class="onboard-step-content text-center space-y-6 hidden py-4">
+          <div class="w-16 h-16 bg-brand-500/20 text-brand-400 rounded-full flex items-center justify-center mx-auto ring-8 ring-brand-500/10">
+            <i data-lucide="check-circle-2" class="w-10 h-10"></i>
+          </div>
+          <div>
+            <h2 class="text-2xl font-bold text-white mb-2">Flight Plan Configured!</h2>
+            <p class="text-sm text-slate-300 max-w-md mx-auto">You're ready to navigate your finances. Paycheck Pilot will keep your Safe Spend updated automatically.</p>
+          </div>
+          <div class="p-4 bg-slate-900/80 rounded-2xl border border-slate-800 text-left text-xs space-y-2 text-slate-400 max-w-sm mx-auto">
+            <div class="flex justify-between"><span class="text-slate-300">Total Liquid Cash:</span> <strong id="summary-cash" class="text-white">$0.00</strong></div>
+            <div class="flex justify-between"><span class="text-slate-300">Upcoming Bills:</span> <strong id="summary-bills" class="text-rose-400">$0.00</strong></div>
+            <div class="flex justify-between pt-1 border-t border-slate-800"><span class="text-brand-400 font-semibold">Initial Safe Spend:</span> <strong id="summary-safespend" class="text-brand-400">$0.00</strong></div>
+          </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="flex justify-between items-center pt-6 mt-6 border-t border-slate-800">
+          <button id="onboard-prev-btn" onclick="prevOnboardStep()" class="px-5 py-2.5 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 text-sm font-semibold transition-all hidden">Back</button>
+          <div></div> <!-- Spacer -->
+          <button id="onboard-next-btn" onclick="nextOnboardStep()" class="px-6 py-2.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-sm transition-all shadow-md flex items-center gap-2">
+            <span>Continue</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ========================================== -->
+  <!-- MAIN APPLICATION SHELL (DESKTOP & MOBILE)  -->
+  <!-- ========================================== -->
+  <div id="screen-app" class="view-screen min-h-screen flex flex-col md:flex-row bg-[#070c18] text-slate-100">
+    
+    <!-- DESKTOP SIDEBAR -->
+    <aside class="hidden md:flex flex-col w-64 border-r border-slate-800/80 bg-[#0b1329] p-5 shrink-0 justify-between">
+      <div class="space-y-8">
+        <!-- Brand -->
+        <div class="flex items-center gap-3 px-2">
+          <img src="paycheck-pilot-hero.png" alt="Logo" class="h-9 w-auto object-contain" onerror="this.src='https://placehold.co/80x80/10b981/ffffff?text=PP'; this.classList.add('rounded-lg');" />
+          <div>
+            <h1 class="font-bold text-base text-white tracking-tight leading-tight">Paycheck Pilot</h1>
+            <p class="text-[10px] text-brand-400 font-semibold uppercase tracking-wider">Navigate Payday</p>
+          </div>
+        </div>
+
+        <!-- Primary Navigation -->
+        <nav class="space-y-1">
+          <button onclick="navigateTo('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
+            <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+            <span>Dashboard</span>
+          </button>
+          
+          <button onclick="navigateTo('coming-up')" id="nav-coming-up" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
+            <i data-lucide="calendar-clock" class="w-4 h-4"></i>
+            <span>Coming Up</span>
+          </button>
+
+          <button onclick="navigateTo('ledger')" id="nav-ledger" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
+            <i data-lucide="receipt" class="w-4 h-4"></i>
+            <span>Transactions</span>
+          </button>
+
+          <button onclick="navigateTo('goals')" id="nav-goals" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
+            <i data-lucide="target" class="w-4 h-4"></i>
+            <span>Goals</span>
+          </button>
+
+          <button onclick="navigateTo('forecast')" id="nav-forecast" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
+            <i data-lucide="line-chart" class="w-4 h-4"></i>
+            <span>Forecast</span>
+          </button>
+
+          <button onclick="navigateTo('reconcile')" id="nav-reconcile" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
+            <i data-lucide="scale" class="w-4 h-4"></i>
+            <span>Reconcile & Data</span>
+          </button>
+        </nav>
+      </div>
+
+      <!-- Footer / Settings & Profile -->
+      <div class="pt-4 border-t border-slate-800/80 space-y-2">
+        <button onclick="navigateTo('settings')" id="nav-settings" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
+          <i data-lucide="settings" class="w-4 h-4"></i>
+          <span>Settings</span>
+        </button>
+
+        <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800/80 flex items-center justify-between">
+          <div class="truncate pr-2">
+            <p id="user-display-email" class="text-xs font-semibold text-slate-200 truncate">pilot@user.com</p>
+            <p class="text-[10px] text-brand-400">Pro Flight Plan</p>
+          </div>
+          <button onclick="handleLogout()" title="Sign Out" class="text-slate-400 hover:text-rose-400 p-1.5 transition-colors">
+            <i data-lucide="log-out" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MOBILE TOP BAR -->
+    <header class="md:hidden bg-[#0b1329] border-b border-slate-800 px-4 py-3 flex items-center justify-between sticky top-0 z-30">
+      <div class="flex items-center gap-2">
+        <img src="paycheck-pilot-hero.png" alt="Logo" class="h-7 w-auto object-contain" onerror="this.src='https://placehold.co/60x60/10b981/ffffff?text=PP'; this.classList.add('rounded');" />
+        <span class="font-bold text-sm text-white">Paycheck Pilot</span>
+      </div>
+      <button onclick="navigateTo('settings')" class="p-2 text-slate-400 hover:text-white">
+        <i data-lucide="settings" class="w-5 h-5"></i>
+      </button>
+    </header>
+
+    <!-- MAIN CONTENT VIEW AREA -->
+    <main class="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 pb-24 md:pb-8">
+      <div class="max-w-6xl mx-auto space-y-6">
+
+        <!-- ================= PAGE: DASHBOARD ================= -->
+        <div id="page-dashboard" class="page-view space-y-6">
+          
+          <!-- TODAY SECTION HEADER -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-brand-500/10 text-brand-400 border border-brand-500/20">
+                  <span class="w-1.5 h-1.5 rounded-full bg-brand-400 mr-1.5 animate-pulse"></span> TODAY
+                </span>
+                <span id="current-date-display" class="text-xs text-slate-400 font-medium">Aug 7, 2026</span>
+              </div>
+              <h2 class="text-2xl font-extrabold text-white tracking-tight mt-1">Flight Control</h2>
+            </div>
+            <button onclick="openAddTransactionModal()" class="self-start sm:self-auto px-4 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5">
+              <i data-lucide="plus" class="w-4 h-4"></i> Quick Transaction
+            </button>
+          </div>
+
+          <!-- PRIMARY METRIC: SAFE SPEND HERO CARD -->
+          <div class="glass-card rounded-3xl p-6 sm:p-8 border border-brand-500/30 relative overflow-hidden glow-emerald">
+            <div class="absolute -right-12 -bottom-12 w-48 h-48 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
+              <div class="lg:col-span-2 space-y-2">
+                <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-brand-400">
+                  <i data-lucide="shield-check" class="w-4 h-4"></i>
+                  <span>Safe Spend (Until Payday)</span>
+                </div>
+                <div class="text-4xl sm:text-5xl font-black text-white tracking-tight" id="dash-safe-spend">$0.00</div>
+                <p class="text-xs text-slate-400 leading-relaxed max-w-md">
+                  This is your true disposable cash after accounting for bills due before your next paycheck on <span id="dash-next-paydate-inline" class="text-slate-200 font-semibold">--</span>.
+                </p>
+              </div>
+
+              <!-- Quick Health Badges -->
+              <div class="space-y-3 bg-slate-900/60 p-4 rounded-2xl border border-slate-800/80">
+                <div class="flex justify-between items-center text-xs">
+                  <span class="text-slate-400">Next Payday:</span>
+                  <span id="dash-next-payday-countdown" class="font-bold text-slate-200">In 0 Days</span>
+                </div>
+                <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                  <div id="dash-payday-progress" class="bg-brand-400 h-full w-0 transition-all"></div>
+                </div>
+                <div class="flex justify-between items-center text-xs pt-1">
+                  <span class="text-slate-400">Bills Before Payday:</span>
+                  <span id="dash-bills-due-total" class="font-bold text-rose-400">$0.00</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3-GRID METRICS -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            
+            <!-- Cash Balance -->
+            <div class="glass-card p-5 rounded-2xl border border-slate-800/80">
+              <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+                <span class="font-semibold uppercase tracking-wider">Current Cash</span>
+                <i data-lucide="wallet" class="w-4 h-4 text-brand-400"></i>
+              </div>
+              <div id="dash-cash-total" class="text-2xl font-bold text-white">$0.00</div>
+              <p class="text-[11px] text-slate-500 mt-1">Liquid checking & savings</p>
+            </div>
+
+            <!-- Next Payday Amount -->
+            <div class="glass-card p-5 rounded-2xl border border-slate-800/80">
+              <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+                <span class="font-semibold uppercase tracking-wider">Next Payday</span>
+                <i data-lucide="banknote" class="w-4 h-4 text-emerald-400"></i>
+              </div>
+              <div id="dash-next-payday-amount" class="text-2xl font-bold text-white">$0.00</div>
+              <p id="dash-next-payday-sub" class="text-[11px] text-slate-500 mt-1">Scheduled deposit</p>
+            </div>
+
+            <!-- Paycheck To Paycheck Ratio -->
+            <div class="glass-card p-5 rounded-2xl border border-slate-800/80">
+              <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+                <span class="font-semibold uppercase tracking-wider">Fixed Load</span>
+                <i data-lucide="gauge" class="w-4 h-4 text-amber-400"></i>
+              </div>
+              <div id="dash-paycheck-ratio" class="text-2xl font-bold text-white">0%</div>
+              <p class="text-[11px] text-slate-500 mt-1">Income committed to bills</p>
+            </div>
+
+          </div>
+
+          <!-- TWO COLUMN DETAILS -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <!-- Bills Due Before Payday Section -->
+            <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4">
+              <div class="flex justify-between items-center">
+                <h3 class="font-bold text-white text-base flex items-center gap-2">
+                  <i data-lucide="clock" class="w-4 h-4 text-brand-400"></i>
+                  <span>Bills Due Before Payday</span>
+                </h3>
+                <button onclick="navigateTo('coming-up')" class="text-xs text-brand-400 hover:underline">View All</button>
+              </div>
+
+              <div id="dash-upcoming-bills-list" class="space-y-2.5">
+                <!-- JS populated -->
+              </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4">
+              <div class="flex justify-between items-center">
+                <h3 class="font-bold text-white text-base flex items-center gap-2">
+                  <i data-lucide="activity" class="w-4 h-4 text-brand-400"></i>
+                  <span>Recent Ledger Activity</span>
+                </h3>
+                <button onclick="navigateTo('ledger')" class="text-xs text-brand-400 hover:underline">Full Ledger</button>
+              </div>
+
+              <div id="dash-recent-activity-list" class="space-y-2.5">
+                <!-- JS populated -->
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+        <!-- ================= PAGE: COMING UP (TIMELINE) ================= -->
+        <div id="page-coming-up" class="page-view space-y-6 hidden">
+          <div class="flex justify-between items-center border-b border-slate-800/80 pb-4">
+            <div>
+              <h2 class="text-2xl font-extrabold text-white tracking-tight">Coming Up</h2>
+              <p class="text-xs text-slate-400">Manage upcoming bills and income events explicitly.</p>
+            </div>
+            <button onclick="openAddBillModal()" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5">
+              <i data-lucide="plus" class="w-4 h-4"></i> Add Recurring Bill
+            </button>
+          </div>
+
+          <!-- Explicit Action Guidance Banner -->
+          <div class="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl flex items-center gap-3 text-xs text-slate-300">
+            <i data-lucide="info" class="w-5 h-5 text-brand-400 shrink-0"></i>
+            <span>Marking a bill as <strong>Complete</strong> logs it into your ledger and advances the due date to next month. Clicking <strong>Delete</strong> permanently removes the obligation.</span>
+          </div>
+
+          <!-- Timeline Container -->
+          <div class="space-y-3" id="coming-up-timeline-list">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- ================= PAGE: LEDGER / TRANSACTIONS ================= -->
+        <div id="page-ledger" class="page-view space-y-6 hidden">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
+            <div>
+              <h2 class="text-2xl font-extrabold text-white tracking-tight">Transaction History</h2>
+              <p class="text-xs text-slate-400">Complete record of posted income, expenses, and payments.</p>
+            </div>
+            <button onclick="openAddTransactionModal()" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5">
+              <i data-lucide="plus" class="w-4 h-4"></i> Log Transaction
+            </button>
+          </div>
+
+          <!-- Filter & Search Bar -->
+          <div class="flex flex-col sm:flex-row gap-3">
+            <div class="relative flex-1">
+              <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
+              <input type="text" id="ledger-search-input" oninput="renderLedger()" placeholder="Search transactions..." class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-4 py-2.5 text-xs text-slate-200 focus:border-brand-500 outline-none" />
+            </div>
+            <select id="ledger-filter-category" onchange="renderLedger()" class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-300 outline-none">
+              <option value="ALL font-semibold">All Categories</option>
+              <option value="Income">Income</option>
+              <option value="Housing">Housing</option>
+              <option value="Utilities">Utilities</option>
+              <option value="Food & Dining">Food & Dining</option>
+              <option value="Subscriptions">Subscriptions</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <!-- Table/List Surface -->
+          <div class="glass-card rounded-2xl border border-slate-800/80 overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-900/80 text-slate-400 font-semibold border-b border-slate-800 uppercase tracking-wider">
+                  <tr>
+                    <th class="p-4">Date</th>
+                    <th class="p-4">Description</th>
+                    <th class="p-4">Category</th>
+                    <th class="p-4 text-right">Amount</th>
+                    <th class="p-4 text-center">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="ledger-table-body" class="divide-y divide-slate-800/60">
+                  <!-- JS populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= PAGE: GOALS ================= -->
+        <div id="page-goals" class="page-view space-y-6 hidden">
+          <div class="flex justify-between items-center border-b border-slate-800/80 pb-4">
+            <div>
+              <h2 class="text-2xl font-extrabold text-white tracking-tight">Financial Goals</h2>
+              <p class="text-xs text-slate-400">Track savings, emergency funds, and big purchases.</p>
+            </div>
+            <button onclick="openAddGoalModal()" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5">
+              <i data-lucide="plus" class="w-4 h-4"></i> Create Goal
+            </button>
+          </div>
+
+          <!-- Goals Cards Grid -->
+          <div id="goals-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- JS Populated -->
+          </div>
+        </div>
+
+        <!-- ================= PAGE: FORECAST ================= -->
+        <div id="page-forecast" class="page-view space-y-6 hidden">
+          <div class="border-b border-slate-800/80 pb-4">
+            <h2 class="text-2xl font-extrabold text-white tracking-tight">Paycheck Forecast</h2>
+            <p class="text-xs text-slate-400">Projected 60-day cash flow based on paydays and recurring bills.</p>
+          </div>
+
+          <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4">
+            <div class="h-72 w-full">
+              <canvas id="forecastChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= PAGE: RECONCILE & DATA ================= -->
+        <div id="page-reconcile" class="page-view space-y-6 hidden">
+          <div class="border-b border-slate-800/80 pb-4">
+            <h2 class="text-2xl font-extrabold text-white tracking-tight">Reconcile & Data Sync</h2>
+            <p class="text-xs text-slate-400">Align app numbers with real bank accounts or export data.</p>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Accounts Reconcile List -->
+            <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4">
+              <h3 class="font-bold text-white text-base">Account Balances</h3>
+              <div id="reconcile-accounts-list" class="space-y-3">
+                <!-- JS populated -->
+              </div>
+            </div>
+
+            <!-- Import / Export Controls -->
+            <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4">
+              <h3 class="font-bold text-white text-base">Data Management</h3>
+              <p class="text-xs text-slate-400">Export your local financial data for backup or import past transactions via JSON.</p>
+              
+              <div class="space-y-3 pt-2">
+                <button onclick="exportDataJSON()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all">
+                  <i data-lucide="download" class="w-4 h-4"></i> Export Application Backup (.JSON)
+                </button>
+                
+                <label class="w-full py-2.5 border border-slate-700 hover:border-brand-500 text-slate-300 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer transition-all">
+                  <i data-lucide="upload" class="w-4 h-4"></i> Import JSON Data
+                  <input type="file" id="import-json-file" accept=".json" onchange="importDataJSON(event)" class="hidden" />
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= PAGE: SETTINGS ================= -->
+        <div id="page-settings" class="page-view space-y-6 hidden">
+          <div class="border-b border-slate-800/80 pb-4">
+            <h2 class="text-2xl font-extrabold text-white tracking-tight">Settings</h2>
+            <p class="text-xs text-slate-400">Configure your profile, cloud sync, and application preferences.</p>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- User Profile Card -->
+            <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4 lg:col-span-2">
+              <h3 class="font-bold text-white text-base">User Profile</h3>
+              
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-xs font-semibold text-slate-400 mb-1">Email</label>
+                  <input type="text" id="settings-email-display" readonly class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-400 outline-none" />
+                </div>
+
+                <div class="pt-4 border-t border-slate-800/80 space-y-3">
+                  <h4 class="text-xs font-bold text-slate-300 uppercase">Change Password</h4>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <input type="password" id="settings-new-pass" placeholder="New Password" class="bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-brand-500" />
+                    <button onclick="updatePassword()" class="bg-brand-500/20 hover:bg-brand-500/30 text-brand-400 border border-brand-500/30 rounded-xl px-4 py-2.5 text-xs font-bold transition-all">Update Password</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- About Section & Sync Status -->
+            <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4 flex flex-col justify-between">
+              <div class="space-y-4 text-center">
+                <img src="paycheck-pilot-hero.png" alt="Logo" class="h-16 w-auto mx-auto object-contain" onerror="this.src='https://placehold.co/120x120/10b981/ffffff?text=PP'; this.classList.add('rounded-xl');" />
+                <div>
+                  <h3 class="font-bold text-white text-lg">Paycheck Pilot</h3>
+                  <p class="text-xs text-brand-400 font-semibold uppercase tracking-wider">Navigate Every Payday</p>
+                  <p class="text-[11px] text-slate-500 mt-1">Version 2.5.0 • Fintech Edition</p>
+                </div>
+              </div>
+
+              <div class="space-y-3 pt-4 border-t border-slate-800/80">
+                <button onclick="restartOnboarding()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all">
+                  Rerun Onboarding Wizard
+                </button>
+
+                <button onclick="clearAllData()" class="w-full py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl text-xs font-semibold transition-all">
+                  Reset All Local Data
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- MOBILE BOTTOM NAVIGATION -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-[#0b1329]/95 backdrop-blur-lg border-t border-slate-800/80 px-2 py-2 flex justify-around items-center z-40">
+      <button onclick="navigateTo('dashboard')" id="mob-nav-dashboard" class="flex flex-col items-center gap-1 p-1 text-brand-400">
+        <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+        <span class="text-[10px] font-semibold">Today</span>
+      </button>
+
+      <button onclick="navigateTo('coming-up')" id="mob-nav-coming-up" class="flex flex-col items-center gap-1 p-1 text-slate-400">
+        <i data-lucide="calendar-clock" class="w-5 h-5"></i>
+        <span class="text-[10px] font-semibold">Upcoming</span>
+      </button>
+
+      <button onclick="navigateTo('ledger')" id="mob-nav-ledger" class="flex flex-col items-center gap-1 p-1 text-slate-400">
+        <i data-lucide="receipt" class="w-5 h-5"></i>
+        <span class="text-[10px] font-semibold">Ledger</span>
+      </button>
+
+      <button onclick="navigateTo('goals')" id="mob-nav-goals" class="flex flex-col items-center gap-1 p-1 text-slate-400">
+        <i data-lucide="target" class="w-5 h-5"></i>
+        <span class="text-[10px] font-semibold">Goals</span>
+      </button>
+
+      <button onclick="navigateTo('settings')" id="mob-nav-settings" class="flex flex-col items-center gap-1 p-1 text-slate-400">
+        <i data-lucide="settings" class="w-5 h-5"></i>
+        <span class="text-[10px] font-semibold">Settings</span>
+      </button>
+    </nav>
+  </div>
+
+
+  <!-- ========================================== -->
+  <!-- MODALS CONTAINER -->
+  <!-- ========================================== -->
+  <div id="modal-backdrop" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    
+    <!-- ADD/EDIT BILL MODAL -->
+    <div id="modal-bill" class="glass-card p-6 rounded-3xl border border-slate-800 w-full max-w-md hidden space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-white text-base">Add Recurring Bill</h3>
+        <button onclick="closeModals()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      
+      <form onsubmit="handleSaveBill(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Bill Name</label>
+          <input type="text" id="bill-title" required placeholder="e.g. Electric Utility / Rent" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-brand-500" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Amount ($)</label>
+            <input type="number" step="0.01" id="bill-amount" required placeholder="120.00" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-brand-500" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Next Due Date</label>
+            <input type="date" id="bill-date" required class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-brand-500" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Category</label>
+          <select id="bill-category" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none">
+            <option value="Housing">Housing</option>
+            <option value="Utilities">Utilities</option>
+            <option value="Subscriptions">Subscriptions</option>
+            <option value="Credit Card / Loan">Credit Card / Loan</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <button type="submit" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Save Bill</button>
+      </form>
+    </div>
+
+    <!-- ADD TRANSACTION MODAL -->
+    <div id="modal-transaction" class="glass-card p-6 rounded-3xl border border-slate-800 w-full max-w-md hidden space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-white text-base">Log Transaction</h3>
+        <button onclick="closeModals()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      
+      <form onsubmit="handleSaveTransaction(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Description</label>
+          <input type="text" id="tx-title" required placeholder="e.g. Grocery Shopping" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-brand-500" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Amount ($)</label>
+            <input type="number" step="0.01" id="tx-amount" required placeholder="45.50" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-brand-500" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Type</label>
+            <select id="tx-type" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none">
+              <option value="expense">Expense (-)</option>
+              <option value="income">Income (+)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Category</label>
+            <select id="tx-category" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none">
+              <option value="Food & Dining">Food & Dining</option>
+              <option value="Housing">Housing</option>
+              <option value="Utilities">Utilities</option>
+              <option value="Subscriptions">Subscriptions</option>
+              <option value="Income">Income</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Date</label>
+            <input type="date" id="tx-date" required class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-brand-500" />
+          </div>
+        </div>
+
+        <button type="submit" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Record Transaction</button>
+      </form>
+    </div>
+
+    <!-- ADD GOAL MODAL -->
+    <div id="modal-goal" class="glass-card p-6 rounded-3xl border border-slate-800 w-full max-w-md hidden space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-white text-base">New Savings Goal</h3>
+        <button onclick="closeModals()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      
+      <form onsubmit="handleSaveGoal(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Goal Title</label>
+          <input type="text" id="goal-title" required placeholder="e.g. Emergency Fund" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-brand-500" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Target Amount ($)</label>
+            <input type="number" step="0.01" id="goal-target" required placeholder="1000.00" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-brand-500" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Current Saved ($)</label>
+            <input type="number" step="0.01" id="goal-current" placeholder="0.00" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-brand-500" />
+          </div>
+        </div>
+
+        <button type="submit" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Create Goal</button>
+      </form>
+    </div>
+
+  </div>
+
+
+  <!-- ========================================== -->
+  <!-- APPLICATION LOGIC (SINGLE ENGINE SCRIPT)   -->
+  <!-- ========================================== -->
+  <script>
+    // Supabase Placeholder Initialization
+    const SUPABASE_URL = 'https://xyzcompany.supabase.co';
+    const SUPABASE_KEY = 'public-anon-key';
+    const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+    // GLOBAL APPLICATION STATE
+    let state = {
+      user: null,
+      onboardingCompleted: false,
+      currentOnboardStep: 1,
+      accounts: [
+        { id: 'acc_1', name: 'Primary Checking', balance: 3450.00, type: 'checking' },
+        { id: 'acc_2', name: 'High Yield Savings', balance: 8200.00, type: 'savings' }
+      ],
+      income: {
+        amount: 2800.00,
+        frequency: 'biweekly',
+        nextDate: '2026-08-14'
+      },
+      bills: [
+        { id: 'bill_1', title: 'Apartment Rent', amount: 1400.00, dueDate: '2026-08-12', category: 'Housing' },
+        { id: 'bill_2', title: 'Electric & Gas Utility', amount: 135.00, dueDate: '2026-08-10', category: 'Utilities' },
+        { id: 'bill_3', title: 'Fiber Internet', amount: 70.00, dueDate: '2026-08-20', category: 'Utilities' },
+        { id: 'bill_4', title: 'Streaming Bundle', amount: 24.99, dueDate: '2026-08-25', category: 'Subscriptions' }
+      ],
+      transactions: [
+        { id: 'tx_1', date: '2026-08-06', title: 'Trader Joe\'s Groceries', amount: 84.20, type: 'expense', category: 'Food & Dining' },
+        { id: 'tx_2', date: '2026-08-01', title: 'Bi-Weekly Paycheck', amount: 2800.00, type: 'income', category: 'Income' },
+        { id: 'tx_3', date: '2026-07-28', title: 'Coffee Shop', amount: 6.50, type: 'expense', category: 'Food & Dining' }
+      ],
+      goals: [
+        { id: 'goal_1', title: 'Emergency Reserve', target: 5000.00, current: 3200.00 },
+        { id: 'goal_2', title: 'Vacation Fund', target: 1500.00, current: 650.00 }
+      ]
+    };
+
+    let forecastChartInstance = null;
+    let authMode = 'login'; // 'login' or 'signup'
+
+    // INITIALIZATION ON DOM READY
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      loadStateFromStorage();
+      
+      // Date Display
+      document.getElementById('current-date-display').innerText = new Date().toLocaleDateString('en-US', {
+        month: 'short', day: 'numeric', year: 'numeric'
+      });
+
+      // Set default transaction date input
+      const todayIso = new Date().toISOString().split('T')[0];
+      document.getElementById('tx-date').value = todayIso;
+      
+      // Determine initial screen display
+      if (!state.user) {
+        showScreen('screen-auth');
+      } else if (!state.onboardingCompleted) {
+        showScreen('screen-onboarding');
+        renderOnboardingStep();
+      } else {
+        showScreen('screen-app');
+        navigateTo('dashboard');
+      }
     });
-  });
 
-  budgetData.settings.onboardingComplete = true;
-  addActivity("Setup Wizard Completed");
+    // STATE STORAGE MANAGERS
+    function saveStateToStorage() {
+      localStorage.setItem('paycheck_pilot_state', JSON.stringify(state));
+    }
 
-  saveData();
-  renderAll();
-  showPage("dashboard");
-}
+    function loadStateFromStorage() {
+      const saved = localStorage.getItem('paycheck_pilot_state');
+      if (saved) {
+        try {
+          state = { ...state, ...JSON.parse(saved) };
+        } catch(e) {
+          console.error("Error loading local state", e);
+        }
+      }
+    }
 
-/* =========================
-   RENDER ALL & INITIALIZATION
-========================= */
-function renderAll() {
-  renderDashboard();
-  renderComingUp();
-  renderPaychecks();
-  renderTimeline();
-  renderLedger();
-  renderForecasts();
-  renderReconcile();
-  renderActivityLog();
-  renderMonthlySummary();
-  renderGoals();
-  generateNetYearAnalysis();
-}
+    // ROUTER & SCREEN DISPLAY MANAGER (CRITICAL: Only 1 active view screen at a time)
+    function showScreen(screenId) {
+      document.querySelectorAll('.view-screen').forEach(s => s.classList.remove('active'));
+      const target = document.getElementById(screenId);
+      if (target) target.classList.add('active');
+    }
 
-/* LISTENERS */
-document.getElementById("modeSelector").addEventListener("change", function() {
-  budgetData.settings.currentMode = this.value;
-  saveData();
-  renderAll();
-});
+    function navigateTo(pageId) {
+      // Hide all sub pages
+      document.querySelectorAll('.page-view').forEach(p => p.classList.add('hidden'));
+      
+      // Show requested page
+      const targetPage = document.getElementById(`page-${pageId}`);
+      if (targetPage) targetPage.classList.remove('hidden');
 
-document.getElementById("forecastBuffer").addEventListener("change", function() {
-  budgetData.settings.forecastBuffer = Number(this.value);
-  saveData();
-  renderAll();
-});
+      // Update Nav active styles (desktop & mobile)
+      document.querySelectorAll('.nav-item').forEach(btn => {
+        btn.classList.remove('text-white', 'bg-slate-800/60');
+        btn.classList.add('text-slate-400');
+      });
 
-document.getElementById("viewSelector").addEventListener("change", function() {
-  budgetData.settings.currentView = this.value;
-  saveData();
-  renderAll();
-});
+      const activeNav = document.getElementById(`nav-${pageId}`);
+      if (activeNav) {
+        activeNav.classList.remove('text-slate-400');
+        activeNav.classList.add('text-white', 'bg-slate-800/60');
+      }
 
-document.getElementById("generateYearBtn").addEventListener("click", generateNetYearAnalysis);
+      // Render view content
+      if (pageId === 'dashboard') renderDashboard();
+      if (pageId === 'coming-up') renderComingUp();
+      if (pageId === 'ledger') renderLedger();
+      if (pageId === 'goals') renderGoals();
+      if (pageId === 'forecast') renderForecast();
+      if (pageId === 'reconcile') renderReconcile();
+      if (pageId === 'settings') renderSettings();
 
-/* STARTUP AUTH CHECK */
-checkAuth();
-</script>
+      lucide.createIcons();
+    }
 
+    // ==========================================
+    // AUTHENTICATION HANDLERS
+    // ==========================================
+    function switchAuthTab(mode) {
+      authMode = mode;
+      const loginBtn = document.getElementById('auth-tab-login');
+      const signupBtn = document.getElementById('auth-tab-signup');
+      const submitBtn = document.getElementById('auth-submit-btn');
+
+      if (mode === 'login') {
+        loginBtn.className = "flex-1 py-2.5 rounded-lg text-white bg-brand-600 shadow-md font-semibold";
+        signupBtn.className = "flex-1 py-2.5 rounded-lg text-slate-400 hover:text-slate-200 font-semibold";
+        submitBtn.querySelector('span').innerText = "Sign In to Pilot";
+      } else {
+        signupBtn.className = "flex-1 py-2.5 rounded-lg text-white bg-brand-600 shadow-md font-semibold";
+        loginBtn.className = "flex-1 py-2.5 rounded-lg text-slate-400 hover:text-slate-200 font-semibold";
+        submitBtn.querySelector('span').innerText = "Create Account";
+      }
+    }
+
+    function handleAuthSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('auth-email').value;
+      
+      state.user = { email: email, id: 'usr_' + Date.now() };
+      saveStateToStorage();
+
+      if (!state.onboardingCompleted) {
+        showScreen('screen-onboarding');
+        renderOnboardingStep();
+      } else {
+        showScreen('screen-app');
+        navigateTo('dashboard');
+      }
+    }
+
+    function loginAsDemo() {
+      state.user = { email: 'demo@paycheckpilot.app', id: 'usr_demo' };
+      saveStateToStorage();
+      
+      if (!state.onboardingCompleted) {
+        showScreen('screen-onboarding');
+        renderOnboardingStep();
+      } else {
+        showScreen('screen-app');
+        navigateTo('dashboard');
+      }
+    }
+
+    function handleForgotPassword() {
+      alert("A password reset link has been dispatched to your email address.");
+    }
+
+    function handleLogout() {
+      state.user = null;
+      saveStateToStorage();
+      showScreen('screen-auth');
+    }
+
+    // ==========================================
+    // ONBOARDING WIZARD
+    // ==========================================
+    function renderOnboardingStep() {
+      const step = state.currentOnboardStep;
+      
+      // Update Stepper Header
+      document.getElementById('onboard-step-indicator').innerText = `Step ${step} of 4`;
+      document.getElementById('onboard-progress-bar').style.width = `${(step / 4) * 100}%`;
+
+      const titles = [
+        "Accounts & Cash",
+        "Income & Payday Schedule",
+        "Recurring Bills & Subscriptions",
+        "Flight Plan Ready"
+      ];
+      document.getElementById('onboard-step-title').innerText = titles[step - 1];
+
+      // Hide all step content containers
+      document.querySelectorAll('.onboard-step-content').forEach(c => c.classList.add('hidden'));
+      document.getElementById(`onboard-step-${step}`).classList.remove('hidden');
+
+      // Previous button visibility
+      const prevBtn = document.getElementById('onboard-prev-btn');
+      if (step === 1) prevBtn.classList.add('hidden');
+      else prevBtn.classList.remove('hidden');
+
+      // Next / Finish button styling
+      const nextBtn = document.getElementById('onboard-next-btn');
+      if (step === 4) {
+        nextBtn.querySelector('span').innerText = "Launch Dashboard";
+        // Calculate step 4 summary values
+        const totalCash = state.accounts.reduce((acc, a) => acc + a.balance, 0);
+        const totalBills = state.bills.reduce((acc, b) => acc + b.amount, 0);
+        document.getElementById('summary-cash').innerText = formatCurrency(totalCash);
+        document.getElementById('summary-bills').innerText = formatCurrency(totalBills);
+        document.getElementById('summary-safespend').innerText = formatCurrency(totalCash - totalBills);
+      } else {
+        nextBtn.querySelector('span').innerText = "Continue";
+      }
+
+      // Step-specific rendering
+      if (step === 1) renderOnboardAccounts();
+      if (step === 2) {
+        document.getElementById('onboard-paycheck-amount').value = state.income.amount;
+        document.getElementById('onboard-pay-frequency').value = state.income.frequency;
+        document.getElementById('onboard-next-payday').value = state.income.nextDate;
+      }
+      if (step === 3) renderOnboardBills();
+
+      lucide.createIcons();
+    }
+
+    function renderOnboardAccounts() {
+      const list = document.getElementById('onboard-accounts-list');
+      list.innerHTML = state.accounts.map(acc => `
+        <div class="flex items-center justify-between p-3 bg-slate-900/90 rounded-xl border border-slate-800">
+          <div class="flex items-center gap-3">
+            <i data-lucide="${acc.type === 'checking' ? 'wallet' : 'piggy-bank'}" class="w-5 h-5 text-brand-400"></i>
+            <div>
+              <p class="text-xs font-bold text-white">${acc.name}</p>
+              <p class="text-[10px] text-slate-400 capitalize">${acc.type}</p>
+            </div>
+          </div>
+          <span class="text-xs font-bold text-emerald-400">${formatCurrency(acc.balance)}</span>
+        </div>
+      `).join('');
+    }
+
+    function renderOnboardBills() {
+      const list = document.getElementById('onboard-bills-list');
+      list.innerHTML = state.bills.map(b => `
+        <div class="flex items-center justify-between p-3 bg-slate-900/90 rounded-xl border border-slate-800">
+          <div class="flex items-center gap-3">
+            <i data-lucide="receipt" class="w-5 h-5 text-rose-400"></i>
+            <div>
+              <p class="text-xs font-bold text-white">${b.title}</p>
+              <p class="text-[10px] text-slate-400">Due ${b.dueDate}</p>
+            </div>
+          </div>
+          <span class="text-xs font-bold text-rose-400">${formatCurrency(b.amount)}</span>
+        </div>
+      `).join('');
+    }
+
+    function addAccountPrompt() {
+      const name = prompt("Account Name (e.g. Chase Checking):");
+      if (!name) return;
+      const balance = parseFloat(prompt("Current Balance ($):", "1000") || "0");
+      state.accounts.push({ id: 'acc_' + Date.now(), name, balance, type: 'checking' });
+      saveStateToStorage();
+      renderOnboardAccounts();
+    }
+
+    function addBillPrompt() {
+      const title = prompt("Bill Name (e.g. Netflix / Rent):");
+      if (!title) return;
+      const amount = parseFloat(prompt("Amount ($):", "50") || "0");
+      const dueDate = prompt("Next Due Date (YYYY-MM-DD):", new Date().toISOString().split('T')[0]);
+      state.bills.push({ id: 'bill_' + Date.now(), title, amount, dueDate, category: 'Utilities' });
+      saveStateToStorage();
+      renderOnboardBills();
+    }
+
+    function nextOnboardStep() {
+      if (state.currentOnboardStep === 2) {
+        state.income.amount = parseFloat(document.getElementById('onboard-paycheck-amount').value || "0");
+        state.income.frequency = document.getElementById('onboard-pay-frequency').value;
+        state.income.nextDate = document.getElementById('onboard-next-payday').value;
+        saveStateToStorage();
+      }
+
+      if (state.currentOnboardStep < 4) {
+        state.currentOnboardStep++;
+        renderOnboardingStep();
+      } else {
+        // Complete Onboarding
+        state.onboardingCompleted = true;
+        saveStateToStorage();
+        showScreen('screen-app');
+        navigateTo('dashboard');
+      }
+    }
+
+    function prevOnboardStep() {
+      if (state.currentOnboardStep > 1) {
+        state.currentOnboardStep--;
+        renderOnboardingStep();
+      }
+    }
+
+    function restartOnboarding() {
+      state.currentOnboardStep = 1;
+      state.onboardingCompleted = false;
+      saveStateToStorage();
+      showScreen('screen-onboarding');
+      renderOnboardingStep();
+    }
+
+    // ==========================================
+    // CALCULATIONS & FINANCIAL LOGIC
+    // ==========================================
+    function calculateFinancials() {
+      const totalCash = state.accounts.reduce((sum, acc) => sum + acc.balance, 0);
+      
+      const nextPayDate = new Date(state.income.nextDate);
+      const today = new Date();
+      today.setHours(0,0,0,0);
+
+      // Bills due between today and next payday
+      const billsBeforePayday = state.bills.filter(b => {
+        const d = new Date(b.dueDate);
+        return d >= today && d <= nextPayDate;
+      });
+
+      const totalBillsBeforePayday = billsBeforePayday.reduce((sum, b) => sum + b.amount, 0);
+      const safeSpend = totalCash - totalBillsBeforePayday;
+
+      // Days countdown
+      const diffTime = nextPayDate - today;
+      const daysUntilPayday = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+
+      // Total monthly bills for ratio
+      const totalMonthlyBills = state.bills.reduce((sum, b) => sum + b.amount, 0);
+      const estimatedMonthlyIncome = state.income.frequency === 'biweekly' ? state.income.amount * 2.16 : state.income.amount;
+      const fixedRatio = estimatedMonthlyIncome > 0 ? Math.round((totalMonthlyBills / estimatedMonthlyIncome) * 100) : 0;
+
+      return {
+        totalCash,
+        billsBeforePayday,
+        totalBillsBeforePayday,
+        safeSpend,
+        daysUntilPayday,
+        fixedRatio
+      };
+    }
+
+    // ==========================================
+    // DASHBOARD VIEW
+    // ==========================================
+    function renderDashboard() {
+      const data = calculateFinancials();
+
+      // Safe Spend Primary Card
+      document.getElementById('dash-safe-spend').innerText = formatCurrency(data.safeSpend);
+      document.getElementById('dash-next-paydate-inline').innerText = formatDate(state.income.nextDate);
+      document.getElementById('dash-next-payday-countdown').innerText = `In ${data.daysUntilPayday} Days`;
+      document.getElementById('dash-bills-due-total').innerText = formatCurrency(data.totalBillsBeforePayday);
+
+      // Progress bar fill (0 to 14 days assumed)
+      const pct = Math.min(100, Math.max(10, ((14 - data.daysUntilPayday) / 14) * 100));
+      document.getElementById('dash-payday-progress').style.width = `${pct}%`;
+
+      // 3 Metrics
+      document.getElementById('dash-cash-total').innerText = formatCurrency(data.totalCash);
+      document.getElementById('dash-next-payday-amount').innerText = formatCurrency(state.income.amount);
+      document.getElementById('dash-paycheck-ratio').innerText = `${data.fixedRatio}%`;
+
+      // Bills Due List
+      const billsContainer = document.getElementById('dash-upcoming-bills-list');
+      if (data.billsBeforePayday.length === 0) {
+        billsContainer.innerHTML = `<p class="text-xs text-slate-500 py-4 text-center">No bills due before next payday!</p>`;
+      } else {
+        billsContainer.innerHTML = data.billsBeforePayday.map(b => `
+          <div class="flex items-center justify-between p-3 bg-slate-900/60 rounded-xl border border-slate-800/80">
+            <div class="flex items-center gap-3">
+              <i data-lucide="calendar" class="w-4 h-4 text-rose-400"></i>
+              <div>
+                <p class="text-xs font-bold text-slate-200">${b.title}</p>
+                <p class="text-[10px] text-slate-400">Due ${formatDate(b.dueDate)}</p>
+              </div>
+            </div>
+            <span class="text-xs font-bold text-rose-400">${formatCurrency(b.amount)}</span>
+          </div>
+        `).join('');
+      }
+
+      // Recent Activity
+      const activityContainer = document.getElementById('dash-recent-activity-list');
+      const recent = state.transactions.slice(0, 4);
+      if (recent.length === 0) {
+        activityContainer.innerHTML = `<p class="text-xs text-slate-500 py-4 text-center">No transactions logged yet.</p>`;
+      } else {
+        activityContainer.innerHTML = recent.map(tx => `
+          <div class="flex items-center justify-between p-3 bg-slate-900/60 rounded-xl border border-slate-800/80">
+            <div class="flex items-center gap-3">
+              <i data-lucide="${tx.type === 'income' ? 'arrow-down-left' : 'arrow-up-right'}" class="w-4 h-4 ${tx.type === 'income' ? 'text-emerald-400' : 'text-slate-400'}"></i>
+              <div>
+                <p class="text-xs font-bold text-slate-200">${tx.title}</p>
+                <p class="text-[10px] text-slate-400">${formatDate(tx.date)} • ${tx.category}</p>
+              </div>
+            </div>
+            <span class="text-xs font-bold ${tx.type === 'income' ? 'text-emerald-400' : 'text-slate-200'}">
+              ${tx.type === 'income' ? '+' : '-'}${formatCurrency(tx.amount)}
+            </span>
+          </div>
+        `).join('');
+      }
+    }
+
+    // ==========================================
+    // COMING UP (TIMELINE VIEW)
+    // ==========================================
+    function renderComingUp() {
+      const container = document.getElementById('coming-up-timeline-list');
+      
+      if (state.bills.length === 0) {
+        container.innerHTML = `<div class="glass-card p-8 rounded-2xl text-center text-slate-500 text-xs">No upcoming bills scheduled.</div>`;
+        return;
+      }
+
+      // Sort by due date
+      const sorted = [...state.bills].sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+
+      container.innerHTML = sorted.map(b => `
+        <div class="glass-card p-4 rounded-2xl border border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-card-hover">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center shrink-0">
+              <i data-lucide="receipt" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h4 class="text-sm font-bold text-white">${b.title}</h4>
+              <p class="text-xs text-slate-400">Due: <span class="text-slate-200 font-medium">${formatDate(b.dueDate)}</span> • Category: ${b.category}</p>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-800">
+            <span class="text-base font-extrabold text-rose-400">${formatCurrency(b.amount)}</span>
+            
+            <!-- EXPLICIT ACTION BUTTONS (NO CONFUSING CHECKBOX) -->
+            <div class="flex items-center gap-2">
+              <button onclick="completeBill('${b.id}')" class="px-3 py-1.5 bg-brand-500/20 hover:bg-brand-500/30 text-brand-400 border border-brand-500/30 rounded-lg text-xs font-bold transition-all flex items-center gap-1">
+                <i data-lucide="check" class="w-3.5 h-3.5"></i>
+                <span>Complete</span>
+              </button>
+              
+              <button onclick="deleteBill('${b.id}')" class="px-3 py-1.5 bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 rounded-lg text-xs font-bold transition-all flex items-center gap-1">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                <span>Delete</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function completeBill(billId) {
+      const bill = state.bills.find(b => b.id === billId);
+      if (!bill) return;
+
+      // 1. Log to ledger
+      state.transactions.unshift({
+        id: 'tx_' + Date.now(),
+        date: new Date().toISOString().split('T')[0],
+        title: `Bill Payment: ${bill.title}`,
+        amount: bill.amount,
+        type: 'expense',
+        category: bill.category
+      });
+
+      // 2. Advance due date by 1 month
+      const current = new Date(bill.dueDate);
+      current.setMonth(current.getMonth() + 1);
+      bill.dueDate = current.toISOString().split('T')[0];
+
+      saveStateToStorage();
+      renderComingUp();
+    }
+
+    function deleteBill(billId) {
+      if (confirm("Are you sure you want to delete this bill?")) {
+        state.bills = state.bills.filter(b => b.id !== billId);
+        saveStateToStorage();
+        renderComingUp();
+      }
+    }
+
+    // ==========================================
+    // TRANSACTION LEDGER VIEW
+    // ==========================================
+    function renderLedger() {
+      const tbody = document.getElementById('ledger-table-body');
+      const search = (document.getElementById('ledger-search-input').value || '').toLowerCase();
+      const catFilter = document.getElementById('ledger-filter-category').value;
+
+      let filtered = state.transactions.filter(tx => {
+        const matchesSearch = tx.title.toLowerCase().includes(search) || tx.category.toLowerCase().includes(search);
+        const matchesCat = catFilter === 'ALL' || tx.category === catFilter;
+        return matchesSearch && matchesCat;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-500">No matching transactions found.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(tx => `
+        <tr class="hover:bg-slate-900/40 transition-colors">
+          <td class="p-4 text-slate-400 whitespace-nowrap">${formatDate(tx.date)}</td>
+          <td class="p-4 font-bold text-slate-200">${tx.title}</td>
+          <td class="p-4 text-slate-400"><span class="px-2 py-1 bg-slate-800 rounded-md text-[10px] font-semibold">${tx.category}</span></td>
+          <td class="p-4 text-right font-extrabold ${tx.type === 'income' ? 'text-emerald-400' : 'text-slate-100'}">
+            ${tx.type === 'income' ? '+' : '-'}${formatCurrency(tx.amount)}
+          </td>
+          <td class="p-4 text-center">
+            <button onclick="deleteTransaction('${tx.id}')" class="text-slate-500 hover:text-rose-400 p-1"><i data-lucide="trash" class="w-4 h-4"></i></button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function deleteTransaction(txId) {
+      state.transactions = state.transactions.filter(t => t.id !== txId);
+      saveStateToStorage();
+      renderLedger();
+    }
+
+    // ==========================================
+    // GOALS VIEW
+    // ==========================================
+    function renderGoals() {
+      const grid = document.getElementById('goals-grid');
+      
+      if (state.goals.length === 0) {
+        grid.innerHTML = `<p class="col-span-2 text-center text-slate-500 text-xs py-8">No savings goals created yet.</p>`;
+        return;
+      }
+
+      grid.innerHTML = state.goals.map(g => {
+        const pct = Math.min(100, Math.round((g.current / g.target) * 100));
+        return `
+          <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4">
+            <div class="flex justify-between items-start">
+              <div>
+                <h3 class="font-bold text-white text-base">${g.title}</h3>
+                <p class="text-xs text-slate-400">${formatCurrency(g.current)} saved of ${formatCurrency(g.target)}</p>
+              </div>
+              <span class="px-2.5 py-1 bg-brand-500/10 text-brand-400 border border-brand-500/20 text-xs font-bold rounded-lg">${pct}%</span>
+            </div>
+
+            <div class="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden border border-slate-800">
+              <div class="bg-brand-500 h-full rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+            </div>
+
+            <div class="flex justify-between items-center pt-2">
+              <button onclick="depositGoal('${g.id}')" class="px-3 py-1.5 bg-brand-500/20 hover:bg-brand-500/30 text-brand-400 border border-brand-500/30 rounded-xl text-xs font-bold transition-all">+ Deposit Cash</button>
+              <button onclick="deleteGoal('${g.id}')" class="text-xs text-slate-500 hover:text-rose-400">Delete Goal</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function depositGoal(goalId) {
+      const amount = parseFloat(prompt("Enter deposit amount ($):", "100") || "0");
+      if (amount <= 0) return;
+      
+      const g = state.goals.find(x => x.id === goalId);
+      if (g) {
+        g.current += amount;
+        saveStateToStorage();
+        renderGoals();
+      }
+    }
+
+    function deleteGoal(goalId) {
+      if (confirm("Delete this goal?")) {
+        state.goals = state.goals.filter(g => g.id !== goalId);
+        saveStateToStorage();
+        renderGoals();
+      }
+    }
+
+    // ==========================================
+    // FORECAST VIEW (CHART.JS)
+    // ==========================================
+    function renderForecast() {
+      const ctx = document.getElementById('forecastChart').getContext('2d');
+      if (forecastChartInstance) forecastChartInstance.destroy();
+
+      // Generate 30 days projection
+      const labels = [];
+      const cashData = [];
+      let currentBalance = state.accounts.reduce((s, a) => s + a.balance, 0);
+
+      const today = new Date();
+      for (let i = 0; i < 30; i++) {
+        const d = new Date(today);
+        d.setDate(d.getDate() + i);
+        const dateStr = d.toISOString().split('T')[0];
+
+        // Check if payday
+        if (dateStr === state.income.nextDate) {
+          currentBalance += state.income.amount;
+        }
+
+        // Check bills due
+        state.bills.forEach(b => {
+          if (b.dueDate === dateStr) {
+            currentBalance -= b.amount;
+          }
+        });
+
+        labels.push(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+        cashData.push(currentBalance);
+      }
+
+      forecastChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Projected Cash ($)',
+            data: cashData,
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.08)',
+            fill: true,
+            tension: 0.3,
+            pointRadius: 2,
+            pointHoverRadius: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#64748b', font: { size: 10 } }
+            },
+            y: {
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#64748b', font: { size: 10 } }
+            }
+          }
+        }
+      });
+    }
+
+    // ==========================================
+    // RECONCILE VIEW
+    // ==========================================
+    function renderReconcile() {
+      const container = document.getElementById('reconcile-accounts-list');
+      container.innerHTML = state.accounts.map(acc => `
+        <div class="p-3 bg-slate-900/60 rounded-2xl border border-slate-800 flex items-center justify-between gap-3">
+          <div>
+            <p class="text-xs font-bold text-white">${acc.name}</p>
+            <p class="text-[10px] text-slate-400 capitalize">${acc.type}</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <input type="number" step="0.01" value="${acc.balance}" onchange="updateAccountBalance('${acc.id}', this.value)" class="w-24 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-right text-xs font-bold text-brand-400 outline-none" />
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function updateAccountBalance(accId, val) {
+      const acc = state.accounts.find(a => a.id === accId);
+      if (acc) {
+        acc.balance = parseFloat(val || "0");
+        saveStateToStorage();
+      }
+    }
+
+    function exportDataJSON() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `paycheck_pilot_backup_${new Date().toISOString().split('T')[0]}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function importDataJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          state = { ...state, ...imported };
+          saveStateToStorage();
+          alert("Backup data imported successfully!");
+          navigateTo('dashboard');
+        } catch (err) {
+          alert("Invalid JSON file format.");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // ==========================================
+    // SETTINGS VIEW
+    // ==========================================
+    function renderSettings() {
+      document.getElementById('settings-email-display').value = state.user ? state.user.email : 'pilot@user.com';
+    }
+
+    function updatePassword() {
+      const pass = document.getElementById('settings-new-pass').value;
+      if (!pass || pass.length < 6) {
+        alert("Please enter a password with at least 6 characters.");
+        return;
+      }
+      alert("Password updated successfully.");
+      document.getElementById('settings-new-pass').value = '';
+    }
+
+    function clearAllData() {
+      if (confirm("Are you sure you want to reset all data? This cannot be undone.")) {
+        localStorage.removeItem('paycheck_pilot_state');
+        location.reload();
+      }
+    }
+
+    // ==========================================
+    // MODAL DIALOG CONTROLLERS
+    // ==========================================
+    function openAddBillModal() {
+      document.getElementById('modal-backdrop').classList.remove('hidden');
+      document.getElementById('modal-bill').classList.remove('hidden');
+    }
+
+    function openAddTransactionModal() {
+      document.getElementById('modal-backdrop').classList.remove('hidden');
+      document.getElementById('modal-transaction').classList.remove('hidden');
+    }
+
+    function openAddGoalModal() {
+      document.getElementById('modal-backdrop').classList.remove('hidden');
+      document.getElementById('modal-goal').classList.remove('hidden');
+    }
+
+    function closeModals() {
+      document.getElementById('modal-backdrop').classList.add('hidden');
+      document.getElementById('modal-bill').classList.add('hidden');
+      document.getElementById('modal-transaction').classList.add('hidden');
+      document.getElementById('modal-goal').classList.add('hidden');
+    }
+
+    function handleSaveBill(e) {
+      e.preventDefault();
+      const title = document.getElementById('bill-title').value;
+      const amount = parseFloat(document.getElementById('bill-amount').value || "0");
+      const dueDate = document.getElementById('bill-date').value;
+      const category = document.getElementById('bill-category').value;
+
+      state.bills.push({ id: 'bill_' + Date.now(), title, amount, dueDate, category });
+      saveStateToStorage();
+      closeModals();
+      renderComingUp();
+    }
+
+    function handleSaveTransaction(e) {
+      e.preventDefault();
+      const title = document.getElementById('tx-title').value;
+      const amount = parseFloat(document.getElementById('tx-amount').value || "0");
+      const type = document.getElementById('tx-type').value;
+      const category = document.getElementById('tx-category').value;
+      const date = document.getElementById('tx-date').value;
+
+      state.transactions.unshift({ id: 'tx_' + Date.now(), title, amount, type, category, date });
+      saveStateToStorage();
+      closeModals();
+      renderLedger();
+    }
+
+    function handleSaveGoal(e) {
+      e.preventDefault();
+      const title = document.getElementById('goal-title').value;
+      const target = parseFloat(document.getElementById('goal-target').value || "0");
+      const current = parseFloat(document.getElementById('goal-current').value || "0");
+
+      state.goals.push({ id: 'goal_' + Date.now(), title, target, current });
+      saveStateToStorage();
+      closeModals();
+      renderGoals();
+    }
+
+    // ==========================================
+    // HELPER FORMATTERS
+    // ==========================================
+    function formatCurrency(num) {
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num || 0);
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '--';
+      const parts = dateStr.split('-');
+      if (parts.length < 3) return dateStr;
+      const d = new Date(parts[0], parts[1] - 1, parts[2]);
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    }
+  </script>
 </body>
 </html>
