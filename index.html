@@ -3924,8 +3924,8 @@ budgetData.setupBills.forEach(bill => {
     amount:
       bill.amount,
 
-    date:
-      `2026-08-${String(bill.day).padStart(2,"0")}`,
+   date:
+  `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2,"0")}-${String(bill.day).padStart(2,"0")}`,
 
     completed:
       false
