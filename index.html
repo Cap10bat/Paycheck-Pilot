@@ -859,13 +859,13 @@ Welcome back to Paycheck Pilot. Here's what matters most right now.
 
 <div id="nextSteps">
 
-<p>✅ Complete setup if you haven't already.</p>
+<p>💰 Check your Safe Spend amount before making purchases.</p>
 
-<p>✅ Add upcoming bills.</p>
+<p>📅 Review upcoming bills in the Coming Up page.</p>
 
-<p>✅ Verify your account balances.</p>
+<p>✅ Reconcile balances regularly for accurate forecasting.</p>
 
-<p>✅ Review your Paycheck To Paycheck forecast.</p>
+<p>🚀 Track your Paycheck To Paycheck number to stay ahead.</p>
 
 </div>
 
@@ -1874,17 +1874,22 @@ async function checkAuth(){
   if(session && session.user){
     currentUser = session.user;
    const authOverlay =
+  const authOverlay =
   document.getElementById("authOverlay");
-
-const appMain =
-  document.getElementById("appMain");
 
 if(authOverlay){
   authOverlay.style.display = "none";
 }
 
+const appMain =
+  document.getElementById("appMain");
+
 if(appMain){
   appMain.style.display = "flex";
+}
+
+if(authOverlay){
+  authOverlay.style.display = "none";
 }
 
    if(document.getElementById("userEmailDisplay")){
