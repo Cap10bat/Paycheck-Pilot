@@ -3825,17 +3825,32 @@ function renderWizardBills(){
     div.className =
       "activity-item";
 
-    div.innerHTML = `
-      <strong>${bill.name}</strong>
-      <br>
-      ${money(bill.amount)}
-      <br>
-      Due Day: ${bill.day}
-    `;
+   div.innerHTML = `
+  <strong>${bill.name}</strong>
+  <br>
+  ${money(bill.amount)}
+  <br>
+  Due Day: ${bill.day}
+  <br><br>
+  <button
+    class="btn btn-danger"
+    onclick="deleteWizardBill(${index})"
+  >
+    Delete
+  </button>
+`;
 
     container.appendChild(div);
 
   });
+
+}
+
+function deleteWizardBill(index){
+
+  budgetData.setupBills.splice(index,1);
+
+  renderWizardBills();
 
 }
   
