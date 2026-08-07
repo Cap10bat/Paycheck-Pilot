@@ -735,14 +735,14 @@ textarea{
   src="paycheck-pilot-hero.png"
   alt="Paycheck Pilot"
   style="
-    width:500px;
-    max-width:100%;
-    display:block;
-    margin:20px auto;
-    border-radius:16px;
-    border:2px solid #8b5cf6;
-    box-shadow:0 0 20px rgba(139,92,246,.35);
-  "
+  width:400px;
+  max-width:90%;
+  display:block;
+  margin:20px auto;
+  border-radius:16px;
+  border:2px solid #8b5cf6;
+  box-shadow:0 0 20px rgba(139,92,246,.35);
+"
 >
 
 
@@ -778,12 +778,49 @@ Let's get your budget set up in under 2 minutes.
 
 <br>
 
+<h3>Recurring Bills</h3>
+
+<div class="form-grid">
+
+<div class="input-group">
+<label>Bill Name</label>
+<input id="billName" type="text">
+</div>
+
+<div class="input-group">
+<label>Amount</label>
+<input id="billAmount" type="number">
+</div>
+
+<div class="input-group">
+<label>Due Day</label>
+<input id="billDay" type="number" min="1" max="31">
+</div>
+
+</div>
+
+<br>
+
+<button
+class="btn btn-secondary"
+onclick="addWizardBill()"
+>
++ Add Bill
+</button>
+
+<br><br>
+
+<div id="wizardBills"></div>
+
+<br>
+
 <button
 class="btn"
 onclick="completeSetupWizard()"
 >
 Launch Dashboard
 </button>
+
 
 </div>
 
@@ -1763,12 +1800,14 @@ const budgetData = {
     savings:0
   },
 
- settings:{
-  currentView:"Household",
-  currentMode:"NOW",
-  forecastBuffer:0,
-  onboardingComplete:false
-},
+  setupBills:[],
+
+  settings:{
+    currentView:"Household",
+    currentMode:"NOW",
+    forecastBuffer:0,
+    onboardingComplete:false
+  },
 
   goals:[],
 
@@ -3736,6 +3775,70 @@ document
   }
 );
 
+function addWizardBill(){
+
+  const name =
+    document.getElementById("billName").value.trim();
+
+  const amount =
+    Number(
+      document.getElementById("billAmount").value
+    );
+
+  const day =
+    Number(
+      document.getElementById("billDay").value
+    );
+
+  if(!name || !amount || !day){
+    return;
+  }
+
+  budgetData.setupBills.push({
+    name,
+    amount,
+    day
+  });
+
+  renderWizardBills();
+
+  document.getElementById("billName").value = "";
+  document.getElementById("billAmount").value = "";
+  document.getElementById("billDay").value = "";
+
+}
+
+function renderWizardBills(){
+
+  const container =
+    document.getElementById("wizardBills");
+
+  if(!container) return;
+
+  container.innerHTML = "";
+
+  budgetData.setupBills.forEach((bill,index)=>{
+
+    const div =
+      document.createElement("div");
+
+    div.className =
+      "activity-item";
+
+    div.innerHTML = `
+      <strong>${bill.name}</strong>
+      <br>
+      ${money(bill.amount)}
+      <br>
+      Due Day: ${bill.day}
+    `;
+
+    container.appendChild(div);
+
+  });
+
+}
+  
 function completeSetupWizard(){
 
   const checking =
@@ -3802,6 +3905,35 @@ function completeSetupWizard(){
 
   }
 
+budgetData.setupBills.forEach(bill => {
+
+  budgetData.timeline.push({
+
+    id:
+      "bill-" + Date.now() + Math.random(),
+
+    owner:
+      "Household",
+
+    type:
+      "expense",
+
+    desc:
+      bill.name,
+
+    amount:
+      bill.amount,
+
+    date:
+      `2026-08-${String(bill.day).padStart(2,"0")}`,
+
+    completed:
+      false
+
+  });
+
+});
+  
   budgetData.settings.onboardingComplete =
     true;
 
@@ -3809,6 +3941,8 @@ function completeSetupWizard(){
     "Setup Wizard Completed"
   );
 
+renderWizardBills();
+  
   saveData();
 
   renderAll();
