@@ -2,530 +2,649 @@
 <html lang="en">
 
 <head>
-
-<meta charset="UTF-8">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paycheck Pilot - Navigate Every Payday</title>
   
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Paycheck Pilot - Navigate Every Payday</title>
-
-<link rel="icon" type="image/png" href="paycheck-pilot-hero.png">
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="paycheck-pilot-hero.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   
-<style>
-  
-:root{
-  --bg:#0f172a;
-  --card:#1e293b;
-  --card2:#334155;
-  --accent:#8b5cf6;
-  --accent2:#a855f7;
-  --success:#22c55e;
-  --warning:#f59e0b;
-  --danger:#ef4444;
-  --text:#f8fafc;
-  --muted:#cbd5e1;
-  --border:#475569;
-}
-
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-  font-family:'Inter',sans-serif;
-}
-
-body{
-  background:var(--bg);
-  color:var(--text);
-  min-height:100vh;
-}
-
-/* AUTH & ONBOARDING MODALS */
-.auth-overlay {
-  position: fixed;
-  top: 0; left: 0; width: 100vw; height: 100vh;
-  background: rgba(15, 23, 42, 0.95);
-  backdrop-filter: blur(8px);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-}
-
-.auth-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  padding: 30px;
-  border-radius: 18px;
-  width: 100%;
-  max-width: 420px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-}
-
-.auth-card h2 {
-  color: var(--text);
-  margin-bottom: 8px;
-  font-size: 1.5rem;
-  text-align: center;
-}
-
-.auth-card p.subtitle {
-  color: var(--muted);
-  font-size: 0.9rem;
-  margin-bottom: 20px;
-  text-align: center;
-}
-
-.auth-card .form-group {
-  margin-bottom: 15px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.auth-card label {
-  color: var(--muted);
-  font-size: 0.85rem;
-}
-
-.auth-card input, .auth-card select {
-  background: var(--card2);
-  border: 1px solid var(--border);
-  color: white;
-  padding: 12px;
-  border-radius: 10px;
-  font-size: 1rem;
-}
-
-.auth-card .btn-block {
-  width: 100%;
-  padding: 12px;
-  margin-top: 10px;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.auth-toggle {
-  margin-top: 15px;
-  text-align: center;
-  font-size: 0.85rem;
-  color: var(--muted);
-}
-
-.auth-toggle a {
-  color: var(--accent2);
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.app{
-  display:none; /* hidden until authenticated */
-  min-height:100vh;
-}
-
-/* SIDEBAR */
-
-.sidebar{
-  width:260px;
-  background:#091225;
-  border-right:1px solid rgba(255,255,255,.08);
-  padding:24px;
-  overflow-y:auto;
-  box-shadow:0 0 25px rgba(0,0,0,.25);
-}
-
-.logo{
-  text-align:center;
-  margin-bottom:40px;
-}
-
-.logo h1{
-  color:var(--accent);
-  margin-bottom:5px;
-  font-size: 1.4rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.logo p{
-  color:var(--muted);
-  font-size:.85rem;
-}
-
-logo img#appLogo {
-
-.nav-section{
-  margin-bottom:22px;
-}
-
-.nav-title{
-  color:#94a3b8;
-  font-size:.75rem;
-  text-transform:uppercase;
-  letter-spacing:1px;
-  margin-bottom:10px;
-}
-
-.nav-btn{
-  width:100%;
-  background:transparent;
-  color:var(--text);
-  border:none;
-  text-align:left;
-  padding:12px;
-  margin-bottom:6px;
-  border-radius:10px;
-  cursor:pointer;
-  font-size:15px;
-  transition:.2s;
-}
-
-.nav-btn:hover{
-  background:var(--card);
-}
-
-.nav-btn.active{
-  background:var(--accent);
-}
-
-.main{
-  flex:1;
-  padding:20px;
-  overflow:auto;
-}
-
-/* TOP BAR */
-
-.topbar{
-  display:flex;
-  justify-content:flex-start;
-  gap:10px;
-  flex-wrap:wrap;
-  margin-bottom:20px;
-}
-
-.top-card{
-  background:var(--card);
-  padding:12px;
-  border-radius:12px;
-  min-width:160px;
-}
-
-.top-card label{
-  display:block;
-  color:var(--muted);
-  font-size:.8rem;
-  margin-bottom:6px;
-}
-
-.top-card select{
-  width:100%;
-  background:var(--card2);
-  color:white;
-  border:none;
-  padding:8px;
-  border-radius:8px;
-}
-
-/* PAGE TITLES */
-
-.page-title{
-  font-size:28px;
-  margin-bottom:20px;
-}
-
-.page-subtitle{
-  color:var(--muted);
-  margin-bottom:25px;
-}
-
-/* DASHBOARD */
-
-.dashboard-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-  gap:16px;
-}
-
-.card{
-  background:linear-gradient(
-    180deg,
-    rgba(30,41,59,1) 0%,
-    rgba(24,34,49,1) 100%
-  );
-  border:1px solid rgba(255,255,255,.08);
-  border-radius:20px;
-  padding:20px;
-  overflow:hidden;
-  box-shadow:
-    0 8px 24px rgba(0,0,0,.25);
-  transition:.2s ease;
-}
-``
-  .card:hover{
-  transform:translateY(-2px);
-  box-shadow:
-    0 12px 30px rgba(0,0,0,.35);
-}
-
-.card h3{
-  font-size:.9rem;
-  color:var(--muted);
-  margin-bottom:10px;
-}
-
-.card-value{
-  font-size:2rem;
-  font-weight:700;
-  word-break:break-word;
-}
-
-.green{
-  color:var(--success);
-}
-
-.red{
-  color:var(--danger);
-}
-
-.orange{
-  color:var(--warning);
-}
-
-.purple{
-  color:var(--accent2);
-}
-
-/* PAGE CONTAINERS */
-
-.page{
-  display:none;
-  padding:16px;
-  width:100%;
-}
-  
-  .page:not(.active){
-  display:none !important;
-}
-
-.page.active{
-  display:block !important;
-  width:100%;
-}
-
-/* TABLES */
-
-.table-wrap{
-  background:var(--card);
-  border-radius:18px;
-  overflow:hidden;
-  border:1px solid var(--border);
-  width:100%;
-}
-
-table{
-  width:100%;
-  border-collapse:collapse;
-}
-
-th{
-  background:#1a2233;
-  text-align:left;
-  padding:12px;
-}
-
-td{
-  padding:12px;
-  border-top:1px solid var(--border);
-}
-
-tr:hover{
-  background:#212d44;
-}
-
-/* CHECKBOX */
-
-.big-check{
-  width:18px;
-  height:18px;
-}
-
-/* BUTTONS */
-
-.btn{
-  background:var(--accent);
-  border:none;
-  color:white;
-  padding:10px 14px;
-  border-radius:10px;
-  cursor:pointer;
-}
-
-.btn:hover{
-  opacity:.9;
-}
-
-.btn-secondary{
-  background:var(--card2);
-}
-
-.btn-success{
-  background:var(--success);
-}
-
-.btn-danger{
-  background:var(--danger);
-}
-
-/* FORMS */
-
-.form-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
-  gap:14px;
-}
-
-.input-group{
-  display:flex;
-  flex-direction:column;
-  gap:5px;
-}
-
-.input-group label{
-  color:var(--muted);
-}
-
-.input-group input,
-.input-group select,
-.input-group textarea{
-  background:var(--card2);
-  border:1px solid var(--border);
-  color:white;
-  padding:10px;
-  border-radius:10px;
-}
-
-textarea{
-  min-height:120px;
-}
-
-/* FORECAST */
-
-.forecast-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:20px;
-}
-
-.forecast-box{
-  background:var(--card);
-  border-radius:16px;
-  padding:18px;
-  border:1px solid var(--border);
-}
-
-.forecast-box h2{
-  margin-bottom:10px;
-}
-
-/* KPI */
-
-.kpi{
-  display:flex;
-  justify-content:space-between;
-  margin-top:10px;
-  padding:10px 0;
-  border-bottom:1px solid var(--border);
-}
-
-
-/* ACTIVITY */
-
-.activity-item{
-  background:var(--card);
-  border-radius:12px;
-  padding:12px;
-  margin-bottom:10px;
-}
-
-/* GOAL */
-
-.goal-card{
-  background:var(--card);
-  border-radius:15px;
-  padding:15px;
-  margin-bottom:10px;
-}
-
-/* HELP */
-
-.help-block{
-  background:var(--card);
-  margin-bottom:15px;
-  padding:15px;
-  border-radius:14px;
-}
-
-.help-block h3{
-  margin-bottom:8px;
-}
-
-#timelineContainer{
-  display:grid;
-  grid-template-columns:
-    repeat(auto-fit,minmax(320px,1fr));
-  gap:16px;
-  align-items:start;
-}
-
-/* MOBILE */
-
-@media(max-width:1000px){
-
-  .app{
-    flex-direction:column;
-  }
-
-  .sidebar{
-    width:100%;
-    overflow-y:auto;
-  }
-
-  .dashboard-grid{
-    grid-template-columns:1fr;
-  }
-
-  .forecast-grid{
-    grid-template-columns:1fr;
-  }
-
-  .form-grid{
-    grid-template-columns:1fr;
-  }
-
-  .card-value{
-    font-size:1.75rem;
-  }
-
-  table{
-    font-size:.85rem;
-  }
-
-  td,
-  th{
-    padding:8px;
-  }
-
-}
-
-</style>
-  
+  <style>
+    :root {
+      --bg: #0b1120;
+      --sidebar-bg: #070d19;
+      --card: #1e293b;
+      --card2: #334155;
+      --accent: #8b5cf6;
+      --accent-hover: #7c3aed;
+      --accent2: #a855f7;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --border: #334155;
+      --border-light: rgba(255, 255, 255, 0.08);
+      --radius: 16px;
+      --shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* BRAND LOGO COMMON STYLES */
+    .brand-logo-img {
+      width: 100%;
+      max-width: 180px;
+      height: auto;
+      object-fit: contain;
+      display: block;
+      margin: 0 auto 16px auto;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(139, 92, 246, 0.25);
+      transition: transform 0.3s ease;
+    }
+
+    .brand-logo-img:hover {
+      transform: scale(1.02);
+    }
+
+    /* AUTH & ONBOARDING OVERLAY */
+    .auth-overlay {
+      position: fixed;
+      top: 0; 
+      left: 0; 
+      width: 100vw; 
+      height: 100vh;
+      background: rgba(11, 17, 32, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .auth-card {
+      background: var(--card);
+      border: 1px solid var(--border-light);
+      padding: 36px 32px;
+      border-radius: 24px;
+      width: 100%;
+      max-width: 440px;
+      box-shadow: var(--shadow);
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .auth-card .brand-logo-img {
+      max-width: 160px;
+      margin-bottom: 20px;
+    }
+
+    .auth-card h2 {
+      color: var(--text);
+      margin-bottom: 6px;
+      font-size: 1.6rem;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .auth-card p.subtitle {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 24px;
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    .auth-card .form-group {
+      margin-bottom: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .auth-card label {
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+
+    .auth-card input, 
+    .auth-card select {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .auth-card input:focus, 
+    .auth-card select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+    }
+
+    .auth-card .btn-block {
+      width: 100%;
+      padding: 14px;
+      margin-top: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .auth-toggle {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 0.88rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .auth-toggle a {
+      color: var(--accent2);
+      text-decoration: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .auth-toggle a:hover {
+      color: var(--accent);
+      text-decoration: underline;
+    }
+
+    /* MAIN APP LAYOUT */
+    .app {
+      display: none; /* Controlled via JS */
+      min-height: 100vh;
+      flex-direction: row;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 280px;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border-light);
+      padding: 28px 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+
+    .sidebar .logo {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .sidebar .logo h1 {
+      color: var(--text);
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+      letter-spacing: -0.02em;
+    }
+
+    .sidebar .logo p {
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+
+    .nav-section {
+      margin-bottom: 24px;
+    }
+
+    .nav-title {
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      margin-bottom: 12px;
+      padding-left: 8px;
+    }
+
+    .nav-btn {
+      width: 100%;
+      background: transparent;
+      color: var(--muted);
+      border: none;
+      text-align: left;
+      padding: 12px 16px;
+      margin-bottom: 4px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.2s ease;
+    }
+
+    .nav-btn:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+    }
+
+    .nav-btn.active {
+      background: var(--accent);
+      color: #ffffff;
+      font-weight: 600;
+      box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+    }
+
+    /* MAIN CONTAINER */
+    .main {
+      flex: 1;
+      padding: 28px 36px;
+      overflow-y: auto;
+      max-width: 1400px;
+    }
+
+    /* TOP BAR */
+    .topbar {
+      display: flex;
+      justify-content: flex-start;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 28px;
+    }
+
+    .top-card {
+      background: var(--card);
+      border: 1px solid var(--border-light);
+      padding: 12px 18px;
+      border-radius: 14px;
+      min-width: 180px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .top-card label {
+      display: block;
+      color: var(--muted);
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 6px;
+    }
+
+    .top-card select {
+      width: 100%;
+      background: var(--card2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      outline: none;
+      cursor: pointer;
+    }
+
+    /* PAGE TITLES */
+    .page-title {
+      font-size: 2rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+      letter-spacing: -0.03em;
+    }
+
+    .page-subtitle {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 28px;
+      line-height: 1.5;
+    }
+
+    /* DASHBOARD GRID & CARDS */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: linear-gradient(180deg, var(--card) 0%, #172033 100%);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+    }
+
+    .card h3 {
+      font-size: 0.88rem;
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .card-value {
+      font-size: 2.2rem;
+      font-weight: 800;
+      word-break: break-word;
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+    }
+
+    .card p {
+      color: var(--muted);
+      font-size: 0.85rem;
+      line-height: 1.4;
+    }
+
+    /* VALUE COLOR VARIANTS */
+    .green { color: var(--success); }
+    .red { color: var(--danger); }
+    .orange { color: var(--warning); }
+    .purple { color: var(--accent2); }
+
+    /* PAGE CONTAINERS */
+    .page {
+      display: none;
+      width: 100%;
+      animation: fadeIn 0.25s ease-in-out;
+    }
+
+    .page.active {
+      display: block !important;
+    }
+
+    /* TABLES */
+    .table-wrap {
+      background: var(--card);
+      border-radius: var(--radius);
+      overflow: hidden;
+      border: 1px solid var(--border-light);
+      width: 100%;
+      box-shadow: var(--shadow);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    th {
+      background: #151f30;
+      color: var(--muted);
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    td {
+      padding: 16px;
+      border-top: 1px solid var(--border-light);
+      color: var(--text);
+      font-size: 0.92rem;
+    }
+
+    tr:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* CHECKBOX */
+    .big-check {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    /* BUTTONS */
+    .btn {
+      background: var(--accent);
+      border: none;
+      color: #ffffff;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 0.92rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary { background: var(--card2); }
+    .btn-secondary:hover { background: #475569; }
+
+    .btn-success { background: var(--success); }
+    .btn-success:hover { background: #16a34a; }
+
+    .btn-danger { background: var(--danger); }
+    .btn-danger:hover { background: #dc2626; }
+
+    /* FORMS */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .input-group label {
+      color: var(--muted);
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+
+    .input-group input,
+    .input-group select,
+    .input-group textarea {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border 0.2s;
+    }
+
+    .input-group input:focus,
+    .input-group select:focus,
+    .input-group textarea:focus {
+      border-color: var(--accent);
+    }
+
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    /* FORECASTS */
+    .forecast-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+    }
+
+    .forecast-box {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 24px;
+      border: 1px solid var(--border-light);
+      box-shadow: var(--shadow);
+    }
+
+    .forecast-box h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--accent2);
+      margin-bottom: 16px;
+      letter-spacing: 0.5px;
+    }
+
+    /* KPI LIST */
+    .kpi {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border-light);
+      font-size: 0.95rem;
+    }
+
+    .kpi span:first-child {
+      color: var(--muted);
+    }
+
+    .kpi span:last-child {
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    /* ACTIVITY LOG & GOALS */
+    .activity-item {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      border: 1px solid var(--border-light);
+      line-height: 1.5;
+    }
+
+    .goal-card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 16px;
+      border: 1px solid var(--border-light);
+    }
+
+    /* HELP CENTER */
+    .help-block {
+      background: var(--card);
+      margin-bottom: 18px;
+      padding: 20px 24px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border-light);
+    }
+
+    .help-block h3 {
+      color: var(--accent2);
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+    }
+
+    .help-block p {
+      color: var(--muted);
+      line-height: 1.6;
+      font-size: 0.92rem;
+    }
+
+    #timelineContainer {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 16px;
+      align-items: start;
+    }
+
+    /* HERO SETUP WIZARD */
+    .hero-wizard-img {
+      width: 100%;
+      max-width: 360px;
+      display: block;
+      margin: 20px auto 28px auto;
+      border-radius: 16px;
+      border: 2px solid var(--accent);
+      box-shadow: 0 0 30px rgba(139, 92, 246, 0.35);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* RESPONSIVE MEDIA QUERIES */
+    @media (max-width: 1000px) {
+      .app {
+        flex-direction: column;
+      }
+
+      .sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border-light);
+        padding: 20px;
+      }
+
+      .main {
+        padding: 20px 16px;
+      }
+
+      .dashboard-grid, 
+      .forecast-grid, 
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .card-value {
+        font-size: 1.8rem;
+      }
+
+      table {
+        font-size: 0.85rem;
+      }
+
+      td, th {
+        padding: 10px 12px;
+      }
+    }
+  </style>
 </head>
 
 <body>
@@ -534,17 +653,22 @@ textarea{
 <div id="authOverlay" class="auth-overlay">
   <!-- LOGIN FORM -->
   <div id="loginForm" class="auth-card">
+    <img src="paycheck-pilot-hero.png" alt="Paycheck Pilot Logo" class="brand-logo-img">
     <h2>Paycheck Pilot</h2>
     <p class="subtitle">Navigate Every Payday</p>
+    
     <div class="form-group">
-      <label>Email</label>
+      <label for="loginEmail">Email</label>
       <input type="email" id="loginEmail" placeholder="you@example.com">
     </div>
+    
     <div class="form-group">
-      <label>Password</label>
+      <label for="loginPassword">Password</label>
       <input type="password" id="loginPassword" placeholder="••••••••">
     </div>
+    
     <button class="btn btn-block" onclick="handleLogin()">Sign In</button>
+    
     <div class="auth-toggle">
       Don't have an account? <a onclick="showAuthView('signup')">Sign Up</a><br><br>
       <a onclick="showAuthView('forgot')">Forgot Password?</a>
@@ -553,17 +677,22 @@ textarea{
 
   <!-- SIGN UP FORM -->
   <div id="signupForm" class="auth-card" style="display:none;">
+    <img src="paycheck-pilot-hero.png" alt="Paycheck Pilot Logo" class="brand-logo-img">
     <h2>Create Account</h2>
     <p class="subtitle">Start taking control of your paychecks</p>
+    
     <div class="form-group">
-      <label>Email</label>
+      <label for="signupEmail">Email</label>
       <input type="email" id="signupEmail" placeholder="you@example.com">
     </div>
+    
     <div class="form-group">
-      <label>Password</label>
+      <label for="signupPassword">Password</label>
       <input type="password" id="signupPassword" placeholder="••••••••">
     </div>
+    
     <button class="btn btn-block" onclick="handleSignUp()">Sign Up</button>
+    
     <div class="auth-toggle">
       Already have an account? <a onclick="showAuthView('login')">Sign In</a>
     </div>
@@ -571,40 +700,45 @@ textarea{
 
   <!-- FORGOT PASSWORD FORM -->
   <div id="forgotForm" class="auth-card" style="display:none;">
+    <img src="paycheck-pilot-hero.png" alt="Paycheck Pilot Logo" class="brand-logo-img">
     <h2>Reset Password</h2>
     <p class="subtitle">Enter your email to receive instructions</p>
+    
     <div class="form-group">
-      <label>Email</label>
+      <label for="forgotEmail">Email</label>
       <input type="email" id="forgotEmail" placeholder="you@example.com">
     </div>
+    
     <button class="btn btn-block" onclick="handleForgotPassword()">Reset Password</button>
+    
     <div class="auth-toggle">
       Back to <a onclick="showAuthView('login')">Sign In</a>
     </div>
   </div>
 
   <!-- ONBOARDING FORM -->
-  <div id="onboardingForm" class="auth-card" style="display:none; max-width:500px;">
+  <div id="onboardingForm" class="auth-card" style="display:none; max-width:520px;">
+    <img src="paycheck-pilot-hero.png" alt="Paycheck Pilot Logo" class="brand-logo-img">
     <h2>Welcome to Paycheck Pilot!</h2>
     <p class="subtitle">Let's set up your starting budget.</p>
     
     <div class="form-group">
-      <label>Checking Balance ($)</label>
+      <label for="onboardChecking">Checking Balance ($)</label>
       <input type="number" id="onboardChecking" value="0">
     </div>
     
     <div class="form-group">
-      <label>Savings Balance ($)</label>
+      <label for="onboardSavings">Savings Balance ($)</label>
       <input type="number" id="onboardSavings" value="0">
     </div>
 
     <div class="form-group">
-      <label>Paycheck Amount ($)</label>
+      <label for="onboardPaycheckAmount">Paycheck Amount ($)</label>
       <input type="number" id="onboardPaycheckAmount" placeholder="2000">
     </div>
 
     <div class="form-group">
-      <label>Paycheck Frequency</label>
+      <label for="onboardPaycheckFreq">Paycheck Frequency</label>
       <select id="onboardPaycheckFreq">
         <option value="biweekly">Bi-Weekly (Every 2 Weeks)</option>
         <option value="monthly">Monthly (1st of month)</option>
@@ -613,13 +747,13 @@ textarea{
     </div>
 
     <div class="form-group">
-      <label>First Payday Date</label>
+      <label for="onboardPaycheckStart">First Payday Date</label>
       <input type="date" id="onboardPaycheckStart">
     </div>
 
     <div class="form-group">
       <label>Recurring Bill (Optional - Name, Amount, Due Day)</label>
-      <div style="display:flex; gap:5px;">
+      <div style="display:flex; gap:8px;">
         <input type="text" id="onboardBillDesc" placeholder="Rent" style="flex:2;">
         <input type="number" id="onboardBillAmount" placeholder="1200" style="flex:1;">
         <input type="number" id="onboardBillDay" placeholder="1" min="1" max="31" style="flex:1;">
@@ -630,1303 +764,664 @@ textarea{
   </div>
 </div>
 
+<!-- MAIN APP CONTENT -->
 <div class="app" id="appMain">
 
-<!-- SIDEBAR -->
-
-<div class="sidebar">
-
-<div class="logo">
-
-<img
-  id="appLogo"
-  src="paycheck-pilot-hero.png"
-  alt="Paycheck Pilot Logo"
-  style="
-    width:180px;
-    height:auto;
-    display:block;
-    margin:0 auto 15px auto;
-    border-radius:12px;
-  "
->
-
-<h1>Paycheck Pilot</h1>
-
-<p>
-  Navigate Every Payday
-</p>
-
-</div>
-
-<div class="nav-section">
-
-<div class="nav-title">Main</div>
-
-<button class="nav-btn active" onclick="showPage('dashboard', event)">
-🏠 Dashboard
-</button>
-
-<button class="nav-btn" onclick="showPage('comingUp', event)">
-📌 Coming Up
-</button>
-
-<button class="nav-btn" onclick="showPage('paychecks', event)">
-💰 Paychecks
-</button>
-
-<button class="nav-btn" onclick="showPage('forecasts', event)">
-📈 Forecasts
-</button>
-
-<button class="nav-btn" onclick="showPage('summary', event)">
-📊 Monthly Summary
-</button>
-
-<button class="nav-btn" onclick="showPage('timeline', event)">
-📅 Timeline
-</button>
-
-<button class="nav-btn" onclick="showPage('ledger', event)">
-📖 Ledger
-</button>
-
-<button class="nav-btn" onclick="showPage('goals', event)">
-🎯 Goals
-</button>
-
-<button class="nav-btn" onclick="showPage('reconcile', event)">
-✅ Reconcile
-</button>
-
-<button class="nav-btn" onclick="showPage('activity', event)">
-📜 Activity Log
-</button>
-
-<button class="nav-btn" onclick="showPage('netyear', event)">
-📊 Net Year Analysis
-</button>
-
-<button class="nav-btn" onclick="showPage('settings', event)">
-⚙️ Settings
-</button>
-
-<button class="nav-btn" onclick="showPage('help', event)">
-❓ Help
-</button>
-
-</div>
-
-</div>
-
-<!-- MAIN -->
-
-<div class="main">
-
-<div class="topbar">
-
-<div class="top-card">
-<label>View</label>
-<select id="viewSelector">
-<option>Household</option>
-</select>
-</div>
-
-<div class="top-card">
-<label>Mode</label>
-<select id="modeSelector">
-<option>NOW</option>
-<option>PROJECTED</option>
-</select>
-</div>
-
-</div>
-
-<!-- SETUP WIZARD -->
-
-<div id="setupWizard" class="page">
-
-<h1 class="page-title">
-🚀 Welcome to Paycheck Pilot
-</h1>
-
-<img
-  src="paycheck-pilot-hero.png"
-  alt="Paycheck Pilot"
-  style="
-  width:400px;
-  max-width:90%;
-  display:block;
-  margin:20px auto;
-  border-radius:16px;
-  border:2px solid #8b5cf6;
-  box-shadow:0 0 20px rgba(139,92,246,.35);
-"
->
-
-
-<p class="page-subtitle">
-Let's get your budget set up in under 2 minutes.
-</p>
-
-<div class="card">
-
-<div class="form-grid">
-
-<div class="input-group">
-<label>Checking Balance</label>
-<input id="setupChecking" type="number" placeholder="0">
-</div>
-
-<div class="input-group">
-<label>Savings Balance</label>
-<input id="setupSavings" type="number" placeholder="0">
-</div>
-
-<div class="input-group">
-<label>Paycheck Amount</label>
-<input id="setupPayAmount" type="number" placeholder="0">
-</div>
-
-<div class="input-group">
-<label>Next Payday</label>
-<input id="setupPayDate" type="date">
-</div>
-
-</div>
-
-<br>
-
-<h3>Recurring Bills</h3>
-
-<div class="form-grid">
-
-<div class="input-group">
-<label>Bill Name</label>
-<input id="billName" type="text">
-</div>
-
-<div class="input-group">
-<label>Amount</label>
-<input id="billAmount" type="number">
-</div>
-
-<div class="input-group">
-<label>Due Day</label>
-<input id="billDay" type="number" min="1" max="31">
-</div>
-
-</div>
-
-<br>
-
-<button
-class="btn btn-secondary"
-onclick="addWizardBill()"
->
-+ Add Bill
-</button>
-
-<br><br>
-
-<div id="wizardBills"></div>
-
-<br>
-
-<button
-class="btn"
-onclick="completeSetupWizard()"
->
-Launch Dashboard
-</button>
-
-
-</div>
-
-</div>
-  
-<!-- DASHBOARD -->
-
-<div id="dashboard" class="page">
-
-<h1 class="page-title">
-🏠 Dashboard
-</h1>
-
-<p class="page-subtitle">
-Welcome back to Paycheck Pilot. Here's what matters most right now.
-</p>
-
-<div class="card" style="margin-bottom:20px;">
-
-<h3>
-🚀 What Should I Do Next?
-</h3>
-
-<div id="nextSteps">
-
-<p>💰 Check your Safe Spend amount before making purchases.</p>
-
-<p>📅 Review upcoming bills in the Coming Up page.</p>
-
-<p>✅ Reconcile balances regularly for accurate forecasting.</p>
-
-<p>🚀 Track your Paycheck To Paycheck number to stay ahead.</p>
-
-</div>
-
-</div>
-
-<div class="dashboard-grid">
-
-<div class="card">
-<h3>💰 Available To Spend</h3>
-<div class="card-value green" id="availableToSpend">
-$0
-</div>
-  <p id="financialHealth">
-  Reviewing...
-</p>
-  <p id="cashRunway">
-  Calculating...
-</p>
-<p id="bufferStatus">
-  Buffer Status
-</p>
-  
-</div>
-
-<div class="card">
-<h3>⚠️ Due Before Next Paycheck</h3>
-<div class="card-value orange" id="dueBeforeIncome">
-$0
-</div>
-</div>
-
-<div class="card">
-<h3>🏦 Combined Cash</h3>
-<div class="card-value purple" id="combinedCash">
-$0
-</div>
-</div>
-
-<div class="card">
-
-  <h3>🛡️ Safe Spend</h3>
-
-  <div
-    class="card-value"
-    id="safeSpend"
-  >
-    $0
-  </div>
-
-  <p id="safeSpendDetails">
-    Available: $0 | Buffer: $0
-  </p>
-
-</div>
-
-<div class="card">
-<h3>✅ Bills Paid</h3>
-<div class="card-value green" id="billsPaid">
-0
-</div>
-</div>
-
-<div class="card">
-<h3>💵 Income Received</h3>
-<div class="card-value green" id="incomeReceived">
-0
-</div>
-</div>
-
-<div class="card">
-
-  <h3>💰 Next Income</h3>
-
-  <div
-    class="card-value green"
-    id="nextIncomeAmount"
-    style="font-size:1.3rem;"
-  >
-    $0
-  </div>
-
-<p id="nextIncomeDate">
-  No income scheduled
-</p>
-
-</div>
-  
-<div class="card">
-
-  <h3>💰 Paycheck To Paycheck</h3>
-
-  <div
-    class="card-value green"
-    id="paycheckToPaycheck"
-  >
-    $0
-  </div>
-
-  <p>
-    Cash after next paycheck &
-    bills before following paycheck
-  </p>
-
-</div>
-
-<div class="card">
-
-  <h3>🕒 Last Updated</h3>
-
-  <div
-    class="card-value"
-    id="lastUpdated"
-    style="font-size:1rem;"
-  >
-    Never
-  </div>
-
-</div>
-  
-</div>
-
-</div>
-
-<!-- COMING UP -->
-
-<div id="comingUp" class="page">
-
-<h1 class="page-title">📌 Coming Up</h1>
-<p class="page-subtitle">
-Next 30 days of bills and income.
-</p>
-
-<div class="table-wrap" style="max-width:none;">
-<table>
-<thead>
-<tr>
-<th>Status</th>
-<th>Date</th>
-<th>Description</th>
-<th>Scope</th>
-<th>Amount</th>
-</tr>
-</thead>
-
-<tbody id="comingUpTable">
-</tbody>
-
-</table>
-</div>
-
-</div>
-
-<!-- PAYCHECKS -->
-
-<div id="paychecks" class="page">
-
-<h1 class="page-title">💰 Paychecks</h1>
-
-<div class="table-wrap">
-
-<table>
-
-<thead>
-<tr>
-<th>Received</th>
-<th>Date</th>
-<th>Scope</th>
-<th>Description</th>
-<th>Amount</th>
-</tr>
-</thead>
-
-<tbody id="paycheckTable">
-
-</tbody>
-
-</table>
-
-<br>
-
-<div
-  class="card"
-  id="paycheckDetails"
->
-
-  <h3>
-    Paycheck Details
-  </h3>
-
-  <p>
-    Select a paycheck to view details.
-  </p>
-
-</div>
-  
-</div>
-
-</div>
-
-<!-- FORECASTS -->
-
-<div id="forecasts" class="page">
-
-<h1 class="page-title">
-📈 Forecasts
-</h1>
-
-<div class="forecast-grid">
-
-<div class="forecast-box">
-
-<h2>CURRENT MONTH</h2>
-
-<div class="kpi">
-<span>Current Cash</span>
-<span id="nowCash">$0</span>
-</div>
-
-<div class="kpi">
-<span>Income Remaining</span>
-<span id="nowIncome">$0</span>
-</div>
-
-<div class="kpi">
-<span>Expenses Remaining</span>
-<span id="nowExpenses">$0</span>
-</div>
-
-<div class="kpi">
-<span>Net Flow</span>
-<span id="nowFlow">$0</span>
-</div>
-
-<div class="kpi">
-<span>Month End</span>
-<span id="nowMonthEnd">$0</span>
-</div>
-
-</div>
-
-<div class="forecast-box">
-
-<h2>PROJECTED</h2>
-
-<div class="kpi">
-<span>Current Cash</span>
-<span id="projCash">$0</span>
-</div>
-
-<div class="kpi">
-<span>Income Remaining</span>
-<span id="projIncome">$0</span>
-</div>
-
-<div class="kpi">
-<span>Expenses Remaining</span>
-<span id="projExpenses">$0</span>
-</div>
-
-<div class="kpi">
-<span>Net Flow</span>
-<span id="projFlow">$0</span>
-</div>
-
-<div class="kpi">
-<span>Year End Projection</span>
-<span id="projMonthEnd">$0</span>
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-<!-- SUMMARY -->
-
-<div id="summary" class="page">
-
-<h1 class="page-title">
-📊 Monthly Summary
-</h1>
-
-<div class="dashboard-grid">
-
-<div class="card">
-<h3>✅ Income Received</h3>
-<div class="card-value" id="summaryIncomeReceived">
-$0
-</div>
-</div>
-
-<div class="card">
-<h3>⏳ Income Remaining</h3>
-<div class="card-value" id="summaryIncomeRemaining">
-$0
-</div>
-</div>
-
-<div class="card">
-<h3>✅ Bills Paid</h3>
-<div class="card-value" id="summaryBillsPaid">
-$0
-</div>
-</div>
-
-<div class="card">
-<h3>⏳ Bills Remaining</h3>
-<div class="card-value" id="summaryBillsRemaining">
-$0
-</div>
-</div>
-
-<div class="card">
-<h3>💰 Net Remaining</h3>
-<div class="card-value" id="summaryNetRemaining">
-$0
-</div>
-</div>
-
-</div>
-
-</div>
-
-<!-- TIMELINE -->
-
-<div id="timeline" class="page">
-
-<h1 class="page-title">
-📅 Timeline
-</h1>
-
-<div id="timelineContainer">
-</div>
-
-</div>
-
-<!-- LEDGER -->
-
-<div id="ledger" class="page">
-
-<h1 class="page-title">
-📖 Ledger
-</h1>
-
-<div class="table-wrap">
-
-<table>
-
-<thead>
-<tr>
-<th>Date</th>
-<th>Description</th>
-<th>Scope</th>
-<th>Amount</th>
-<th>Status</th>
-</tr>
-</thead>
-
-<tbody id="ledgerTable">
-</tbody>
-
-</table>
-
-</div>
-
-</div>
-
-<!-- GOALS -->
-
-<div id="goals" class="page">
-
-<h1 class="page-title">
-🎯 Goals
-</h1>
-
-<div class="card">
-
-  <div class="form-grid">
-
-    <div class="input-group">
-      <label>Goal Name</label>
-      <input id="goalName" type="text">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="logo">
+      <img id="appLogo" src="paycheck-pilot-hero.png" alt="Paycheck Pilot Logo" class="brand-logo-img">
+      <h1>Paycheck Pilot</h1>
+      <p>Navigate Every Payday</p>
     </div>
 
-    <div class="input-group">
-      <label>Current Amount</label>
-      <input id="goalCurrent" type="number">
+    <div class="nav-section">
+      <div class="nav-title">Main</div>
+      <button class="nav-btn active" onclick="showPage('dashboard', event)">🏠 Dashboard</button>
+      <button class="nav-btn" onclick="showPage('comingUp', event)">📌 Coming Up</button>
+      <button class="nav-btn" onclick="showPage('paychecks', event)">💰 Paychecks</button>
+      <button class="nav-btn" onclick="showPage('forecasts', event)">📈 Forecasts</button>
+      <button class="nav-btn" onclick="showPage('summary', event)">📊 Monthly Summary</button>
+      <button class="nav-btn" onclick="showPage('timeline', event)">📅 Timeline</button>
+      <button class="nav-btn" onclick="showPage('ledger', event)">📖 Ledger</button>
+      <button class="nav-btn" onclick="showPage('goals', event)">🎯 Goals</button>
+      <button class="nav-btn" onclick="showPage('reconcile', event)">✅ Reconcile</button>
+      <button class="nav-btn" onclick="showPage('activity', event)">📜 Activity Log</button>
+      <button class="nav-btn" onclick="showPage('netyear', event)">📊 Net Year Analysis</button>
+      <button class="nav-btn" onclick="showPage('settings', event)">⚙️ Settings</button>
+      <button class="nav-btn" onclick="showPage('help', event)">❓ Help Center</button>
+    </div>
+  </div>
+
+  <!-- MAIN VIEW CONTAINER -->
+  <div class="main">
+
+    <!-- TOP CONTROL BAR -->
+    <div class="topbar">
+      <div class="top-card">
+        <label for="viewSelector">View</label>
+        <select id="viewSelector">
+          <option value="Household">Household</option>
+        </select>
+      </div>
+
+      <div class="top-card">
+        <label for="modeSelector">Mode</label>
+        <select id="modeSelector">
+          <option value="NOW">NOW</option>
+          <option value="PROJECTED">PROJECTED</option>
+        </select>
+      </div>
     </div>
 
-    <div class="input-group">
-      <label>Target Amount</label>
-      <input id="goalTarget" type="number">
+    <!-- SETUP WIZARD PAGE -->
+    <div id="setupWizard" class="page">
+      <h1 class="page-title">🚀 Welcome to Paycheck Pilot</h1>
+      
+      <img src="paycheck-pilot-hero.png" alt="Paycheck Pilot Logo" class="hero-wizard-img">
+
+      <p class="page-subtitle">Let's get your budget set up in under 2 minutes.</p>
+
+      <div class="card">
+        <div class="form-grid">
+          <div class="input-group">
+            <label for="setupChecking">Checking Balance</label>
+            <input id="setupChecking" type="number" placeholder="0">
+          </div>
+
+          <div class="input-group">
+            <label for="setupSavings">Savings Balance</label>
+            <input id="setupSavings" type="number" placeholder="0">
+          </div>
+
+          <div class="input-group">
+            <label for="setupPayAmount">Paycheck Amount</label>
+            <input id="setupPayAmount" type="number" placeholder="0">
+          </div>
+
+          <div class="input-group">
+            <label for="setupPayDate">Next Payday</label>
+            <input id="setupPayDate" type="date">
+          </div>
+        </div>
+
+        <br>
+        <h3>Recurring Bills</h3>
+
+        <div class="form-grid">
+          <div class="input-group">
+            <label for="billName">Bill Name</label>
+            <input id="billName" type="text" placeholder="e.g., Rent, Electric">
+          </div>
+
+          <div class="input-group">
+            <label for="billAmount">Amount</label>
+            <input id="billAmount" type="number" placeholder="0">
+          </div>
+
+          <div class="input-group">
+            <label for="billDay">Due Day</label>
+            <input id="billDay" type="number" min="1" max="31" placeholder="15">
+          </div>
+        </div>
+
+        <br>
+        <button class="btn btn-secondary" onclick="addWizardBill()">+ Add Bill</button>
+
+        <br><br>
+        <div id="wizardBills"></div>
+
+        <br>
+        <button class="btn" onclick="completeSetupWizard()">Launch Dashboard</button>
+      </div>
+    </div>
+      
+    <!-- DASHBOARD PAGE -->
+    <div id="dashboard" class="page">
+      <h1 class="page-title">🏠 Dashboard</h1>
+      <p class="page-subtitle">Welcome back to Paycheck Pilot. Here's what matters most right now.</p>
+
+      <div class="card" style="margin-bottom:20px;">
+        <h3>🚀 What Should I Do Next?</h3>
+        <div id="nextSteps">
+          <p style="margin-bottom:6px;">💰 Check your Safe Spend amount before making purchases.</p>
+          <p style="margin-bottom:6px;">📅 Review upcoming bills in the Coming Up page.</p>
+          <p style="margin-bottom:6px;">✅ Reconcile balances regularly for accurate forecasting.</p>
+          <p>🚀 Track your Paycheck To Paycheck number to stay ahead.</p>
+        </div>
+      </div>
+
+      <div class="dashboard-grid">
+        <div class="card">
+          <h3>💰 Available To Spend</h3>
+          <div class="card-value green" id="availableToSpend">$0</div>
+          <p id="financialHealth">Reviewing...</p>
+          <p id="cashRunway">Calculating...</p>
+          <p id="bufferStatus">Buffer Status</p>
+        </div>
+
+        <div class="card">
+          <h3>⚠️ Due Before Next Paycheck</h3>
+          <div class="card-value orange" id="dueBeforeIncome">$0</div>
+        </div>
+
+        <div class="card">
+          <h3>🏦 Combined Cash</h3>
+          <div class="card-value purple" id="combinedCash">$0</div>
+        </div>
+
+        <div class="card">
+          <h3>🛡️ Safe Spend</h3>
+          <div class="card-value" id="safeSpend">$0</div>
+          <p id="safeSpendDetails">Available: $0 | Buffer: $0</p>
+        </div>
+
+        <div class="card">
+          <h3>✅ Bills Paid</h3>
+          <div class="card-value green" id="billsPaid">0</div>
+        </div>
+
+        <div class="card">
+          <h3>💵 Income Received</h3>
+          <div class="card-value green" id="incomeReceived">0</div>
+        </div>
+
+        <div class="card">
+          <h3>💰 Next Income</h3>
+          <div class="card-value green" id="nextIncomeAmount" style="font-size:1.6rem;">$0</div>
+          <p id="nextIncomeDate">No income scheduled</p>
+        </div>
+          
+        <div class="card">
+          <h3>💰 Paycheck To Paycheck</h3>
+          <div class="card-value green" id="paycheckToPaycheck">$0</div>
+          <p>Cash after next paycheck & bills before following paycheck</p>
+        </div>
+
+        <div class="card">
+          <h3>🕒 Last Updated</h3>
+          <div class="card-value" id="lastUpdated" style="font-size:1.1rem;">Never</div>
+        </div>
+      </div>
     </div>
 
+    <!-- COMING UP PAGE -->
+    <div id="comingUp" class="page">
+      <h1 class="page-title">📌 Coming Up</h1>
+      <p class="page-subtitle">Next 30 days of bills and income.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>Date</th>
+              <th>Description</th>
+              <th>Scope</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody id="comingUpTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- PAYCHECKS PAGE -->
+    <div id="paychecks" class="page">
+      <h1 class="page-title">💰 Paychecks</h1>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Received</th>
+              <th>Date</th>
+              <th>Scope</th>
+              <th>Description</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody id="paycheckTable"></tbody>
+        </table>
+      </div>
+
+      <br>
+
+      <div class="card" id="paycheckDetails">
+        <h3>Paycheck Details</h3>
+        <p>Select a paycheck to view details.</p>
+      </div>
+    </div>
+
+    <!-- FORECASTS PAGE -->
+    <div id="forecasts" class="page">
+      <h1 class="page-title">📈 Forecasts</h1>
+
+      <div class="forecast-grid">
+        <div class="forecast-box">
+          <h2>CURRENT MONTH</h2>
+          <div class="kpi"><span>Current Cash</span><span id="nowCash">$0</span></div>
+          <div class="kpi"><span>Income Remaining</span><span id="nowIncome">$0</span></div>
+          <div class="kpi"><span>Expenses Remaining</span><span id="nowExpenses">$0</span></div>
+          <div class="kpi"><span>Net Flow</span><span id="nowFlow">$0</span></div>
+          <div class="kpi"><span>Month End</span><span id="nowMonthEnd">$0</span></div>
+        </div>
+
+        <div class="forecast-box">
+          <h2>PROJECTED</h2>
+          <div class="kpi"><span>Current Cash</span><span id="projCash">$0</span></div>
+          <div class="kpi"><span>Income Remaining</span><span id="projIncome">$0</span></div>
+          <div class="kpi"><span>Expenses Remaining</span><span id="projExpenses">$0</span></div>
+          <div class="kpi"><span>Net Flow</span><span id="projFlow">$0</span></div>
+          <div class="kpi"><span>Year End Projection</span><span id="projMonthEnd">$0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MONTHLY SUMMARY PAGE -->
+    <div id="summary" class="page">
+      <h1 class="page-title">📊 Monthly Summary</h1>
+
+      <div class="dashboard-grid">
+        <div class="card">
+          <h3>✅ Income Received</h3>
+          <div class="card-value" id="summaryIncomeReceived">$0</div>
+        </div>
+
+        <div class="card">
+          <h3>⏳ Income Remaining</h3>
+          <div class="card-value" id="summaryIncomeRemaining">$0</div>
+        </div>
+
+        <div class="card">
+          <h3>✅ Bills Paid</h3>
+          <div class="card-value" id="summaryBillsPaid">$0</div>
+        </div>
+
+        <div class="card">
+          <h3>⏳ Bills Remaining</h3>
+          <div class="card-value" id="summaryBillsRemaining">$0</div>
+        </div>
+
+        <div class="card">
+          <h3>💰 Net Remaining</h3>
+          <div class="card-value" id="summaryNetRemaining">$0</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TIMELINE PAGE -->
+    <div id="timeline" class="page">
+      <h1 class="page-title">📅 Timeline</h1>
+      <div id="timelineContainer"></div>
+    </div>
+
+    <!-- LEDGER PAGE -->
+    <div id="ledger" class="page">
+      <h1 class="page-title">📖 Ledger</h1>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Description</th>
+              <th>Scope</th>
+              <th>Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="ledgerTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- GOALS PAGE -->
+    <div id="goals" class="page">
+      <h1 class="page-title">🎯 Goals</h1>
+
+      <div class="card">
+        <div class="form-grid">
+          <div class="input-group">
+            <label for="goalName">Goal Name</label>
+            <input id="goalName" type="text" placeholder="Emergency Fund">
+          </div>
+
+          <div class="input-group">
+            <label for="goalCurrent">Current Amount</label>
+            <input id="goalCurrent" type="number" placeholder="500">
+          </div>
+
+          <div class="input-group">
+            <label for="goalTarget">Target Amount</label>
+            <input id="goalTarget" type="number" placeholder="2000">
+          </div>
+        </div>
+
+        <br>
+        <button class="btn" onclick="addGoal()">Add Goal</button>
+      </div>
+
+      <br>
+      <div id="goalContainer"></div>
+    </div>
+
+    <!-- RECONCILE PAGE -->
+    <div id="reconcile" class="page">
+      <h1 class="page-title">✅ Reconcile</h1>
+
+      <div class="card">
+        <div class="form-grid">
+          <div class="input-group">
+            <label for="checkingInput">Checking Account Balance ($)</label>
+            <input id="checkingInput" type="number">
+          </div>
+
+          <div class="input-group">
+            <label for="savingsInput">Savings Account Balance ($)</label>
+            <input id="savingsInput" type="number">
+          </div>
+        </div>
+
+        <br>
+        <button class="btn" onclick="updateBalances()">Update Balances</button>
+
+        <br><br>
+        <div id="reconcileSummary">
+          <div class="kpi"><span>Total Cash</span><span id="reconcileTotal">$0</span></div>
+          <div class="kpi"><span>Checking Balance</span><span id="reconcileChecking">$0</span></div>
+          <div class="kpi"><span>Savings Balance</span><span id="reconcileSavings">$0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTIVITY LOG PAGE -->
+    <div id="activity" class="page">
+      <h1 class="page-title">📜 Activity Log</h1>
+      <p class="page-subtitle">Track every change made inside Paycheck Pilot.</p>
+
+      <div id="activityContainer">
+        <div class="activity-item">Activity will appear here.</div>
+      </div>
+    </div>
+
+    <!-- NET YEAR ANALYSIS PAGE -->
+    <div id="netyear" class="page">
+      <h1 class="page-title">📊 Net Year Analysis</h1>
+      <p class="page-subtitle">Review income growth, expense changes, and projected year-end finances.</p>
+
+      <div class="card">
+        <button class="btn" id="generateYearBtn">Generate Net Year Analysis</button>
+
+        <br><br>
+        <div id="yearAnalysisResults">
+          <div class="kpi"><span>Income Changes</span><span id="yearIncomeChange">$0</span></div>
+          <div class="kpi"><span>Expense Changes</span><span id="yearExpenseChange">$0</span></div>
+          <div class="kpi"><span>New Bills Added</span><span id="yearNewBills">0</span></div>
+          <div class="kpi"><span>Removed Bills</span><span id="yearRemovedBills">0</span></div>
+          <div class="kpi"><span>Largest Expense</span><span id="yearLargestExpense">-</span></div>
+          <div class="kpi"><span>Projected Year End</span><span id="yearProjectedEnd">$0</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS PAGE -->
+    <div id="settings" class="page">
+      <h1 class="page-title">⚙️ Settings</h1>
+
+      <div class="dashboard-grid">
+        <div class="card">
+          <h3>👤 Profile</h3>
+          <p style="margin-bottom:12px;">Logged in as: <strong id="userEmailDisplay">-</strong></p>
+          <button class="btn btn-danger" onclick="handleLogout()">Logout</button>
+        </div>
+
+        <div class="card">
+          <h3>🔒 Change Password</h3>
+          <div class="input-group" style="margin-bottom:12px;">
+            <label for="newPasswordInput">New Password</label>
+            <input type="password" id="newPasswordInput" placeholder="••••••••">
+          </div>
+          <button class="btn" onclick="handleChangePassword()">Update Password</button>
+        </div>
+
+        <div class="card">
+          <h3>📤 Export Budget</h3>
+          <p>Create a portable backup and sync file.</p>
+          <br>
+          <button class="btn" onclick="exportBudget()">Export Budget</button>
+        </div>
+
+        <div class="card">
+          <h3>🔄 Merge Budget</h3>
+          <p>Merge updates without replacing existing data.</p>
+          <br>
+          <input type="file" id="importFile" onchange="importBudget(event)">
+        </div>
+
+        <div class="card">
+          <h3>📥 Restore Budget</h3>
+          <p>Replace all current data with a backup file.</p>
+          <br>
+          <input type="file" accept=".json" onchange="restoreBudget(event)">
+        </div>
+
+        <div class="card">
+          <h3>🔮 Forecast Buffer</h3>
+          <div class="input-group">
+            <select id="forecastBuffer">
+              <option value="0">$0</option>
+              <option value="250">$250</option>
+              <option value="500">$500</option>
+              <option value="1000">$1000</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>🎨 Theme</h3>
+          <div class="input-group">
+            <select disabled>
+              <option>Purple Dark (Default)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>ℹ️ About</h3>
+          <img src="paycheck-pilot-hero.png" alt="Paycheck Pilot Logo" class="brand-logo-img" style="max-width:120px; margin-bottom:10px;">
+          <p><strong>Paycheck Pilot</strong></p>
+          <p>Navigate Every Payday</p>
+        </div>
+
+        <div class="card">
+          <h3>☁️ Cloud Sync</h3>
+          <p style="margin-bottom:12px;">Download latest budget from cloud storage.</p>
+          <button class="btn" onclick="cloudLoad()">☁️ Sync Now</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- HELP CENTER PAGE -->
+    <div id="help" class="page">
+      <h1 class="page-title">❓ Help Center</h1>
+
+      <div class="help-block">
+        <h3>💜 What Number Should I Watch?</h3>
+        <p>For day-to-day decisions, focus on <strong>Paycheck To Paycheck</strong>. This number shows what should remain after the next paycheck arrives and the bills tied to that paycheck have been paid.</p>
+      </div>
+        
+      <div class="help-block">
+        <h3>🏠 Dashboard</h3>
+        <p>Dashboard provides a live paycheck-to-paycheck snapshot of finances. Available To Spend shows current cash after bills due before the next paycheck. Safe Spend applies any selected buffer. Paycheck To Paycheck shows what should remain after the next paycheck arrives and bills before the following paycheck are paid.</p>
+      </div>
+
+      <div class="help-block">
+        <h3>📌 Coming Up</h3>
+        <p>Displays unpaid bills and unreceived income expected during the next 30 days.</p>
+      </div>
+
+      <div class="help-block">
+        <h3>💰 Paychecks</h3>
+        <p>Shows all scheduled paychecks for the year. Marking income as received updates forecasts, balances, and reports.</p>
+      </div>
+
+      <div class="help-block">
+        <h3>📈 Forecasts</h3>
+        <p><strong>NOW</strong> focuses on current finances and remaining activity for the active budget period. <strong>PROJECTED</strong> includes all future scheduled income and expenses to estimate long-term financial outcomes.</p>
+      </div>
+
+      <div class="help-block">
+        <h3>📊 Monthly Summary</h3>
+        <p>Provides a summary of income received, income remaining, bills paid, and bills still due. Use this page to review overall progress during the current budgeting cycle.</p>
+      </div>
+
+      <div class="help-block">
+        <h3>📅 Timeline</h3>
+        <p>Displays upcoming future financial events in chronological order.</p>
+      </div>
+
+      <div class="help-block">
+        <h3>📖 Ledger</h3>
+        <p>Permanent historical record of completed income and expense activity.</p>
+      </div>
+
+      <div class="help-block">
+        <h3>🎯 Goals</h3>
+        <p>Goals are informational only and never affect forecasting calculations.</p>
+      </div>
+
+      <div class="help-block">
+        <h3>✅ Reconcile</h3>
+        <p>Update actual checking and savings balances from your bank accounts. Accurate balances improve forecasts, available spending calculations, and dashboard insights.</p>
+      </div>
+
+      <div class="help-block">
+        <h3>📜 Activity Log</h3>
+        <p>Automatically records major events including bills paid, income received, imports, exports, and balance updates.</p>
+      </div>
+
+      <div class="help-block">
+        <h3>☁️ Cloud Sync</h3>
+        <p>Budget data is automatically backed up to cloud storage when changes are saved. Use Sync Now to manually load the latest budget from the cloud.</p>
+      </div>
+
+      <div class="help-block">
+        <h3>🛡️ Safe Spend</h3>
+        <p>Safe Spend shows how much cash is available after subtracting bills due before the next paycheck and applying your selected buffer. This is the safest number to use when deciding whether extra spending is affordable.</p>
+      </div>
+
+      <div class="help-block">
+        <h3>💰 Paycheck To Paycheck</h3>
+        <p>Paycheck To Paycheck estimates how much cash should remain after the next paycheck arrives and the bills between that paycheck and the following paycheck are paid. This is one of the most useful indicators for short-term financial planning.</p>
+      </div>
+
+      <div class="help-block">
+        <h3>📈 Forecast Types</h3>
+        <p><strong>CURRENT MONTH</strong> shows expected income, expenses, and projected cash position for the remainder of the current month.<br><strong>PROJECTED</strong> shows all remaining scheduled income and expenses through the end of the budget timeline and includes the Year End Projection value.</p>
+      </div>
+    </div>  
+
   </div>
-
-  <br>
-
-  <button
-    class="btn"
-    onclick="addGoal()"
-  >
-    Add Goal
-  </button>
-
-</div>
-
-<br>
-
-<div id="goalContainer">
-</div>
-
-</div>
-
-<!-- RECONCILE -->
-
-<div id="reconcile" class="page">
-
-<h1 class="page-title">
-✅ Reconcile
-</h1>
-
-<div class="card">
-
-<div class="form-grid">
-
-<div class="input-group">
-<label>Checking Account</label>
-<input id="checkingInput" type="number">
-</div>
-
-<div class="input-group">
-<label>Savings Account</label>
-<input id="savingsInput" type="number">
-</div>
-
-</div>
-
-<br>
-
-<button
-  class="btn"
-  onclick="updateBalances()"
->
-Update Balances
-</button>
-
-<br><br>
-
-<div id="reconcileSummary">
-
-  <div class="kpi">
-    <span>Total Cash</span>
-    <span id="reconcileTotal">$0</span>
-  </div>
-
-  <div class="kpi">
-    <span>Checking Balance</span>
-    <span id="reconcileChecking">$0</span>
-  </div>
-
-  <div class="kpi">
-    <span>Savings Balance</span>
-    <span id="reconcileSavings">$0</span>
-  </div>
-
-</div>
-  
-</div>
-
-</div>
-
-<!-- ACTIVITY LOG -->
-
-<div id="activity" class="page">
-
-<h1 class="page-title">
-📜 Activity Log
-</h1>
-
-<p class="page-subtitle">
-Track every change made inside Paycheck Pilot.
-</p>
-
-<div id="activityContainer">
-
-<div class="activity-item">
-Activity will appear here.
-</div>
-
-</div>
-
-</div>
-
-<!-- NET YEAR ANALYSIS -->
-
-<div id="netyear" class="page">
-
-<h1 class="page-title">
-📊 Net Year Analysis
-</h1>
-
-<p class="page-subtitle">
-Review income growth, expense changes and projected year-end finances.
-</p>
-
-<div class="card">
-
-<button class="btn" id="generateYearBtn">
-Generate Net Year Analysis
-</button>
-
-<br><br>
-
-<div id="yearAnalysisResults">
-
-<div class="kpi">
-<span>Income Changes</span>
-<span id="yearIncomeChange">$0</span>
-</div>
-
-<div class="kpi">
-<span>Expense Changes</span>
-<span id="yearExpenseChange">$0</span>
-</div>
-
-<div class="kpi">
-<span>New Bills Added</span>
-<span id="yearNewBills">0</span>
-</div>
-
-<div class="kpi">
-<span>Removed Bills</span>
-<span id="yearRemovedBills">0</span>
-</div>
-
-<div class="kpi">
-<span>Largest Expense</span>
-<span id="yearLargestExpense">-</span>
-</div>
-
-<div class="kpi">
-<span>Projected Year End</span>
-<span id="yearProjectedEnd">$0</span>
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-<!-- SETTINGS -->
-
-<div id="settings" class="page">
-
-<h1 class="page-title">
-⚙️ Settings
-</h1>
-
-<div class="dashboard-grid">
-
-<div class="card">
-  <h3>👤 Profile</h3>
-  <p style="margin-bottom:10px;">Logged in as: <strong id="userEmailDisplay">-</strong></p>
-  <button class="btn btn-danger" onclick="handleLogout()">Logout</button>
-</div>
-
-<div class="card">
-  <h3>🔒 Change Password</h3>
-  <div class="input-group" style="margin-bottom:10px;">
-    <label>New Password</label>
-    <input type="password" id="newPasswordInput" placeholder="••••••••">
-  </div>
-  <button class="btn" onclick="handleChangePassword()">Update Password</button>
-</div>
-
-<div class="card">
-
-<h3>📤 Export Budget</h3>
-
-<p>
-Create a portable backup and sync file.
-</p>
-
-<br>
-
-<button
-  class="btn"
-  onclick="exportBudget()"
->
-Export Budget
-</button>
-
-</div>
-
-
-<div class="card">
-
-  <h3>🔄 Merge Budget</h3>
-
-  <p>
-    Merge updates without replacing data
-  </p>
-
-  <br>
-
-  <input
-    type="file"
-    id="importFile"
-    onchange="importBudget(event)"
-  >
-
-</div>
-
-<div class="card">
-
-  <h3>📥 Restore Budget</h3>
-
-  <p>
-    Replace all current data
-  </p>
-
-  <br>
-
-  <input
-    type="file"
-    accept=".json"
-    onchange="restoreBudget(event)"
-  >
-
-</div>
-
-<div class="card">
-<h3>🔮 Forecast Buffer</h3>
-
-<select id="forecastBuffer">
-
-<option value="0">$0</option>
-<option value="250">$250</option>
-<option value="500">$500</option>
-<option value="1000">$1000</option>
-
-</select>
-
-</div>
-
-<div class="card">
-
-<h3>🎨 Theme</h3>
-
-<select>
-
-<option>Purple</option>
-<option>Dark</option>
-
-</select>
-
-</div>
-
-<div class="card">
-
-<h3>ℹ️ About</h3>
-
-<p>
-Paycheck Pilot - Navigate Every Payday
-</p>
-
-</div>
-
-<div class="card">
-
-  <h3>☁️ Cloud Sync</h3>
-
-  <button
-    class="btn"
-    onclick="cloudLoad()"
-  >
-    ☁️ Sync Now
-  </button>
-
-  <p>
-    Download latest budget
-    from cloud storage.
-  </p>
-
-</div>
-  
-</div>
-
-</div>
-
-<!-- HELP -->
-
-<div id="help" class="page">
-
-<h1 class="page-title">
-❓ Help Center
-</h1>
-
-<div class="help-block">
-<h3>💜 What Number Should I Watch?</h3>
-<p>
-For day-to-day decisions, focus on Paycheck To Paycheck.
-This number shows what should remain after the next
-paycheck arrives and the bills tied to that paycheck
-have been paid.
-</p>
-</div>
-  
-<div class="help-block">
-
-<h3>
-🏠 Dashboard
-</h3>
-<p>
-Dashboard provides a live paycheck-to-paycheck snapshot
-of finances. Available To Spend shows current
-cash after bills due before the next paycheck. Safe Spend
-applies any selected buffer. Paycheck To Paycheck shows
-what should remain after the next paycheck arrives and
-bills before the following paycheck are paid.
-</p>
-
-</div>
-
-
-<div class="help-block">
-
-<h3>
-📌 Coming Up
-</h3>
-
-<p>
-Displays unpaid bills and unreceived income expected during the next 30 days.
-</p>
-
-</div>
-
-<div class="help-block">
-
-<h3>
-💰 Paychecks
-</h3>
-
-<p>
-Shows all scheduled paychecks for the year.
-Marking income as received updates forecasts, balances and reports.
-</p>
-
-</div>
-
-<div class="help-block">
-
-<h3>
-📈 Forecasts
-</h3>
-
-<p>
-NOW focuses on current finances and remaining activity
-for the active budget period.
-PROJECTED includes all future scheduled income and
-expenses to estimate long-term financial outcomes.
-</p>
-
-</div>
-
-<div class="help-block">
-
-<h3>
-📊 Monthly Summary
-</h3>
-
-<p>
-Provides a summary of income received, income remaining,
-bills paid and bills still due. Use this page to review
-overall progress during the current budgeting cycle.
-</p>
-
-
-</div>
-
-<div class="help-block">
-
-<h3>
-📅 Timeline
-</h3>
-
-<p>
-Displays upcoming future financial events in chronological order.
-</p>
-
-</div>
-
-<div class="help-block">
-
-<h3>
-📖 Ledger
-</h3>
-
-<p>
-Permanent historical record of completed income and expense activity.
-</p>
-
-</div>
-
-<div class="help-block">
-
-<h3>
-🎯 Goals
-</h3>
-
-<p>
-Goals are informational only.
-Goals never affect forecasting calculations.
-</p>
-
-</div>
-
-<div class="help-block">
-
-<h3>
-✅ Reconcile
-</h3>
-
-<p>
-Update actual checking and savings balances from your
-bank accounts. Accurate balances improve forecasts,
-available spending calculations and dashboard insights.
-</p>
-
-</div>
-
-<div class="help-block">
-
-<h3>
-📜 Activity Log
-</h3>
-
-<p>
-Automatically records major events including bills paid,
-income received,
-imports,
-exports and balance updates.
-</p>
-
-</div>
-
-<div class="help-block">
-
-<h3>
-☁️ Cloud Sync
-</h3>
-
-<p>
-Budget data is automatically backed up to cloud storage
-when changes are saved. Use Sync Now to manually load
-the latest budget from the cloud.
-</p>
-
-</div>
-
-<div class="help-block">
-
-<h3>
-🛡️ Safe Spend
-</h3>
-<p>
-Safe Spend shows how much cash is available after
-subtracting bills due before the next paycheck and
-applying your selected buffer. This is the safest number
-to use when deciding whether extra spending is affordable.
-</p>
-
-</div>
-
-<div class="help-block">
-
-<h3>
-💰 Paycheck To Paycheck
-</h3>
-
-<p>
-Paycheck To Paycheck estimates how much cash should
-remain after the next paycheck arrives and the bills
-between that paycheck and the following paycheck are
-paid. This is one of the most useful indicators for
-short-term financial planning.
-</p>
-
-</div>
-
-<div class="help-block">
-
-<h3>
-📈 Forecast Types
-</h3>
-<p>
-CURRENT MONTH shows expected income, expenses and
-projected cash position for the remainder of the current
-month.
-
-PROJECTED shows all remaining scheduled income and
-expenses through the end of the budget timeline and
-includes the Year End Projection value.
-</p>
-
-</div>
-
-</div>  
-
-</div>
-
-</div>
-
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
+/* =========================
+   NAVIGATION & PAGE SWITCHING
+========================= */
+function showPage(pageId, evt) {
+  document.querySelectorAll('.page').forEach(page => {
+    page.classList.remove('active');
+  });
 
-function showPage(pageId, evt){
+  const targetPage = document.getElementById(pageId);
+  if(targetPage) {
+    targetPage.classList.add('active');
+  }
 
-document
-.querySelectorAll('.page')
-.forEach(page=>{
-page.classList.remove('active');
-});
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
 
-document
-.getElementById(pageId)
-.classList.add('active');
-
-document
-.querySelectorAll('.nav-btn')
-.forEach(btn=>{
-btn.classList.remove('active');
-});
-
-if(evt && evt.target){
-  evt.target.classList.add('active');
-}
+  if (evt && evt.target) {
+    evt.target.classList.add('active');
+  }
 }
 
 /* =========================
-   BUDGET DATA
+   BUDGET DATA & SUPABASE SETUP
 ========================= */
+const SUPABASE_URL = "https://zsfcqymmlzpfaapygmlu.supabase.co";
+const SUPABASE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
 
-const SUPABASE_URL =
-  "https://zsfcqymmlzpfaapygmlu.supabase.co";
-
-const SUPABASE_KEY =
-  "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
-
-const supabaseClient =
-supabase.createClient(
-SUPABASE_URL,
-SUPABASE_KEY
-);
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 let currentUser = null;
 
 const budgetData = {
-
-  accounts:{
-    checking:0,
-    savings:0
+  accounts: {
+    checking: 0,
+    savings: 0
   },
-
-  setupBills:[],
-
-  settings:{
-    currentView:"Household",
-    currentMode:"NOW",
-    forecastBuffer:0,
-    onboardingComplete:false
+  setupBills: [],
+  settings: {
+    currentView: "Household",
+    currentMode: "NOW",
+    forecastBuffer: 0,
+    onboardingComplete: false,
+    lastUpdated: "Never"
   },
-
-  goals:[],
-
-  activityLog:[],
-
-  timeline:[]
-
+  goals: [],
+  activityLog: [],
+  timeline: []
 };
 
 /* =========================
    AUTHENTICATION & ONBOARDING
 ========================= */
-
-function showAuthView(view){
+function showAuthView(view) {
   document.getElementById("loginForm").style.display = "none";
   document.getElementById("signupForm").style.display = "none";
   document.getElementById("forgotForm").style.display = "none";
   document.getElementById("onboardingForm").style.display = "none";
 
-  if(view === 'login') document.getElementById("loginForm").style.display = "block";
-  if(view === 'signup') document.getElementById("signupForm").style.display = "block";
-  if(view === 'forgot') document.getElementById("forgotForm").style.display = "block";
-  if(view === 'onboarding') document.getElementById("onboardingForm").style.display = "block";
+  if (view === 'login') document.getElementById("loginForm").style.display = "block";
+  if (view === 'signup') document.getElementById("signupForm").style.display = "block";
+  if (view === 'forgot') document.getElementById("forgotForm").style.display = "block";
+  if (view === 'onboarding') document.getElementById("onboardingForm").style.display = "block";
 }
 
-async function checkAuth(){
+async function checkAuth() {
   const { data: { session } } = await supabaseClient.auth.getSession();
-  if(session && session.user){
-   currentUser = session.user;
+  if (session && session.user) {
+    currentUser = session.user;
 
-const authOverlay =
-  document.getElementById("authOverlay");
+    const authOverlay = document.getElementById("authOverlay");
+    if (authOverlay) authOverlay.style.display = "none";
 
-if(authOverlay){
-  authOverlay.style.display = "none";
-}
+    const appMain = document.getElementById("appMain");
+    if (appMain) appMain.style.display = "flex";
 
-const appMain =
-  document.getElementById("appMain");
+    if (document.getElementById("userEmailDisplay")) {
+      document.getElementById("userEmailDisplay").textContent = currentUser.email;
+    }
+    
+    loadData();
+    await cloudLoad();
 
-if(appMain){
-  appMain.style.display = "flex";
-}
-
-   if(document.getElementById("userEmailDisplay")){
-  document.getElementById("userEmailDisplay").textContent =
-    currentUser.email;
-}
-  loadData();
-await cloudLoad();
-
-if(
-  !budgetData.settings
-    .onboardingComplete
-){
-
-  showPage(
-    "setupWizard"
-  );
-
-  return;
-
-}
+    if (!budgetData.settings || !budgetData.settings.onboardingComplete) {
+      showPage("setupWizard");
+      return;
+    }
   } else {
-const authOverlay =
-  document.getElementById("authOverlay");
+    const authOverlay = document.getElementById("authOverlay");
+    const appMain = document.getElementById("appMain");
 
-const appMain =
-  document.getElementById("appMain");
-
-if(authOverlay){
-  authOverlay.style.display = "flex";
-}
-
-if(appMain){
-  appMain.style.display = "none";
-}
+    if (authOverlay) authOverlay.style.display = "flex";
+    if (appMain) appMain.style.display = "none";
+    
     showAuthView('login');
   }
 }
@@ -1934,111 +1429,88 @@ if(appMain){
 supabaseClient.auth.onAuthStateChange((event, session) => {
   if (session && session.user) {
     currentUser = session.user;
-    const authOverlay =
-  document.getElementById("authOverlay");
+    
+    const authOverlay = document.getElementById("authOverlay");
+    const appMain = document.getElementById("appMain");
 
-const appMain =
-  document.getElementById("appMain");
+    if (authOverlay) authOverlay.style.display = "none";
+    if (appMain) appMain.style.display = "flex";
 
-if(authOverlay){
-  authOverlay.style.display = "none";
-}
-
-if(appMain){
-  appMain.style.display = "flex";
-}
-    if(document.getElementById("userEmailDisplay")){
+    if (document.getElementById("userEmailDisplay")) {
       document.getElementById("userEmailDisplay").textContent = currentUser.email;
     }
+    
     loadData();
 
-cloudLoad().then(() => {
-
-  if(
-  !budgetData.settings ||
-  !budgetData.settings.onboardingComplete
-){
-
-  document
-    .getElementById("setupWizard")
-    .classList.add("active");
-
-  return;
-
-}
-
-  renderAll();
-
-});
-    
+    cloudLoad().then(() => {
+      if (!budgetData.settings || !budgetData.settings.onboardingComplete) {
+        showPage("setupWizard");
+        return;
+      }
+      renderAll();
+    });
   } else {
     currentUser = null;
-   const authOverlay =
-  document.getElementById("authOverlay");
+    const authOverlay = document.getElementById("authOverlay");
+    const appMain = document.getElementById("appMain");
 
-const appMain =
-  document.getElementById("appMain");
-
-if(authOverlay){
-  authOverlay.style.display = "flex";
-}
-
-if(appMain){
-  appMain.style.display = "none";
-}
+    if (authOverlay) authOverlay.style.display = "flex";
+    if (appMain) appMain.style.display = "none";
+    
     showAuthView('login');
   }
 });
 
-async function handleLogin(){
+async function handleLogin() {
   const email = document.getElementById("loginEmail").value.trim();
   const password = document.getElementById("loginPassword").value.trim();
-  if(!email || !password) return alert("Please enter email and password.");
+  if (!email || !password) return alert("Please enter email and password.");
 
   const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-  if(error) alert(error.message);
+  if (error) alert(error.message);
 }
 
-async function handleSignUp(){
+async function handleSignUp() {
   const email = document.getElementById("signupEmail").value.trim();
   const password = document.getElementById("signupPassword").value.trim();
-  if(!email || !password) return alert("Please enter email and password.");
+  if (!email || !password) return alert("Please enter email and password.");
 
   const { data, error } = await supabaseClient.auth.signUp({ email, password });
-  if(error){
+  if (error) {
     alert(error.message);
   } else {
-    alert("Signup successful!");
+    alert("Signup successful! Please log in.");
+    showAuthView('login');
   }
 }
 
-async function handleForgotPassword(){
+async function handleForgotPassword() {
   const email = document.getElementById("forgotEmail").value.trim();
-  if(!email) return alert("Please enter your email.");
+  if (!email) return alert("Please enter your email.");
 
   const { error } = await supabaseClient.auth.resetPasswordForEmail(email);
-  if(error) alert(error.message);
+  if (error) alert(error.message);
   else alert("Password reset instructions sent to your email.");
 }
 
-async function handleLogout(){
+async function handleLogout() {
   await supabaseClient.auth.signOut();
   localStorage.removeItem("paycheckPilot");
   window.location.reload();
 }
 
-async function handleChangePassword(){
+async function handleChangePassword() {
   const newPassword = document.getElementById("newPasswordInput").value.trim();
-  if(!newPassword) return alert("Please enter a new password.");
+  if (!newPassword) return alert("Please enter a new password.");
   const { error } = await supabaseClient.auth.updateUser({ password: newPassword });
-  if(error) alert(error.message);
+  if (error) alert(error.message);
   else {
     alert("Password updated successfully!");
     document.getElementById("newPasswordInput").value = "";
   }
 }
 
-function handleOnboardingSubmit(){
+function handleOnboardingSubmit() {
   const chk = Number(document.getElementById("onboardChecking").value) || 0;
   const sav = Number(document.getElementById("onboardSavings").value) || 0;
   const paycheckAmt = Number(document.getElementById("onboardPaycheckAmount").value) || 0;
@@ -2052,9 +1524,9 @@ function handleOnboardingSubmit(){
   budgetData.accounts.checking = chk;
   budgetData.accounts.savings = sav;
 
-  if(paycheckAmt > 0 && startDate){
+  if (paycheckAmt > 0 && startDate) {
     let dt = new Date(startDate);
-    for(let i=0; i<12; i++){
+    for (let i = 0; i < 12; i++) {
       let dateStr = dt.toISOString().split("T")[0];
       budgetData.timeline.push({
         id: `income-${i}-${Date.now()}`,
@@ -2065,16 +1537,16 @@ function handleOnboardingSubmit(){
         date: dateStr,
         completed: false
       });
-      if(freq === 'biweekly') dt.setDate(dt.getDate() + 14);
-      else if(freq === 'monthly') dt.setMonth(dt.getMonth() + 1);
-      else if(freq === 'semimonthly') dt.setDate(dt.getDate() + 15);
+      if (freq === 'biweekly') dt.setDate(dt.getDate() + 14);
+      else if (freq === 'monthly') dt.setMonth(dt.getMonth() + 1);
+      else if (freq === 'semimonthly') dt.setDate(dt.getDate() + 15);
     }
   }
 
-  if(billDesc && billAmt > 0){
-    for(let m=1; m<=12; m++){
-      let mm = String(m).padStart(2,'0');
-      let dd = String(billDay).padStart(2,'0');
+  if (billDesc && billAmt > 0) {
+    for (let m = 1; m <= 12; m++) {
+      let mm = String(m).padStart(2, '0');
+      let dd = String(billDay).padStart(2, '0');
       budgetData.timeline.push({
         id: `bill-${m}-${Date.now()}`,
         owner: "Household",
@@ -2087,1718 +1559,791 @@ function handleOnboardingSubmit(){
     }
   }
 
+  budgetData.settings.onboardingComplete = true;
   addActivity("Onboarding completed and budget initialized.");
   saveData();
+
   document.getElementById("authOverlay").style.display = "none";
   document.getElementById("appMain").style.display = "flex";
+  showPage("dashboard");
   renderAll();
 }
 
 /* =========================
-   UTILITIES
+   UTILITIES & CALCULATIONS
 ========================= */
-
-function money(value){
-
-  return value.toLocaleString(
-    "en-US",
-    {
-      style:"currency",
-      currency:"USD"
-    }
-  );
-
+function money(value) {
+  return (value || 0).toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD"
+  });
 }
 
-function addActivity(message){
-
-  const now =
-    new Date();
-
-  const timestamp =
-    now.toLocaleDateString() +
-    " " +
-    now.toLocaleTimeString(
-      [],
-      {
-        hour:"2-digit",
-        minute:"2-digit"
-      }
-    );
+function addActivity(message) {
+  const now = new Date();
+  const timestamp = now.toLocaleDateString() + " " + now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
   budgetData.activityLog.unshift({
-
-    date:timestamp,
-
+    date: timestamp,
     message
-
   });
 
-  budgetData.settings.lastUpdated =
-  timestamp;
-
+  budgetData.settings.lastUpdated = timestamp;
 }
 
-function getCombinedCash(){
-
-  return (
-    budgetData.accounts.checking +
-    budgetData.accounts.savings
-  );
-
+function getCombinedCash() {
+  return (budgetData.accounts.checking || 0) + (budgetData.accounts.savings || 0);
 }
 
-function getIncomeReceived(){
-
+function getIncomeReceived() {
   return budgetData.timeline
-  .filter(x=>x.type==="income" && x.completed)
-  .reduce((a,b)=>a+b.amount,0);
-
+    .filter(x => x.type === "income" && x.completed)
+    .reduce((a, b) => a + b.amount, 0);
 }
 
-function getBillsPaid(){
-
+function getBillsPaid() {
   return budgetData.timeline
-  .filter(x=>x.type==="expense" && x.completed)
-  .reduce((a,b)=>a+b.amount,0);
-
+    .filter(x => x.type === "expense" && x.completed)
+    .reduce((a, b) => a + b.amount, 0);
 }
 
-function getRemainingExpenses(){
-
+function getRemainingExpenses() {
   return getVisibleItems()
-    .filter(item =>
-      item.type === "expense" &&
-      !item.completed
-    )
-    .reduce(
-      (sum,item)=>sum + item.amount,
-      0
-    );
-
+    .filter(item => item.type === "expense" && !item.completed)
+    .reduce((sum, item) => sum + item.amount, 0);
 }
 
-function getRemainingIncome(){
-
+function getRemainingIncome() {
   return getVisibleItems()
-    .filter(item =>
-      item.type === "income" &&
-      !item.completed
-    )
-    .reduce(
-      (sum,item)=>sum + item.amount,
-      0
-    );
-
+    .filter(item => item.type === "income" && !item.completed)
+    .reduce((sum, item) => sum + item.amount, 0);
 }
 
-function getDueBeforeNextIncome(){
-
+function getDueBeforeNextIncome() {
   const incomes = getVisibleItems()
-    .filter(item =>
-      item.type === "income" &&
-      !item.completed
-    )
-    .sort(
-      (a,b) =>
-      new Date(a.date) -
-      new Date(b.date)
-    );
+    .filter(item => item.type === "income" && !item.completed)
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
 
-  if(incomes.length === 0){
-    return 0;
-  }
+  if (incomes.length === 0) return 0;
 
-  const nextIncomeDate =
-    new Date(incomes[0].date);
+  const nextIncomeDate = new Date(incomes[0].date);
 
   return getVisibleItems()
-    .filter(item =>
-      item.type === "expense" &&
-      !item.completed &&
-      new Date(item.date) < nextIncomeDate
-    )
-    .reduce(
-      (sum,item) =>
-      sum + item.amount,
-      0
-    );
-
+    .filter(item => item.type === "expense" && !item.completed && new Date(item.date) < nextIncomeDate)
+    .reduce((sum, item) => sum + item.amount, 0);
 }
 
-function getNextIncome(){
-
-  const incomes =
-    getVisibleItems()
-      .filter(item =>
-        item.type === "income" &&
-        !item.completed
-      )
-      .sort(
-        (a,b) =>
-          new Date(a.date) -
-          new Date(b.date)
-      );
+function getNextIncome() {
+  const incomes = getVisibleItems()
+    .filter(item => item.type === "income" && !item.completed)
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
 
   return incomes[0] || null;
-
 }
 
-function getPaycheckToPaycheck(){
+function getPaycheckToPaycheck() {
+  const incomes = getVisibleItems()
+    .filter(item => item.type === "income" && !item.completed)
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
 
-  const incomes =
-    getVisibleItems()
-      .filter(item =>
-        item.type === "income" &&
-        !item.completed
-      )
-      .sort(
-        (a,b) =>
-          new Date(a.date) -
-          new Date(b.date)
-      );
-
-  if(incomes.length === 0){
+  if (incomes.length === 0) {
     return getCurrentCash();
   }
 
-  const nextIncome =
-    incomes[0];
-
-  const followingIncome =
-    incomes[1];
-
+  const nextIncome = incomes[0];
+  const followingIncome = incomes[1];
   let expenses = 0;
 
-  if(followingIncome){
-
-   expenses =
-  getVisibleItems()
-    .filter(item =>
-      item.type === "expense" &&
-      !item.completed &&
-      new Date(item.date) >=
-        new Date(nextIncome.date) &&
-      new Date(item.date) <
-        new Date(followingIncome.date)
-    )
-        .reduce(
-          (sum,item) =>
-            sum + item.amount,
-          0
-        );
-
+  if (followingIncome) {
+    expenses = getVisibleItems()
+      .filter(item =>
+        item.type === "expense" &&
+        !item.completed &&
+        new Date(item.date) >= new Date(nextIncome.date) &&
+        new Date(item.date) < new Date(followingIncome.date)
+      )
+      .reduce((sum, item) => sum + item.amount, 0);
   }
 
-  return (
-    getCurrentCash() +
-    nextIncome.amount -
-    expenses
-  );
-
+  return getCurrentCash() + nextIncome.amount - expenses;
 }
 
-function getCurrentCash(){
-
-  return (
-    budgetData.accounts.checking +
-    budgetData.accounts.savings
-  );
-
+function getCurrentCash() {
+  return getCombinedCash();
 }
 
-function getAvailableToSpend(){
-
-  return (
-
-    getCurrentCash() -
-    getRemainingExpenses()
-
-  );
-
+function getAvailableToSpend() {
+  return getCurrentCash() - getRemainingExpenses();
 }
 
-  
-/* =========================
-   DASHBOARD
-========================= */
-
-function renderDashboard(){
-
-  const combinedCash =
-    getCurrentCash();
-
-const remainingExpenses =
-  budgetData.settings.currentMode === "PROJECTED"
-    ? getRemainingExpenses()
-    : getMonthBillsRemaining();
-
-const remainingIncome =
-  budgetData.settings.currentMode === "PROJECTED"
-    ? getRemainingIncome()
-    : getMonthIncomeRemaining();
-  
-const isProjected =
-  budgetData.settings.currentMode === "PROJECTED";
-
-const nextIncome =
-  getNextIncome();
-
-const dueBeforeIncome =
-  getDueBeforeNextIncome();
-  
-const monthRemaining =
-
-  remainingIncome -
-  remainingExpenses;
-
-const available =
-  combinedCash -
-  dueBeforeIncome;
-
-const safeSpend =
-
-  Math.max(
-    0,
-    available -
-    Number(
-      budgetData.settings.forecastBuffer || 0
-    )
-  );
-  
-const healthStatus =
-
-  combinedCash >= 2000
-    ? "✅ Strong"
-    : combinedCash >= 500
-      ? "🟡 Stable"
-      : combinedCash >= 0
-        ? "⚠️ Tight"
-        : "🔴 Deficit";
-  
-
-  
-const bufferGap =
-
-  isProjected
-
-    ? available -
-      Number(
-        budgetData.settings.forecastBuffer || 0
-      )
-
-    : available;
-
-document.getElementById(
-  "bufferStatus"
-).textContent =
-
-  bufferGap >= 0
-
-    ? `✅ ${money(bufferGap)} Above Buffer`
-
-    : `⚠️ ${money(Math.abs(bufferGap))} Below Buffer`;
-  
- document.getElementById(
-    "combinedCash"
-).textContent =
-    money(combinedCash);
-
-
-const dueBeforeIncomeElement =
-  document.getElementById(
-    "dueBeforeIncome"
-  );
-
-dueBeforeIncomeElement.textContent =
-  money(dueBeforeIncome);
-
-dueBeforeIncomeElement.className =
-  "card-value " +
-
-  (
-    dueBeforeIncome >= 3000
-
-      ? "red"
-
-      : dueBeforeIncome >= 1000
-
-        ? "orange"
-
-        : "green"
-  );  
-  
-  const availableElement =
-  document.getElementById(
-    "availableToSpend"
-  );
-
-availableElement.textContent =
-  money(available);
-
-availableElement.className =
-  "card-value " +
-
-  (
-    available >= 2000
-
-      ? "green"
-
-      : available >= 500
-
-        ? "purple"
-
-        : available >= 0
-
-          ? "orange"
-
-          : "red"
-  );
-
-const safeSpendElement =
-  document.getElementById(
-    "safeSpend"
-  );
-
-safeSpendElement.textContent =
-  money(safeSpend);
-
-safeSpendElement.className =
-  "card-value " +
-  (
-    safeSpend >= 2000
-      ? "green"
-      : safeSpend >= 500
-        ? "purple"
-        : safeSpend >= 0
-          ? "orange"
-          : "red"
-  );
-
-document.getElementById(
-  "safeSpendDetails"
-).textContent =
-  "Available: " +
-  money(available) +
-  " | Buffer: " +
-  money(
-    Number(
-      budgetData.settings.forecastBuffer || 0
-    )
-  );
-
-  
-   document.getElementById(
-  "financialHealth"
-).textContent =
-  healthStatus; 
-
-document.getElementById(
-  "cashRunway"
-).textContent =
-  dueBeforeIncome <= combinedCash
-    ? "✅ Covered Until Next Paycheck"
-    : "⚠️ Need " +
-      money(dueBeforeIncome - combinedCash) +
-      " Before Payday";
-  
-  document.getElementById(
-    "incomeReceived"
-  ).textContent =
-    money(getIncomeReceived());
-
-  document.getElementById(
-    "billsPaid"
-  ).textContent =
-    money(getBillsPaid());
-  
-  document.getElementById(
-  "lastUpdated"
-).textContent =
-  budgetData.settings.lastUpdated ||
-  "Never";
-
-
-document.getElementById(
-  "nextIncomeAmount"
-).textContent =
-
-  nextIncome
-    ? money(nextIncome.amount)
-    : "$0";
-
-document.getElementById(
-  "nextIncomeDate"
-).textContent =
-
-  nextIncome
-    ? `${nextIncome.owner} • ${nextIncome.date}`
-    : "No income scheduled";
-
-  document.getElementById(
-  "paycheckToPaycheck"
-).textContent =
-  money(
-    getPaycheckToPaycheck()
-  );
-  
-}
-
-/* =========================
-   TIMELINE FILTER
-========================= */
-
-function getVisibleItems(){
-
+function getVisibleItems() {
   return budgetData.timeline;
-
 }
 
 /* =========================
-   COMING UP
+   DASHBOARD RENDER
 ========================= */
+function renderDashboard() {
+  const combinedCash = getCurrentCash();
+  const isProjected = budgetData.settings.currentMode === "PROJECTED";
 
-function renderComingUp(){
+  const remainingExpenses = isProjected ? getRemainingExpenses() : getMonthBillsRemaining();
+  const remainingIncome = isProjected ? getRemainingIncome() : getMonthIncomeRemaining();
+  
+  const nextIncome = getNextIncome();
+  const dueBeforeIncome = getDueBeforeNextIncome();
+  const available = combinedCash - dueBeforeIncome;
+  const safeSpend = Math.max(0, available - Number(budgetData.settings.forecastBuffer || 0));
 
-  const table =
-    document.getElementById("comingUpTable");
+  const healthStatus = combinedCash >= 2000 ? "✅ Strong" : combinedCash >= 500 ? "🟡 Stable" : combinedCash >= 0 ? "⚠️ Tight" : "🔴 Deficit";
+  const bufferGap = isProjected ? available - Number(budgetData.settings.forecastBuffer || 0) : available;
 
-  if(!table) return;
+  document.getElementById("bufferStatus").textContent = bufferGap >= 0 ? `✅ ${money(bufferGap)} Above Buffer` : `⚠️ ${money(Math.abs(bufferGap))} Below Buffer`;
+  document.getElementById("combinedCash").textContent = money(combinedCash);
+
+  const dueBeforeIncomeElement = document.getElementById("dueBeforeIncome");
+  dueBeforeIncomeElement.textContent = money(dueBeforeIncome);
+  dueBeforeIncomeElement.className = "card-value " + (dueBeforeIncome >= 3000 ? "red" : dueBeforeIncome >= 1000 ? "orange" : "green");
+
+  const availableElement = document.getElementById("availableToSpend");
+  availableElement.textContent = money(available);
+  availableElement.className = "card-value " + (available >= 2000 ? "green" : available >= 500 ? "purple" : available >= 0 ? "orange" : "red");
+
+  const safeSpendElement = document.getElementById("safeSpend");
+  safeSpendElement.textContent = money(safeSpend);
+  safeSpendElement.className = "card-value " + (safeSpend >= 2000 ? "green" : safeSpend >= 500 ? "purple" : safeSpend >= 0 ? "orange" : "red");
+
+  document.getElementById("safeSpendDetails").textContent = "Available: " + money(available) + " | Buffer: " + money(Number(budgetData.settings.forecastBuffer || 0));
+  document.getElementById("financialHealth").textContent = healthStatus;
+
+  document.getElementById("cashRunway").textContent = dueBeforeIncome <= combinedCash ? "✅ Covered Until Next Paycheck" : "⚠️ Need " + money(dueBeforeIncome - combinedCash) + " Before Payday";
+
+  document.getElementById("incomeReceived").textContent = money(getIncomeReceived());
+  document.getElementById("billsPaid").textContent = money(getBillsPaid());
+  document.getElementById("lastUpdated").textContent = budgetData.settings.lastUpdated || "Never";
+
+  document.getElementById("nextIncomeAmount").textContent = nextIncome ? money(nextIncome.amount) : "$0";
+  document.getElementById("nextIncomeDate").textContent = nextIncome ? `${nextIncome.owner} • ${nextIncome.date}` : "No income scheduled";
+
+  document.getElementById("paycheckToPaycheck").textContent = money(getPaycheckToPaycheck());
+}
+
+/* =========================
+   COMING UP RENDER
+========================= */
+function renderComingUp() {
+  const table = document.getElementById("comingUpTable");
+  if (!table) return;
 
   table.innerHTML = "";
 
-  const items =
-    getVisibleItems()
+  const items = getVisibleItems()
     .filter(item => !item.completed)
-    .sort(
-      (a,b)=>
-      new Date(a.date) -
-      new Date(b.date)
-    );
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  if (items.length === 0) {
+    table.innerHTML = `<tr><td colspan="5" style="text-align:center;">No upcoming transactions for the next period.</td></tr>`;
+    return;
+  }
 
   items.forEach(item => {
-
-    const row =
-      document.createElement("tr");
-
+    const row = document.createElement("tr");
     row.innerHTML = `
-
       <td>
-
-        <input
-          type="checkbox"
-          class="big-check"
-          onchange="toggleItem('${item.id}')"
-        >
-
+        <input type="checkbox" class="big-check" onchange="toggleItem('${item.id}')">
       </td>
-
       <td>${item.date}</td>
-
       <td>${item.desc}</td>
-
       <td>${item.owner}</td>
-
-      <td>
-        ${item.type==="expense"?"-":"+"}
-        ${money(item.amount)}
+      <td class="${item.type === 'expense' ? 'red' : 'green'}">
+        ${item.type === "expense" ? "-" : "+"} ${money(item.amount)}
       </td>
-
     `;
-
     table.appendChild(row);
-
   });
-
 }
 
 /* =========================
-   PAYCHECKS
+   PAYCHECKS RENDER
 ========================= */
-
-function showPaycheckDetails(item){
-
-  const card =
-    document.getElementById(
-      "paycheckDetails"
-    );
-
-  if(!card) return;
+function showPaycheckDetails(item) {
+  const card = document.getElementById("paycheckDetails");
+  if (!card) return;
 
   card.innerHTML = `
-
-    <h3>
-      Paycheck Details
-    </h3>
-
-    <p>
-      <strong>Scope:</strong>
-      ${item.owner}
-    </p>
-
-    <p>
-      <strong>Date:</strong>
-      ${item.date}
-    </p>
-
-    <p>
-      <strong>Description:</strong>
-      ${item.desc}
-    </p>
-
-    <p>
-      <strong>Amount:</strong>
-      ${money(item.amount)}
-    </p>
-
-    <p>
-      <strong>Status:</strong>
-      ${
-        item.completed
-          ? "Received"
-          : "Pending"
-      }
-    </p>
-
+    <h3>Paycheck Details</h3>
+    <p><strong>Scope:</strong> ${item.owner}</p>
+    <p><strong>Date:</strong> ${item.date}</p>
+    <p><strong>Description:</strong> ${item.desc}</p>
+    <p><strong>Amount:</strong> ${money(item.amount)}</p>
+    <p><strong>Status:</strong> ${item.completed ? "Received" : "Pending"}</p>
   `;
-
 }
 
-  
-function renderPaychecks(){
-
-  const table =
-    document.getElementById("paycheckTable");
-
-  if(!table) return;
+function renderPaychecks() {
+  const table = document.getElementById("paycheckTable");
+  if (!table) return;
 
   table.innerHTML = "";
 
-  const checks =
-    getVisibleItems()
-    .filter(item =>
-      item.type === "income"
-    )
-    .sort(
-      (a,b)=>
-      new Date(a.date) -
-      new Date(b.date)
-    );
+  const checks = getVisibleItems()
+    .filter(item => item.type === "income")
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+  if (checks.length === 0) {
+    table.innerHTML = `<tr><td colspan="5" style="text-align:center;">No paychecks scheduled.</td></tr>`;
+    return;
+  }
 
   checks.forEach(item => {
+    const row = document.createElement("tr");
+    row.style.cursor = "pointer";
+    row.onclick = () => showPaycheckDetails(item);
 
-    const row =
-      document.createElement("tr");
-    
-row.style.cursor = "pointer";
-
-row.onclick = () =>
-  showPaycheckDetails(item);
-    
     row.innerHTML = `
-
       <td>
-
-        <input
-          type="checkbox"
-          class="big-check"
-          ${item.completed?"checked":""}
-          onchange="toggleItem('${item.id}')"
-        >
-
+        <input type="checkbox" class="big-check" ${item.completed ? "checked" : ""} onchange="toggleItem('${item.id}')">
       </td>
-
       <td>${item.date}</td>
-
       <td>${item.owner}</td>
-
       <td>${item.desc}</td>
-
-      <td>${money(item.amount)}</td>
-
+      <td class="green">${money(item.amount)}</td>
     `;
-
     table.appendChild(row);
-
   });
-
 }
 
 /* =========================
-   TIMELINE
+   TIMELINE RENDER
 ========================= */
-
-function renderTimeline(){
-
-  const container =
-    document.getElementById(
-      "timelineContainer"
-    );
-
-  if(!container) return;
+function renderTimeline() {
+  const container = document.getElementById("timelineContainer");
+  if (!container) return;
 
   container.innerHTML = "";
 
-  const items =
-    getVisibleItems()
+  const items = getVisibleItems()
     .filter(item => !item.completed)
-    .sort(
-      (a,b)=>
-      new Date(a.date) -
-      new Date(b.date)
-    );
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
 
-  items.forEach(item=>{
+  if (items.length === 0) {
+    container.innerHTML = `<div class="card"><p>No upcoming events in timeline.</p></div>`;
+    return;
+  }
 
-    const card =
-      document.createElement("div");
-
-    card.className =
-      "activity-item";
-
-    card.style.marginBottom = "0";
-
-
+  items.forEach(item => {
+    const card = document.createElement("div");
+    card.className = "activity-item";
     card.innerHTML = `
-
-      <strong>${item.date}</strong>
-
-      <br>
-
-      ${item.desc}
-
-      <br>
-
-      ${item.owner}
-
-      <br>
-
-      ${money(item.amount)}
-
+      <strong style="color:var(--accent2);">${item.date}</strong><br>
+      <strong>${item.desc}</strong> (${item.owner})<br>
+      <span class="${item.type === 'expense' ? 'red' : 'green'}">${money(item.amount)}</span>
     `;
-
     container.appendChild(card);
-
   });
-
 }
 
 /* =========================
-   LEDGER
+   LEDGER RENDER
 ========================= */
-
-function renderLedger(){
-
-  const table =
-    document.getElementById(
-      "ledgerTable"
-    );
-
-  if(!table) return;
+function renderLedger() {
+  const table = document.getElementById("ledgerTable");
+  if (!table) return;
 
   table.innerHTML = "";
 
-  const completedItems =
-    getVisibleItems()
-    .filter(item =>
-      item.completed
-    );
+  const completedItems = getVisibleItems().filter(item => item.completed);
 
-  if(completedItems.length === 0){
-
-    table.innerHTML = `
-        <tr>
-            <td colspan="5" style="text-align:center;">
-                No completed transactions yet.
-            </td>
-        </tr>
-    `;
-
+  if (completedItems.length === 0) {
+    table.innerHTML = `<tr><td colspan="5" style="text-align:center;">No completed transactions yet.</td></tr>`;
     return;
+  }
 
-}
-
-  completedItems.forEach(item=>{
-
-    const row =
-      document.createElement("tr");
-
+  completedItems.forEach(item => {
+    const row = document.createElement("tr");
     row.innerHTML = `
-
       <td>${item.date}</td>
-
       <td>${item.desc}</td>
-
       <td>${item.owner}</td>
-
-      <td>${money(item.amount)}</td>
-
+      <td class="${item.type === 'expense' ? 'red' : 'green'}">${money(item.amount)}</td>
       <td>✅ Complete</td>
-
     `;
-
     table.appendChild(row);
-
   });
-
 }
 
 /* =========================
-   COMPLETE ITEM
+   TOGGLE TRANSACTION ITEM
 ========================= */
+function toggleItem(id) {
+  const item = budgetData.timeline.find(x => x.id === id);
+  if (!item) return;
 
-function toggleItem(id){
-
-  const item =
-    budgetData.timeline.find(
-      x => x.id === id
-    );
-
-  if(!item) return;
-
-  item.completed =
-    !item.completed;
-
-  addActivity(
-
-    `${item.desc} marked ${
-      item.completed
-        ? "completed"
-        : "pending"
-    }`
-
-  );
+  item.completed = !item.completed;
+  addActivity(`${item.desc} marked ${item.completed ? "completed" : "pending"}`);
 
   saveData();
-
   generateNetYearAnalysis();
-
   renderAll();
-
 }
 
 /* =========================
    FORECAST ENGINE
 ========================= */
+function renderForecasts() {
+  const currentCash = getCurrentCash();
+  const nowIncome = getMonthIncomeRemaining();
+  const nowExpenses = getMonthBillsRemaining();
+  const nowFlow = nowIncome - nowExpenses;
+  const nowMonthEnd = currentCash + nowFlow;
 
-function renderForecasts(){
+  const projectedIncome = getRemainingIncome();
+  const projectedExpenses = getRemainingExpenses();
+  const projectedFlow = projectedIncome - projectedExpenses;
+  const projectedEnd = currentCash + projectedFlow;
 
-  const currentCash =
-    getCurrentCash();
+  document.getElementById("nowCash").textContent = money(currentCash);
+  document.getElementById("nowIncome").textContent = money(nowIncome);
+  document.getElementById("nowExpenses").textContent = money(nowExpenses);
+  document.getElementById("nowFlow").textContent = money(nowFlow);
+  document.getElementById("nowMonthEnd").textContent = money(nowMonthEnd);
 
-const nowIncome =
-    getMonthIncomeRemaining();
-
-const nowExpenses =
-    getMonthBillsRemaining();
-
-const nowFlow =
-    nowIncome -
-    nowExpenses;
-
-const nowMonthEnd =
-    currentCash +
-    nowFlow;
-
-const projectedIncome =
-    getRemainingIncome();
-
-const projectedExpenses =
-    getRemainingExpenses();
-
-const projectedFlow =
-    projectedIncome -
-    projectedExpenses;
-
-const projectedEnd =
-
-  currentCash +
-  projectedFlow;
-  document.getElementById(
-    "nowCash"
-  ).textContent =
-    money(currentCash);
-
-  document.getElementById(
-    "nowIncome"
-  ).textContent =
-    money(nowIncome);
-
-  document.getElementById(
-    "nowExpenses"
-  ).textContent =
-    money(nowExpenses);
-
-  document.getElementById(
-  "nowFlow"
-).textContent =
-  money(nowFlow);
-
-  document.getElementById(
-    "nowMonthEnd"
-  ).textContent =
-    money(nowMonthEnd);
-
-  document.getElementById(
-    "projCash"
-  ).textContent =
-    money(currentCash);
-
-  document.getElementById(
-    "projIncome"
-  ).textContent =
-    money(projectedIncome);
-
-  document.getElementById(
-    "projExpenses"
-  ).textContent =
-   money(projectedExpenses);
-
-  document.getElementById(
-    "projFlow"
-  ).textContent =
-    money(projectedFlow);
-
-  document.getElementById(
-    "projMonthEnd"
-  ).textContent =
-    money(projectedEnd);
-
+  document.getElementById("projCash").textContent = money(currentCash);
+  document.getElementById("projIncome").textContent = money(projectedIncome);
+  document.getElementById("projExpenses").textContent = money(projectedExpenses);
+  document.getElementById("projFlow").textContent = money(projectedFlow);
+  document.getElementById("projMonthEnd").textContent = money(projectedEnd);
 }
 
-  function renderActivityLog(){
-
-  const container =
-    document.getElementById(
-      "activityContainer"
-    );
-
-  if(!container) return;
+function renderActivityLog() {
+  const container = document.getElementById("activityContainer");
+  if (!container) return;
 
   container.innerHTML = "";
 
-  budgetData.activityLog.forEach(item=>{
-
-    const div =
-      document.createElement("div");
-
-    div.className =
-      "activity-item";
-
-   div.innerHTML = `
-
-<strong>${item.date}</strong>
-
-<br>
-
-${item.message}
-
-`;
-    container.appendChild(div);
-
-  });
-
-}
-
-/* =========================
-   MONTHLY SUMMARY
-========================= */
-
-function getBudgetMonth(){
-
-  return (
-    new Date().getMonth() + 1
-  );
-
-}
-
-function getCurrentMonthItems(){
-
-    const currentMonth =
-        getBudgetMonth();
-
- return getVisibleItems().filter(item => {
-
-    const itemDate =
-        new Date(item.date);
-
-    return (
-        itemDate.getMonth() + 1 === currentMonth &&
-        itemDate.getFullYear() ===
-        new Date().getFullYear()
-    );
-
-});
-
-}
-
-function getMonthIncomeReceived(){
-
-  return getCurrentMonthItems()
-    .filter(item =>
-      item.type === "income" &&
-      item.completed
-    )
-    .reduce(
-      (sum,item)=>sum + item.amount,
-      0
-    );
-
-}
-
-function getMonthIncomeRemaining(){
-
-  return getCurrentMonthItems()
-    .filter(item =>
-      item.type === "income" &&
-      !item.completed
-    )
-    .reduce(
-      (sum,item)=>sum + item.amount,
-      0
-    );
-
-}
-
-function getMonthBillsPaid(){
-
-  return getCurrentMonthItems()
-    .filter(item =>
-      item.type === "expense" &&
-      item.completed
-    )
-    .reduce(
-      (sum,item)=>sum + item.amount,
-      0
-    );
-
-}
-
-function getMonthBillsRemaining(){
-
-  return getCurrentMonthItems()
-    .filter(item =>
-      item.type === "expense" &&
-      !item.completed
-    )
-    .reduce(
-      (sum,item)=>sum + item.amount,
-      0
-    );
-
-}
-
-function renderMonthlySummary(){
-
- const incomeReceived =
-  getMonthIncomeReceived();
-
-const billsPaid =
-  getMonthBillsPaid();
-
-const incomeRemaining =
-  getMonthIncomeRemaining();
-
-const billsRemaining =
-  getMonthBillsRemaining();
-  const netRemaining =
-    incomeRemaining -
-    billsRemaining;
-
-  document.getElementById(
-    "summaryIncomeReceived"
-  ).textContent =
-    money(incomeReceived);
-
-  document.getElementById(
-    "summaryIncomeRemaining"
-  ).textContent =
-    money(incomeRemaining);
-
-  document.getElementById(
-    "summaryBillsPaid"
-  ).textContent =
-    money(billsPaid);
-
-  document.getElementById(
-    "summaryBillsRemaining"
-  ).textContent =
-    money(billsRemaining);
-
-  document.getElementById(
-    "summaryNetRemaining"
-  ).textContent =
-    money(netRemaining);
-
-}  
-
-/* =========================
-   GOALS
-========================= */
-
-function deleteGoal(name){
-
-  budgetData.goals =
-    budgetData.goals.filter(
-      goal => goal.name !== name
-    );
-
-  addActivity(
-    `Goal Deleted: ${name}`
-  );
-
- saveData();
-
-renderAll();
-
-}
-  
-function addGoal(){
-
-  const name =
-    document.getElementById(
-      "goalName"
-    ).value.trim();
-
-  const current =
-    Number(
-      document.getElementById(
-        "goalCurrent"
-      ).value
-    );
-
-  const target =
-    Number(
-      document.getElementById(
-        "goalTarget"
-      ).value
-    );
-
-  if(!name) return;
-
-  budgetData.goals.push({
-
-    name,
-
-    current,
-
-    target,
-
-    notes:""
-
-  });
-
-  addActivity(
-    `Goal Added: ${name}`
-  );
-
-  document.getElementById(
-    "goalName"
-  ).value = "";
-
-  document.getElementById(
-    "goalCurrent"
-  ).value = "";
-
-  document.getElementById(
-    "goalTarget"
-  ).value = "";
-
-saveData();
-
-renderAll();
-
-}
-
-function renderGoals(){
-
-  const container =
-    document.getElementById(
-      "goalContainer"
-    );
-
-  if(!container) return;
-
-  container.innerHTML = "";
-
-  if(
-    budgetData.goals.length === 0
-  ){
-
-    container.innerHTML = `
-
-      <div class="goal-card">
-        No goals created yet.
-      </div>
-
-    `;
-
+  if (budgetData.activityLog.length === 0) {
+    container.innerHTML = `<div class="activity-item">No activity recorded yet.</div>`;
     return;
-
   }
 
- budgetData.goals.forEach(goal=>{
-
-  const percent =
-
-    goal.target > 0
-
-      ? Math.min(
-          100,
-          Math.round(
-            (goal.current / goal.target) * 100
-          )
-        )
-
-      : 0;
-
-   const progressColor =
-
-  percent >= 100
-
-    ? "#22c55e"
-
-    : percent >= 75
-
-      ? "#3b82f6"
-
-      : percent >= 50
-
-        ? "#f59e0b"
-
-        : "#ef4444";
-
-  const div =
-    document.createElement("div");
-
-  div.className =
-    "goal-card";
-
- div.innerHTML = `
-
-    <h3>${goal.name}</h3>
-
-    <p>
-      Current:
-      ${money(goal.current)}
-    </p>
-
-    <p>
-      Target:
-      ${money(goal.target)}
-    </p>
-
-    <p>
-      Progress:
-      ${percent}%
-    </p>
-
-    <div style="
-      width:100%;
-      background:#334155;
-      border-radius:10px;
-      overflow:hidden;
-      margin-top:8px;
-    ">
-
-      <div style="
-        width:${percent}%;
-        background:${progressColor};
-        height:12px;
-      "></div>
-
-    </div>
-
-    <br>
-
-    <button
-      class="btn btn-danger"
-      onclick="deleteGoal('${goal.name}')"
-    >
-      Delete Goal
-    </button>
-
-  `;
-   
-  container.appendChild(div);
-
-});
-
+  budgetData.activityLog.forEach(item => {
+    const div = document.createElement("div");
+    div.className = "activity-item";
+    div.innerHTML = `<strong>${item.date}</strong><br>${item.message}`;
+    container.appendChild(div);
+  });
 }
-  
+
+/* =========================
+   MONTHLY SUMMARY CALCULATIONS
+========================= */
+function getBudgetMonth() {
+  return new Date().getMonth() + 1;
+}
+
+function getCurrentMonthItems() {
+  const currentMonth = getBudgetMonth();
+  const currentYear = new Date().getFullYear();
+
+  return getVisibleItems().filter(item => {
+    const itemDate = new Date(item.date);
+    return (itemDate.getMonth() + 1) === currentMonth && itemDate.getFullYear() === currentYear;
+  });
+}
+
+function getMonthIncomeReceived() {
+  return getCurrentMonthItems()
+    .filter(item => item.type === "income" && item.completed)
+    .reduce((sum, item) => sum + item.amount, 0);
+}
+
+function getMonthIncomeRemaining() {
+  return getCurrentMonthItems()
+    .filter(item => item.type === "income" && !item.completed)
+    .reduce((sum, item) => sum + item.amount, 0);
+}
+
+function getMonthBillsPaid() {
+  return getCurrentMonthItems()
+    .filter(item => item.type === "expense" && item.completed)
+    .reduce((sum, item) => sum + item.amount, 0);
+}
+
+function getMonthBillsRemaining() {
+  return getCurrentMonthItems()
+    .filter(item => item.type === "expense" && !item.completed)
+    .reduce((sum, item) => sum + item.amount, 0);
+}
+
+function renderMonthlySummary() {
+  const incomeReceived = getMonthIncomeReceived();
+  const billsPaid = getMonthBillsPaid();
+  const incomeRemaining = getMonthIncomeRemaining();
+  const billsRemaining = getMonthBillsRemaining();
+  const netRemaining = incomeRemaining - billsRemaining;
+
+  document.getElementById("summaryIncomeReceived").textContent = money(incomeReceived);
+  document.getElementById("summaryIncomeRemaining").textContent = money(incomeRemaining);
+  document.getElementById("summaryBillsPaid").textContent = money(billsPaid);
+  document.getElementById("summaryBillsRemaining").textContent = money(billsRemaining);
+  document.getElementById("summaryNetRemaining").textContent = money(netRemaining);
+}
+
+/* =========================
+   GOALS RENDER & CONTROLS
+========================= */
+function deleteGoal(name) {
+  budgetData.goals = budgetData.goals.filter(goal => goal.name !== name);
+  addActivity(`Goal Deleted: ${name}`);
+  saveData();
+  renderAll();
+}
+
+function addGoal() {
+  const name = document.getElementById("goalName").value.trim();
+  const current = Number(document.getElementById("goalCurrent").value) || 0;
+  const target = Number(document.getElementById("goalTarget").value) || 0;
+
+  if (!name) return alert("Please enter a goal name.");
+
+  budgetData.goals.push({
+    name,
+    current,
+    target,
+    notes: ""
+  });
+
+  addActivity(`Goal Added: ${name}`);
+  document.getElementById("goalName").value = "";
+  document.getElementById("goalCurrent").value = "";
+  document.getElementById("goalTarget").value = "";
+
+  saveData();
+  renderAll();
+}
+
+function renderGoals() {
+  const container = document.getElementById("goalContainer");
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  if (budgetData.goals.length === 0) {
+    container.innerHTML = `<div class="goal-card"><p>No goals created yet.</p></div>`;
+    return;
+  }
+
+  budgetData.goals.forEach(goal => {
+    const percent = goal.target > 0 ? Math.min(100, Math.round((goal.current / goal.target) * 100)) : 0;
+    const progressColor = percent >= 100 ? "#22c55e" : percent >= 75 ? "#3b82f6" : percent >= 50 ? "#f59e0b" : "#ef4444";
+
+    const div = document.createElement("div");
+    div.className = "goal-card";
+    div.innerHTML = `
+      <h3>${goal.name}</h3>
+      <p>Current: ${money(goal.current)}</p>
+      <p>Target: ${money(goal.target)}</p>
+      <p>Progress: ${percent}%</p>
+      <div style="width:100%; background:#334155; border-radius:10px; overflow:hidden; margin:10px 0;">
+        <div style="width:${percent}%; background:${progressColor}; height:12px;"></div>
+      </div>
+      <button class="btn btn-danger" onclick="deleteGoal('${goal.name}')">Delete Goal</button>
+    `;
+    container.appendChild(div);
+  });
+}
+
 /* =========================
    RECONCILIATION
 ========================= */
+function updateBalances() {
+  const oldChecking = budgetData.accounts.checking;
+  const oldSavings = budgetData.accounts.savings;
 
-function updateBalances(){
+  budgetData.accounts.checking = Number(document.getElementById("checkingInput").value) || 0;
+  budgetData.accounts.savings = Number(document.getElementById("savingsInput").value) || 0;
 
-const oldChecking = budgetData.accounts.checking;
-const oldSavings = budgetData.accounts.savings;
-
-  budgetData.accounts.checking =
-    Number(
-      document.getElementById(
-        "checkingInput"
-      ).value
-    ) || 0;
-
-  budgetData.accounts.savings =
-    Number(
-      document.getElementById(
-        "savingsInput"
-      ).value
-    ) || 0;
-
-addActivity(
-  "Balances Reconciled | " +
-  "Checking: " +
-  money(oldChecking) +
-  " → " +
-  money(budgetData.accounts.checking) +
-  " | Savings: " +
-  money(oldSavings) +
-  " → " +
-  money(budgetData.accounts.savings)
-);
-
-saveData();
-
-renderAll();
-
+  addActivity(`Balances Reconciled | Checking: ${money(oldChecking)} → ${money(budgetData.accounts.checking)} | Savings: ${money(oldSavings)} → ${money(budgetData.accounts.savings)}`);
+  saveData();
+  renderAll();
 }
 
-function renderReconcile(){
+function renderReconcile() {
+  const checking = document.getElementById("checkingInput");
+  const savings = document.getElementById("savingsInput");
 
-  const checking =
-    document.getElementById(
-      "checkingInput"
-    );
+  if (!checking) return;
 
-  const savings =
-    document.getElementById(
-      "savingsInput"
-    );
+  checking.value = budgetData.accounts.checking;
+  savings.value = budgetData.accounts.savings;
 
-  if(!checking) return;
-
-  checking.value =
-    budgetData.accounts.checking;
-
-  savings.value =
-    budgetData.accounts.savings;
-
-document.getElementById(
-  "reconcileTotal"
-).textContent =
-  money(
-    budgetData.accounts.checking +
-    budgetData.accounts.savings
-  );
-
-document.getElementById(
-  "reconcileChecking"
-).textContent =
-  money(budgetData.accounts.checking);
-
-document.getElementById(
-  "reconcileSavings"
-).textContent =
-  money(budgetData.accounts.savings);
-
+  document.getElementById("reconcileTotal").textContent = money(budgetData.accounts.checking + budgetData.accounts.savings);
+  document.getElementById("reconcileChecking").textContent = money(budgetData.accounts.checking);
+  document.getElementById("reconcileSavings").textContent = money(budgetData.accounts.savings);
 }
 
-function importBudget(event){
+/* =========================
+   EXPORT / IMPORT / RESTORE
+========================= */
+function importBudget(event) {
+  const file = event.target.files[0];
+  if (!file) return;
 
-  const file =
-    event.target.files[0];
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const imported = JSON.parse(e.target.result);
 
-  if(!file) return;
+      if (imported.accounts) budgetData.accounts = imported.accounts;
+      if (imported.goals) budgetData.goals = imported.goals;
+      if (imported.activityLog) budgetData.activityLog = imported.activityLog;
 
-  const reader =
-    new FileReader();
-
-  reader.onload = function(e){
-
-    const imported =
-      JSON.parse(
-        e.target.result
-      );
-
-    if(imported.accounts){
-
-      budgetData.accounts =
-        imported.accounts;
-
-    }
-
-    if(imported.goals){
-
-      budgetData.goals =
-        imported.goals;
-
-    }
-
-    if(imported.activityLog){
-
-      budgetData.activityLog =
-        imported.activityLog;
-
-    }
-
-    if(imported.timeline){
-
-      imported.timeline.forEach(
-        incoming=>{
-
-          const exists =
-            budgetData.timeline.some(
-              current =>
-                current.id === incoming.id
-            );
-
-          if(!exists){
-
-            budgetData.timeline.push(
-              incoming
-            );
-
-          }
-
-        }
-      );
-
-    }
-
-    addActivity(
-      "Budget Imported"
-    );
-
-    saveData();
-
-    renderAll();
-
-  };
-
-  reader.readAsText(file);
-
-}
-
-function restoreBudget(event){
-
-  const file =
-    event.target.files[0];
-
-  if(!file) return;
-
-  const reader =
-    new FileReader();
-
-  reader.onload = function(e){
-
-    const imported =
-      JSON.parse(
-        e.target.result
-      );
-
-    budgetData.accounts =
-      imported.accounts || { checking:0, savings:0 };
-
-    budgetData.settings =
-      imported.settings || { currentView:"Household", currentMode:"NOW", forecastBuffer:0 };
-
-    budgetData.goals =
-      imported.goals || [];
-
-    budgetData.activityLog =
-      imported.activityLog || [];
-
-    budgetData.timeline =
-      imported.timeline || [];
-
-    addActivity(
-      "Budget Restored"
-    );
-
-    saveData();
-
-    renderAll();
-
-  };
-
-  reader.readAsText(file);
-
-}
-
-function exportBudget(){
-
-  const data =
-    JSON.stringify(
-      budgetData,
-      null,
-      2
-    );
-
-  const blob =
-    new Blob(
-      [data],
-      {
-        type:"application/json"
+      if (imported.timeline) {
+        imported.timeline.forEach(incoming => {
+          const exists = budgetData.timeline.some(current => current.id === incoming.id);
+          if (!exists) budgetData.timeline.push(incoming);
+        });
       }
-    );
 
-  const url =
-    URL.createObjectURL(blob);
+      addActivity("Budget Imported");
+      saveData();
+      renderAll();
+      alert("Budget merged successfully!");
+    } catch(err) {
+      alert("Invalid JSON file format.");
+    }
+  };
+  reader.readAsText(file);
+}
 
-  const a =
-    document.createElement("a");
+function restoreBudget(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const imported = JSON.parse(e.target.result);
+
+      budgetData.accounts = imported.accounts || { checking: 0, savings: 0 };
+      budgetData.settings = imported.settings || { currentView: "Household", currentMode: "NOW", forecastBuffer: 0, onboardingComplete: true };
+      budgetData.goals = imported.goals || [];
+      budgetData.activityLog = imported.activityLog || [];
+      budgetData.timeline = imported.timeline || [];
+
+      addActivity("Budget Restored");
+      saveData();
+      renderAll();
+      alert("Budget restored successfully!");
+    } catch(err) {
+      alert("Invalid backup file.");
+    }
+  };
+  reader.readAsText(file);
+}
+
+function exportBudget() {
+  const data = JSON.stringify(budgetData, null, 2);
+  const blob = new Blob([data], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
 
   a.href = url;
-
-  a.download =
-    "paycheck-pilot-backup.json";
-
+  a.download = "paycheck-pilot-backup.json";
   a.click();
-
   URL.revokeObjectURL(url);
 
-  addActivity(
-    "Budget Exported"
-  );
-
+  addActivity("Budget Exported");
 }
 
-  function generateNetYearAnalysis(){
+function generateNetYearAnalysis() {
+  const income = getRemainingIncome();
+  const expenses = getRemainingExpenses();
 
-  const income =
-    getRemainingIncome();
+  const largestExpense = budgetData.timeline
+    .filter(item => item.type === "expense")
+    .sort((a, b) => b.amount - a.amount)[0];
 
-  const expenses =
-    getRemainingExpenses();
+  document.getElementById("yearIncomeChange").textContent = money(income);
+  document.getElementById("yearExpenseChange").textContent = money(expenses);
+  document.getElementById("yearNewBills").textContent = budgetData.timeline.filter(item => item.type === "expense").length;
+  document.getElementById("yearRemovedBills").textContent = "0";
 
-  const largestExpense =
-    budgetData.timeline
-      .filter(item =>
-        item.type === "expense"
-      )
-      .sort(
-        (a,b) =>
-        b.amount - a.amount
-      )[0];
-
-  document.getElementById(
-    "yearIncomeChange"
-  ).textContent =
-    money(income);
-
-  document.getElementById(
-    "yearExpenseChange"
-  ).textContent =
-    money(expenses);
-
-  document.getElementById(
-    "yearNewBills"
-  ).textContent =
-    budgetData.timeline.filter(
-      item => item.type === "expense"
-    ).length;
-
-  document.getElementById(
-    "yearRemovedBills"
-  ).textContent =
-    "0";
-
-  document.getElementById(
-    "yearLargestExpense"
-  ).textContent =
-    largestExpense
-      ? `${largestExpense.desc} (${money(largestExpense.amount)})`
-      : "-";
-
-  document.getElementById(
-    "yearProjectedEnd"
-  ).textContent =
-    money(
-      getCurrentCash() +
-      income -
-      expenses -
-      Number(
-        budgetData.settings.forecastBuffer || 0
-      )
-    );
-
+  document.getElementById("yearLargestExpense").textContent = largestExpense ? `${largestExpense.desc} (${money(largestExpense.amount)})` : "-";
+  document.getElementById("yearProjectedEnd").textContent = money(getCurrentCash() + income - expenses - Number(budgetData.settings.forecastBuffer || 0));
 }
 
-async function cloudSave(){
+/* =========================
+   CLOUD SYNC (SUPABASE)
+========================= */
+async function cloudSave() {
+  if (!currentUser) return;
 
-  if(!currentUser) return;
+  try {
+    const { data, error } = await supabaseClient
+      .from("budget_sync")
+      .upsert({
+        id: currentUser.id,
+        data: budgetData,
+        updated_at: new Date().toISOString()
+      })
+      .select();
 
-  try{
-
-   const { data, error } =
-  await supabaseClient
-    .from("budget_sync")
-   .upsert({
-  id: currentUser.id,
-  data: budgetData,
-  updated_at:
-    new Date().toISOString()
-})
-.select();
-
-if(error){
-
-  console.error(error);
-  return;
-
-}
-
-    console.log(
-  "SAVE RESULT",
-  data
-);
-
-  }catch(error){
-
-    console.error(
-      "Cloud Save Failed",
-      error
-    );
-
+    if (error) console.error("Cloud Save Error:", error);
+  } catch (error) {
+    console.error("Cloud Save Failed", error);
   }
-
 }
 
-async function cloudLoad(){
+async function cloudLoad() {
+  if (!currentUser) return;
 
-  if(!currentUser) return;
-
-  try{
-
-    const {
-      data,
-      error
-    } = await supabaseClient
+  try {
+    const { data, error } = await supabaseClient
       .from("budget_sync")
       .select("*")
-      .eq(
-        "id",
-        currentUser.id
-      )
-     .maybeSingle();
+      .eq("id", currentUser.id)
+      .maybeSingle();
 
-    if(error){
-      if(error.code === 'PGRST116'){
-        showAuthView('onboarding');
-      } else {
-        console.error(error);
-      }
+    if (error) {
+      if (error.code === 'PGRST116') showAuthView('onboarding');
+      else console.error(error);
       return;
     }
 
-if(!data){
+    if (data?.data) {
+      Object.assign(budgetData, data.data);
 
-  console.log(
-    "No cloud data found for user."
-  );
+      if (!budgetData.settings) budgetData.settings = {};
+      if (budgetData.settings.onboardingComplete === undefined) {
+        budgetData.settings.onboardingComplete = false;
+      }
 
-  return;
-
-}
-    
-    if(data?.data){
-
-      Object.assign(
-        budgetData,
-        data.data
-      );
-
-if(!budgetData.settings){
-  budgetData.settings = {};
-}
-
-if(
-  budgetData.settings.onboardingComplete === undefined
-){
-  budgetData.settings.onboardingComplete = false;
-}
-      
       renderAll();
-
-      console.log(
-        "Cloud Load Complete"
-      );
-
     }
+  } catch (error) {
+    console.error("Cloud Load Failed", error);
+  }
+}
 
-  }catch(error){
+/* =========================
+   LOCAL DATA PERSISTENCE
+========================= */
+function saveData() {
+  localStorage.setItem("paycheckPilot", JSON.stringify(budgetData));
+  cloudSave();
+}
 
-    console.error(
-      "Cloud Load Failed",
-      error
-    );
+function loadData() {
+  const saved = localStorage.getItem("paycheckPilot");
+  if (saved) {
+    const data = JSON.parse(saved);
+    Object.assign(budgetData, data);
 
+    document.getElementById("modeSelector").value = budgetData.settings.currentMode || "NOW";
+    document.getElementById("viewSelector").value = budgetData.settings.currentView || "Household";
+    document.getElementById("forecastBuffer").value = budgetData.settings.forecastBuffer || 0;
+  }
+}
+
+/* =========================
+   SETUP WIZARD LOGIC
+========================= */
+function addWizardBill() {
+  const name = document.getElementById("billName").value.trim();
+  const amount = Number(document.getElementById("billAmount").value);
+  const day = Number(document.getElementById("billDay").value);
+
+  if (!name || !amount || !day) return alert("Please fill in bill name, amount, and due day.");
+
+  budgetData.setupBills.push({ name, amount, day });
+  renderWizardBills();
+
+  document.getElementById("billName").value = "";
+  document.getElementById("billAmount").value = "";
+  document.getElementById("billDay").value = "";
+}
+
+function renderWizardBills() {
+  const container = document.getElementById("wizardBills");
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  budgetData.setupBills.forEach((bill, index) => {
+    const div = document.createElement("div");
+    div.className = "activity-item";
+    div.innerHTML = `
+      <strong>${bill.name}</strong><br>
+      ${money(bill.amount)} | Due Day: ${bill.day}<br><br>
+      <button class="btn btn-danger" onclick="deleteWizardBill(${index})">Delete</button>
+    `;
+    container.appendChild(div);
+  });
+}
+
+function deleteWizardBill(index) {
+  budgetData.setupBills.splice(index, 1);
+  renderWizardBills();
+}
+
+function completeSetupWizard() {
+  const checking = Number(document.getElementById("setupChecking").value) || 0;
+  const savings = Number(document.getElementById("setupSavings").value) || 0;
+  const amount = Number(document.getElementById("setupPayAmount").value) || 0;
+  const payDate = document.getElementById("setupPayDate").value;
+
+  budgetData.accounts.checking = checking;
+  budgetData.accounts.savings = savings;
+
+  if (amount > 0 && payDate) {
+    budgetData.timeline.push({
+      id: "starter-paycheck",
+      owner: "Household",
+      type: "income",
+      desc: "Primary Paycheck",
+      amount: amount,
+      date: payDate,
+      completed: false
+    });
   }
 
+  budgetData.setupBills.forEach(bill => {
+    budgetData.timeline.push({
+      id: "bill-" + Date.now() + Math.random(),
+      owner: "Household",
+      type: "expense",
+      desc: bill.name,
+      amount: bill.amount,
+      date: (() => {
+        const today = new Date();
+        let year = today.getFullYear();
+        let month = today.getMonth() + 1;
+        if (bill.day < today.getDate()) {
+          month++;
+          if (month > 12) {
+            month = 1;
+            year++;
+          }
+        }
+        return `${year}-${String(month).padStart(2, "0")}-${String(bill.day).padStart(2, "0")}`;
+      })(),
+      completed: false
+    });
+  });
+
+  budgetData.settings.onboardingComplete = true;
+  addActivity("Setup Wizard Completed");
+
+  saveData();
+  renderAll();
+  showPage("dashboard");
 }
-  
+
 /* =========================
-   SAVE / LOAD
+   RENDER ALL & INITIALIZATION
 ========================= */
-
-function saveData(){
-
-  localStorage.setItem(
-    "paycheckPilot",
-    JSON.stringify(budgetData)
-  );
-
-cloudSave();
-}
-
-function loadData(){
-
-  const saved =
-    localStorage.getItem(
-      "paycheckPilot"
-    );
-
-  if(saved){
-
-    const data =
-      JSON.parse(saved);
-
-    Object.assign(
-      budgetData,
-      data
-    );
-
-document.getElementById(
-  "modeSelector"
-).value =
-  budgetData.settings.currentMode || "NOW";   
-    
-document.getElementById(
-  "viewSelector"
-).value =
-  budgetData.settings.currentView ||
-  "Household";
-
-document.getElementById(
-  "forecastBuffer"
-).value =
-  budgetData.settings.forecastBuffer ||
-  0;
-    
-  }
-
-}
-  
-/* =========================
-   RENDER ALL
-========================= */
-
-function renderAll(){
-
+function renderAll() {
   renderDashboard();
   renderComingUp();
   renderPaychecks();
@@ -3810,291 +2355,31 @@ function renderAll(){
   renderMonthlySummary();
   renderGoals();
   generateNetYearAnalysis();
-
 }
 
-document
-.getElementById("modeSelector")
-.addEventListener(
-  "change",
-  function(){
-
-    budgetData.settings.currentMode =
-      this.value;
-
-    saveData();
-
-    renderAll();
-
-  }
-);
-
-  document
-.getElementById("forecastBuffer")
-.addEventListener(
-  "change",
-  function(){
-
-    budgetData.settings.forecastBuffer =
-      Number(this.value);
-
-    saveData();
-
-    renderAll();
-
-  }
-);
-  
-/* =========================
-   VIEW CHANGE
-========================= */
-
-document
-.getElementById("viewSelector")
-.addEventListener(
-  "change",
-  function(){
-
-    budgetData.settings.currentView =
-      this.value;
-
-    saveData();
-
-    renderAll();
-
-  }
-);
-
-function addWizardBill(){
-
-  const name =
-    document.getElementById("billName").value.trim();
-
-  const amount =
-    Number(
-      document.getElementById("billAmount").value
-    );
-
-  const day =
-    Number(
-      document.getElementById("billDay").value
-    );
-
-  if(!name || !amount || !day){
-    return;
-  }
-
-  budgetData.setupBills.push({
-    name,
-    amount,
-    day
-  });
-
-  renderWizardBills();
-
-  document.getElementById("billName").value = "";
-  document.getElementById("billAmount").value = "";
-  document.getElementById("billDay").value = "";
-
-}
-
-function renderWizardBills(){
-
-  const container =
-    document.getElementById("wizardBills");
-
-  if(!container) return;
-
-  container.innerHTML = "";
-
-  budgetData.setupBills.forEach((bill,index)=>{
-
-    const div =
-      document.createElement("div");
-
-    div.className =
-      "activity-item";
-
-   div.innerHTML = `
-  <strong>${bill.name}</strong>
-  <br>
-  ${money(bill.amount)}
-  <br>
-  Due Day: ${bill.day}
-  <br><br>
-  <button
-    class="btn btn-danger"
-    onclick="deleteWizardBill(${index})"
-  >
-    Delete
-  </button>
-`;
-
-    container.appendChild(div);
-
-  });
-
-}
-
-function deleteWizardBill(index){
-
-  budgetData.setupBills.splice(index,1);
-
-  renderWizardBills();
-
-}
-  
-function completeSetupWizard(){
-
-  const checking =
-    Number(
-      document.getElementById(
-        "setupChecking"
-      ).value
-    ) || 0;
-
-  const savings =
-    Number(
-      document.getElementById(
-        "setupSavings"
-      ).value
-    ) || 0;
-
-  const amount =
-    Number(
-      document.getElementById(
-        "setupPayAmount"
-      ).value
-    ) || 0;
-
-  const payDate =
-    document.getElementById(
-      "setupPayDate"
-    ).value;
-
-  budgetData.accounts.checking =
-    checking;
-
-  budgetData.accounts.savings =
-    savings;
-
-  if(
-    amount > 0 &&
-    payDate
-  ){
-
-    budgetData.timeline.push({
-
-      id:
-        "starter-paycheck",
-
-      owner:
-        "Household",
-
-      type:
-        "income",
-
-      desc:
-        "Primary Paycheck",
-
-      amount:
-        amount,
-
-      date:
-        payDate,
-
-      completed:
-        false
-
-    });
-
-  }
-
-budgetData.setupBills.forEach(bill => {
-
-  budgetData.timeline.push({
-
-    id:
-      "bill-" + Date.now() + Math.random(),
-
-    owner:
-      "Household",
-
-    type:
-      "expense",
-
-    desc:
-      bill.name,
-
-    amount:
-      bill.amount,
-
-  date:(() => {
-
-  const today = new Date();
-
-  let year =
-    today.getFullYear();
-
-  let month =
-    today.getMonth() + 1;
-
-  if(
-    bill.day < today.getDate()
-  ){
-    month++;
-
-    if(month > 12){
-      month = 1;
-      year++;
-    }
-  }
-
-  return `${year}-${String(month).padStart(2,"0")}-${String(bill.day).padStart(2,"0")}`;
-
-})(),
-
-    completed:
-      false
-
-  });
-
-});
-  
-  budgetData.settings.onboardingComplete =
-    true;
-
-  addActivity(
-    "Setup Wizard Completed"
-  );
-
-renderWizardBills();
-  
+/* LISTENERS */
+document.getElementById("modeSelector").addEventListener("change", function() {
+  budgetData.settings.currentMode = this.value;
   saveData();
-
   renderAll();
+});
 
-  showPage(
-    "dashboard"
-  );
+document.getElementById("forecastBuffer").addEventListener("change", function() {
+  budgetData.settings.forecastBuffer = Number(this.value);
+  saveData();
+  renderAll();
+});
 
-}
-  
-/* =========================
-   STARTUP
-========================= */
+document.getElementById("viewSelector").addEventListener("change", function() {
+  budgetData.settings.currentView = this.value;
+  saveData();
+  renderAll();
+});
 
-document
-.getElementById(
-  "generateYearBtn"
-)
-.addEventListener(
-  "click",
-  generateNetYearAnalysis
-);
+document.getElementById("generateYearBtn").addEventListener("click", generateNetYearAnalysis);
 
+/* STARTUP AUTH CHECK */
 checkAuth();
-
 </script>
 
 </body>
