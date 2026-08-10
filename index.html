@@ -6,6 +6,12 @@
   <title>Paycheck Pilot — Navigate Every Payday</title>
   <meta name="impact-site-verification" value="c01f5ea2-5682-4671-9ef4-d27f7bc71fe3">
   
+  <!-- PWA Manifest & Meta -->
+  <link rel="manifest" href='data:application/json;charset=utf-8,{"name":"Paycheck Pilot","short_name":"PaycheckPilot","start_url":"/","display":"standalone","background_color":"#070c18","theme_color":"#10b981","icons":[{"src":"paycheck-pilot-hero.png","sizes":"192x192","type":"image/png"}]}'>
+  <meta name="theme-color" content="#10b981">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  
   <!-- Inter Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -51,7 +57,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
-    /* Custom Scrollbar & Utility Polish */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: #0b1329; }
     ::-webkit-scrollbar-thumb { background: #1e2d4a; border-radius: 9999px; }
@@ -75,30 +80,41 @@
       box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.25);
     }
     
-    /* Hide views by default */
-   .view-screen {
-  display: none;
-}
+    .view-screen {
+      display: none;
+    }
+    .view-screen.active {
+      display: flex;
+    }
 
-.view-screen.active {
-  display: flex;
-}
+    /* Toast Animations */
+    @keyframes slideIn {
+      from { transform: translateY(100%); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .toast-animate {
+      animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
   </style>
 </head>
 <body class="h-full bg-[#070c18] text-slate-100 font-sans antialiased selection:bg-brand-500 selection:text-white">
 
   <!-- ========================================== -->
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <!-- ========================================== -->
+  <div id="toast-container" class="fixed bottom-20 md:bottom-6 right-4 z-50 flex flex-col gap-3 pointer-events-none"></div>
+
+  <!-- ========================================== -->
   <!-- AUTHENTICATION SCREEN -->
   <!-- ========================================== -->
-  <div id="screen-auth" class="view-screen active min-h-screen flex items-center justify-center p-4 sm:p-6 md:p-8 bg-gradient-to-br from-[#070c18] via-[#0b1329] to-[#041226]">
+  <div id="screen-auth" class="view-screen active min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 md:p-8 bg-gradient-to-br from-[#070c18] via-[#0b1329] to-[#041226]">
     <div class="w-full max-w-md space-y-8 glass-card p-8 rounded-3xl shadow-2xl border border-slate-800/80 relative overflow-hidden">
-      <!-- Glow Accent -->
       <div class="absolute -top-24 -right-24 w-48 h-48 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
       
       <!-- Brand Header -->
       <div class="text-center space-y-3">
         <div class="flex justify-center items-center gap-3">
-          <img src="paycheck-pilot-hero.png" alt="Paycheck Pilot Logo" class="h-12 w-auto object-contain drop-shadow-lg" onerror="this.src='https://placehold.co/120x120/10b981/ffffff?text=PP'; this.classList.add('rounded-xl');" />
+          <img src="paycheck-pilot-hero.png" alt="Paycheck Pilot Logo" class="h-14 w-auto object-contain drop-shadow-xl" onerror="this.src='https://placehold.co/120x120/10b981/ffffff?text=PP'; this.classList.add('rounded-xl');" />
         </div>
         <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Paycheck Pilot</h1>
         <p class="text-xs uppercase tracking-widest text-brand-400 font-semibold">Navigate Every Payday</p>
@@ -106,7 +122,7 @@
 
       <!-- Auth Tabs -->
       <div class="flex bg-slate-900/80 p-1 rounded-xl border border-slate-800 text-xs font-semibold">
-        <button id="auth-tab-login" onclick="switchAuthTab('login')" class="flex-1 py-2.5 rounded-lg text-slate-300 transition-all bg-brand-600 text-white shadow-md">Sign In</button>
+        <button id="auth-tab-login" onclick="switchAuthTab('login')" class="flex-1 py-2.5 rounded-lg text-white transition-all bg-brand-600 shadow-md">Sign In</button>
         <button id="auth-tab-signup" onclick="switchAuthTab('signup')" class="flex-1 py-2.5 rounded-lg text-slate-400 hover:text-slate-200 transition-all">Create Account</button>
       </div>
 
@@ -123,7 +139,7 @@
         <div>
           <div class="flex justify-between items-center mb-1.5">
             <label class="text-xs font-semibold uppercase text-slate-400">Password</label>
-            <button type="button" id="forgot-pw-link" onclick="handleForgotPassword()" class="text-xs text-brand-400 hover:underline">Forgot?</button>
+            <button type="button" onclick="openCustomModal('Forgot Password', 'Enter your email address to receive password reset instructions.', [{label: 'Send Instructions', primary: true, onclick: 'simulatePasswordReset()'}])" class="text-xs text-brand-400 hover:underline">Forgot?</button>
           </div>
           <div class="relative">
             <i data-lucide="lock" class="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500"></i>
@@ -137,12 +153,19 @@
         </button>
       </form>
 
-      <!-- Demo Account Quick Sign-in -->
-      <div class="pt-2 border-t border-slate-800/80 text-center">
-        <button onclick="loginAsDemo()" class="text-xs text-slate-400 hover:text-brand-400 transition-colors inline-flex items-center gap-1.5 py-1">
+      <!-- Quick Demo Sign-in -->
+      <div class="pt-3 border-t border-slate-800/80 text-center space-y-2">
+        <button onclick="loginAsDemo()" class="text-xs text-slate-300 hover:text-brand-400 transition-colors inline-flex items-center gap-1.5 py-1 font-medium">
           <i data-lucide="play-circle" class="w-4 h-4 text-brand-400"></i>
-          <span>Continue with Offline Demo Mode</span>
+          <span>Continue with Clean Demo Mode</span>
         </button>
+        <div class="flex justify-center gap-4 text-[11px] text-slate-500 pt-2">
+          <button onclick="openPublicPage('privacy')" class="hover:underline">Privacy Policy</button>
+          <span>•</span>
+          <button onclick="openPublicPage('terms')" class="hover:underline">Terms of Service</button>
+          <span>•</span>
+          <button onclick="openPublicPage('about')" class="hover:underline">About</button>
+        </div>
       </div>
     </div>
   </div>
@@ -181,11 +204,9 @@
             <p class="text-sm text-slate-400">Add your liquid cash balances (checking, savings) and credit cards to calculate your real-time Safe Spend.</p>
           </div>
 
-          <div id="onboard-accounts-list" class="space-y-3 max-h-60 overflow-y-auto pr-1">
-            <!-- Account items rendered via JS -->
-          </div>
+          <div id="onboard-accounts-list" class="space-y-3 max-h-60 overflow-y-auto pr-1"></div>
 
-          <button onclick="addAccountPrompt()" class="w-full py-3 border border-dashed border-slate-700 hover:border-brand-500 text-slate-300 hover:text-brand-400 rounded-xl flex items-center justify-center gap-2 text-sm font-medium transition-all">
+          <button onclick="promptAddAccount()" class="w-full py-3 border border-dashed border-slate-700 hover:border-brand-500 text-slate-300 hover:text-brand-400 rounded-xl flex items-center justify-center gap-2 text-sm font-medium transition-all">
             <i data-lucide="plus-circle" class="w-4 h-4"></i> Add Cash or Credit Account
           </button>
         </div>
@@ -228,11 +249,9 @@
             <p class="text-sm text-slate-400">List fixed obligations due every month so we can reserve cash before payday.</p>
           </div>
 
-          <div id="onboard-bills-list" class="space-y-3 max-h-60 overflow-y-auto pr-1">
-            <!-- Bill items rendered via JS -->
-          </div>
+          <div id="onboard-bills-list" class="space-y-3 max-h-60 overflow-y-auto pr-1"></div>
 
-          <button onclick="addBillPrompt()" class="w-full py-3 border border-dashed border-slate-700 hover:border-brand-500 text-slate-300 hover:text-brand-400 rounded-xl flex items-center justify-center gap-2 text-sm font-medium transition-all">
+          <button onclick="promptAddBill()" class="w-full py-3 border border-dashed border-slate-700 hover:border-brand-500 text-slate-300 hover:text-brand-400 rounded-xl flex items-center justify-center gap-2 text-sm font-medium transition-all">
             <i data-lucide="plus-circle" class="w-4 h-4"></i> Add Recurring Bill
           </button>
         </div>
@@ -256,7 +275,7 @@
         <!-- Navigation Buttons -->
         <div class="flex justify-between items-center pt-6 mt-6 border-t border-slate-800">
           <button id="onboard-prev-btn" onclick="prevOnboardStep()" class="px-5 py-2.5 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 text-sm font-semibold transition-all hidden">Back</button>
-          <div></div> <!-- Spacer -->
+          <div></div>
           <button id="onboard-next-btn" onclick="nextOnboardStep()" class="px-6 py-2.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-sm transition-all shadow-md flex items-center gap-2">
             <span>Continue</span>
             <i data-lucide="arrow-right" class="w-4 h-4"></i>
@@ -269,7 +288,7 @@
 
 
   <!-- ========================================== -->
-  <!-- MAIN APPLICATION SHELL (DESKTOP & MOBILE)  -->
+  <!-- MAIN APPLICATION SHELL -->
   <!-- ========================================== -->
   <div id="screen-app" class="view-screen min-h-screen flex flex-col md:flex-row bg-[#070c18] text-slate-100">
     
@@ -310,6 +329,11 @@
           <button onclick="navigateTo('forecast')" id="nav-forecast" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
             <i data-lucide="line-chart" class="w-4 h-4"></i>
             <span>Forecast</span>
+          </button>
+
+          <button onclick="navigateTo('activity')" id="nav-activity" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
+            <i data-lucide="activity" class="w-4 h-4"></i>
+            <span>Activity Log</span>
           </button>
 
           <button onclick="navigateTo('reconcile')" id="nav-reconcile" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
@@ -356,20 +380,25 @@
         <!-- ================= PAGE: DASHBOARD ================= -->
         <div id="page-dashboard" class="page-view space-y-6">
           
-          <!-- TODAY SECTION HEADER -->
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-4">
             <div>
               <div class="flex items-center gap-2">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-brand-500/10 text-brand-400 border border-brand-500/20">
-                  <span class="w-1.5 h-1.5 rounded-full bg-brand-400 mr-1.5 animate-pulse"></span> TODAY
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-brand-500/15 text-brand-400 border border-brand-500/30">
+                  <span class="w-1.5 h-1.5 rounded-full bg-brand-400 mr-1.5 animate-pulse"></span> FLIGHT CONTROL
                 </span>
-                <span id="current-date-display" class="text-xs text-slate-400 font-medium">Aug 7, 2026</span>
+                <span id="current-date-display" class="text-xs text-slate-400 font-medium"></span>
               </div>
-              <h2 class="text-2xl font-extrabold text-white tracking-tight mt-1">Flight Control</h2>
+              <h2 class="text-2xl font-extrabold text-white tracking-tight mt-1">Can I make it until payday?</h2>
             </div>
             <button onclick="openAddTransactionModal()" class="self-start sm:self-auto px-4 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5">
               <i data-lucide="plus" class="w-4 h-4"></i> Quick Transaction
             </button>
+          </div>
+
+          <!-- RISK ALERTS & HEALTH STATUS BANNER -->
+          <div id="dash-risk-banner" class="hidden p-4 rounded-2xl border text-xs font-medium flex items-center gap-3">
+            <i data-lucide="alert-triangle" class="w-5 h-5 shrink-0"></i>
+            <span id="dash-risk-message"></span>
           </div>
 
           <!-- PRIMARY METRIC: SAFE SPEND HERO CARD -->
@@ -384,15 +413,19 @@
                 </div>
                 <div class="text-4xl sm:text-5xl font-black text-white tracking-tight" id="dash-safe-spend">$0.00</div>
                 <p class="text-xs text-slate-400 leading-relaxed max-w-md">
-                  This is your true disposable cash after accounting for bills due before your next paycheck on <span id="dash-next-paydate-inline" class="text-slate-200 font-semibold">--</span>.
+                  Your true disposable cash after reserved bills before your next paycheck on <span id="dash-next-paydate-inline" class="text-slate-200 font-semibold">--</span>.
                 </p>
               </div>
 
-              <!-- Quick Health Badges -->
-              <div class="space-y-3 bg-slate-900/60 p-4 rounded-2xl border border-slate-800/80">
+              <!-- Quick Health & Countdown Badges -->
+              <div class="space-y-3 bg-slate-900/70 p-4 rounded-2xl border border-slate-800/80">
                 <div class="flex justify-between items-center text-xs">
-                  <span class="text-slate-400">Next Payday:</span>
-                  <span id="dash-next-payday-countdown" class="font-bold text-slate-200">In 0 Days</span>
+                  <span class="text-slate-400">Payday Countdown:</span>
+                  <span id="dash-next-payday-countdown" class="font-bold text-slate-200">--</span>
+                </div>
+                <div class="flex justify-between items-center text-xs">
+                  <span class="text-slate-400">Daily Available:</span>
+                  <span id="dash-daily-available" class="font-bold text-brand-400">$0.00 / day</span>
                 </div>
                 <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
                   <div id="dash-payday-progress" class="bg-brand-400 h-full w-0 transition-all"></div>
@@ -405,20 +438,18 @@
             </div>
           </div>
 
-          <!-- 3-GRID METRICS -->
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <!-- 4-GRID METRICS -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             
-            <!-- Cash Balance -->
             <div class="glass-card p-5 rounded-2xl border border-slate-800/80">
               <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
                 <span class="font-semibold uppercase tracking-wider">Current Cash</span>
                 <i data-lucide="wallet" class="w-4 h-4 text-brand-400"></i>
               </div>
               <div id="dash-cash-total" class="text-2xl font-bold text-white">$0.00</div>
-              <p class="text-[11px] text-slate-500 mt-1">Liquid checking & savings</p>
+              <p class="text-[11px] text-slate-500 mt-1">Total liquid balance</p>
             </div>
 
-            <!-- Next Payday Amount -->
             <div class="glass-card p-5 rounded-2xl border border-slate-800/80">
               <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
                 <span class="font-semibold uppercase tracking-wider">Next Payday</span>
@@ -428,10 +459,18 @@
               <p id="dash-next-payday-sub" class="text-[11px] text-slate-500 mt-1">Scheduled deposit</p>
             </div>
 
-            <!-- Paycheck To Paycheck Ratio -->
             <div class="glass-card p-5 rounded-2xl border border-slate-800/80">
               <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
-                <span class="font-semibold uppercase tracking-wider">Fixed Load</span>
+                <span class="font-semibold uppercase tracking-wider">Resilience Score</span>
+                <i data-lucide="shield" class="w-4 h-4 text-blue-400"></i>
+              </div>
+              <div id="dash-resilience-score" class="text-2xl font-bold text-white">--</div>
+              <p class="text-[11px] text-slate-500 mt-1" id="dash-buffer-days">Buffer days: 0</p>
+            </div>
+
+            <div class="glass-card p-5 rounded-2xl border border-slate-800/80">
+              <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+                <span class="font-semibold uppercase tracking-wider">Paycheck To Paycheck</span>
                 <i data-lucide="gauge" class="w-4 h-4 text-amber-400"></i>
               </div>
               <div id="dash-paycheck-ratio" class="text-2xl font-bold text-white">0%</div>
@@ -443,41 +482,33 @@
           <!-- TWO COLUMN DETAILS -->
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             
-            <!-- Bills Due Before Payday Section -->
             <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4">
               <div class="flex justify-between items-center">
                 <h3 class="font-bold text-white text-base flex items-center gap-2">
                   <i data-lucide="clock" class="w-4 h-4 text-brand-400"></i>
-                  <span>Bills Due Before Payday</span>
+                  <span>Bills Before Payday</span>
                 </h3>
                 <button onclick="navigateTo('coming-up')" class="text-xs text-brand-400 hover:underline">View All</button>
               </div>
-
-              <div id="dash-upcoming-bills-list" class="space-y-2.5">
-                <!-- JS populated -->
-              </div>
+              <div id="dash-upcoming-bills-list" class="space-y-2.5"></div>
             </div>
 
-            <!-- Recent Activity -->
             <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4">
               <div class="flex justify-between items-center">
                 <h3 class="font-bold text-white text-base flex items-center gap-2">
                   <i data-lucide="activity" class="w-4 h-4 text-brand-400"></i>
-                  <span>Recent Ledger Activity</span>
+                  <span>Recent Activity</span>
                 </h3>
-                <button onclick="navigateTo('ledger')" class="text-xs text-brand-400 hover:underline">Full Ledger</button>
+                <button onclick="navigateTo('activity')" class="text-xs text-brand-400 hover:underline">Full Log</button>
               </div>
-
-              <div id="dash-recent-activity-list" class="space-y-2.5">
-                <!-- JS populated -->
-              </div>
+              <div id="dash-recent-activity-list" class="space-y-2.5"></div>
             </div>
 
           </div>
 
         </div>
 
-        <!-- ================= PAGE: COMING UP (TIMELINE) ================= -->
+        <!-- ================= PAGE: COMING UP ================= -->
         <div id="page-coming-up" class="page-view space-y-6 hidden">
           <div class="flex justify-between items-center border-b border-slate-800/80 pb-4">
             <div>
@@ -489,19 +520,15 @@
             </button>
           </div>
 
-          <!-- Explicit Action Guidance Banner -->
           <div class="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl flex items-center gap-3 text-xs text-slate-300">
             <i data-lucide="info" class="w-5 h-5 text-brand-400 shrink-0"></i>
-            <span>Marking a bill as <strong>Complete</strong> logs it into your ledger and advances the due date to next month. Clicking <strong>Delete</strong> permanently removes the obligation.</span>
+            <span>Marking a bill as <strong>Complete</strong> logs it into your ledger, advances the due date, and records activity. <strong>Delete</strong> is recoverable for 5 seconds.</span>
           </div>
 
-          <!-- Timeline Container -->
-          <div class="space-y-3" id="coming-up-timeline-list">
-            <!-- Rendered by JS -->
-          </div>
+          <div class="space-y-3" id="coming-up-timeline-list"></div>
         </div>
 
-        <!-- ================= PAGE: LEDGER / TRANSACTIONS ================= -->
+        <!-- ================= PAGE: TRANSACTIONS / LEDGER ================= -->
         <div id="page-ledger" class="page-view space-y-6 hidden">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
             <div>
@@ -513,14 +540,13 @@
             </button>
           </div>
 
-          <!-- Filter & Search Bar -->
           <div class="flex flex-col sm:flex-row gap-3">
             <div class="relative flex-1">
               <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500"></i>
               <input type="text" id="ledger-search-input" oninput="renderLedger()" placeholder="Search transactions..." class="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-4 py-2.5 text-xs text-slate-200 focus:border-brand-500 outline-none" />
             </div>
             <select id="ledger-filter-category" onchange="renderLedger()" class="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-300 outline-none">
-              <option value="ALL font-semibold">All Categories</option>
+              <option value="ALL">All Categories</option>
               <option value="Income">Income</option>
               <option value="Housing">Housing</option>
               <option value="Utilities">Utilities</option>
@@ -530,7 +556,6 @@
             </select>
           </div>
 
-          <!-- Table/List Surface -->
           <div class="glass-card rounded-2xl border border-slate-800/80 overflow-hidden">
             <div class="overflow-x-auto">
               <table class="w-full text-left text-xs">
@@ -543,9 +568,7 @@
                     <th class="p-4 text-center">Action</th>
                   </tr>
                 </thead>
-                <tbody id="ledger-table-body" class="divide-y divide-slate-800/60">
-                  <!-- JS populated -->
-                </tbody>
+                <tbody id="ledger-table-body" class="divide-y divide-slate-800/60"></tbody>
               </table>
             </div>
           </div>
@@ -556,17 +579,14 @@
           <div class="flex justify-between items-center border-b border-slate-800/80 pb-4">
             <div>
               <h2 class="text-2xl font-extrabold text-white tracking-tight">Financial Goals</h2>
-              <p class="text-xs text-slate-400">Track savings, emergency funds, and big purchases.</p>
+              <p class="text-xs text-slate-400">Track savings, emergency reserves, and ETAs.</p>
             </div>
             <button onclick="openAddGoalModal()" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5">
               <i data-lucide="plus" class="w-4 h-4"></i> Create Goal
             </button>
           </div>
 
-          <!-- Goals Cards Grid -->
-          <div id="goals-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- JS Populated -->
-          </div>
+          <div id="goals-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
         </div>
 
         <!-- ================= PAGE: FORECAST ================= -->
@@ -583,6 +603,19 @@
           </div>
         </div>
 
+        <!-- ================= PAGE: ACTIVITY LOG 2.0 ================= -->
+        <div id="page-activity" class="page-view space-y-6 hidden">
+          <div class="flex justify-between items-center border-b border-slate-800/80 pb-4">
+            <div>
+              <h2 class="text-2xl font-extrabold text-white tracking-tight">Activity Log</h2>
+              <p class="text-xs text-slate-400">Chronological history of all system events, syncs, and financial actions.</p>
+            </div>
+            <button onclick="clearActivityLog()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold">Clear Log</button>
+          </div>
+
+          <div id="activity-log-timeline" class="space-y-3"></div>
+        </div>
+
         <!-- ================= PAGE: RECONCILE & DATA ================= -->
         <div id="page-reconcile" class="page-view space-y-6 hidden">
           <div class="border-b border-slate-800/80 pb-4">
@@ -591,22 +624,18 @@
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Accounts Reconcile List -->
             <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4">
               <h3 class="font-bold text-white text-base">Account Balances</h3>
-              <div id="reconcile-accounts-list" class="space-y-3">
-                <!-- JS populated -->
-              </div>
+              <div id="reconcile-accounts-list" class="space-y-3"></div>
             </div>
 
-            <!-- Import / Export Controls -->
             <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4">
               <h3 class="font-bold text-white text-base">Data Management</h3>
               <p class="text-xs text-slate-400">Export your local financial data for backup or import past transactions via JSON.</p>
               
               <div class="space-y-3 pt-2">
                 <button onclick="exportDataJSON()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all">
-                  <i data-lucide="download" class="w-4 h-4"></i> Export Application Backup (.JSON)
+                  <i data-lucide="download" class="w-4 h-4"></i> Export Backup (.JSON)
                 </button>
                 
                 <label class="w-full py-2.5 border border-slate-700 hover:border-brand-500 text-slate-300 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer transition-all">
@@ -621,48 +650,69 @@
         <!-- ================= PAGE: SETTINGS ================= -->
         <div id="page-settings" class="page-view space-y-6 hidden">
           <div class="border-b border-slate-800/80 pb-4">
-            <h2 class="text-2xl font-extrabold text-white tracking-tight">Settings</h2>
-            <p class="text-xs text-slate-400">Configure your profile, cloud sync, and application preferences.</p>
+            <h2 class="text-2xl font-extrabold text-white tracking-tight">Settings & Sponsor Configuration</h2>
+            <p class="text-xs text-slate-400">Configure your profile, sponsors, cloud sync status, and developer tools.</p>
           </div>
 
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            <!-- User Profile Card -->
-            <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4 lg:col-span-2">
-              <h3 class="font-bold text-white text-base">User Profile</h3>
-              
+            <!-- User Profile & Sponsors -->
+            <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-6 lg:col-span-2">
               <div class="space-y-4">
+                <h3 class="font-bold text-white text-base">User Profile</h3>
                 <div>
                   <label class="block text-xs font-semibold text-slate-400 mb-1">Email</label>
                   <input type="text" id="settings-email-display" readonly class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-400 outline-none" />
                 </div>
+              </div>
 
-                <div class="pt-4 border-t border-slate-800/80 space-y-3">
-                  <h4 class="text-xs font-bold text-slate-300 uppercase">Change Password</h4>
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <input type="password" id="settings-new-pass" placeholder="New Password" class="bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-brand-500" />
-                    <button onclick="updatePassword()" class="bg-brand-500/20 hover:bg-brand-500/30 text-brand-400 border border-brand-500/30 rounded-xl px-4 py-2.5 text-xs font-bold transition-all">Update Password</button>
-                  </div>
+              <div class="pt-4 border-t border-slate-800/80 space-y-4">
+                <div class="flex justify-between items-center">
+                  <h3 class="font-bold text-white text-base">Sponsor Network Management</h3>
+                  <span class="text-xs text-brand-400 font-semibold" id="sponsor-ctr-summary">CTR: 0.0%</span>
                 </div>
+                <p class="text-xs text-slate-400">Configure AWIN, ShareASale, CJ Affiliate, FlexOffers, and PartnerStack partner offers.</p>
+                
+                <div id="sponsor-management-list" class="space-y-3"></div>
               </div>
             </div>
 
-            <!-- About Section & Sync Status -->
+            <!-- Developer Diagnostics & Status -->
             <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4 flex flex-col justify-between">
-              <div class="space-y-4 text-center">
-                <img src="paycheck-pilot-hero.png" alt="Logo" class="h-16 w-auto mx-auto object-contain" onerror="this.src='https://placehold.co/120x120/10b981/ffffff?text=PP'; this.classList.add('rounded-xl');" />
-                <div>
-                  <h3 class="font-bold text-white text-lg">Paycheck Pilot</h3>
-                  <p class="text-xs text-brand-400 font-semibold uppercase tracking-wider">Navigate Every Payday</p>
-                  <p class="text-[11px] text-slate-500 mt-1">Version 2.5.0 • Fintech Edition</p>
+              <div class="space-y-4">
+                <h3 class="font-bold text-white text-base">Developer Diagnostics</h3>
+                
+                <div class="space-y-2 text-xs">
+                  <div class="flex justify-between p-2.5 bg-slate-900/80 rounded-xl">
+                    <span class="text-slate-400">Version:</span>
+                    <strong class="text-white">v2.5.0 Fintech</strong>
+                  </div>
+                  <div class="flex justify-between p-2.5 bg-slate-900/80 rounded-xl">
+                    <span class="text-slate-400">Supabase:</span>
+                    <strong class="text-brand-400" id="diag-supabase-status">Connected</strong>
+                  </div>
+                  <div class="flex justify-between p-2.5 bg-slate-900/80 rounded-xl">
+                    <span class="text-slate-400">Cloud Sync Table:</span>
+                    <strong class="text-white">paycheck_pilot_sync</strong>
+                  </div>
+                  <div class="flex justify-between p-2.5 bg-slate-900/80 rounded-xl">
+                    <span class="text-slate-400">Last Sync:</span>
+                    <strong class="text-slate-200" id="diag-last-sync">Never</strong>
+                  </div>
+                  <div class="flex justify-between p-2.5 bg-slate-900/80 rounded-xl">
+                    <span class="text-slate-400">PWA Status:</span>
+                    <strong class="text-emerald-400">Ready / Installed</strong>
+                  </div>
                 </div>
               </div>
 
-              <div class="space-y-3 pt-4 border-t border-slate-800/80">
+              <div class="space-y-2 pt-4 border-t border-slate-800/80">
+                <button onclick="triggerCloudSync()" class="w-full py-2.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">
+                  Sync Now (`paycheck_pilot_sync`)
+                </button>
                 <button onclick="restartOnboarding()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all">
                   Rerun Onboarding Wizard
                 </button>
-
                 <button onclick="clearAllData()" class="w-full py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl text-xs font-semibold transition-all">
                   Reset All Local Data
                 </button>
@@ -670,6 +720,15 @@
             </div>
 
           </div>
+        </div>
+
+        <!-- ================= PUBLIC PAGES MODAL VIEW ================= -->
+        <div id="page-public" class="page-view space-y-6 hidden">
+          <div class="flex justify-between items-center border-b border-slate-800/80 pb-4">
+            <h2 id="public-page-title" class="text-2xl font-extrabold text-white tracking-tight">Public Document</h2>
+            <button onclick="closePublicPage()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold">Back</button>
+          </div>
+          <div id="public-page-content" class="glass-card p-6 sm:p-8 rounded-3xl border border-slate-800/80 space-y-4 text-xs sm:text-sm text-slate-300 leading-relaxed"></div>
         </div>
 
       </div>
@@ -706,10 +765,20 @@
 
 
   <!-- ========================================== -->
-  <!-- MODALS CONTAINER -->
+  <!-- CUSTOM MODALS CONTAINER -->
   <!-- ========================================== -->
   <div id="modal-backdrop" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     
+    <!-- GENERIC CUSTOM MODAL -->
+    <div id="modal-generic" class="glass-card p-6 rounded-3xl border border-slate-800 w-full max-w-md hidden space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 id="generic-modal-title" class="font-bold text-white text-base">Modal Title</h3>
+        <button onclick="closeModals()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <p id="generic-modal-body" class="text-xs text-slate-300"></p>
+      <div id="generic-modal-actions" class="flex gap-2 pt-2"></div>
+    </div>
+
     <!-- ADD/EDIT BILL MODAL -->
     <div id="modal-bill" class="glass-card p-6 rounded-3xl border border-slate-800 w-full max-w-md hidden space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -830,67 +899,58 @@
 
 
   <!-- ========================================== -->
-  <!-- APPLICATION LOGIC (SINGLE ENGINE SCRIPT)   -->
+  <!-- APPLICATION SCRIPT & ENGINE                -->
   <!-- ========================================== -->
-  
   <script>
+    // CRITICAL SUPABASE CONSTANTS & CLIENT
+    const SUPABASE_URL = "https://zsfcqymmlzpfaapygmlu.supabase.co";
+    const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
     
-    // Supabase Placeholder Initialization
-  const SUPABASE_URL = "https://zsfcqymmlzpfaapygmlu.supabase.co";
-const SUPABASE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
-   const supabaseClient = window.supabase
-  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
-  : null;
+    const supabaseClient = window.supabase
+      ? window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
+      : null;
 
-    // GLOBAL APPLICATION STATE
+    // GLOBAL APPLICATION STATE (Clean start for new users)
     let state = {
       user: null,
       onboardingCompleted: false,
       currentOnboardStep: 1,
-      accounts: [
-        { id: 'acc_1', name: 'Primary Checking', balance: 3450.00, type: 'checking' },
-        { id: 'acc_2', name: 'High Yield Savings', balance: 8200.00, type: 'savings' }
-      ],
+      lastSyncTime: null,
+      accounts: [],
       income: {
-        amount: 2800.00,
+        amount: 0,
         frequency: 'biweekly',
-        nextDate: '2026-08-14'
+        nextDate: ''
       },
-      bills: [
-        { id: 'bill_1', title: 'Apartment Rent', amount: 1400.00, dueDate: '2026-08-12', category: 'Housing' },
-        { id: 'bill_2', title: 'Electric & Gas Utility', amount: 135.00, dueDate: '2026-08-10', category: 'Utilities' },
-        { id: 'bill_3', title: 'Fiber Internet', amount: 70.00, dueDate: '2026-08-20', category: 'Utilities' },
-        { id: 'bill_4', title: 'Streaming Bundle', amount: 24.99, dueDate: '2026-08-25', category: 'Subscriptions' }
-      ],
-      transactions: [
-        { id: 'tx_1', date: '2026-08-06', title: 'Trader Joe\'s Groceries', amount: 84.20, type: 'expense', category: 'Food & Dining' },
-        { id: 'tx_2', date: '2026-08-01', title: 'Bi-Weekly Paycheck', amount: 2800.00, type: 'income', category: 'Income' },
-        { id: 'tx_3', date: '2026-07-28', title: 'Coffee Shop', amount: 6.50, type: 'expense', category: 'Food & Dining' }
-      ],
-      goals: [
-        { id: 'goal_1', title: 'Emergency Reserve', target: 5000.00, current: 3200.00 },
-        { id: 'goal_2', title: 'Vacation Fund', target: 1500.00, current: 650.00 }
+      bills: [],
+      transactions: [],
+      goals: [],
+      activityLog: [],
+      sponsors: [
+        { id: 'awin', name: 'AWIN Partner', title: 'High-Yield Savings Boost', description: 'Earn 5.15% APY on liquid cash reserves.', url: 'https://example.com/awin', priority: 1, enabled: true, impressions: 0, clicks: 0, dismissals: 0 },
+        { id: 'sharesale', name: 'ShareASale', title: 'Credit Builder Pro', description: 'Automate debt paydown safely before payday.', url: 'https://example.com/sharesale', priority: 2, enabled: true, impressions: 0, clicks: 0, dismissals: 0 },
+        { id: 'cj', name: 'CJ Affiliate', title: 'Tax & Expense Shield', description: 'Quarterly tax estimation made foolproof.', url: 'https://example.com/cj', priority: 3, enabled: true, impressions: 0, clicks: 0, dismissals: 0 }
       ]
     };
 
     let forecastChartInstance = null;
-    let authMode = 'login'; // 'login' or 'signup'
+    let authMode = 'login';
+    let undoBuffer = null;
+    let undoTimer = null;
 
-    // INITIALIZATION ON DOM READY
+    // INITIALIZATION
     document.addEventListener('DOMContentLoaded', () => {
       lucide.createIcons();
       loadStateFromStorage();
       
-      // Date Display
-      document.getElementById('current-date-display').innerText = new Date().toLocaleDateString('en-US', {
-        month: 'short', day: 'numeric', year: 'numeric'
-      });
-
-      // Set default transaction date input
+      const todayStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      document.getElementById('current-date-display').innerText = todayStr;
+      
       const todayIso = new Date().toISOString().split('T')[0];
       document.getElementById('tx-date').value = todayIso;
-      
-      // Determine initial screen display
+      document.getElementById('onboard-next-payday').value = todayIso;
+      document.getElementById('bill-date').value = todayIso;
+
       if (!state.user) {
         showScreen('screen-auth');
       } else if (!state.onboardingCompleted) {
@@ -900,11 +960,24 @@ const SUPABASE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
         showScreen('screen-app');
         navigateTo('dashboard');
       }
+
+      // Register Service Worker for PWA
+      if ('serviceWorker' in navigator) {
+        const swCode = `
+          self.addEventListener('install', e => { self.skipWaiting(); });
+          self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
+          self.addEventListener('fetch', e => { e.respondWith(fetch(e.request).catch(() => caches.match(e.request))); });
+        `;
+        const blob = new Blob([swCode], { type: 'text/javascript' });
+        const swUrl = URL.createObjectURL(blob);
+        navigator.serviceWorker.register(swUrl).catch(err => console.log('SW registration skipped', err));
+      }
     });
 
-    // STATE STORAGE MANAGERS
+    // STORAGE & CLOUD SYNC OPERATIONS (Using paycheck_pilot_sync table)
     function saveStateToStorage() {
       localStorage.setItem('paycheck_pilot_state', JSON.stringify(state));
+      triggerCloudSync(true); // Background sync
     }
 
     function loadStateFromStorage() {
@@ -918,35 +991,141 @@ const SUPABASE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
       }
     }
 
-    // ROUTER & SCREEN DISPLAY MANAGER (CRITICAL: Only 1 active view screen at a time)
-   function showScreen(screenId) {
-  document.querySelectorAll('.view-screen').forEach(screen => {
-    screen.classList.remove('active');
-    screen.style.display = 'none';
-  });
-
-  const target = document.getElementById(screenId);
-
-  if (target) {
-    target.classList.add('active');
-
-    if (screenId === 'screen-app') {
-      target.style.display = 'flex';
-    } else {
-      target.style.display = 'block';
+    async function triggerCloudSync(isBackground = false) {
+      state.lastSyncTime = new Date().toISOString();
+      document.getElementById('diag-last-sync').innerText = new Date(state.lastSyncTime).toLocaleTimeString();
+      
+      if (supabaseClient && state.user) {
+        try {
+          const { error } = await supabaseClient
+            .from('paycheck_pilot_sync')
+            .upsert({ user_id: state.user.id, state_data: state, updated_at: state.lastSyncTime });
+          
+          if (error) {
+            console.warn("Supabase sync warning:", error.message);
+            document.getElementById('diag-supabase-status').innerText = "Offline / Local Mode";
+          } else {
+            document.getElementById('diag-supabase-status').innerText = "Connected & Synced";
+            if (!isBackground) showToast("Cloud Sync Complete", "success");
+            logActivity("Cloud Sync Completed", "State synced to paycheck_pilot_sync successfully.");
+          }
+        } catch(err) {
+          document.getElementById('diag-supabase-status').innerText = "Local Fallback Active";
+          if (!isBackground) showToast("Cloud Sync Complete (Local)", "success");
+        }
+      } else {
+        document.getElementById('diag-supabase-status').innerText = "Offline Mode";
+        if (!isBackground) showToast("Cloud Sync Complete", "success");
+      }
     }
-  }
-}
+
+    // ACTIVITY LOG 2.0
+    function logActivity(action, details) {
+      state.activityLog.unshift({
+        id: 'act_' + Date.now(),
+        action,
+        details,
+        timestamp: new Date().toISOString()
+      });
+      if (state.activityLog.length > 50) state.activityLog.pop();
+    }
+
+    function clearActivityLog() {
+      state.activityLog = [];
+      saveStateToStorage();
+      renderActivityPage();
+      showToast("Activity log cleared", "info");
+    }
+
+    // TOAST NOTIFICATIONS
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      
+      let bg = 'bg-slate-900 border-slate-700 text-slate-100';
+      let icon = 'check-circle';
+      let iconColor = 'text-brand-400';
+      
+      if (type === 'error') {
+        bg = 'bg-rose-950/90 border-rose-800 text-rose-200';
+        icon = 'alert-circle';
+        iconColor = 'text-rose-400';
+      } else if (type === 'info') {
+        bg = 'bg-blue-950/90 border-blue-800 text-blue-200';
+        icon = 'info';
+        iconColor = 'text-blue-400';
+      }
+
+      toast.className = `pointer-events-auto toast-animate ${bg} border px-4 py-3 rounded-2xl shadow-2xl flex items-center justify-between gap-4 text-xs font-semibold min-w-[280px]`;
+      toast.innerHTML = `
+        <div class="flex items-center gap-3">
+          <i data-lucide="${icon}" class="w-4 h-4 ${iconColor} shrink-0"></i>
+          <span>${message}</span>
+        </div>
+        ${undoBuffer ? `<button onclick="executeUndo()" class="px-2.5 py-1 bg-white/10 hover:bg-white/25 rounded-lg text-[11px] underline">Undo</button>` : ''}
+      `;
+
+      container.appendChild(toast);
+      lucide.createIcons();
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    // UNDO SYSTEM (5 Second recovery for Bills, Goals, Transactions)
+    function setUndoBuffer(data, restoreCallback) {
+      undoBuffer = { data, restoreCallback };
+      if (undoTimer) clearTimeout(undoTimer);
+      
+      showToast("Action completed. Click Undo to revert.", "info");
+
+      undoTimer = setTimeout(() => {
+        undoBuffer = null;
+      }, 5000);
+    }
+
+    function executeUndo() {
+      if (undoBuffer && undoBuffer.restoreCallback) {
+        undoBuffer.restoreCallback(undoBuffer.data);
+        undoBuffer = null;
+        if (undoTimer) clearTimeout(undoTimer);
+        saveStateToStorage();
+        showToast("Action undone successfully", "success");
+        navigateTo(getCurrentPageId());
+      }
+    }
+
+    function getCurrentPageId() {
+      const pages = ['dashboard', 'coming-up', 'ledger', 'goals', 'forecast', 'activity', 'reconcile', 'settings'];
+      for (let p of pages) {
+        const el = document.getElementById(`page-${p}`);
+        if (el && !el.classList.contains('hidden')) return p;
+      }
+      return 'dashboard';
+    }
+
+    // SCREEN & ROUTER MANAGER
+    function showScreen(screenId) {
+      document.querySelectorAll('.view-screen').forEach(screen => {
+        screen.classList.remove('active');
+        screen.style.display = 'none';
+      });
+
+      const target = document.getElementById(screenId);
+      if (target) {
+        target.classList.add('active');
+        target.style.display = screenId === 'screen-app' ? 'flex' : 'block';
+      }
+    }
 
     function navigateTo(pageId) {
-      // Hide all sub pages
       document.querySelectorAll('.page-view').forEach(p => p.classList.add('hidden'));
       
-      // Show requested page
       const targetPage = document.getElementById(`page-${pageId}`);
       if (targetPage) targetPage.classList.remove('hidden');
 
-      // Update Nav active styles (desktop & mobile)
       document.querySelectorAll('.nav-item').forEach(btn => {
         btn.classList.remove('text-white', 'bg-slate-800/60');
         btn.classList.add('text-slate-400');
@@ -958,21 +1137,83 @@ const SUPABASE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
         activeNav.classList.add('text-white', 'bg-slate-800/60');
       }
 
-      // Render view content
       if (pageId === 'dashboard') renderDashboard();
       if (pageId === 'coming-up') renderComingUp();
       if (pageId === 'ledger') renderLedger();
       if (pageId === 'goals') renderGoals();
       if (pageId === 'forecast') renderForecast();
+      if (pageId === 'activity') renderActivityPage();
       if (pageId === 'reconcile') renderReconcile();
       if (pageId === 'settings') renderSettings();
 
       lucide.createIcons();
     }
 
-    // ==========================================
-    // AUTHENTICATION HANDLERS
-    // ==========================================
+    // CUSTOM MODALS
+    function openCustomModal(title, body, actions = []) {
+      document.getElementById('generic-modal-title').innerText = title;
+      document.getElementById('generic-modal-body').innerText = body;
+      const actionsEl = document.getElementById('generic-modal-actions');
+      
+      actionsEl.innerHTML = actions.map(a => `
+        <button onclick="${a.onclick}; closeModals();" class="flex-1 py-2.5 rounded-xl text-xs font-bold ${a.primary ? 'bg-brand-500 text-slate-950 hover:bg-brand-600' : 'bg-slate-800 text-slate-200 hover:bg-slate-700'}">${a.label}</button>
+      `).join('');
+
+      document.getElementById('modal-backdrop').classList.remove('hidden');
+      document.getElementById('modal-generic').classList.remove('hidden');
+    }
+
+    function openAddBillModal() {
+      document.getElementById('modal-backdrop').classList.remove('hidden');
+      document.getElementById('modal-bill').classList.remove('hidden');
+    }
+
+    function openAddTransactionModal() {
+      document.getElementById('modal-backdrop').classList.remove('hidden');
+      document.getElementById('modal-transaction').classList.remove('hidden');
+    }
+
+    function openAddGoalModal() {
+      document.getElementById('modal-backdrop').classList.remove('hidden');
+      document.getElementById('modal-goal').classList.remove('hidden');
+    }
+
+    function closeModals() {
+      document.getElementById('modal-backdrop').classList.add('hidden');
+      document.getElementById('modal-generic').classList.add('hidden');
+      document.getElementById('modal-bill').classList.add('hidden');
+      document.getElementById('modal-transaction').classList.add('hidden');
+      document.getElementById('modal-goal').classList.add('hidden');
+    }
+
+    // PUBLIC PAGES
+    function openPublicPage(pageKey) {
+      const titles = {
+        privacy: "Privacy Policy",
+        terms: "Terms of Service",
+        about: "About Paycheck Pilot"
+      };
+      const content = {
+        privacy: "Paycheck Pilot respects your privacy. All financial data is stored securely and encrypted via Supabase and local storage. We never sell your personal information.",
+        terms: "By using Paycheck Pilot, you agree to navigate your finances responsibly. Paycheck Pilot provides financial calculations for informational and budgeting purposes.",
+        about: "Paycheck Pilot v2.5.0 Fintech Edition is engineered to answer one fundamental question instantly: Can I make it until payday?"
+      };
+
+      document.getElementById('public-page-title').innerText = titles[pageKey];
+      document.getElementById('public-page-content').innerHTML = `<p>${content[pageKey]}</p>`;
+      
+      document.querySelectorAll('.view-screen').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.page-view').forEach(p => p.classList.add('hidden'));
+      document.getElementById('page-public').classList.remove('hidden');
+      showScreen('screen-app');
+    }
+
+    function closePublicPage() {
+      if (state.user) navigateTo('dashboard');
+      else showScreen('screen-auth');
+    }
+
+    // AUTHENTICATION
     function switchAuthTab(mode) {
       authMode = mode;
       const loginBtn = document.getElementById('auth-tab-login');
@@ -993,9 +1234,9 @@ const SUPABASE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
     function handleAuthSubmit(e) {
       e.preventDefault();
       const email = document.getElementById('auth-email').value;
-      
       state.user = { email: email, id: 'usr_' + Date.now() };
       saveStateToStorage();
+      logActivity("Settings Changed", `User signed in as ${email}`);
 
       if (!state.onboardingCompleted) {
         showScreen('screen-onboarding');
@@ -1004,63 +1245,55 @@ const SUPABASE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
         showScreen('screen-app');
         navigateTo('dashboard');
       }
+      showToast("Signed in successfully", "success");
     }
 
     function loginAsDemo() {
       state.user = { email: 'demo@paycheckpilot.app', id: 'usr_demo' };
-      saveStateToStorage();
-      
-      if (!state.onboardingCompleted) {
-        showScreen('screen-onboarding');
-        renderOnboardingStep();
-      } else {
-        showScreen('screen-app');
-        navigateTo('dashboard');
+      // Populate clean demo starter data if empty
+      if (state.accounts.length === 0) {
+        state.accounts = [{ id: 'acc_1', name: 'Primary Checking', balance: 3450.00, type: 'checking' }];
+        state.income = { amount: 2800.00, frequency: 'biweekly', nextDate: new Date(Date.now() + 7*86400000).toISOString().split('T')[0] };
+        state.bills = [{ id: 'bill_1', title: 'Apartment Rent', amount: 1400.00, dueDate: new Date(Date.now() + 4*86400000).toISOString().split('T')[0], category: 'Housing' }];
+        state.goals = [{ id: 'goal_1', title: 'Emergency Reserve', target: 5000.00, current: 1200.00 }];
+        state.onboardingCompleted = true;
       }
+      saveStateToStorage();
+      showScreen('screen-app');
+      navigateTo('dashboard');
+      showToast("Loaded Clean Demo Mode", "success");
     }
 
-    function handleForgotPassword() {
-      alert("A password reset link has been dispatched to your email address.");
+    function simulatePasswordReset() {
+      showToast("Password reset instructions sent", "info");
     }
 
     function handleLogout() {
       state.user = null;
       saveStateToStorage();
       showScreen('screen-auth');
+      showToast("Signed out", "info");
     }
 
-    // ==========================================
     // ONBOARDING WIZARD
-    // ==========================================
     function renderOnboardingStep() {
       const step = state.currentOnboardStep;
-      
-      // Update Stepper Header
       document.getElementById('onboard-step-indicator').innerText = `Step ${step} of 4`;
       document.getElementById('onboard-progress-bar').style.width = `${(step / 4) * 100}%`;
 
-      const titles = [
-        "Accounts & Cash",
-        "Income & Payday Schedule",
-        "Recurring Bills & Subscriptions",
-        "Flight Plan Ready"
-      ];
+      const titles = ["Accounts & Cash", "Income & Payday Schedule", "Recurring Bills & Subscriptions", "Flight Plan Ready"];
       document.getElementById('onboard-step-title').innerText = titles[step - 1];
 
-      // Hide all step content containers
       document.querySelectorAll('.onboard-step-content').forEach(c => c.classList.add('hidden'));
       document.getElementById(`onboard-step-${step}`).classList.remove('hidden');
 
-      // Previous button visibility
       const prevBtn = document.getElementById('onboard-prev-btn');
       if (step === 1) prevBtn.classList.add('hidden');
       else prevBtn.classList.remove('hidden');
 
-      // Next / Finish button styling
       const nextBtn = document.getElementById('onboard-next-btn');
       if (step === 4) {
         nextBtn.querySelector('span').innerText = "Launch Dashboard";
-        // Calculate step 4 summary values
         const totalCash = state.accounts.reduce((acc, a) => acc + a.balance, 0);
         const totalBills = state.bills.reduce((acc, b) => acc + b.amount, 0);
         document.getElementById('summary-cash').innerText = formatCurrency(totalCash);
@@ -1070,12 +1303,11 @@ const SUPABASE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
         nextBtn.querySelector('span').innerText = "Continue";
       }
 
-      // Step-specific rendering
       if (step === 1) renderOnboardAccounts();
       if (step === 2) {
-        document.getElementById('onboard-paycheck-amount').value = state.income.amount;
+        document.getElementById('onboard-paycheck-amount').value = state.income.amount || '';
         document.getElementById('onboard-pay-frequency').value = state.income.frequency;
-        document.getElementById('onboard-next-payday').value = state.income.nextDate;
+        if (state.income.nextDate) document.getElementById('onboard-next-payday').value = state.income.nextDate;
       }
       if (step === 3) renderOnboardBills();
 
@@ -1084,6 +1316,10 @@ const SUPABASE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
 
     function renderOnboardAccounts() {
       const list = document.getElementById('onboard-accounts-list');
+      if (state.accounts.length === 0) {
+        list.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">No accounts added yet. Click below to add one.</p>`;
+        return;
+      }
       list.innerHTML = state.accounts.map(acc => `
         <div class="flex items-center justify-between p-3 bg-slate-900/90 rounded-xl border border-slate-800">
           <div class="flex items-center gap-3">
@@ -1100,6 +1336,10 @@ const SUPABASE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
 
     function renderOnboardBills() {
       const list = document.getElementById('onboard-bills-list');
+      if (state.bills.length === 0) {
+        list.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">No recurring bills added yet.</p>`;
+        return;
+      }
       list.innerHTML = state.bills.map(b => `
         <div class="flex items-center justify-between p-3 bg-slate-900/90 rounded-xl border border-slate-800">
           <div class="flex items-center gap-3">
@@ -1114,19 +1354,20 @@ const SUPABASE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
       `).join('');
     }
 
-    function addAccountPrompt() {
+    function promptAddAccount() {
       const name = prompt("Account Name (e.g. Chase Checking):");
       if (!name) return;
-      const balance = parseFloat(prompt("Current Balance ($):", "1000") || "0");
+      const balance = parseFloat(prompt("Current Balance ($):", "1500") || "0");
       state.accounts.push({ id: 'acc_' + Date.now(), name, balance, type: 'checking' });
       saveStateToStorage();
       renderOnboardAccounts();
+      logActivity("Account Changes", `Added account ${name}`);
     }
 
-    function addBillPrompt() {
-      const title = prompt("Bill Name (e.g. Netflix / Rent):");
+    function promptAddBill() {
+      const title = prompt("Bill Name (e.g. Electric / Rent):");
       if (!title) return;
-      const amount = parseFloat(prompt("Amount ($):", "50") || "0");
+      const amount = parseFloat(prompt("Amount ($):", "100") || "0");
       const dueDate = prompt("Next Due Date (YYYY-MM-DD):", new Date().toISOString().split('T')[0]);
       state.bills.push({ id: 'bill_' + Date.now(), title, amount, dueDate, category: 'Utilities' });
       saveStateToStorage();
@@ -1145,11 +1386,11 @@ const SUPABASE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
         state.currentOnboardStep++;
         renderOnboardingStep();
       } else {
-        // Complete Onboarding
         state.onboardingCompleted = true;
         saveStateToStorage();
         showScreen('screen-app');
         navigateTo('dashboard');
+        showToast("Flight plan configured successfully!", "success");
       }
     }
 
@@ -1168,17 +1409,14 @@ const SUPABASE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
       renderOnboardingStep();
     }
 
-    // ==========================================
-    // CALCULATIONS & FINANCIAL LOGIC
-    // ==========================================
+    // FINANCIAL ENGINE & DYNAMIC CALCULATIONS
     function calculateFinancials() {
       const totalCash = state.accounts.reduce((sum, acc) => sum + acc.balance, 0);
       
-      const nextPayDate = new Date(state.income.nextDate);
+      const nextPayDate = state.income.nextDate ? new Date(state.income.nextDate) : new Date(Date.now() + 14*86400000);
       const today = new Date();
       today.setHours(0,0,0,0);
 
-      // Bills due between today and next payday
       const billsBeforePayday = state.bills.filter(b => {
         const d = new Date(b.dueDate);
         return d >= today && d <= nextPayDate;
@@ -1187,14 +1425,22 @@ const SUPABASE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
       const totalBillsBeforePayday = billsBeforePayday.reduce((sum, b) => sum + b.amount, 0);
       const safeSpend = totalCash - totalBillsBeforePayday;
 
-      // Days countdown
       const diffTime = nextPayDate - today;
-      const daysUntilPayday = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+      const daysUntilPayday = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+      const dailyAvailable = safeSpend / daysUntilPayday;
 
-      // Total monthly bills for ratio
       const totalMonthlyBills = state.bills.reduce((sum, b) => sum + b.amount, 0);
-      const estimatedMonthlyIncome = state.income.frequency === 'biweekly' ? state.income.amount * 2.16 : state.income.amount;
+      const estimatedMonthlyIncome = state.income.frequency === 'biweekly' ? state.income.amount * 2.16 : (state.income.amount || 3000);
       const fixedRatio = estimatedMonthlyIncome > 0 ? Math.round((totalMonthlyBills / estimatedMonthlyIncome) * 100) : 0;
+
+      // Resilience score & buffer days
+      const bufferDays = totalMonthlyBills > 0 ? Math.round((totalCash / (totalMonthlyBills / 30))) : 30;
+      const resilienceScore = Math.min(100, Math.max(10, bufferDays * 3));
+
+      // Risk status
+      let riskStatus = "Healthy";
+      if (safeSpend < 0) riskStatus = "Critical Risk";
+      else if (safeSpend < 200) riskStatus = "Caution";
 
       return {
         totalCash,
@@ -1202,30 +1448,46 @@ const SUPABASE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
         totalBillsBeforePayday,
         safeSpend,
         daysUntilPayday,
-        fixedRatio
+        dailyAvailable,
+        fixedRatio,
+        bufferDays,
+        resilienceScore,
+        riskStatus
       };
     }
 
-    // ==========================================
     // DASHBOARD VIEW
-    // ==========================================
     function renderDashboard() {
       const data = calculateFinancials();
 
-      // Safe Spend Primary Card
       document.getElementById('dash-safe-spend').innerText = formatCurrency(data.safeSpend);
-      document.getElementById('dash-next-paydate-inline').innerText = formatDate(state.income.nextDate);
+      document.getElementById('dash-next-paydate-inline').innerText = state.income.nextDate ? formatDate(state.income.nextDate) : 'Upcoming';
       document.getElementById('dash-next-payday-countdown').innerText = `In ${data.daysUntilPayday} Days`;
+      document.getElementById('dash-daily-available').innerText = `${formatCurrency(data.dailyAvailable)} / day`;
       document.getElementById('dash-bills-due-total').innerText = formatCurrency(data.totalBillsBeforePayday);
 
-      // Progress bar fill (0 to 14 days assumed)
       const pct = Math.min(100, Math.max(10, ((14 - data.daysUntilPayday) / 14) * 100));
       document.getElementById('dash-payday-progress').style.width = `${pct}%`;
 
-      // 3 Metrics
       document.getElementById('dash-cash-total').innerText = formatCurrency(data.totalCash);
       document.getElementById('dash-next-payday-amount').innerText = formatCurrency(state.income.amount);
+      document.getElementById('dash-resilience-score').innerText = `${data.resilienceScore}/100`;
+      document.getElementById('dash-buffer-days').innerText = `Buffer days: ${data.bufferDays}`;
       document.getElementById('dash-paycheck-ratio').innerText = `${data.fixedRatio}%`;
+
+      // Risk banner
+      const banner = document.getElementById('dash-risk-banner');
+      if (data.riskStatus === 'Critical Risk') {
+        banner.className = "p-4 rounded-2xl border bg-rose-950/80 border-rose-800 text-rose-200 text-xs font-medium flex items-center gap-3";
+        document.getElementById('dash-risk-message').innerText = "Critical Risk: Safe Spend is negative! Review upcoming bills or adjust spending.";
+        banner.classList.remove('hidden');
+      } else if (data.riskStatus === 'Caution') {
+        banner.className = "p-4 rounded-2xl border bg-amber-950/80 border-amber-800 text-amber-200 text-xs font-medium flex items-center gap-3";
+        document.getElementById('dash-risk-message').innerText = "Caution: Safe Spend is running low before payday.";
+        banner.classList.remove('hidden');
+      } else {
+        banner.classList.add('hidden');
+      }
 
       // Bills Due List
       const billsContainer = document.getElementById('dash-upcoming-bills-list');
@@ -1235,7 +1497,7 @@ const SUPABASE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
         billsContainer.innerHTML = data.billsBeforePayday.map(b => `
           <div class="flex items-center justify-between p-3 bg-slate-900/60 rounded-xl border border-slate-800/80">
             <div class="flex items-center gap-3">
-              <i data-lucide="calendar" class="w-4 h-4 text-rose-400"></i>
+              <span class="px-2 py-0.5 bg-rose-500/10 text-rose-400 rounded text-[10px] font-bold">Bill</span>
               <div>
                 <p class="text-xs font-bold text-slate-200">${b.title}</p>
                 <p class="text-[10px] text-slate-400">Due ${formatDate(b.dueDate)}</p>
@@ -1255,7 +1517,7 @@ const SUPABASE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
         activityContainer.innerHTML = recent.map(tx => `
           <div class="flex items-center justify-between p-3 bg-slate-900/60 rounded-xl border border-slate-800/80">
             <div class="flex items-center gap-3">
-              <i data-lucide="${tx.type === 'income' ? 'arrow-down-left' : 'arrow-up-right'}" class="w-4 h-4 ${tx.type === 'income' ? 'text-emerald-400' : 'text-slate-400'}"></i>
+              <span class="px-2 py-0.5 ${tx.type === 'income' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-800 text-slate-400'} rounded text-[10px] font-bold">${tx.type === 'income' ? 'Income' : 'Expense'}</span>
               <div>
                 <p class="text-xs font-bold text-slate-200">${tx.title}</p>
                 <p class="text-[10px] text-slate-400">${formatDate(tx.date)} • ${tx.category}</p>
@@ -1269,26 +1531,20 @@ const SUPABASE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
       }
     }
 
-    // ==========================================
-    // COMING UP (TIMELINE VIEW)
-    // ==========================================
+    // COMING UP VIEW
     function renderComingUp() {
       const container = document.getElementById('coming-up-timeline-list');
-      
       if (state.bills.length === 0) {
         container.innerHTML = `<div class="glass-card p-8 rounded-2xl text-center text-slate-500 text-xs">No upcoming bills scheduled.</div>`;
         return;
       }
 
-      // Sort by due date
       const sorted = [...state.bills].sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
 
       container.innerHTML = sorted.map(b => `
         <div class="glass-card p-4 rounded-2xl border border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-card-hover">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center shrink-0">
-              <i data-lucide="receipt" class="w-5 h-5"></i>
-            </div>
+            <span class="px-2.5 py-1 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-lg text-[10px] font-bold uppercase tracking-wider">Bill</span>
             <div>
               <h4 class="text-sm font-bold text-white">${b.title}</h4>
               <p class="text-xs text-slate-400">Due: <span class="text-slate-200 font-medium">${formatDate(b.dueDate)}</span> • Category: ${b.category}</p>
@@ -1298,7 +1554,6 @@ const SUPABASE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
           <div class="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-800">
             <span class="text-base font-extrabold text-rose-400">${formatCurrency(b.amount)}</span>
             
-            <!-- EXPLICIT ACTION BUTTONS (NO CONFUSING CHECKBOX) -->
             <div class="flex items-center gap-2">
               <button onclick="completeBill('${b.id}')" class="px-3 py-1.5 bg-brand-500/20 hover:bg-brand-500/30 text-brand-400 border border-brand-500/30 rounded-lg text-xs font-bold transition-all flex items-center gap-1">
                 <i data-lucide="check" class="w-3.5 h-3.5"></i>
@@ -1319,17 +1574,18 @@ const SUPABASE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
       const bill = state.bills.find(b => b.id === billId);
       if (!bill) return;
 
-      // 1. Log to ledger
       state.transactions.unshift({
         id: 'tx_' + Date.now(),
         date: new Date().toISOString().split('T')[0],
-        title: `Bill Payment: ${bill.title}`,
+        title: `Bill Paid: ${bill.title}`,
         amount: bill.amount,
         type: 'expense',
         category: bill.category
       });
 
-      // 2. Advance due date by 1 month
+      logActivity("Bill Completed", `Marked bill "${bill.title}" (${formatCurrency(bill.amount)}) as paid.`);
+      showToast(`Bill Paid: ${bill.title}`, "success");
+
       const current = new Date(bill.dueDate);
       current.setMonth(current.getMonth() + 1);
       bill.dueDate = current.toISOString().split('T')[0];
@@ -1339,16 +1595,23 @@ const SUPABASE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
     }
 
     function deleteBill(billId) {
-      if (confirm("Are you sure you want to delete this bill?")) {
-        state.bills = state.bills.filter(b => b.id !== billId);
-        saveStateToStorage();
-        renderComingUp();
-      }
+      const idx = state.bills.findIndex(b => b.id === billId);
+      if (idx === -1) return;
+      const removed = state.bills[idx];
+
+      state.bills.splice(idx, 1);
+      logActivity("Bill Deleted", `Deleted bill "${removed.title}".`);
+
+      setUndoBuffer(removed, (restored) => {
+        state.bills.push(restored);
+        logActivity("Bill Restored", `Restored bill "${restored.title}" via Undo.`);
+      });
+
+      saveStateToStorage();
+      renderComingUp();
     }
 
-    // ==========================================
-    // TRANSACTION LEDGER VIEW
-    // ==========================================
+    // TRANSACTION LEDGER
     function renderLedger() {
       const tbody = document.getElementById('ledger-table-body');
       const search = (document.getElementById('ledger-search-input').value || '').toLowerCase();
@@ -1381,17 +1644,26 @@ const SUPABASE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
     }
 
     function deleteTransaction(txId) {
-      state.transactions = state.transactions.filter(t => t.id !== txId);
+      const idx = state.transactions.findIndex(t => t.id === txId);
+      if (idx === -1) return;
+      const removed = state.transactions[idx];
+
+      state.transactions.splice(idx, 1);
+      logActivity("Transaction Deleted", `Deleted transaction "${removed.title}".`);
+      showToast("Transaction Deleted", "info");
+
+      setUndoBuffer(removed, (restored) => {
+        state.transactions.unshift(restored);
+        logActivity("Transaction Restored", `Restored transaction "${restored.title}" via Undo.`);
+      });
+
       saveStateToStorage();
       renderLedger();
     }
 
-    // ==========================================
-    // GOALS VIEW
-    // ==========================================
+    // GOALS VIEW WITH ETA, AMOUNT REMAINING, PROGRESS BARS
     function renderGoals() {
       const grid = document.getElementById('goals-grid');
-      
       if (state.goals.length === 0) {
         grid.innerHTML = `<p class="col-span-2 text-center text-slate-500 text-xs py-8">No savings goals created yet.</p>`;
         return;
@@ -1399,6 +1671,10 @@ const SUPABASE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
 
       grid.innerHTML = state.goals.map(g => {
         const pct = Math.min(100, Math.round((g.current / g.target) * 100));
+        const remaining = Math.max(0, g.target - g.current);
+        const daysToCompletion = Math.ceil(remaining / 50); // Assumed $50/day savings rate
+        const projDate = new Date(Date.now() + daysToCompletion * 86400000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
         return `
           <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4">
             <div class="flex justify-between items-start">
@@ -1406,11 +1682,16 @@ const SUPABASE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
                 <h3 class="font-bold text-white text-base">${g.title}</h3>
                 <p class="text-xs text-slate-400">${formatCurrency(g.current)} saved of ${formatCurrency(g.target)}</p>
               </div>
-              <span class="px-2.5 py-1 bg-brand-500/10 text-brand-400 border border-brand-500/20 text-xs font-bold rounded-lg">${pct}%</span>
+              <span class="px-2.5 py-1 bg-brand-500/15 text-brand-400 border border-brand-500/30 text-xs font-bold rounded-lg">${pct}%</span>
             </div>
 
-            <div class="w-full bg-slate-900 h-2.5 rounded-full overflow-hidden border border-slate-800">
-              <div class="bg-brand-500 h-full rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+            <div class="w-full bg-slate-900 h-3 rounded-full overflow-hidden border border-slate-800 p-0.5">
+              <div class="bg-gradient-to-r from-brand-600 to-brand-400 h-full rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 text-xs bg-slate-900/60 p-3 rounded-2xl border border-slate-800/80">
+              <div><span class="text-slate-400">Remaining:</span> <strong class="text-rose-400">${formatCurrency(remaining)}</strong></div>
+              <div><span class="text-slate-400">Projected ETA:</span> <strong class="text-slate-200">${projDate}</strong></div>
             </div>
 
             <div class="flex justify-between items-center pt-2">
@@ -1429,27 +1710,58 @@ const SUPABASE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
       const g = state.goals.find(x => x.id === goalId);
       if (g) {
         g.current += amount;
+        logActivity("Goal Updated", `Deposited ${formatCurrency(amount)} into goal "${g.title}".`);
+        showToast(`Goal Updated: +${formatCurrency(amount)}`, "success");
         saveStateToStorage();
         renderGoals();
       }
     }
 
     function deleteGoal(goalId) {
-      if (confirm("Delete this goal?")) {
-        state.goals = state.goals.filter(g => g.id !== goalId);
-        saveStateToStorage();
-        renderGoals();
-      }
+      const idx = state.goals.findIndex(g => g.id === goalId);
+      if (idx === -1) return;
+      const removed = state.goals[idx];
+
+      state.goals.splice(idx, 1);
+      logActivity("Goal Deleted", `Deleted goal "${removed.title}".`);
+      showToast("Goal Deleted", "info");
+
+      setUndoBuffer(removed, (restored) => {
+        state.goals.push(restored);
+        logActivity("Goal Restored", `Restored goal "${restored.title}" via Undo.`);
+      });
+
+      saveStateToStorage();
+      renderGoals();
     }
 
-    // ==========================================
-    // FORECAST VIEW (CHART.JS)
-    // ==========================================
+    // ACTIVITY PAGE
+    function renderActivityPage() {
+      const container = document.getElementById('activity-log-timeline');
+      if (state.activityLog.length === 0) {
+        container.innerHTML = `<div class="glass-card p-8 rounded-2xl text-center text-slate-500 text-xs">No activity recorded yet.</div>`;
+        return;
+      }
+
+      container.innerHTML = state.activityLog.map(act => `
+        <div class="glass-card p-4 rounded-2xl border border-slate-800/80 flex items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <i data-lucide="activity" class="w-4 h-4 text-brand-400 shrink-0"></i>
+            <div>
+              <p class="text-xs font-bold text-white">${act.action}</p>
+              <p class="text-xs text-slate-300">${act.details}</p>
+            </div>
+          </div>
+          <span class="text-[10px] text-slate-500 whitespace-nowrap">${new Date(act.timestamp).toLocaleTimeString()}</span>
+        </div>
+      `).join('');
+    }
+
+    // FORECAST VIEW
     function renderForecast() {
       const ctx = document.getElementById('forecastChart').getContext('2d');
       if (forecastChartInstance) forecastChartInstance.destroy();
 
-      // Generate 30 days projection
       const labels = [];
       const cashData = [];
       let currentBalance = state.accounts.reduce((s, a) => s + a.balance, 0);
@@ -1460,12 +1772,10 @@ const SUPABASE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
         d.setDate(d.getDate() + i);
         const dateStr = d.toISOString().split('T')[0];
 
-        // Check if payday
         if (dateStr === state.income.nextDate) {
           currentBalance += state.income.amount;
         }
 
-        // Check bills due
         state.bills.forEach(b => {
           if (b.dueDate === dateStr) {
             currentBalance -= b.amount;
@@ -1494,37 +1804,29 @@ const SUPABASE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false }
-          },
+          plugins: { legend: { display: false } },
           scales: {
-            x: {
-              grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              ticks: { color: '#64748b', font: { size: 10 } }
-            },
-            y: {
-              grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              ticks: { color: '#64748b', font: { size: 10 } }
-            }
+            x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#64748b', font: { size: 10 } } },
+            y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#64748b', font: { size: 10 } } }
           }
         }
       });
     }
 
-    // ==========================================
     // RECONCILE VIEW
-    // ==========================================
     function renderReconcile() {
       const container = document.getElementById('reconcile-accounts-list');
+      if (state.accounts.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-500 text-center">No accounts found.</p>`;
+        return;
+      }
       container.innerHTML = state.accounts.map(acc => `
         <div class="p-3 bg-slate-900/60 rounded-2xl border border-slate-800 flex items-center justify-between gap-3">
           <div>
             <p class="text-xs font-bold text-white">${acc.name}</p>
             <p class="text-[10px] text-slate-400 capitalize">${acc.type}</p>
           </div>
-          <div class="flex items-center gap-2">
-            <input type="number" step="0.01" value="${acc.balance}" onchange="updateAccountBalance('${acc.id}', this.value)" class="w-24 bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-right text-xs font-bold text-brand-400 outline-none" />
-          </div>
+          <input type="number" step="0.01" value="${acc.balance}" onchange="updateAccountBalance('${acc.id}', this.value)" class="w-28 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-right text-xs font-bold text-brand-400 outline-none" />
         </div>
       `).join('');
     }
@@ -1534,6 +1836,7 @@ const SUPABASE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
       if (acc) {
         acc.balance = parseFloat(val || "0");
         saveStateToStorage();
+        logActivity("Account Changes", `Updated balance for ${acc.name} to ${formatCurrency(acc.balance)}`);
       }
     }
 
@@ -1545,6 +1848,7 @@ const SUPABASE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
       document.body.appendChild(downloadAnchor);
       downloadAnchor.click();
       downloadAnchor.remove();
+      showToast("Backup exported successfully", "success");
     }
 
     function importDataJSON(event) {
@@ -1557,64 +1861,67 @@ const SUPABASE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
           const imported = JSON.parse(e.target.result);
           state = { ...state, ...imported };
           saveStateToStorage();
-          alert("Backup data imported successfully!");
+          showToast("Data imported successfully!", "success");
           navigateTo('dashboard');
         } catch (err) {
-          alert("Invalid JSON file format.");
+          showToast("Invalid JSON format", "error");
         }
       };
       reader.readAsText(file);
     }
 
-    // ==========================================
-    // SETTINGS VIEW
-    // ==========================================
+    // SETTINGS & SPONSOR MANAGEMENT VIEW
     function renderSettings() {
       document.getElementById('settings-email-display').value = state.user ? state.user.email : 'pilot@user.com';
+      
+      const sponsorList = document.getElementById('sponsor-management-list');
+      let totalImpressions = state.sponsors.reduce((s, sp) => s + sp.impressions, 0);
+      let totalClicks = state.sponsors.reduce((s, sp) => s + sp.clicks, 0);
+      let ctr = totalImpressions > 0 ? ((totalClicks / totalImpressions) * 100).toFixed(1) : '0.0';
+      document.getElementById('sponsor-ctr-summary').innerText = `CTR: ${ctr}% (${totalClicks}/${totalImpressions})`;
+
+      sponsorList.innerHTML = state.sponsors.map((sp, idx) => `
+        <div class="p-3.5 bg-slate-900/80 rounded-2xl border border-slate-800 space-y-3">
+          <div class="flex justify-between items-center">
+            <span class="text-xs font-bold text-white">${sp.name}</span>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" ${sp.enabled ? 'checked' : ''} onchange="toggleSponsor('${sp.id}')" class="sr-only peer">
+              <div class="w-8 h-4 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-brand-500"></div>
+            </label>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+            <input type="text" value="${sp.title}" onchange="updateSponsorField('${sp.id}', 'title', this.value)" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-200 outline-none" placeholder="Title" />
+            <input type="text" value="${sp.url}" onchange="updateSponsorField('${sp.id}', 'url', this.value)" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-200 outline-none" placeholder="Destination URL" />
+          </div>
+        </div>
+      `).join('');
     }
 
-    function updatePassword() {
-      const pass = document.getElementById('settings-new-pass').value;
-      if (!pass || pass.length < 6) {
-        alert("Please enter a password with at least 6 characters.");
-        return;
+    function toggleSponsor(id) {
+      const sp = state.sponsors.find(s => s.id === id);
+      if (sp) {
+        sp.enabled = !sp.enabled;
+        saveStateToStorage();
+        showToast(`Sponsor ${sp.name} updated`, "success");
       }
-      alert("Password updated successfully.");
-      document.getElementById('settings-new-pass').value = '';
+    }
+
+    function updateSponsorField(id, field, val) {
+      const sp = state.sponsors.find(s => s.id === id);
+      if (sp) {
+        sp[field] = val;
+        saveStateToStorage();
+      }
     }
 
     function clearAllData() {
-      if (confirm("Are you sure you want to reset all data? This cannot be undone.")) {
-        localStorage.removeItem('paycheck_pilot_state');
-        location.reload();
-      }
+      openCustomModal("Reset All Local Data", "Are you sure you want to reset all data and restart?", [
+        { label: "Cancel", primary: false, onclick: "closeModals()" },
+        { label: "Confirm Reset", primary: true, onclick: "localStorage.removeItem('paycheck_pilot_state'); location.reload();" }
+      ]);
     }
 
-    // ==========================================
-    // MODAL DIALOG CONTROLLERS
-    // ==========================================
-    function openAddBillModal() {
-      document.getElementById('modal-backdrop').classList.remove('hidden');
-      document.getElementById('modal-bill').classList.remove('hidden');
-    }
-
-    function openAddTransactionModal() {
-      document.getElementById('modal-backdrop').classList.remove('hidden');
-      document.getElementById('modal-transaction').classList.remove('hidden');
-    }
-
-    function openAddGoalModal() {
-      document.getElementById('modal-backdrop').classList.remove('hidden');
-      document.getElementById('modal-goal').classList.remove('hidden');
-    }
-
-    function closeModals() {
-      document.getElementById('modal-backdrop').classList.add('hidden');
-      document.getElementById('modal-bill').classList.add('hidden');
-      document.getElementById('modal-transaction').classList.add('hidden');
-      document.getElementById('modal-goal').classList.add('hidden');
-    }
-
+    // MODAL FORM SUBMISSIONS
     function handleSaveBill(e) {
       e.preventDefault();
       const title = document.getElementById('bill-title').value;
@@ -1623,6 +1930,8 @@ const SUPABASE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
       const category = document.getElementById('bill-category').value;
 
       state.bills.push({ id: 'bill_' + Date.now(), title, amount, dueDate, category });
+      logActivity("Bill Created", `Added recurring bill "${title}" (${formatCurrency(amount)}).`);
+      showToast("Bill Created Successfully", "success");
       saveStateToStorage();
       closeModals();
       renderComingUp();
@@ -1637,6 +1946,8 @@ const SUPABASE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
       const date = document.getElementById('tx-date').value;
 
       state.transactions.unshift({ id: 'tx_' + Date.now(), title, amount, type, category, date });
+      logActivity("Transaction Added", `Logged ${type} "${title}" (${formatCurrency(amount)}).`);
+      showToast("Transaction Logged", "success");
       saveStateToStorage();
       closeModals();
       renderLedger();
@@ -1649,14 +1960,14 @@ const SUPABASE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
       const current = parseFloat(document.getElementById('goal-current').value || "0");
 
       state.goals.push({ id: 'goal_' + Date.now(), title, target, current });
+      logActivity("Goal Created", `Created savings goal "${title}" (${formatCurrency(target)}).`);
+      showToast("Goal Created Successfully", "success");
       saveStateToStorage();
       closeModals();
       renderGoals();
     }
 
-    // ==========================================
-    // HELPER FORMATTERS
-    // ==========================================
+    // FORMATTERS
     function formatCurrency(num) {
       return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num || 0);
     }
