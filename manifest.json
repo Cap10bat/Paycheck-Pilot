@@ -1,0 +1,20 @@
+{
+  "name": "Paycheck Pilot",
+  "short_name": "Paycheck Pilot",
+  "start_url": "/Paycheck-Pilot/",
+  "display": "standalone",
+  "background_color": "#070c18",
+  "theme_color": "#10b981",
+  "icons": [
+    {
+      "src": "paycheck-pilot-hero.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "paycheck-pilot-hero.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
