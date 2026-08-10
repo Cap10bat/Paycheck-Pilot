@@ -76,8 +76,13 @@
     }
     
     /* Hide views by default */
-    .view-screen { display: none; }
-    .view-screen.active { display: block; }
+   .view-screen {
+  display: none;
+}
+
+.view-screen.active {
+  display: flex;
+}
   </style>
 </head>
 <body class="h-full bg-[#070c18] text-slate-100 font-sans antialiased selection:bg-brand-500 selection:text-white">
@@ -914,11 +919,24 @@ const SUPABASE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
     }
 
     // ROUTER & SCREEN DISPLAY MANAGER (CRITICAL: Only 1 active view screen at a time)
-    function showScreen(screenId) {
-      document.querySelectorAll('.view-screen').forEach(s => s.classList.remove('active'));
-      const target = document.getElementById(screenId);
-      if (target) target.classList.add('active');
+   function showScreen(screenId) {
+  document.querySelectorAll('.view-screen').forEach(screen => {
+    screen.classList.remove('active');
+    screen.style.display = 'none';
+  });
+
+  const target = document.getElementById(screenId);
+
+  if (target) {
+    target.classList.add('active');
+
+    if (screenId === 'screen-app') {
+      target.style.display = 'flex';
+    } else {
+      target.style.display = 'block';
     }
+  }
+}
 
     function navigateTo(pageId) {
       // Hide all sub pages
