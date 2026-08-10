@@ -827,11 +827,15 @@
   <!-- ========================================== -->
   <!-- APPLICATION LOGIC (SINGLE ENGINE SCRIPT)   -->
   <!-- ========================================== -->
+  
   <script>
+    
     // Supabase Placeholder Initialization
-    const SUPABASE_URL = 'https://xyzcompany.supabase.co';
-    const SUPABASE_KEY = 'public-anon-key';
-    const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+  const SUPABASE_URL = "https://zsfcqymmlzpfaapygmlu.supabase.co";
+const SUPABASE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
+   const supabaseClient = window.supabase
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+  : null;
 
     // GLOBAL APPLICATION STATE
     let state = {
