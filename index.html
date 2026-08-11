@@ -2070,7 +2070,10 @@ if (weatherCanvas) {
   weatherCanvas.width = rect.width;
   weatherCanvas.height = rect.height;
 
-  const statusText = (document.getElementById('dash-weather-status')?.innerText || '').toLowerCase();
+ const statusText =
+(
+  document.getElementById('fin-weather-title')?.innerText || ''
+).toLowerCase();
   
   let mode = 'clear';
   if (statusText.includes('storm') || statusText.includes('warning')) {
