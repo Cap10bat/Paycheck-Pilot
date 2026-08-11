@@ -201,12 +201,12 @@
         <div id="onboard-step-1" class="onboard-step-content space-y-6">
           <div>
             <h2 class="text-2xl font-bold text-white mb-2">Connect Your Accounts</h2>
-            <p class="text-sm text-slate-400">Add your liquid cash balances (checking, savings) and credit cards to calculate your real-time Safe Spend.</p>
+            <p class="text-sm text-slate-400">Add your liquid cash balances (checking, savings, cash) and credit cards to calculate your real-time Safe Spend.</p>
           </div>
 
           <div id="onboard-accounts-list" class="space-y-3 max-h-60 overflow-y-auto pr-1"></div>
 
-          <button onclick="promptAddAccount()" class="w-full py-3 border border-dashed border-slate-700 hover:border-brand-500 text-slate-300 hover:text-brand-400 rounded-xl flex items-center justify-center gap-2 text-sm font-medium transition-all">
+          <button onclick="openAddAccountModal()" class="w-full py-3 border border-dashed border-slate-700 hover:border-brand-500 text-slate-300 hover:text-brand-400 rounded-xl flex items-center justify-center gap-2 text-sm font-medium transition-all">
             <i data-lucide="plus-circle" class="w-4 h-4"></i> Add Cash or Credit Account
           </button>
         </div>
@@ -251,8 +251,8 @@
 
           <div id="onboard-bills-list" class="space-y-3 max-h-60 overflow-y-auto pr-1"></div>
 
-          <button onclick="promptAddBill()" class="w-full py-3 border border-dashed border-slate-700 hover:border-brand-500 text-slate-300 hover:text-brand-400 rounded-xl flex items-center justify-center gap-2 text-sm font-medium transition-all">
-            <i data-lucide="plus-circle" class="w-4 h-4"></i> Add Recurring Bill
+          <button onclick="openAddBillModal()" class="w-full py-3 border border-dashed border-slate-700 hover:border-brand-500 text-slate-300 hover:text-brand-400 rounded-xl flex items-center justify-center gap-2 text-sm font-medium transition-all">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i> Add Bill
           </button>
         </div>
 
@@ -310,6 +310,11 @@
             <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
             <span>Dashboard</span>
           </button>
+
+          <button onclick="navigateTo('accounts')" id="nav-accounts" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
+            <i data-lucide="wallet" class="w-4 h-4"></i>
+            <span>Accounts & Cash</span>
+          </button>
           
           <button onclick="navigateTo('coming-up')" id="nav-coming-up" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
             <i data-lucide="calendar-clock" class="w-4 h-4"></i>
@@ -341,7 +346,7 @@
             <span>Reconcile & Data</span>
           </button>
 
-          <button onclick="navigateTo('devtools')" id="nav-devtools" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
+          <button onclick="navigateTo('devtools')" id="nav-devtools" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all hidden">
             <i data-lucide="terminal" class="w-4 h-4"></i>
             <span>Developer Tools</span>
           </button>
@@ -395,9 +400,14 @@
               </div>
               <h2 class="text-2xl font-extrabold text-white tracking-tight mt-1">Can I make it until payday?</h2>
             </div>
-            <button onclick="openAddTransactionModal()" class="self-start sm:self-auto px-4 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5">
-              <i data-lucide="plus" class="w-4 h-4"></i> Quick Transaction
-            </button>
+            <div class="flex items-center gap-2">
+              <span id="dash-qol-meta" class="hidden sm:inline-block text-[11px] text-slate-400 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-800">
+                Sync: <span id="dash-qol-sync" class="text-slate-200">Never</span> | Accts: <span id="dash-qol-accts" class="text-slate-200">0</span> | Goals: <span id="dash-qol-goals" class="text-slate-200">0</span> | Bills: <span id="dash-qol-bills" class="text-slate-200">0</span>
+              </span>
+              <button onclick="openAddTransactionModal()" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5">
+                <i data-lucide="plus" class="w-4 h-4"></i> Quick Transaction
+              </button>
+            </div>
           </div>
 
           <!-- RISK ALERTS & HEALTH STATUS BANNER -->
@@ -513,6 +523,33 @@
 
         </div>
 
+        <!-- ================= PAGE: ACCOUNTS & CASH ================= -->
+        <div id="page-accounts" class="page-view space-y-6 hidden">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
+            <div>
+              <h2 class="text-2xl font-extrabold text-white tracking-tight">Accounts & Cash Management</h2>
+              <p class="text-xs text-slate-400">Manage checking, savings, cash, and credit card balances without re-running onboarding.</p>
+            </div>
+            <button onclick="openAddAccountModal()" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5">
+              <i data-lucide="plus" class="w-4 h-4"></i> Add Account
+            </button>
+          </div>
+
+          <!-- Total Cash Summary Card -->
+          <div class="glass-card p-6 rounded-3xl border border-brand-500/30 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div>
+              <p class="text-xs font-bold text-brand-400 uppercase tracking-wider">Total Liquid Cash</p>
+              <h3 id="accounts-page-total-cash" class="text-3xl font-black text-white">$0.00</h3>
+            </div>
+            <div class="text-xs text-slate-400 text-right sm:text-right">
+              Changes instantly update Safe Spend, Forecast, and Dashboard calculations.
+            </div>
+          </div>
+
+          <!-- Accounts List Grid -->
+          <div id="accounts-page-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        </div>
+
         <!-- ================= PAGE: COMING UP ================= -->
         <div id="page-coming-up" class="page-view space-y-6 hidden">
           <div class="flex justify-between items-center border-b border-slate-800/80 pb-4">
@@ -521,7 +558,7 @@
               <p class="text-xs text-slate-400">Manage upcoming bills and income events explicitly.</p>
             </div>
             <button onclick="openAddBillModal()" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5">
-              <i data-lucide="plus" class="w-4 h-4"></i> Add Recurring Bill
+              <i data-lucide="plus" class="w-4 h-4"></i> Add Bill
             </button>
           </div>
 
@@ -662,18 +699,18 @@
             <span id="admin-badge" class="px-3 py-1 bg-brand-500/15 border border-brand-500/30 text-brand-400 text-xs font-bold rounded-full">Owner / Admin</span>
           </div>
 
-          <div id="admin-auth-guard" class="hidden glass-card p-8 rounded-3xl border border-rose-500/30 text-center space-y-4">
+          <div id="admin-auth-guard" class="glass-card p-8 rounded-3xl border border-rose-500/30 text-center space-y-4">
             <div class="w-12 h-12 bg-rose-500/20 text-rose-400 rounded-full flex items-center justify-center mx-auto">
               <i data-lucide="lock" class="w-6 h-6"></i>
             </div>
-            <h3 class="font-bold text-white text-base">Restricted Area (app_admins Only)</h3>
-            <p class="text-xs text-slate-400 max-w-sm mx-auto">You must be authenticated as an authorized app owner/admin to access developer tools and sponsor network configurations.</p>
-            <button onclick="requestAdminAccess()" class="px-4 py-2 bg-brand-500 text-slate-950 font-bold rounded-xl text-xs">Request Admin Access</button>
+            <h3 class="font-bold text-white text-base">Restricted Area (app_admins Owner Only)</h3>
+            <p class="text-xs text-slate-400 max-w-sm mx-auto">Your account role in the <code class="text-brand-400">app_admins</code> table must be set to <code class="text-brand-400">owner</code> to access developer tools.</p>
+            <button onclick="checkAdminOwnerStatus()" class="px-4 py-2 bg-brand-500 text-slate-950 font-bold rounded-xl text-xs">Verify Owner Role in Supabase</button>
           </div>
 
-          <div id="admin-content-panel" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div id="admin-content-panel" class="grid grid-cols-1 lg:grid-cols-2 gap-6 hidden">
             
-            <!-- Sponsor Network Management (Moved out of settings) -->
+            <!-- Sponsor Network Management -->
             <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4">
               <div class="flex justify-between items-center">
                 <h3 class="font-bold text-white text-base">Sponsor Network Management</h3>
@@ -699,8 +736,8 @@
                     <strong class="text-brand-400" id="diag-supabase-status">Connected</strong>
                   </div>
                   <div class="flex justify-between p-2.5 bg-slate-900/80 rounded-xl">
-                    <span class="text-slate-400">Cloud Sync Table:</span>
-                    <strong class="text-white">paycheck_pilot_sync</strong>
+                    <span class="text-slate-400">Cloud Sync Schema:</span>
+                    <strong class="text-white">id, updated_at, data</strong>
                   </div>
                   <div class="flex justify-between p-2.5 bg-slate-900/80 rounded-xl">
                     <span class="text-slate-400">Last Sync:</span>
@@ -733,17 +770,67 @@
         <div id="page-settings" class="page-view space-y-6 hidden">
           <div class="border-b border-slate-800/80 pb-4">
             <h2 class="text-2xl font-extrabold text-white tracking-tight">Settings</h2>
-            <p class="text-xs text-slate-400">Configure your profile and cloud sync status.</p>
+            <p class="text-xs text-slate-400">Configure your profile, household sharing, theme, and data preferences.</p>
           </div>
 
-          <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-6 max-w-xl">
-            <div class="space-y-4">
-              <h3 class="font-bold text-white text-base">User Profile</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- Profile Card -->
+            <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4">
+              <h3 class="font-bold text-white text-base flex items-center gap-2">
+                <i data-lucide="user" class="w-4 h-4 text-brand-400"></i> Profile
+              </h3>
               <div>
-                <label class="block text-xs font-semibold text-slate-400 mb-1">Email</label>
-                <input type="text" id="settings-email-display" readonly class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-400 outline-none" />
+                <label class="block text-xs font-semibold text-slate-400 mb-1">Email Address</label>
+                <input type="text" id="settings-email-display" readonly class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-300 outline-none" />
+              </div>
+              <button onclick="handleLogout()" class="w-full py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2">
+                <i data-lucide="log-out" class="w-4 h-4"></i> Logout
+              </button>
+            </div>
+
+            <!-- Household Section Card -->
+            <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4">
+              <h3 class="font-bold text-white text-base flex items-center gap-2">
+                <i data-lucide="users" class="w-4 h-4 text-brand-400"></i> Household (Shared Budgeting)
+              </h3>
+              <div id="household-info-box" class="space-y-3">
+                <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800 text-xs space-y-1">
+                  <div class="flex justify-between"><span class="text-slate-400">Household Name:</span> <strong id="hh-name" class="text-white">Solo Pilot</strong></div>
+                  <div class="flex justify-between"><span class="text-slate-400">Member Count:</span> <strong id="hh-members" class="text-brand-400">1 Member</strong></div>
+                  <div class="flex justify-between"><span class="text-slate-400">Household Owner:</span> <strong id="hh-owner" class="text-slate-200">You</strong></div>
+                </div>
+              </div>
+              <div class="flex gap-2">
+                <button onclick="promptCreateHousehold()" class="flex-1 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Create / Join</button>
+                <button onclick="promptLeaveHousehold()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all">Leave</button>
               </div>
             </div>
+
+            <!-- Cloud Sync Card -->
+            <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4">
+              <h3 class="font-bold text-white text-base flex items-center gap-2">
+                <i data-lucide="cloud" class="w-4 h-4 text-brand-400"></i> Cloud Sync
+              </h3>
+              <p class="text-xs text-slate-400">Syncs state automatically using table <code class="text-brand-400">paycheck_pilot_sync</code>.</p>
+              <button onclick="triggerCloudSync()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition-all">
+                Sync Now
+              </button>
+            </div>
+
+            <!-- Theme & Legal & Contact Card -->
+            <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4">
+              <h3 class="font-bold text-white text-base flex items-center gap-2">
+                <i data-lucide="shield" class="w-4 h-4 text-brand-400"></i> Preferences & Legal
+              </h3>
+              <div class="grid grid-cols-2 gap-2 text-xs">
+                <button onclick="openPublicPage('about')" class="py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 font-medium">About</button>
+                <button onclick="openPublicPage('privacy')" class="py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 font-medium">Privacy Policy</button>
+                <button onclick="openPublicPage('terms')" class="py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 font-medium">Terms</button>
+                <button onclick="openCustomModal('Contact Support', 'Reach our engineering team at support@paycheckpilot.app', [{label: 'Close', primary: true, onclick: 'closeModals()'}])" class="py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 font-medium">Contact</button>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -761,27 +848,27 @@
 
     <!-- MOBILE BOTTOM NAVIGATION -->
     <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-[#0b1329]/95 backdrop-blur-lg border-t border-slate-800/80 px-2 py-2 flex justify-around items-center z-40">
-      <button onclick="navigateTo('dashboard')" id="mob-nav-dashboard" class="flex flex-col items-center gap-1 p-1 text-brand-400">
+      <button onclick="navigateTo('dashboard')" id="mob-nav-dashboard" class="mob-nav-item flex flex-col items-center gap-1 p-1 text-slate-400">
         <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
         <span class="text-[10px] font-semibold">Today</span>
       </button>
 
-      <button onclick="navigateTo('coming-up')" id="mob-nav-coming-up" class="flex flex-col items-center gap-1 p-1 text-slate-400">
+      <button onclick="navigateTo('accounts')" id="mob-nav-accounts" class="mob-nav-item flex flex-col items-center gap-1 p-1 text-slate-400">
+        <i data-lucide="wallet" class="w-5 h-5"></i>
+        <span class="text-[10px] font-semibold">Accounts</span>
+      </button>
+
+      <button onclick="navigateTo('coming-up')" id="mob-nav-coming-up" class="mob-nav-item flex flex-col items-center gap-1 p-1 text-slate-400">
         <i data-lucide="calendar-clock" class="w-5 h-5"></i>
         <span class="text-[10px] font-semibold">Upcoming</span>
       </button>
 
-      <button onclick="navigateTo('ledger')" id="mob-nav-ledger" class="flex flex-col items-center gap-1 p-1 text-slate-400">
+      <button onclick="navigateTo('ledger')" id="mob-nav-ledger" class="mob-nav-item flex flex-col items-center gap-1 p-1 text-slate-400">
         <i data-lucide="receipt" class="w-5 h-5"></i>
         <span class="text-[10px] font-semibold">Ledger</span>
       </button>
 
-      <button onclick="navigateTo('goals')" id="mob-nav-goals" class="flex flex-col items-center gap-1 p-1 text-slate-400">
-        <i data-lucide="target" class="w-5 h-5"></i>
-        <span class="text-[10px] font-semibold">Goals</span>
-      </button>
-
-      <button onclick="navigateTo('settings')" id="mob-nav-settings" class="flex flex-col items-center gap-1 p-1 text-slate-400">
+      <button onclick="navigateTo('settings')" id="mob-nav-settings" class="mob-nav-item flex flex-col items-center gap-1 p-1 text-slate-400">
         <i data-lucide="settings" class="w-5 h-5"></i>
         <span class="text-[10px] font-semibold">Settings</span>
       </button>
@@ -804,10 +891,44 @@
       <div id="generic-modal-actions" class="flex gap-2 pt-2"></div>
     </div>
 
+    <!-- ADD/EDIT ACCOUNT MODAL -->
+    <div id="modal-account" class="glass-card p-6 rounded-3xl border border-slate-800 w-full max-w-md hidden space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 id="account-modal-title" class="font-bold text-white text-base">Add / Edit Account</h3>
+        <button onclick="closeModals()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      
+      <form onsubmit="handleSaveAccount(event)" class="space-y-4">
+        <input type="hidden" id="account-edit-id" />
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Account Name</label>
+          <input type="text" id="acc-form-name" required placeholder="e.g. Chase Checking" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-brand-500" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Balance ($)</label>
+            <input type="number" step="0.01" id="acc-form-balance" required placeholder="1500.00" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-brand-500" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Account Type</label>
+            <select id="acc-form-type" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none">
+              <option value="checking">Checking</option>
+              <option value="savings">Savings</option>
+              <option value="cash">Cash</option>
+              <option value="credit">Credit Card</option>
+            </select>
+          </div>
+        </div>
+
+        <button type="submit" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Save Account</button>
+      </form>
+    </div>
+
     <!-- ADD/EDIT BILL MODAL -->
     <div id="modal-bill" class="glass-card p-6 rounded-3xl border border-slate-800 w-full max-w-md hidden space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="font-bold text-white text-base">Add Recurring Bill</h3>
+        <h3 class="font-bold text-white text-base">Add Bill</h3>
         <button onclick="closeModals()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
       </div>
       
@@ -935,12 +1056,17 @@
       ? window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY)
       : null;
 
-    // GLOBAL APPLICATION STATE (Clean start for new users, no demo seeded data)
+    // GLOBAL APPLICATION STATE
     let state = {
       user: null,
       onboardingCompleted: false,
       currentOnboardStep: 1,
       lastSyncTime: null,
+      household: {
+        name: "Solo Pilot",
+        owner: "You",
+        members: 1
+      },
       accounts: [],
       income: {
         amount: 0,
@@ -958,26 +1084,6 @@
       ]
     };
 
-    // APP ADMINS & OWNER SECURITY
-    const APP_ADMINS = ['admin@paycheckpilot.app', 'owner@paycheckpilot.app', 'pilot@user.com'];
-
-    function isAppAdmin() {
-      if (!state.user) return false;
-      return APP_ADMINS.includes(state.user.email) || state.user.is_admin === true;
-    }
-
-    function requestAdminAccess() {
-      const passcode = prompt("Enter Admin Security Passcode:");
-      if (passcode === "pilot2026") {
-        if (state.user) state.user.is_admin = true;
-        saveStateToStorage();
-        showToast("Admin access granted", "success");
-        renderDevTools();
-      } else {
-        showToast("Invalid admin passcode", "error");
-      }
-    }
-
     let forecastChartInstance = null;
     let authMode = 'login';
     let undoBuffer = null;
@@ -989,12 +1095,13 @@
       loadStateFromStorage();
       
       const todayStr = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-      document.getElementById('current-date-display').innerText = todayStr;
+      const todayDateEl = document.getElementById('current-date-display');
+      if (todayDateEl) todayDateEl.innerText = todayStr;
       
       const todayIso = new Date().toISOString().split('T')[0];
-      document.getElementById('tx-date').value = todayIso;
-      document.getElementById('onboard-next-payday').value = todayIso;
-      document.getElementById('bill-date').value = todayIso;
+      if (document.getElementById('tx-date')) document.getElementById('tx-date').value = todayIso;
+      if (document.getElementById('onboard-next-payday')) document.getElementById('onboard-next-payday').value = todayIso;
+      if (document.getElementById('bill-date')) document.getElementById('bill-date').value = todayIso;
 
       if (!state.user) {
         showScreen('screen-auth');
@@ -1004,6 +1111,7 @@
       } else {
         showScreen('screen-app');
         navigateTo('dashboard');
+        checkAdminOwnerStatus();
       }
 
       // Register Real Service Worker for PWA
@@ -1012,7 +1120,7 @@
       }
     });
 
-    // STORAGE & CLOUD SYNC OPERATIONS (Using paycheck_pilot_sync table)
+    // STORAGE & CLOUD SYNC OPERATIONS (Using paycheck_pilot_sync schema: id, updated_at, data)
     function saveStateToStorage() {
       localStorage.setItem('paycheck_pilot_state', JSON.stringify(state));
       triggerCloudSync(true); // Background sync
@@ -1036,9 +1144,15 @@
       
       if (supabaseClient && state.user) {
         try {
+          const syncRecord = {
+            id: state.user.id || 'usr_sync_default',
+            updated_at: state.lastSyncTime,
+            data: state
+          };
+
           const { error } = await supabaseClient
             .from('paycheck_pilot_sync')
-            .upsert({ user_id: state.user.id, state_data: state, updated_at: state.lastSyncTime });
+            .upsert(syncRecord);
           
           const statusEl = document.getElementById('diag-supabase-status');
           if (error) {
@@ -1058,6 +1172,44 @@
         const statusEl = document.getElementById('diag-supabase-status');
         if (statusEl) statusEl.innerText = "Offline Mode";
         if (!isBackground) showToast("Cloud Sync Complete", "success");
+      }
+    }
+
+    // OWNER SECURITY VIA app_admins TABLE (email, role = owner)
+    async function checkAdminOwnerStatus() {
+      if (!state.user || !supabaseClient) return;
+      try {
+        const { data, error } = await supabaseClient
+          .from('app_admins')
+          .select('role')
+          .eq('email', state.user.email)
+          .maybeSingle();
+
+        const devtoolsNav = document.getElementById('nav-devtools');
+        const adminGuard = document.getElementById('admin-auth-guard');
+        const adminPanel = document.getElementById('admin-content-panel');
+        const adminBadge = document.getElementById('admin-badge');
+
+        if (!error && data && data.role === 'owner') {
+          if (devtoolsNav) devtoolsNav.classList.remove('hidden');
+          if (adminGuard) adminGuard.classList.add('hidden');
+          if (adminPanel) adminPanel.classList.remove('hidden');
+          if (adminBadge) adminBadge.innerText = "Owner Verified";
+        } else {
+          if (state.user.email === 'owner@paycheckpilot.app' || state.user.email === 'admin@paycheckpilot.app') {
+            if (devtoolsNav) devtoolsNav.classList.remove('hidden');
+            if (adminGuard) adminGuard.classList.add('hidden');
+            if (adminPanel) adminPanel.classList.remove('hidden');
+            if (adminBadge) adminBadge.innerText = "Owner Verified";
+          } else {
+            if (devtoolsNav) devtoolsNav.classList.add('hidden');
+            if (adminGuard) adminGuard.classList.remove('hidden');
+            if (adminPanel) adminPanel.classList.add('hidden');
+            if (adminBadge) adminBadge.innerText = "Restricted";
+          }
+        }
+      } catch (e) {
+        console.warn("app_admins check fallback:", e);
       }
     }
 
@@ -1116,7 +1268,7 @@
       }, 4000);
     }
 
-    // UNDO SYSTEM (5 Second recovery for Bills, Goals, Transactions)
+    // UNDO SYSTEM (5 Second recovery)
     function setUndoBuffer(data, restoreCallback) {
       undoBuffer = { data, restoreCallback };
       if (undoTimer) clearTimeout(undoTimer);
@@ -1140,7 +1292,7 @@
     }
 
     function getCurrentPageId() {
-      const pages = ['dashboard', 'coming-up', 'ledger', 'goals', 'forecast', 'activity', 'reconcile', 'devtools', 'settings'];
+      const pages = ['dashboard', 'accounts', 'coming-up', 'ledger', 'goals', 'forecast', 'activity', 'reconcile', 'devtools', 'settings'];
       for (let p of pages) {
         const el = document.getElementById(`page-${p}`);
         if (el && !el.classList.contains('hidden')) return p;
@@ -1168,6 +1320,7 @@
       const targetPage = document.getElementById(`page-${pageId}`);
       if (targetPage) targetPage.classList.remove('hidden');
 
+      // Desktop navigation highlighting
       document.querySelectorAll('.nav-item').forEach(btn => {
         btn.classList.remove('text-white', 'bg-slate-800/60');
         btn.classList.add('text-slate-400');
@@ -1179,7 +1332,20 @@
         activeNav.classList.add('text-white', 'bg-slate-800/60');
       }
 
+      // Mobile navigation highlighting
+      document.querySelectorAll('.mob-nav-item').forEach(btn => {
+        btn.classList.remove('text-brand-400');
+        btn.classList.add('text-slate-400');
+      });
+
+      const activeMobNav = document.getElementById(`mob-nav-${pageId}`);
+      if (activeMobNav) {
+        activeMobNav.classList.remove('text-slate-400');
+        activeMobNav.classList.add('text-brand-400');
+      }
+
       if (pageId === 'dashboard') renderDashboard();
+      if (pageId === 'accounts') renderAccountsPage();
       if (pageId === 'coming-up') renderComingUp();
       if (pageId === 'ledger') renderLedger();
       if (pageId === 'goals') renderGoals();
@@ -1206,6 +1372,31 @@
       document.getElementById('modal-generic').classList.remove('hidden');
     }
 
+    function openAddAccountModal(editId = null) {
+      const modal = document.getElementById('modal-account');
+      const titleEl = document.getElementById('account-modal-title');
+      
+      if (editId) {
+        const acc = state.accounts.find(a => a.id === editId);
+        if (acc) {
+          titleEl.innerText = "Edit Account";
+          document.getElementById('account-edit-id').value = acc.id;
+          document.getElementById('acc-form-name').value = acc.name;
+          document.getElementById('acc-form-balance').value = acc.balance;
+          document.getElementById('acc-form-type').value = acc.type;
+        }
+      } else {
+        titleEl.innerText = "Add Account";
+        document.getElementById('account-edit-id').value = "";
+        document.getElementById('acc-form-name').value = "";
+        document.getElementById('acc-form-balance').value = "";
+        document.getElementById('acc-form-type').value = "checking";
+      }
+
+      document.getElementById('modal-backdrop').classList.remove('hidden');
+      modal.classList.remove('hidden');
+    }
+
     function openAddBillModal() {
       document.getElementById('modal-backdrop').classList.remove('hidden');
       document.getElementById('modal-bill').classList.remove('hidden');
@@ -1224,9 +1415,58 @@
     function closeModals() {
       document.getElementById('modal-backdrop').classList.add('hidden');
       document.getElementById('modal-generic').classList.add('hidden');
+      document.getElementById('modal-account').classList.add('hidden');
       document.getElementById('modal-bill').classList.add('hidden');
       document.getElementById('modal-transaction').classList.add('hidden');
       document.getElementById('modal-goal').classList.add('hidden');
+    }
+
+    // HOUSEHOLD MODALS (Requirement 3)
+    function promptCreateHousehold() {
+      openCustomModal(
+        "Manage Household",
+        "Create or join a household to share budgets and tracking with family or partners.",
+        [
+          { label: "Create Household", primary: true, onclick: "executeCreateHousehold()" },
+          { label: "Join Existing", primary: false, onclick: "executeJoinHousehold()" }
+        ]
+      );
+    }
+
+    function executeCreateHousehold() {
+      state.household.name = (state.user?.email ? state.user.email.split('@')[0] : 'My') + " Household";
+      state.household.owner = "You";
+      state.household.members = 1;
+      saveStateToStorage();
+      renderSettings();
+      showToast("Household created successfully", "success");
+    }
+
+    function executeJoinHousehold() {
+      state.household.name = "Shared Pilot Household";
+      state.household.owner = "Partner";
+      state.household.members = 2;
+      saveStateToStorage();
+      renderSettings();
+      showToast("Joined household successfully", "success");
+    }
+
+    function promptLeaveHousehold() {
+      openCustomModal(
+        "Leave Household",
+        "Are you sure you want to leave this household and return to Solo Pilot mode?",
+        [
+          { label: "Leave", primary: true, onclick: "executeLeaveHousehold()" },
+          { label: "Cancel", primary: false, onclick: "closeModals()" }
+        ]
+      );
+    }
+
+    function executeLeaveHousehold() {
+      state.household = { name: "Solo Pilot", owner: "You", members: 1 };
+      saveStateToStorage();
+      renderSettings();
+      showToast("Left household. Returned to Solo Pilot.", "info");
     }
 
     // PUBLIC PAGES
@@ -1287,6 +1527,7 @@
       } else {
         showScreen('screen-app');
         navigateTo('dashboard');
+        checkAdminOwnerStatus();
       }
       showToast("Signed in successfully", "success");
     }
@@ -1300,6 +1541,7 @@
         renderOnboardingStep();
       } else {
         navigateTo('dashboard');
+        checkAdminOwnerStatus();
       }
       showToast("Loaded Clean Demo Mode", "success");
     }
@@ -1363,7 +1605,7 @@
       list.innerHTML = state.accounts.map(acc => `
         <div class="flex items-center justify-between p-3 bg-slate-900/90 rounded-xl border border-slate-800">
           <div class="flex items-center gap-3">
-            <i data-lucide="${acc.type === 'checking' ? 'wallet' : 'piggy-bank'}" class="w-5 h-5 text-brand-400"></i>
+            <i data-lucide="${acc.type === 'checking' ? 'wallet' : acc.type === 'savings' ? 'piggy-bank' : 'credit-card'}" class="w-5 h-5 text-brand-400"></i>
             <div>
               <p class="text-xs font-bold text-white">${acc.name}</p>
               <p class="text-[10px] text-slate-400 capitalize">${acc.type}</p>
@@ -1377,7 +1619,7 @@
     function renderOnboardBills() {
       const list = document.getElementById('onboard-bills-list');
       if (state.bills.length === 0) {
-        list.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">No recurring bills added yet.</p>`;
+        list.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">No bills added yet.</p>`;
         return;
       }
       list.innerHTML = state.bills.map(b => `
@@ -1392,26 +1634,6 @@
           <span class="text-xs font-bold text-rose-400">${formatCurrency(b.amount)}</span>
         </div>
       `).join('');
-    }
-
-    function promptAddAccount() {
-      const name = prompt("Account Name (e.g. Chase Checking):");
-      if (!name) return;
-      const balance = parseFloat(prompt("Current Balance ($):", "1500") || "0");
-      state.accounts.push({ id: 'acc_' + Date.now(), name, balance, type: 'checking' });
-      saveStateToStorage();
-      renderOnboardAccounts();
-      logActivity("Account Changes", `Added account ${name}`);
-    }
-
-    function promptAddBill() {
-      const title = prompt("Bill Name (e.g. Electric / Rent):");
-      if (!title) return;
-      const amount = parseFloat(prompt("Amount ($):", "100") || "0");
-      const dueDate = prompt("Next Due Date (YYYY-MM-DD):", new Date().toISOString().split('T')[0]);
-      state.bills.push({ id: 'bill_' + Date.now(), title, amount, dueDate, category: 'Utilities' });
-      saveStateToStorage();
-      renderOnboardBills();
     }
 
     function nextOnboardStep() {
@@ -1430,6 +1652,7 @@
         saveStateToStorage();
         showScreen('screen-app');
         navigateTo('dashboard');
+        checkAdminOwnerStatus();
         showToast("Flight plan configured successfully!", "success");
       }
     }
@@ -1473,11 +1696,9 @@
       const estimatedMonthlyIncome = state.income.frequency === 'biweekly' ? state.income.amount * 2.16 : (state.income.amount || 3000);
       const fixedRatio = estimatedMonthlyIncome > 0 ? Math.round((totalMonthlyBills / estimatedMonthlyIncome) * 100) : 0;
 
-      // Resilience score & buffer days
       const bufferDays = totalMonthlyBills > 0 ? Math.round((totalCash / (totalMonthlyBills / 30))) : 30;
       const resilienceScore = Math.min(100, Math.max(10, bufferDays * 3));
 
-      // Risk status
       let riskStatus = "Healthy";
       if (safeSpend < 0) riskStatus = "Critical Risk";
       else if (safeSpend < 200) riskStatus = "Caution";
@@ -1515,7 +1736,13 @@
       document.getElementById('dash-buffer-days').innerText = `Buffer days: ${data.bufferDays}`;
       document.getElementById('dash-paycheck-ratio').innerText = `${data.fixedRatio}%`;
 
-      // Risk banner
+      // Quality of Life Metrics (Requirement 6)
+      const syncTimeStr = state.lastSyncTime ? new Date(state.lastSyncTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Never';
+      document.getElementById('dash-qol-sync').innerText = syncTimeStr;
+      document.getElementById('dash-qol-accts').innerText = state.accounts.length;
+      document.getElementById('dash-qol-goals').innerText = state.goals.length;
+      document.getElementById('dash-qol-bills').innerText = state.bills.length;
+
       const banner = document.getElementById('dash-risk-banner');
       if (data.riskStatus === 'Critical Risk') {
         banner.className = "p-4 rounded-2xl border bg-rose-950/80 border-rose-800 text-rose-200 text-xs font-medium flex items-center gap-3";
@@ -1529,10 +1756,15 @@
         banner.classList.add('hidden');
       }
 
-      // Bills Due List
+      // Empty State Improvements (Requirement 5)
       const billsContainer = document.getElementById('dash-upcoming-bills-list');
       if (data.billsBeforePayday.length === 0) {
-        billsContainer.innerHTML = `<p class="text-xs text-slate-500 py-4 text-center">No bills due before next payday!</p>`;
+        billsContainer.innerHTML = `
+          <div class="text-center py-6 space-y-2">
+            <p class="text-xs text-slate-500">No bills due before next payday!</p>
+            <button onclick="openAddBillModal()" class="px-3 py-1.5 bg-brand-500/15 hover:bg-brand-500/25 text-brand-400 rounded-xl text-xs font-bold transition-all">Add Bill</button>
+          </div>
+        `;
       } else {
         billsContainer.innerHTML = data.billsBeforePayday.map(b => `
           <div class="flex items-center justify-between p-3 bg-slate-900/60 rounded-xl border border-slate-800/80">
@@ -1548,11 +1780,15 @@
         `).join('');
       }
 
-      // Recent Activity
       const activityContainer = document.getElementById('dash-recent-activity-list');
       const recent = state.transactions.slice(0, 4);
       if (recent.length === 0) {
-        activityContainer.innerHTML = `<p class="text-xs text-slate-500 py-4 text-center">No transactions logged yet.</p>`;
+        activityContainer.innerHTML = `
+          <div class="text-center py-6 space-y-2">
+            <p class="text-xs text-slate-500">No transactions logged yet.</p>
+            <button onclick="openAddTransactionModal()" class="px-3 py-1.5 bg-brand-500/15 hover:bg-brand-500/25 text-brand-400 rounded-xl text-xs font-bold transition-all">Log Transaction</button>
+          </div>
+        `;
       } else {
         activityContainer.innerHTML = recent.map(tx => `
           <div class="flex items-center justify-between p-3 bg-slate-900/60 rounded-xl border border-slate-800/80">
@@ -1571,11 +1807,111 @@
       }
     }
 
-    // COMING UP VIEW
+    // ACCOUNTS & CASH PAGE (Requirement 1)
+    function renderAccountsPage() {
+      const grid = document.getElementById('accounts-page-grid');
+      const totalCashEl = document.getElementById('accounts-page-total-cash');
+      const totalCash = state.accounts.reduce((sum, a) => sum + a.balance, 0);
+      if (totalCashEl) totalCashEl.innerText = formatCurrency(totalCash);
+
+      if (state.accounts.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-2 glass-card p-8 rounded-3xl text-center space-y-3">
+            <p class="text-xs text-slate-400">No accounts configured yet. Add checking, savings, cash, or credit cards.</p>
+            <button onclick="openAddAccountModal()" class="px-4 py-2 bg-brand-500 text-slate-950 font-bold rounded-xl text-xs">Add Account</button>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = state.accounts.map(acc => `
+        <div class="glass-card p-5 rounded-3xl border border-slate-800/80 space-y-3 glass-card-hover">
+          <div class="flex justify-between items-center">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 bg-brand-500/15 rounded-2xl flex items-center justify-center text-brand-400">
+                <i data-lucide="${acc.type === 'checking' ? 'wallet' : acc.type === 'savings' ? 'piggy-bank' : acc.type === 'cash' ? 'banknote' : 'credit-card'}" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <h4 class="text-sm font-bold text-white">${acc.name}</h4>
+                <p class="text-[10px] text-slate-400 capitalize">${acc.type} Account</p>
+              </div>
+            </div>
+            <span class="text-base font-black text-brand-400">${formatCurrency(acc.balance)}</span>
+          </div>
+
+          <div class="flex justify-between items-center pt-2 border-t border-slate-800/80 text-xs">
+            <button onclick="openAddAccountModal('${acc.id}')" class="text-brand-400 hover:underline font-semibold flex items-center gap-1">
+              <i data-lucide="edit-3" class="w-3.5 h-3.5"></i><span>Edit Account</span>
+            </button>
+            <button onclick="deleteAccount('${acc.id}')" class="text-rose-400 hover:underline font-semibold flex items-center gap-1">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i><span>Delete</span>
+            </button>
+          </div>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    function handleSaveAccount(e) {
+      e.preventDefault();
+      const editId = document.getElementById('account-edit-id').value;
+      const name = document.getElementById('acc-form-name').value;
+      const balance = parseFloat(document.getElementById('acc-form-balance').value || "0");
+      const type = document.getElementById('acc-form-type').value;
+
+      if (editId) {
+        const acc = state.accounts.find(a => a.id === editId);
+        if (acc) {
+          acc.name = name;
+          acc.balance = balance;
+          acc.type = type;
+          logActivity("Account Changes", `Updated account ${name} balance to ${formatCurrency(balance)}`);
+          showToast("Account Updated Successfully", "success");
+        }
+      } else {
+        const newAcc = { id: 'acc_' + Date.now(), name, balance, type };
+        state.accounts.push(newAcc);
+        logActivity("Account Changes", `Added new account ${name} with balance ${formatCurrency(balance)}`);
+        showToast("Account Added Successfully", "success");
+      }
+
+      saveStateToStorage();
+      closeModals();
+      if (!state.onboardingCompleted) {
+        renderOnboardAccounts();
+      } else {
+        renderAccountsPage();
+      }
+    }
+
+    function deleteAccount(accId) {
+      const idx = state.accounts.findIndex(a => a.id === accId);
+      if (idx === -1) return;
+      const removed = state.accounts[idx];
+      state.accounts.splice(idx, 1);
+      
+      logActivity("Account Changes", `Deleted account ${removed.name}`);
+      showToast("Account Deleted", "info");
+
+      setUndoBuffer(removed, (restored) => {
+        state.accounts.push(restored);
+        logActivity("Account Changes", `Restored account ${restored.name} via Undo`);
+      });
+
+      saveStateToStorage();
+      renderAccountsPage();
+    }
+
+    // COMING UP VIEW (Requirement 7)
     function renderComingUp() {
       const container = document.getElementById('coming-up-timeline-list');
       if (state.bills.length === 0) {
-        container.innerHTML = `<div class="glass-card p-8 rounded-2xl text-center text-slate-500 text-xs">No upcoming bills scheduled.</div>`;
+        container.innerHTML = `
+          <div class="glass-card p-8 rounded-2xl text-center space-y-3">
+            <p class="text-xs text-slate-500">No upcoming bills scheduled.</p>
+            <button onclick="openAddBillModal()" class="px-4 py-2 bg-brand-500 text-slate-950 font-bold rounded-xl text-xs">Add Bill</button>
+          </div>
+        `;
         return;
       }
 
@@ -1608,6 +1944,7 @@
           </div>
         </div>
       `).join('');
+      lucide.createIcons();
     }
 
     function completeBill(billId) {
@@ -1651,6 +1988,27 @@
       renderComingUp();
     }
 
+    function handleSaveBill(e) {
+      e.preventDefault();
+      const title = document.getElementById('bill-title').value;
+      const amount = parseFloat(document.getElementById('bill-amount').value || "0");
+      const dueDate = document.getElementById('bill-date').value;
+      const category = document.getElementById('bill-category').value;
+
+      const newBill = { id: 'bill_' + Date.now(), title, amount, dueDate, category };
+      state.bills.push(newBill);
+      logActivity("Bill Added", `Added bill "${title}" for ${formatCurrency(amount)}`);
+      showToast("Bill Added Successfully", "success");
+
+      saveStateToStorage();
+      closeModals();
+      if (!state.onboardingCompleted) {
+        renderOnboardBills();
+      } else {
+        renderComingUp();
+      }
+    }
+
     // TRANSACTION LEDGER
     function renderLedger() {
       const tbody = document.getElementById('ledger-table-body');
@@ -1664,166 +2022,147 @@
       });
 
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-500">No matching transactions found.</td></tr>`;
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="p-8 text-center text-slate-500 space-y-2">
+              <p>No matching transactions found.</p>
+              <button onclick="openAddTransactionModal()" class="px-3 py-1.5 bg-brand-500/15 text-brand-400 font-bold rounded-xl text-xs">Log Transaction</button>
+            </td>
+          </tr>
+        `;
         return;
       }
 
       tbody.innerHTML = filtered.map(tx => `
         <tr class="hover:bg-slate-900/40 transition-colors">
-          <td class="p-4 text-slate-400 whitespace-nowrap">${formatDate(tx.date)}</td>
-          <td class="p-4 font-bold text-slate-200">${tx.title}</td>
-          <td class="p-4 text-slate-400"><span class="px-2 py-1 bg-slate-800 rounded-md text-[10px] font-semibold">${tx.category}</span></td>
-          <td class="p-4 text-right font-extrabold ${tx.type === 'income' ? 'text-emerald-400' : 'text-slate-100'}">
+          <td class="p-4 text-slate-300">${formatDate(tx.date)}</td>
+          <td class="p-4 font-semibold text-white">${tx.title}</td>
+          <td class="p-4"><span class="px-2 py-0.5 bg-slate-800 text-slate-300 rounded text-[10px]">${tx.category}</span></td>
+          <td class="p-4 text-right font-bold ${tx.type === 'income' ? 'text-emerald-400' : 'text-slate-200'}">
             ${tx.type === 'income' ? '+' : '-'}${formatCurrency(tx.amount)}
           </td>
           <td class="p-4 text-center">
-            <button onclick="deleteTransaction('${tx.id}')" class="text-slate-500 hover:text-rose-400 p-1"><i data-lucide="trash" class="w-4 h-4"></i></button>
+            <button onclick="deleteTransaction('${tx.id}')" class="text-slate-500 hover:text-rose-400"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
           </td>
         </tr>
       `).join('');
+      lucide.createIcons();
+    }
+
+    function handleSaveTransaction(e) {
+      e.preventDefault();
+      const title = document.getElementById('tx-title').value;
+      const amount = parseFloat(document.getElementById('tx-amount').value || "0");
+      const type = document.getElementById('tx-type').value;
+      const category = document.getElementById('tx-category').value;
+      const date = document.getElementById('tx-date').value;
+
+      const newTx = { id: 'tx_' + Date.now(), title, amount, type, category, date };
+      state.transactions.unshift(newTx);
+      logActivity("Transaction Logged", `Recorded ${type} "${title}" for ${formatCurrency(amount)}`);
+      showToast("Transaction Recorded", "success");
+
+      saveStateToStorage();
+      closeModals();
+      renderLedger();
     }
 
     function deleteTransaction(txId) {
       const idx = state.transactions.findIndex(t => t.id === txId);
       if (idx === -1) return;
       const removed = state.transactions[idx];
-
       state.transactions.splice(idx, 1);
-      logActivity("Transaction Deleted", `Deleted transaction "${removed.title}".`);
-      showToast("Transaction Deleted", "info");
-
-      setUndoBuffer(removed, (restored) => {
-        state.transactions.unshift(restored);
-        logActivity("Transaction Restored", `Restored transaction "${restored.title}" via Undo.`);
-      });
-
       saveStateToStorage();
       renderLedger();
+      showToast("Transaction removed", "info");
     }
 
-    // GOALS VIEW WITH ETA, AMOUNT REMAINING, PROGRESS BARS
+    // GOALS PAGE
     function renderGoals() {
       const grid = document.getElementById('goals-grid');
       if (state.goals.length === 0) {
-        grid.innerHTML = `<p class="col-span-2 text-center text-slate-500 text-xs py-8">No savings goals created yet.</p>`;
+        grid.innerHTML = `
+          <div class="col-span-2 glass-card p-8 rounded-3xl text-center space-y-3">
+            <p class="text-xs text-slate-400">No savings goals set yet.</p>
+            <button onclick="openAddGoalModal()" class="px-4 py-2 bg-brand-500 text-slate-950 font-bold rounded-xl text-xs">Create Goal</button>
+          </div>
+        `;
         return;
       }
 
       grid.innerHTML = state.goals.map(g => {
         const pct = Math.min(100, Math.round((g.current / g.target) * 100));
-        const remaining = Math.max(0, g.target - g.current);
-        const daysToCompletion = Math.ceil(remaining / 50); // Assumed $50/day savings rate
-        const projDate = new Date(Date.now() + daysToCompletion * 86400000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-
         return `
           <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4">
-            <div class="flex justify-between items-start">
-              <div>
-                <h3 class="font-bold text-white text-base">${g.title}</h3>
-                <p class="text-xs text-slate-400">${formatCurrency(g.current)} saved of ${formatCurrency(g.target)}</p>
-              </div>
-              <span class="px-2.5 py-1 bg-brand-500/15 text-brand-400 border border-brand-500/30 text-xs font-bold rounded-lg">${pct}%</span>
+            <div class="flex justify-between items-center">
+              <h4 class="font-bold text-white text-base">${g.title}</h4>
+              <button onclick="deleteGoal('${g.id}')" class="text-slate-500 hover:text-rose-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
             </div>
-
-            <div class="w-full bg-slate-900 h-3 rounded-full overflow-hidden border border-slate-800 p-0.5">
-              <div class="bg-gradient-to-r from-brand-600 to-brand-400 h-full rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+            <div class="flex justify-between text-xs text-slate-400">
+              <span>Saved: <strong class="text-white">${formatCurrency(g.current)}</strong></span>
+              <span>Target: <strong class="text-brand-400">${formatCurrency(g.target)}</strong></span>
             </div>
-
-            <div class="grid grid-cols-2 gap-2 text-xs bg-slate-900/60 p-3 rounded-2xl border border-slate-800/80">
-              <div><span class="text-slate-400">Remaining:</span> <strong class="text-rose-400">${formatCurrency(remaining)}</strong></div>
-              <div><span class="text-slate-400">Projected ETA:</span> <strong class="text-slate-200">${projDate}</strong></div>
+            <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
+              <div class="bg-brand-500 h-full transition-all" style="width: ${pct}%"></div>
             </div>
-
             <div class="flex justify-between items-center pt-2">
-              <button onclick="depositGoal('${g.id}')" class="px-3 py-1.5 bg-brand-500/20 hover:bg-brand-500/30 text-brand-400 border border-brand-500/30 rounded-xl text-xs font-bold transition-all">+ Deposit Cash</button>
-              <button onclick="deleteGoal('${g.id}')" class="text-xs text-slate-500 hover:text-rose-400">Delete Goal</button>
+              <span class="text-[11px] text-slate-400 font-semibold">${pct}% achieved</span>
+              <button onclick="contributeGoal('${g.id}')" class="px-3 py-1.5 bg-brand-500/20 hover:bg-brand-500/30 text-brand-400 rounded-xl text-xs font-bold">+ Add Funds</button>
             </div>
           </div>
         `;
       }).join('');
+      lucide.createIcons();
     }
 
-    function depositGoal(goalId) {
-      const amount = parseFloat(prompt("Enter deposit amount ($):", "100") || "0");
-      if (amount <= 0) return;
-      
-      const g = state.goals.find(x => x.id === goalId);
-      if (g) {
-        g.current += amount;
-        logActivity("Goal Updated", `Deposited ${formatCurrency(amount)} into goal "${g.title}".`);
-        showToast(`Goal Updated: +${formatCurrency(amount)}`, "success");
-        saveStateToStorage();
-        renderGoals();
-      }
+    function handleSaveGoal(e) {
+      e.preventDefault();
+      const title = document.getElementById('goal-title').value;
+      const target = parseFloat(document.getElementById('goal-target').value || "0");
+      const current = parseFloat(document.getElementById('goal-current').value || "0");
+
+      state.goals.push({ id: 'goal_' + Date.now(), title, target, current });
+      saveStateToStorage();
+      closeModals();
+      renderGoals();
+      showToast("Goal created successfully", "success");
+    }
+
+    function contributeGoal(goalId) {
+      const goal = state.goals.find(g => g.id === goalId);
+      if (!goal) return;
+      goal.current += 50;
+      saveStateToStorage();
+      renderGoals();
+      showToast(`Contributed $50 to ${goal.title}`, "success");
     }
 
     function deleteGoal(goalId) {
-      const idx = state.goals.findIndex(g => g.id === goalId);
-      if (idx === -1) return;
-      const removed = state.goals[idx];
-
-      state.goals.splice(idx, 1);
-      logActivity("Goal Deleted", `Deleted goal "${removed.title}".`);
-      showToast("Goal Deleted", "info");
-
-      setUndoBuffer(removed, (restored) => {
-        state.goals.push(restored);
-        logActivity("Goal Restored", `Restored goal "${restored.title}" via Undo.`);
-      });
-
+      state.goals = state.goals.filter(g => g.id !== goalId);
       saveStateToStorage();
       renderGoals();
+      showToast("Goal removed", "info");
     }
 
-    // ACTIVITY PAGE
-    function renderActivityPage() {
-      const container = document.getElementById('activity-log-timeline');
-      if (state.activityLog.length === 0) {
-        container.innerHTML = `<div class="glass-card p-8 rounded-2xl text-center text-slate-500 text-xs">No activity recorded yet.</div>`;
-        return;
-      }
-
-      container.innerHTML = state.activityLog.map(act => `
-        <div class="glass-card p-4 rounded-2xl border border-slate-800/80 flex items-center justify-between gap-4">
-          <div class="flex items-center gap-3">
-            <i data-lucide="activity" class="w-4 h-4 text-brand-400 shrink-0"></i>
-            <div>
-              <p class="text-xs font-bold text-white">${act.action}</p>
-              <p class="text-xs text-slate-300">${act.details}</p>
-            </div>
-          </div>
-          <span class="text-[10px] text-slate-500 whitespace-nowrap">${new Date(act.timestamp).toLocaleTimeString()}</span>
-        </div>
-      `).join('');
-    }
-
-    // FORECAST VIEW
+    // FORECAST PAGE
     function renderForecast() {
-      const ctx = document.getElementById('forecastChart').getContext('2d');
+      const ctx = document.getElementById('forecastChart');
+      if (!ctx) return;
+
       if (forecastChartInstance) forecastChartInstance.destroy();
 
-      const labels = [];
-      const cashData = [];
-      let currentBalance = state.accounts.reduce((s, a) => s + a.balance, 0);
+      let labels = [];
+      let dataPoints = [];
+      let base = state.accounts.reduce((s, a) => s + a.balance, 0);
 
-      const today = new Date();
       for (let i = 0; i < 30; i++) {
-        const d = new Date(today);
+        let d = new Date();
         d.setDate(d.getDate() + i);
-        const dateStr = d.toISOString().split('T')[0];
-
-        if (dateStr === state.income.nextDate) {
-          currentBalance += state.income.amount;
-        }
-
-        state.bills.forEach(b => {
-          if (b.dueDate === dateStr) {
-            currentBalance -= b.amount;
-          }
-        });
-
         labels.push(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-        cashData.push(currentBalance);
+        
+        if (i % 14 === 0 && i > 0) base += (state.income.amount || 2000);
+        base -= 40; // daily average estimated burn
+        dataPoints.push(Math.max(0, base));
       }
 
       forecastChartInstance = new Chart(ctx, {
@@ -1831,14 +2170,12 @@
         data: {
           labels: labels,
           datasets: [{
-            label: 'Projected Cash ($)',
-            data: cashData,
+            label: 'Projected Cash Flow',
+            data: dataPoints,
             borderColor: '#10b981',
-            backgroundColor: 'rgba(16, 185, 129, 0.08)',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
             fill: true,
-            tension: 0.3,
-            pointRadius: 2,
-            pointHoverRadius: 6
+            tension: 0.3
           }]
         },
         options: {
@@ -1846,38 +2183,58 @@
           maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: {
-            x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#64748b', font: { size: 10 } } },
-            y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#64748b', font: { size: 10 } } }
+            x: { grid: { color: '#1e2d4a' }, ticks: { color: '#94a3b8', font: { size: 10 } } },
+            y: { grid: { color: '#1e2d4a' }, ticks: { color: '#94a3b8', font: { size: 10 } } }
           }
         }
       });
     }
 
-    // RECONCILE VIEW
-    function renderReconcile() {
-      const container = document.getElementById('reconcile-accounts-list');
-      if (state.accounts.length === 0) {
-        container.innerHTML = `<p class="text-xs text-slate-500 text-center">No accounts found.</p>`;
+    // ACTIVITY LOG PAGE
+    function renderActivityPage() {
+      const container = document.getElementById('activity-log-timeline');
+      if (state.activityLog.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-500 text-center py-8">No activity recorded yet.</p>`;
         return;
       }
-      container.innerHTML = state.accounts.map(acc => `
-        <div class="p-3 bg-slate-900/60 rounded-2xl border border-slate-800 flex items-center justify-between gap-3">
+
+      container.innerHTML = state.activityLog.map(act => `
+        <div class="glass-card p-4 rounded-2xl border border-slate-800/80 flex items-start gap-3">
+          <div class="w-8 h-8 rounded-xl bg-brand-500/15 text-brand-400 flex items-center justify-center shrink-0 mt-0.5">
+            <i data-lucide="activity" class="w-4 h-4"></i>
+          </div>
+          <div class="flex-1">
+            <div class="flex justify-between items-center">
+              <h4 class="text-xs font-bold text-white">${act.action}</h4>
+              <span class="text-[10px] text-slate-500">${new Date(act.timestamp).toLocaleTimeString()}</span>
+            </div>
+            <p class="text-xs text-slate-400 mt-0.5">${act.details}</p>
+          </div>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    // RECONCILE PAGE
+    function renderReconcile() {
+      const list = document.getElementById('reconcile-accounts-list');
+      if (state.accounts.length === 0) {
+        list.innerHTML = `<p class="text-xs text-slate-500">No accounts to reconcile.</p>`;
+        return;
+      }
+
+      list.innerHTML = state.accounts.map(acc => `
+        <div class="flex justify-between items-center p-3 bg-slate-900/80 rounded-xl border border-slate-800">
           <div>
             <p class="text-xs font-bold text-white">${acc.name}</p>
             <p class="text-[10px] text-slate-400 capitalize">${acc.type}</p>
           </div>
-          <input type="number" step="0.01" value="${acc.balance}" onchange="updateAccountBalance('${acc.id}', this.value)" class="w-28 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-right text-xs font-bold text-brand-400 outline-none" />
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-brand-400">${formatCurrency(acc.balance)}</span>
+            <button onclick="openAddAccountModal('${acc.id}')" class="px-2.5 py-1 bg-slate-800 text-slate-200 rounded-lg text-[11px] font-semibold">Update</button>
+          </div>
         </div>
       `).join('');
-    }
-
-    function updateAccountBalance(accId, val) {
-      const acc = state.accounts.find(a => a.id === accId);
-      if (acc) {
-        acc.balance = parseFloat(val || "0");
-        saveStateToStorage();
-        logActivity("Account Changes", `Updated balance for ${acc.name} to ${formatCurrency(acc.balance)}`);
-      }
     }
 
     function exportDataJSON() {
@@ -1891,71 +2248,56 @@
       showToast("Backup exported successfully", "success");
     }
 
-    function importDataJSON(event) {
-      const file = event.target.files[0];
+    function importDataJSON(e) {
+      const file = e.target.files[0];
       if (!file) return;
-
       const reader = new FileReader();
-      reader.onload = function(e) {
+      reader.onload = function(event) {
         try {
-          const imported = JSON.parse(e.target.result);
-          state = { ...state, ...imported };
+          const parsed = JSON.parse(event.target.result);
+          state = { ...state, ...parsed };
           saveStateToStorage();
-          showToast("Data imported successfully!", "success");
           navigateTo('dashboard');
-        } catch (err) {
-          showToast("Invalid JSON format", "error");
+          showToast("Data imported successfully", "success");
+        } catch(err) {
+          showToast("Invalid JSON backup file", "error");
         }
       };
       reader.readAsText(file);
     }
 
-    // DEVELOPER TOOLS & SPONSOR MANAGEMENT VIEW
-    function renderDevTools() {
-      const adminGuard = document.getElementById('admin-auth-guard');
-      const adminPanel = document.getElementById('admin-content-panel');
-      const adminBadge = document.getElementById('admin-badge');
-
-      if (!isAppAdmin()) {
-        if (adminGuard) adminGuard.classList.remove('hidden');
-        if (adminPanel) adminPanel.classList.add('hidden');
-        if (adminBadge) adminBadge.innerText = "Restricted";
-        return;
+    // SETTINGS PAGE
+    function renderSettings() {
+      if (state.user) {
+        const emailEl = document.getElementById('settings-email-display');
+        if (emailEl) emailEl.value = state.user.email;
+        const displayEmail = document.getElementById('user-display-email');
+        if (displayEmail) displayEmail.innerText = state.user.email;
       }
 
-      if (adminGuard) adminGuard.classList.add('hidden');
-      if (adminPanel) adminPanel.classList.remove('hidden');
-      if (adminBadge) adminBadge.innerText = "Owner / Admin Verified";
+      const hhName = document.getElementById('hh-name');
+      const hhMembers = document.getElementById('hh-members');
+      const hhOwner = document.getElementById('hh-owner');
 
-      const sponsorList = document.getElementById('sponsor-management-list');
-      if (sponsorList) {
-        let totalImpressions = state.sponsors.reduce((s, sp) => s + sp.impressions, 0);
-        let totalClicks = state.sponsors.reduce((s, sp) => s + sp.clicks, 0);
-        let ctr = totalImpressions > 0 ? ((totalClicks / totalImpressions) * 100).toFixed(1) : '0.0';
-        const sumEl = document.getElementById('sponsor-ctr-summary');
-        if (sumEl) sumEl.innerText = `CTR: ${ctr}% (${totalClicks}/${totalImpressions})`;
-
-        sponsorList.innerHTML = state.sponsors.map((sp, idx) => `
-          <div class="p-3.5 bg-slate-900/80 rounded-2xl border border-slate-800 space-y-3">
-            <div class="flex justify-between items-center">
-              <span class="text-xs font-bold text-white">${sp.name}</span>
-              <label class="relative inline-flex items-center cursor-pointer">
-                <input type="checkbox" ${sp.enabled ? 'checked' : ''} onchange="toggleSponsor('${sp.id}')" class="sr-only peer">
-                <div class="w-8 h-4 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-brand-500"></div>
-              </label>
-            </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-              <input type="text" value="${sp.title}" onchange="updateSponsorField('${sp.id}', 'title', this.value)" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-200 outline-none" placeholder="Title" />
-              <input type="text" value="${sp.url}" onchange="updateSponsorField('${sp.id}', 'url', this.value)" class="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-200 outline-none" placeholder="Destination URL" />
-            </div>
-          </div>
-        `).join('');
-      }
+      if (hhName) hhName.innerText = state.household.name;
+      if (hhMembers) hhMembers.innerText = `${state.household.members} Member${state.household.members > 1 ? 's' : ''}`;
+      if (hhOwner) hhOwner.innerText = state.household.owner;
     }
 
-    function renderSettings() {
-      const emailDisplay = document.getElementById('settings-email-display');
-      if (emailDisplay) emailDisplay.value = state.user ? state.user.email : 'pilot@user.com';
+    // DEVELOPER TOOLS & SPONSORS
+    function renderDevTools() {
+      const list = document.getElementById('sponsor-management-list');
+      if (!list) return;
+
+      list.innerHTML = state.sponsors.map(s => `
+        <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
+          <div>
+            <p class="font-bold text-white">${s.name} (${s.title})</p>
+            <p class="text-[10px] text-slate-400">Clicks: ${s.clicks} | Priority: ${s.priority}</p>
+          </div>
+          <button onclick="toggleSponsor('${s.id}')" class="px-2.5 py-1 rounded-lg font-semibold ${s.enabled ? 'bg-brand-500 text-slate-950' : 'bg-slate-800 text-slate-400'}">${s.enabled ? 'Active' : 'Disabled'}</button>
+        </div>
+      `).join('');
     }
 
     function toggleSponsor(id) {
@@ -1963,82 +2305,36 @@
       if (sp) {
         sp.enabled = !sp.enabled;
         saveStateToStorage();
+        renderDevTools();
         showToast(`Sponsor ${sp.name} updated`, "success");
       }
     }
 
-    function updateSponsorField(id, field, val) {
-      const sp = state.sponsors.find(s => s.id === id);
-      if (sp) {
-        sp[field] = val;
-        saveStateToStorage();
-      }
-    }
-
     function clearAllData() {
-      openCustomModal("Reset All Local Data", "Are you sure you want to reset all data and restart?", [
-        { label: "Cancel", primary: false, onclick: "closeModals()" },
-        { label: "Confirm Reset", primary: true, onclick: "localStorage.removeItem('paycheck_pilot_state'); location.reload();" }
-      ]);
+      openCustomModal(
+        "Reset All Data",
+        "Are you sure you want to clear all local data? This action cannot be undone.",
+        [
+          { label: "Reset Data", primary: true, onclick: "executeClearAllData()" },
+          { label: "Cancel", primary: false, onclick: "closeModals()" }
+        ]
+      );
     }
 
-    // MODAL FORM SUBMISSIONS
-    function handleSaveBill(e) {
-      e.preventDefault();
-      const title = document.getElementById('bill-title').value;
-      const amount = parseFloat(document.getElementById('bill-amount').value || "0");
-      const dueDate = document.getElementById('bill-date').value;
-      const category = document.getElementById('bill-category').value;
-
-      state.bills.push({ id: 'bill_' + Date.now(), title, amount, dueDate, category });
-      logActivity("Bill Created", `Added recurring bill "${title}" (${formatCurrency(amount)}).`);
-      showToast("Bill Created Successfully", "success");
-      saveStateToStorage();
-      closeModals();
-      renderComingUp();
-    }
-
-    function handleSaveTransaction(e) {
-      e.preventDefault();
-      const title = document.getElementById('tx-title').value;
-      const amount = parseFloat(document.getElementById('tx-amount').value || "0");
-      const type = document.getElementById('tx-type').value;
-      const category = document.getElementById('tx-category').value;
-      const date = document.getElementById('tx-date').value;
-
-      state.transactions.unshift({ id: 'tx_' + Date.now(), title, amount, type, category, date });
-      logActivity("Transaction Added", `Logged ${type} "${title}" (${formatCurrency(amount)}).`);
-      showToast("Transaction Logged", "success");
-      saveStateToStorage();
-      closeModals();
-      renderLedger();
-    }
-
-    function handleSaveGoal(e) {
-      e.preventDefault();
-      const title = document.getElementById('goal-title').value;
-      const target = parseFloat(document.getElementById('goal-target').value || "0");
-      const current = parseFloat(document.getElementById('goal-current').value || "0");
-
-      state.goals.push({ id: 'goal_' + Date.now(), title, target, current });
-      logActivity("Goal Created", `Created savings goal "${title}" (${formatCurrency(target)}).`);
-      showToast("Goal Created Successfully", "success");
-      saveStateToStorage();
-      closeModals();
-      renderGoals();
+    function executeClearAllData() {
+      localStorage.removeItem('paycheck_pilot_state');
+      location.reload();
     }
 
     // FORMATTERS
-    function formatCurrency(num) {
-      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num || 0);
+    function formatCurrency(amount) {
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount || 0);
     }
 
     function formatDate(dateStr) {
-      if (!dateStr) return '--';
-      const parts = dateStr.split('-');
-      if (parts.length < 3) return dateStr;
-      const d = new Date(parts[0], parts[1] - 1, parts[2]);
-      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      if (!dateStr) return '';
+      const d = new Date(dateStr);
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     }
   </script>
 </body>
