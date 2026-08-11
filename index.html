@@ -69,18 +69,17 @@
       background: rgba(19, 31, 55, 0.75);
       backdrop-filter: blur(16px);
       border: 1px solid rgba(255, 255, 255, 0.07);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
     
-    .glass-card-hover {
-      transition: all 0.2s ease-in-out;
-    }
     .glass-card-hover:hover {
-      border-color: rgba(52, 211, 153, 0.3);
+      border-color: rgba(52, 211, 153, 0.4);
       transform: translateY(-2px);
+      box-shadow: 0 12px 30px -10px rgba(16, 185, 129, 0.15);
     }
     
     .glow-emerald {
-      box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.25);
+      box-shadow: 0 0 30px -5px rgba(16, 185, 129, 0.3);
     }
     
     .glow-payday {
@@ -95,21 +94,22 @@
       display: flex;
     }
 
-    /* Animations for Safe Spend & Weather */
+    /* Premium Fintech Animations */
     @keyframes floatUp {
-      0% { transform: translateY(10px); opacity: 0; }
+      0% { transform: translateY(12px) scale(0.9); opacity: 0; }
       50% { opacity: 1; }
-      100% { transform: translateY(-25px); opacity: 0; }
+      100% { transform: translateY(-35px) scale(1.05); opacity: 0; }
     }
-    .anim-floating-bill {
-      animation: floatUp 2.5s ease-in-out infinite;
+    .anim-floating-bill { animation: floatUp 2.4s ease-in-out infinite; }
+    .anim-floating-coin { animation: floatUp 1.9s ease-in-out infinite; }
+    .anim-warning-particle { animation: floatUp 1.6s ease-in-out infinite; }
+    .anim-storm-cloud { animation: floatUp 2.2s ease-in-out infinite; }
+
+    @keyframes lightningFlash {
+      0%, 90%, 100% { opacity: 0.2; }
+      92%, 96% { opacity: 0.9; filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.8)); }
     }
-    .anim-floating-coin {
-      animation: floatUp 2s ease-in-out infinite;
-    }
-    .anim-warning-particle {
-      animation: floatUp 1.8s ease-in-out infinite;
-    }
+    .anim-lightning { animation: lightningFlash 4s infinite; }
 
     @keyframes slideIn {
       from { transform: translateY(100%); opacity: 0; }
@@ -117,6 +117,16 @@
     }
     .toast-animate {
       animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Forecast Plane Flight Path Animation */
+    @keyframes flyPath {
+      0% { offset-distance: 0%; transform: scale(1) rotate(0deg); }
+      50% { transform: scale(1.15) rotate(-3deg); }
+      100% { offset-distance: 100%; transform: scale(1) rotate(0deg); }
+    }
+    .forecast-plane {
+      transition: all 0.5s ease;
     }
   </style>
 </head>
@@ -449,7 +459,7 @@
             <div id="safe-spend-hero-card" class="lg:col-span-2 glass-card rounded-3xl p-6 sm:p-8 border border-brand-500/30 relative overflow-hidden glow-emerald">
               <div class="absolute -right-12 -bottom-12 w-48 h-48 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
               
-              <!-- Safe Spend Animation Element -->
+              <!-- Safe Spend Premium Animation Container -->
               <div id="safe-spend-anim-container" class="absolute top-4 right-4 pointer-events-none"></div>
 
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
@@ -697,7 +707,7 @@
               <p class="text-xs text-slate-400">60-day projected cash flow based strictly on Current Cash, Scheduled Bills, and Paychecks.</p>
             </div>
             <span class="px-3 py-1 bg-brand-500/15 border border-brand-500/30 text-brand-400 text-xs font-bold rounded-full flex items-center gap-1.5">
-              <i data-lucide="plane" class="w-3.5 h-3.5"></i> Animated Flight Path Active
+              <i data-lucide="plane" class="w-3.5 h-3.5 animate-pulse"></i> Animated Flight Path Active
             </span>
           </div>
 
@@ -721,8 +731,14 @@
             </div>
           </div>
 
-          <!-- Chart & Flight Path -->
-          <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4 relative">
+          <!-- Chart & Flight Path with Animated Plane -->
+          <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4 relative overflow-hidden">
+            <div id="forecast-plane-container" class="absolute z-20 pointer-events-none transition-all duration-300 hidden">
+              <div class="flex items-center gap-1 bg-brand-500 text-slate-950 px-2 py-0.5 rounded-full text-[10px] font-bold shadow-lg">
+                <i data-lucide="plane" class="w-3.5 h-3.5 animate-spin"></i>
+                <span id="forecast-plane-label">Today</span>
+              </div>
+            </div>
             <div class="h-72 w-full relative">
               <canvas id="forecastChart"></canvas>
             </div>
@@ -893,15 +909,16 @@
                   <div id="hh-member-list-container" class="space-y-1.5 max-h-32 overflow-y-auto"></div>
                 </div>
 
-                <!-- Account Sharing Toggles -->
+                <!-- Account Sharing Radio Toggles (Mutually Exclusive) -->
                 <div class="space-y-2 pt-2 border-t border-slate-800">
-                  <label class="flex items-center justify-between text-xs text-slate-300 cursor-pointer">
-                    <span>Shared Accounts (Same account pool)</span>
-                    <input type="checkbox" id="toggle-shared-accounts" checked onchange="updateHouseholdToggles()" class="accent-brand-500" />
+                  <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">Account Mode (Mutually Exclusive)</span>
+                  <label class="flex items-center justify-between text-xs text-slate-300 cursor-pointer p-2 bg-slate-900/60 rounded-xl border border-slate-800">
+                    <span class="flex items-center gap-2"><i data-lucide="users" class="w-3.5 h-3.5 text-brand-400"></i> Shared Accounts (Same pool)</span>
+                    <input type="radio" name="account_mode" id="radio-shared-accounts" onchange="updateAccountMode()" class="accent-brand-500" />
                   </label>
-                  <label class="flex items-center justify-between text-xs text-slate-300 cursor-pointer">
-                    <span>Individual Accounts (Separate balances)</span>
-                    <input type="checkbox" id="toggle-indiv-accounts" checked onchange="updateHouseholdToggles()" class="accent-brand-500" />
+                  <label class="flex items-center justify-between text-xs text-slate-300 cursor-pointer p-2 bg-slate-900/60 rounded-xl border border-slate-800">
+                    <span class="flex items-center gap-2"><i data-lucide="user" class="w-3.5 h-3.5 text-brand-400"></i> Individual Accounts (Separate balances)</span>
+                    <input type="radio" name="account_mode" id="radio-indiv-accounts" onchange="updateAccountMode()" class="accent-brand-500" />
                   </label>
                 </div>
               </div>
@@ -1015,12 +1032,12 @@
       <div id="generic-modal-actions" class="flex gap-2 pt-2"></div>
     </div>
 
-    <!-- DEFICIT NAVIGATOR / BILL TETRIS MODAL -->
+    <!-- DEFICIT NAVIGATOR 2.0 (BILL TETRIS) MODAL -->
     <div id="modal-deficit" class="glass-card p-6 rounded-3xl border border-rose-500/40 w-full max-w-2xl hidden space-y-4 max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
         <div class="flex items-center gap-2">
           <i data-lucide="alert-octagon" class="w-5 h-5 text-rose-400"></i>
-          <h3 class="font-bold text-white text-base">Deficit Navigator (Bill Tetris)</h3>
+          <h3 class="font-bold text-white text-base">Deficit Navigator 2.0 (Bill Tetris)</h3>
         </div>
         <button onclick="closeModals()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
       </div>
@@ -1212,6 +1229,25 @@
       </form>
     </div>
 
+    <!-- GOAL DEPOSIT FUNDS MODAL -->
+    <div id="modal-goal-deposit" class="glass-card p-6 rounded-3xl border border-brand-500/40 w-full max-w-md hidden space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-white text-base flex items-center gap-2">
+          <i data-lucide="piggy-bank" class="w-4 h-4 text-brand-400"></i> Deposit Funds to Goal
+        </h3>
+        <button onclick="closeModals()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <form onsubmit="handleGoalDepositSubmit(event)" class="space-y-4">
+        <input type="hidden" id="deposit-goal-id" />
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Contribution Amount ($)</label>
+          <input type="number" step="0.01" id="deposit-amount-input" required placeholder="e.g. 150.00" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-3 text-lg font-bold text-brand-400 outline-none focus:border-brand-500" />
+          <p class="text-[10px] text-slate-500 mt-1">Enter any amount. Stored in real contribution history for precise ETA calculations.</p>
+        </div>
+        <button type="submit" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Confirm Deposit</button>
+      </form>
+    </div>
+
   </div>
 
 
@@ -1238,15 +1274,14 @@
         owner: "You",
         members: 1,
         inviteCode: "PP-8829-X",
-        sharedAccountsEnabled: true,
-        individualAccountsEnabled: true,
+        accountMode: 'shared', // 'shared' or 'individual' (mutually exclusive)
         memberList: [{ name: "You (Owner)", role: "owner", email: "pilot@user.com" }]
       },
       accounts: [],
       income: {
-        amount: 0,
+        amount: 2500,
         frequency: 'biweekly',
-        nextDate: ''
+        nextDate: new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0]
       },
       bills: [],
       transactions: [],
@@ -1527,7 +1562,7 @@
       lucide.createIcons();
     }
 
-    // CUSTOM MODALS (Zero browser dialogs - fully modal system)
+    // CUSTOM MODALS
     function openCustomModal(title, body, actions = []) {
       document.getElementById('generic-modal-title').innerText = title;
       document.getElementById('generic-modal-body').innerText = body;
@@ -1541,12 +1576,12 @@
       document.getElementById('modal-generic').classList.remove('hidden');
     }
 
+    // DEFICIT NAVIGATOR 2.0 (BILL TETRIS)
     function openDeficitNavigatorModal() {
       const financials = calculateFinancials();
       const shortfall = Math.abs(financials.safeSpend);
       const content = document.getElementById('deficit-modal-content');
 
-      // Bill Tetris / Deficit Navigator Analysis
       const unpaidBills = state.bills.filter(b => !b.completed).sort((a,b) => {
         const pOrder = { critical: 1, important: 2, flexible: 3 };
         return (pOrder[a.priority || 'important'] - pOrder[b.priority || 'important']);
@@ -1563,72 +1598,63 @@
             <span>Shortfall Amount (Deficit):</span>
             <span class="text-base">${formatCurrency(shortfall)}</span>
           </div>
-          <p class="text-[11px] text-slate-300">Safe Spend has dropped below $0.00. Bill Tetris recommends delaying flexible subscriptions and prioritizing critical housing and utility obligations.</p>
+          <p class="text-[11px] text-slate-300">Safe Spend or Forecast has dropped below zero. Deficit Navigator 2.0 compares options with and without action using grace periods, late fees, and priority ratings.</p>
         </div>
 
-        <div class="space-y-3">
-          <h4 class="font-bold text-white text-sm">Recommended Payment Order & Priorities</h4>
-          <div class="space-y-2 max-h-40 overflow-y-auto">
-            ${mustBePaid.map(b => `
-              <div class="flex justify-between items-center p-2.5 bg-slate-900 rounded-xl border border-slate-800">
-                <div class="flex items-center gap-2">
-                  <span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-rose-500/20 text-rose-400">${b.priority || 'critical'}</span>
-                  <span class="text-white font-medium">${b.title}</span>
-                </div>
-                <span class="text-rose-400 font-bold">${formatCurrency(b.amount)} (Due ${b.dueDate})</span>
-              </div>
-            `).join('')}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+          <div class="p-4 bg-slate-900 rounded-2xl border border-slate-800 space-y-3">
+            <h4 class="font-bold text-rose-400 text-sm flex items-center gap-1.5"><i data-lucide="x-circle" class="w-4 h-4"></i> Without Action</h4>
+            <div class="space-y-1 text-slate-300 text-[11px]">
+              <div class="flex justify-between"><span>Late Fees Incurred:</span> <strong class="text-rose-400">${formatCurrency(estimatedFees)}</strong></div>
+              <div class="flex justify-between"><span>Credit Impact:</span> <strong class="text-rose-400">Moderate Risk</strong></div>
+              <div class="flex justify-between"><span>Overdraft Risk:</span> <strong class="text-rose-400">High</strong></div>
+            </div>
+          </div>
+          <div class="p-4 bg-slate-900 rounded-2xl border border-brand-500/30 space-y-3">
+            <h4 class="font-bold text-brand-400 text-sm flex items-center gap-1.5"><i data-lucide="check-circle" class="w-4 h-4"></i> With Action Plan</h4>
+            <div class="space-y-1 text-slate-300 text-[11px]">
+              <div class="flex justify-between"><span>Fees Avoided:</span> <strong class="text-emerald-400">${formatCurrency(estimatedFees)}</strong></div>
+              <div class="flex justify-between"><span>Relief / Savings:</span> <strong class="text-brand-400">${formatCurrency(estimatedSavings)}</strong></div>
+              <div class="flex justify-between"><span>Recommended Plan:</span> <strong class="text-white">Delay Flexible Bills</strong></div>
+            </div>
           </div>
         </div>
 
-        <div class="space-y-3 pt-2 border-t border-slate-800">
-          <h4 class="font-bold text-white text-sm">Bills Safe To Delay (Flexible)</h4>
-          <div class="space-y-2 max-h-32 overflow-y-auto">
-            ${safeToDelay.length === 0 ? '<p class="text-slate-500 text-xs">No flexible bills found to delay.</p>' : safeToDelay.map(b => `
-              <div class="flex justify-between items-center p-2.5 bg-slate-900 rounded-xl border border-slate-800">
-                <div class="flex items-center gap-2">
-                  <span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-brand-500/20 text-brand-400">Flexible</span>
-                  <span class="text-white font-medium">${b.title}</span>
-                </div>
-                <span class="text-brand-400 font-bold">${formatCurrency(b.amount)}</span>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3 pt-3 border-t border-slate-800 text-xs">
-          <div class="p-3 bg-slate-900 rounded-xl">
-            <span class="text-slate-400 block">Estimated Fees Avoided:</span>
-            <strong class="text-emerald-400 text-sm">${formatCurrency(estimatedFees)}</strong>
-          </div>
-          <div class="p-3 bg-slate-900 rounded-xl">
-            <span class="text-slate-400 block">Estimated Savings / Relief:</span>
-            <strong class="text-brand-400 text-sm">${formatCurrency(estimatedSavings)}</strong>
+        <div class="space-y-2 pt-2">
+          <h4 class="font-bold text-white text-sm">Recommended Plan Reasoning</h4>
+          <div class="p-3 bg-slate-900/90 rounded-xl border border-slate-800 text-[11px] text-slate-300 space-y-1">
+            <p><strong>Delay Netflix / Flexible Subscriptions because:</strong></p>
+            <ul class="list-disc pl-4 space-y-0.5 text-slate-400">
+              <li>No late fees assessed during typical 14-day grace period.</li>
+              <li>Flexible priority rating allows rescheduling without service disruption.</li>
+              <li>Preserves cash available for critical rent and utility obligations.</li>
+            </ul>
           </div>
         </div>
 
         <div class="flex gap-2 pt-3">
-          <button onclick="applyBillTetrisPlan()" class="flex-1 py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs">Apply Action Plan (Delay Flexible Bills)</button>
+          <button onclick="applyBillTetrisPlan()" class="flex-1 py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs">Apply Recommended Plan (Delay Flexible Bills)</button>
           <button onclick="closeModals()" class="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs">Close</button>
         </div>
       `;
 
       document.getElementById('modal-backdrop').classList.remove('hidden');
       document.getElementById('modal-deficit').classList.remove('hidden');
+      lucide.createIcons();
     }
 
     function applyBillTetrisPlan() {
       state.bills = state.bills.map(b => {
         if ((b.priority || 'important') === 'flexible' && !b.completed) {
           const d = new Date(b.dueDate);
-          d.setDate(d.getDate() + 15); // Push due date by 15 days
+          d.setDate(d.getDate() + 15);
           b.dueDate = d.toISOString().split('T')[0];
         }
         return b;
       });
       saveStateToStorage();
       closeModals();
-      showToast("Bill Tetris action plan applied successfully", "success");
+      showToast("Deficit Navigator action plan applied successfully", "success");
       navigateTo('dashboard');
     }
 
@@ -1672,6 +1698,33 @@
       document.getElementById('modal-goal').classList.remove('hidden');
     }
 
+    // GOAL DEPOSIT FUNDS MODAL (No forced presets)
+    function openGoalDepositModal(goalId) {
+      document.getElementById('deposit-goal-id').value = goalId;
+      document.getElementById('deposit-amount-input').value = '';
+      document.getElementById('modal-backdrop').classList.remove('hidden');
+      document.getElementById('modal-goal-deposit').classList.remove('hidden');
+    }
+
+    function handleGoalDepositSubmit(event) {
+      event.preventDefault();
+      const goalId = document.getElementById('deposit-goal-id').value;
+      const amount = parseFloat(document.getElementById('deposit-amount-input').value) || 0;
+      if (amount <= 0) return;
+
+      const goal = state.goals.find(g => g.id === goalId);
+      if (goal) {
+        if (!goal.contributions) goal.contributions = [];
+        goal.contributions.push({ amount, date: new Date().toISOString() });
+        goal.current = (goal.current || 0) + amount;
+        saveStateToStorage();
+        closeModals();
+        renderGoals();
+        showToast(`Successfully deposited ${formatCurrency(amount)} to ${goal.title}`, "success");
+        logActivity("Goal Deposit", `Deposited ${formatCurrency(amount)} to goal ${goal.title}`);
+      }
+    }
+
     function closeModals() {
       document.getElementById('modal-backdrop').classList.add('hidden');
       document.getElementById('modal-generic').classList.add('hidden');
@@ -1681,9 +1734,10 @@
       document.getElementById('modal-bill').classList.add('hidden');
       document.getElementById('modal-transaction').classList.add('hidden');
       document.getElementById('modal-goal').classList.add('hidden');
+      document.getElementById('modal-goal-deposit').classList.add('hidden');
     }
 
-    // HOUSEHOLD & INVITE CODE SYSTEM (Complete Foundation)
+    // HOUSEHOLD & INVITE CODE SYSTEM (No undefined, Generate Invite Code)
     function promptCreateHousehold() {
       document.getElementById('modal-backdrop').classList.remove('hidden');
       document.getElementById('modal-household-action').classList.remove('hidden');
@@ -1716,6 +1770,13 @@
       showToast("Successfully joined household", "success");
     }
 
+    function generateInviteCode() {
+      state.household.inviteCode = 'PP-' + Math.floor(1000 + Math.random() * 9000) + '-X';
+      saveStateToStorage();
+      renderSettings();
+      showToast("New invite code generated", "success");
+    }
+
     function removeHouseholdMember(email) {
       if (state.household.memberList.length <= 1) {
         showToast("Cannot remove the last member", "error");
@@ -1728,11 +1789,17 @@
       showToast("Member removed from household", "info");
     }
 
-    function updateHouseholdToggles() {
-      state.household.sharedAccountsEnabled = document.getElementById('toggle-shared-accounts').checked;
-      state.household.individualAccountsEnabled = document.getElementById('toggle-indiv-accounts').checked;
+    // MUTUALLY EXCLUSIVE ACCOUNT MODE (Radio button behavior)
+    function updateAccountMode() {
+      const sharedRadio = document.getElementById('radio-shared-accounts');
+      const indivRadio = document.getElementById('radio-indiv-accounts');
+      if (sharedRadio && sharedRadio.checked) {
+        state.household.accountMode = 'shared';
+      } else if (indivRadio && indivRadio.checked) {
+        state.household.accountMode = 'individual';
+      }
       saveStateToStorage();
-      showToast("Household sharing preferences updated", "success");
+      showToast(`Account mode set to ${state.household.accountMode.toUpperCase()}`, "success");
     }
 
     function promptLeaveHousehold() {
@@ -1747,7 +1814,7 @@
     }
 
     function executeLeaveHousehold() {
-      state.household = { name: "Solo Pilot", owner: "You", members: 1, inviteCode: "PP-8829-X", sharedAccountsEnabled: true, individualAccountsEnabled: true, memberList: [{ name: "You (Owner)", role: "owner", email: "pilot@user.com" }] };
+      state.household = { name: "Solo Pilot", owner: "You", members: 1, inviteCode: "PP-8829-X", accountMode: 'shared', memberList: [{ name: "You (Owner)", role: "owner", email: "pilot@user.com" }] };
       saveStateToStorage();
       renderSettings();
       showToast("Left household. Returned to Solo Pilot.", "info");
@@ -1768,836 +1835,388 @@
 
       document.getElementById('public-page-title').innerText = titles[pageKey];
       document.getElementById('public-page-content').innerHTML = `<p>${content[pageKey]}</p>`;
-      
-      document.querySelectorAll('.view-screen').forEach(s => s.classList.remove('active'));
-      document.querySelectorAll('.page-view').forEach(p => p.classList.add('hidden'));
-      document.getElementById('page-public').classList.remove('hidden');
-      showScreen('screen-app');
+      navigateTo('public');
     }
 
     function closePublicPage() {
-      if (state.user) navigateTo('dashboard');
-      else showScreen('screen-auth');
+      navigateTo('settings');
     }
 
-    // AUTHENTICATION
-    function switchAuthTab(mode) {
-      authMode = mode;
-      const loginBtn = document.getElementById('auth-tab-login');
-      const signupBtn = document.getElementById('auth-tab-signup');
-      const submitBtn = document.getElementById('auth-submit-btn');
-
-      if (mode === 'login') {
-        loginBtn.className = "flex-1 py-2.5 rounded-lg text-white bg-brand-600 shadow-md font-semibold";
-        signupBtn.className = "flex-1 py-2.5 rounded-lg text-slate-400 hover:text-slate-200 font-semibold";
-        submitBtn.querySelector('span').innerText = "Sign In to Pilot";
-      } else {
-        signupBtn.className = "flex-1 py-2.5 rounded-lg text-white bg-brand-600 shadow-md font-semibold";
-        loginBtn.className = "flex-1 py-2.5 rounded-lg text-slate-400 hover:text-slate-200 font-semibold";
-        submitBtn.querySelector('span').innerText = "Create Account";
-      }
-    }
-
-    function handleAuthSubmit(e) {
-      e.preventDefault();
-      const email = document.getElementById('auth-email').value;
-      state.user = { email: email, id: 'usr_' + Date.now() };
-      saveStateToStorage();
-      logActivity("Settings Changed", `User signed in as ${email}`);
-
-      if (!state.onboardingCompleted) {
-        showScreen('screen-onboarding');
-        renderOnboardingStep();
-      } else {
-        showScreen('screen-app');
-        navigateTo('dashboard');
-        checkAdminOwnerStatus();
-      }
-      showToast("Signed in successfully", "success");
-    }
-
-    function loginAsDemo() {
-      state.user = { email: 'demo@paycheckpilot.app', id: 'usr_demo' };
-      saveStateToStorage();
-      showScreen('screen-app');
-      if (!state.onboardingCompleted) {
-        showScreen('screen-onboarding');
-        renderOnboardingStep();
-      } else {
-        navigateTo('dashboard');
-        checkAdminOwnerStatus();
-      }
-      showToast("Loaded Clean Demo Mode", "success");
-    }
-
-    function simulatePasswordReset() {
-      showToast("Password reset instructions sent", "info");
-    }
-
-    function handleLogout() {
-      state.user = null;
-      saveStateToStorage();
-      showScreen('screen-auth');
-      showToast("Signed out", "info");
-    }
-
-    // ONBOARDING WIZARD
-    function renderOnboardingStep() {
-      const step = state.currentOnboardStep;
-      document.getElementById('onboard-step-indicator').innerText = `Step ${step} of 4`;
-      document.getElementById('onboard-progress-bar').style.width = `${(step / 4) * 100}%`;
-
-      const titles = ["Accounts & Cash", "Income & Payday Schedule", "Recurring Bills & Subscriptions", "Flight Plan Ready"];
-      document.getElementById('onboard-step-title').innerText = titles[step - 1];
-
-      document.querySelectorAll('.onboard-step-content').forEach(c => c.classList.add('hidden'));
-      document.getElementById(`onboard-step-${step}`).classList.remove('hidden');
-
-      const prevBtn = document.getElementById('onboard-prev-btn');
-      if (step === 1) prevBtn.classList.add('hidden');
-      else prevBtn.classList.remove('hidden');
-
-      const nextBtn = document.getElementById('onboard-next-btn');
-      if (step === 4) {
-        nextBtn.querySelector('span').innerText = "Launch Dashboard";
-        const totalCash = state.accounts.reduce((acc, a) => acc + a.balance, 0);
-        const totalBills = state.bills.reduce((acc, b) => acc + b.amount, 0);
-        document.getElementById('summary-cash').innerText = formatCurrency(totalCash);
-        document.getElementById('summary-bills').innerText = formatCurrency(totalBills);
-        document.getElementById('summary-safespend').innerText = formatCurrency(totalCash - totalBills);
-      } else {
-        nextBtn.querySelector('span').innerText = "Continue";
-      }
-
-      if (step === 1) renderOnboardAccounts();
-      if (step === 2) {
-        document.getElementById('onboard-paycheck-amount').value = state.income.amount || '';
-        document.getElementById('onboard-pay-frequency').value = state.income.frequency;
-        if (state.income.nextDate) document.getElementById('onboard-next-payday').value = state.income.nextDate;
-      }
-      if (step === 3) renderOnboardBills();
-
-      lucide.createIcons();
-    }
-
-    function renderOnboardAccounts() {
-      const list = document.getElementById('onboard-accounts-list');
-      if (state.accounts.length === 0) {
-        list.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">No accounts added yet. Click below to add one.</p>`;
-        return;
-      }
-      list.innerHTML = state.accounts.map(acc => `
-        <div class="flex items-center justify-between p-3 bg-slate-900/90 rounded-xl border border-slate-800">
-          <div class="flex items-center gap-3">
-            <i data-lucide="${acc.type === 'checking' ? 'wallet' : acc.type === 'savings' ? 'piggy-bank' : 'credit-card'}" class="w-5 h-5 text-brand-400"></i>
-            <div>
-              <p class="text-xs font-bold text-white">${acc.name}</p>
-              <p class="text-[10px] text-slate-400 capitalize">${acc.type}</p>
-            </div>
-          </div>
-          <span class="text-xs font-bold text-emerald-400">${formatCurrency(acc.balance)}</span>
-        </div>
-      `).join('');
-    }
-
-    function renderOnboardBills() {
-      const list = document.getElementById('onboard-bills-list');
-      if (state.bills.length === 0) {
-        list.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">No bills added yet.</p>`;
-        return;
-      }
-      list.innerHTML = state.bills.map(b => `
-        <div class="flex items-center justify-between p-3 bg-slate-900/90 rounded-xl border border-slate-800">
-          <div class="flex items-center gap-3">
-            <i data-lucide="receipt" class="w-5 h-5 text-rose-400"></i>
-            <div>
-              <p class="text-xs font-bold text-white">${b.title}</p>
-              <p class="text-[10px] text-slate-400">Due ${b.dueDate} (${b.priority || 'important'})</p>
-            </div>
-          </div>
-          <span class="text-xs font-bold text-rose-400">${formatCurrency(b.amount)}</span>
-        </div>
-      `).join('');
-    }
-
-    function nextOnboardStep() {
-      if (state.currentOnboardStep === 2) {
-        state.income.amount = parseFloat(document.getElementById('onboard-paycheck-amount').value || "0");
-        state.income.frequency = document.getElementById('onboard-pay-frequency').value;
-        state.income.nextDate = document.getElementById('onboard-next-payday').value;
-        saveStateToStorage();
-      }
-
-      if (state.currentOnboardStep < 4) {
-        state.currentOnboardStep++;
-        renderOnboardingStep();
-      } else {
-        state.onboardingCompleted = true;
-        saveStateToStorage();
-        showScreen('screen-app');
-        navigateTo('dashboard');
-        checkAdminOwnerStatus();
-        showToast("Flight plan configured successfully!", "success");
-      }
-    }
-
-    function prevOnboardStep() {
-      if (state.currentOnboardStep > 1) {
-        state.currentOnboardStep--;
-        renderOnboardingStep();
-      }
-    }
-
-    function restartOnboarding() {
-      state.currentOnboardStep = 1;
-      state.onboardingCompleted = false;
-      saveStateToStorage();
-      showScreen('screen-onboarding');
-      renderOnboardingStep();
-    }
-
-    // FINANCIAL ENGINE & DATE AWARENESS
+    // FINANCIAL ENGINE CALCULATIONS
     function calculateFinancials() {
-      const totalCash = state.accounts.reduce((sum, acc) => sum + acc.balance, 0);
-      
-      const nextPayDate = state.income.nextDate ? new Date(state.income.nextDate) : new Date(Date.now() + 14*86400000);
-      const today = new Date();
-      today.setHours(0,0,0,0);
+      const totalCash = state.accounts.reduce((sum, a) => {
+        return a.type === 'credit' ? sum - parseFloat(a.balance || 0) : sum + parseFloat(a.balance || 0);
+      }, 0);
 
-      const billsBeforePayday = state.bills.filter(b => {
-        const d = new Date(b.dueDate);
-        return d >= today && d <= nextPayDate && !b.completed;
+      const nextPayDate = state.income.nextDate ? new Date(state.income.nextDate) : new Date(Date.now() + 7 * 86400000);
+      const today = new Date();
+      const diffTime = nextPayDate - today;
+      const daysToPayday = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
+
+      const unpaidBillsBeforePayday = state.bills.filter(b => {
+        if (b.completed) return false;
+        const bDate = new Date(b.dueDate);
+        return bDate <= nextPayDate;
       });
 
-      const totalBillsBeforePayday = billsBeforePayday.reduce((sum, b) => sum + b.amount, 0);
-      const safeSpend = totalCash - totalBillsBeforePayday;
-
-      const diffTime = nextPayDate - today;
-      const daysUntilPayday = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
-      const dailyAvailable = safeSpend / daysUntilPayday;
-
-      const totalMonthlyBills = state.bills.reduce((sum, b) => sum + b.amount, 0);
-      const estimatedMonthlyIncome = state.income.frequency === 'biweekly' ? state.income.amount * 2.16 : (state.income.amount || 3000);
-      const fixedRatio = estimatedMonthlyIncome > 0 ? Math.round((totalMonthlyBills / estimatedMonthlyIncome) * 100) : 0;
-
-      const bufferDays = totalMonthlyBills > 0 ? Math.round((totalCash / (totalMonthlyBills / 30))) : 30;
-      const resilienceScore = Math.min(100, Math.max(10, bufferDays * 3));
-
-      let riskStatus = "Healthy";
-      if (safeSpend < 0) riskStatus = "Critical Risk";
-      else if (safeSpend < 200) riskStatus = "Caution";
-
-      // Financial Weather calculation based strictly on actual financial metrics
-      let weather = { icon: "☀", title: "Clear Skies", desc: "Stable cash reserves and healthy safe spend buffer.", risk: "Healthy" };
-      if (safeSpend < 0) {
-        weather = { icon: "⛈", title: "Financial Storm", desc: "Negative safe spend! Immediate bill adjustments required.", risk: "Critical Risk" };
-      } else if (safeSpend < 200) {
-        weather = { icon: "🌦", title: "Turbulence Ahead", desc: "Low safe spend buffer before next payday.", risk: "Caution" };
-      } else if (resilienceScore > 75) {
-        weather = { icon: "🌤", title: "Smooth Flight", desc: "Strong cash buffer and solid resilience score.", risk: "Healthy" };
-      }
+      const billsSumBeforePayday = unpaidBillsBeforePayday.reduce((sum, b) => sum + parseFloat(b.amount || 0), 0);
+      const safeSpend = totalCash - billsSumBeforePayday;
+      const dailyAvailable = safeSpend > 0 ? safeSpend / daysToPayday : 0;
 
       return {
         totalCash,
-        nextPayDate,
-        billsBeforePayday,
-        totalBillsBeforePayday,
+        daysToPayday,
+        billsSumBeforePayday,
         safeSpend,
-        daysUntilPayday,
         dailyAvailable,
-        fixedRatio,
-        bufferDays,
-        resilienceScore,
-        riskStatus,
-        weather
+        nextPayDate
       };
     }
 
-    function formatCurrency(amt) {
-      return '$' + Number(amt || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    function formatCurrency(amount) {
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
     }
 
-    // DASHBOARD RENDERER & DATE AWARENESS
+    // RENDER DASHBOARD & ANIMATIONS
     function renderDashboard() {
-      const f = calculateFinancials();
+      const fin = calculateFinancials();
       
-      // Update QoL Header
-      document.getElementById('dash-qol-sync').innerText = state.lastSyncTime ? new Date(state.lastSyncTime).toLocaleTimeString() : 'Never';
+      document.getElementById('dash-safe-spend').innerText = formatCurrency(fin.safeSpend);
+      document.getElementById('dash-cash-total').innerText = formatCurrency(fin.totalCash);
+      document.getElementById('dash-next-payday-amount').innerText = formatCurrency(state.income.amount || 0);
+      document.getElementById('dash-next-payday-countdown').innerText = `${fin.daysToPayday} days remaining`;
+      document.getElementById('dash-daily-available').innerText = `${formatCurrency(fin.dailyAvailable)} / day`;
+      document.getElementById('dash-bills-due-total').innerText = formatCurrency(fin.billsSumBeforePayday);
+      document.getElementById('dash-next-paydate-inline').innerText = fin.nextPayDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       document.getElementById('dash-qol-accts').innerText = state.accounts.length;
       document.getElementById('dash-qol-goals').innerText = state.goals.length;
-      document.getElementById('dash-qol-bills').innerText = state.bills.length;
+      document.getElementById('dash-qol-bills').innerText = state.bills.filter(b => !b.completed).length;
+      document.getElementById('dash-qol-sync').innerText = state.lastSyncTime ? new Date(state.lastSyncTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Never';
 
-      // Safe Spend & Animations
-      const safeSpendEl = document.getElementById('dash-safe-spend');
-      safeSpendEl.innerText = formatCurrency(f.safeSpend);
-      safeSpendEl.className = `text-4xl sm:text-5xl font-black tracking-tight ${f.safeSpend < 0 ? 'text-rose-400' : 'text-white'}`;
-
+      // Safe Spend Premium Animations & Financial Weather
       const animContainer = document.getElementById('safe-spend-anim-container');
-      if (f.safeSpend >= 500) {
-        animContainer.innerHTML = `<div class="anim-floating-bill text-emerald-400 text-lg font-bold">💵</div>`;
-      } else if (f.safeSpend >= 0) {
-        animContainer.innerHTML = `<div class="anim-floating-coin text-amber-400 text-lg font-bold">🪙</div>`;
-      } else {
-        animContainer.innerHTML = `<div class="anim-warning-particle text-rose-400 text-lg font-bold">⚠</div>`;
-      }
-
-      // Deficit Navigator Button Visibility
+      const weatherIcon = document.getElementById('fin-weather-icon');
+      const weatherTitle = document.getElementById('fin-weather-title');
+      const weatherDesc = document.getElementById('fin-weather-desc');
+      const weatherRisk = document.getElementById('fin-weather-risk');
       const analyzeDeficitBtn = document.getElementById('analyze-deficit-btn');
-      if (f.safeSpend < 0) {
-        analyzeDeficitBtn.classList.remove('hidden');
-      } else {
-        analyzeDeficitBtn.classList.add('hidden');
-      }
 
-      // Date Awareness notices & Payday Celebration
-      const today = new Date();
-      today.setHours(0,0,0,0);
-      const nextPay = new Date(state.income.nextDate);
-      nextPay.setHours(0,0,0,0);
+      animContainer.innerHTML = '';
+      if (fin.safeSpend >= 1000) {
+        // Healthy: Floating cash bills & premium money effects
+        weatherIcon.innerText = "☀";
+        weatherTitle.innerText = "Clear Skies";
+        weatherDesc.innerText = "Stable cash reserves and robust safe spend buffer.";
+        weatherRisk.innerText = "Healthy";
+        weatherRisk.className = "text-brand-400";
+        if (analyzeDeficitBtn) analyzeDeficitBtn.classList.add('hidden');
 
-      const diffDays = Math.round((nextPay - today) / (1000 * 60 * 60 * 24));
-      const dateBanner = document.getElementById('dash-date-awareness-banner');
-      const heroCard = document.getElementById('safe-spend-hero-card');
-
-      if (diffDays === 0) {
-        dateBanner.className = "p-4 rounded-2xl border bg-brand-500/20 border-brand-500 text-brand-300 font-bold flex items-center gap-3";
-        dateBanner.innerHTML = `<i data-lucide="party-popper" class="w-5 h-5 text-brand-400 shrink-0"></i><span>🎉 Payday Today! Your scheduled deposit has arrived.</span>`;
-        dateBanner.classList.remove('hidden');
-        heroCard.classList.add('glow-payday');
-        
-        // Trigger Confetti Celebration
-        if (typeof confetti === 'function') {
-          confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        for (let i = 0; i < 3; i++) {
+          const bill = document.createElement('div');
+          bill.className = 'absolute text-brand-400 font-bold text-sm anim-floating-bill pointer-events-none';
+          bill.style.right = `${i * 24}px`;
+          bill.style.animationDelay = `${i * 0.7}s`;
+          bill.innerHTML = '💵';
+          animContainer.appendChild(bill);
         }
-      } else if (diffDays === 1) {
-        dateBanner.className = "p-4 rounded-2xl border bg-blue-500/20 border-blue-500 text-blue-300 font-bold flex items-center gap-3";
-        dateBanner.innerHTML = `<i data-lucide="plane-landing" class="w-5 h-5 text-blue-400 shrink-0"></i><span>🛬 Payday Tomorrow! Final stretch before deposit.</span>`;
-        dateBanner.classList.remove('hidden');
-        heroCard.classList.remove('glow-payday');
+      } else if (fin.safeSpend >= 0) {
+        // Stable: Coins and subtle motion
+        weatherIcon.innerText = "🌤";
+        weatherTitle.innerText = "Smooth Flight";
+        weatherDesc.innerText = "Maintaining positive trajectory toward upcoming payday.";
+        weatherRisk.innerText = "Stable";
+        weatherRisk.className = "text-emerald-400";
+        if (analyzeDeficitBtn) analyzeDeficitBtn.classList.add('hidden');
+
+        for (let i = 0; i < 2; i++) {
+          const coin = document.createElement('div');
+          coin.className = 'absolute text-amber-400 text-sm anim-floating-coin pointer-events-none';
+          coin.style.right = `${i * 20}px`;
+          coin.style.animationDelay = `${i * 0.9}s`;
+          coin.innerHTML = '🪙';
+          animContainer.appendChild(coin);
+        }
+      } else if (fin.safeSpend > -500) {
+        // Warning: Wind particles
+        weatherIcon.innerText = "🌦";
+        weatherTitle.innerText = "Turbulence Ahead";
+        weatherDesc.innerText = "Safe spend is negative. Review upcoming obligations.";
+        weatherRisk.innerText = "Warning";
+        weatherRisk.className = "text-amber-400";
+        if (analyzeDeficitBtn) analyzeDeficitBtn.classList.remove('hidden');
+
+        const wind = document.createElement('div');
+        wind.className = 'absolute text-amber-400 text-xs anim-warning-particle pointer-events-none';
+        wind.innerHTML = '💨';
+        animContainer.appendChild(wind);
       } else {
-        dateBanner.classList.add('hidden');
-        heroCard.classList.remove('glow-payday');
+        // Financial Storm: Clouds, turbulence, subtle lightning flashes
+        weatherIcon.innerText = "⛈";
+        weatherTitle.innerText = "Financial Storm";
+        weatherDesc.innerText = "Severe deficit detected. Deficit Navigator 2.0 recommended.";
+        weatherRisk.innerText = "Critical";
+        weatherRisk.className = "text-rose-400";
+        if (analyzeDeficitBtn) analyzeDeficitBtn.classList.remove('hidden');
+
+        const storm = document.createElement('div');
+        storm.className = 'absolute text-rose-400 text-base anim-storm-cloud anim-lightning pointer-events-none';
+        storm.innerHTML = '⚡☁';
+        animContainer.appendChild(storm);
       }
 
-      // Risk Banner
-      const riskBanner = document.getElementById('dash-risk-banner');
-      const riskMsg = document.getElementById('dash-risk-message');
-      if (f.safeSpend < 0) {
-        riskBanner.className = "p-4 rounded-2xl border bg-rose-950/40 border-rose-800 text-rose-300 text-xs font-bold flex items-center gap-3";
-        riskMsg.innerText = `Critical Deficit! Safe Spend is ${formatCurrency(f.safeSpend)}. Click "Analyze Deficit" above to resolve obligations.`;
-        riskBanner.classList.remove('hidden');
-      } else {
-        riskBanner.classList.add('hidden');
-      }
+      // Resilience Score & Buffer Days
+      const dailyBurn = fin.billsSumBeforePayday / Math.max(1, fin.daysToPayday) + 50;
+      const bufferDays = Math.floor(fin.totalCash / Math.max(1, dailyBurn));
+      document.getElementById('dash-resilience-score').innerText = bufferDays > 14 ? 'Strong (A)' : bufferDays > 7 ? 'Stable (B)' : 'Fragile (C)';
+      document.getElementById('dash-buffer-days').innerText = `Buffer days: ${bufferDays} days`;
 
-      // Financial Weather Card
-      document.getElementById('fin-weather-icon').innerText = f.weather.icon;
-      document.getElementById('fin-weather-title').innerText = f.weather.title;
-      document.getElementById('fin-weather-desc').innerText = f.weather.desc;
-      document.getElementById('fin-weather-risk').innerText = f.weather.risk;
-
-      // Metrics
-      document.getElementById('dash-cash-total').innerText = formatCurrency(f.totalCash);
-      document.getElementById('dash-next-payday-amount').innerText = formatCurrency(state.income.amount);
-      document.getElementById('dash-next-paydate-inline').innerText = state.income.nextDate || 'Upcoming';
-      document.getElementById('dash-next-payday-countdown').innerText = `${f.daysUntilPayday} days remaining`;
-      document.getElementById('dash-daily-available').innerText = `${formatCurrency(f.dailyAvailable)} / day`;
-      document.getElementById('dash-bills-due-total').innerText = formatCurrency(f.totalBillsBeforePayday);
-      document.getElementById('dash-resilience-score').innerText = `${f.resilienceScore} / 100`;
-      document.getElementById('dash-buffer-days').innerText = `Buffer days: ${f.bufferDays}`;
-      document.getElementById('dash-paycheck-ratio').innerText = `${f.fixedRatio}%`;
-      
-      const progressPercent = Math.min(100, Math.max(0, ((14 - f.daysUntilPayday) / 14) * 100));
-      document.getElementById('dash-payday-progress').style.width = `${progressPercent}%`;
-
-      // Upcoming Bills List
-      const billsListEl = document.getElementById('dash-upcoming-bills-list');
-      const upcoming = state.bills.filter(b => !b.completed).slice(0, 4);
-      if (upcoming.length === 0) {
-        billsListEl.innerHTML = `<div class="p-4 bg-slate-900/60 rounded-2xl border border-slate-800 text-center text-xs text-slate-400">No upcoming bills scheduled. Click <button onclick="openAddBillModal()" class="text-brand-400 underline">Add Bill</button> to add one.</div>`;
-      } else {
-        billsListEl.innerHTML = upcoming.map(b => `
-          <div class="flex items-center justify-between p-3 bg-slate-900/80 rounded-xl border border-slate-800 text-xs">
-            <div class="flex items-center gap-3">
-              <i data-lucide="receipt" class="w-4 h-4 text-rose-400"></i>
-              <div>
-                <p class="font-bold text-white">${b.title}</p>
-                <p class="text-[10px] text-slate-400">Due ${b.dueDate} • <span class="capitalize text-brand-400">${b.priority || 'important'}</span></p>
-              </div>
+      // Upcoming Bills List on Dashboard
+      const upcomingContainer = document.getElementById('dash-upcoming-bills-list');
+      const unpaid = state.bills.filter(b => !b.completed).slice(0, 4);
+      upcomingContainer.innerHTML = unpaid.length === 0 ? '<p class="text-slate-500 text-xs">No upcoming bills before payday.</p>' : unpaid.map(b => `
+        <div class="flex justify-between items-center p-3 bg-slate-900/80 rounded-2xl border border-slate-800/80">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-xl bg-slate-800 flex items-center justify-center text-rose-400 font-bold text-xs">
+              <i data-lucide="receipt" class="w-4 h-4"></i>
             </div>
-            <div class="flex items-center gap-3">
-              <span class="font-bold text-rose-400">${formatCurrency(b.amount)}</span>
-              <button onclick="completeBill('${b.id}')" class="px-2.5 py-1 bg-brand-500/20 hover:bg-brand-500 text-brand-300 hover:text-slate-950 font-bold rounded-lg text-[10px] transition-all">Pay</button>
+            <div>
+              <p class="text-xs font-bold text-white">${b.title}</p>
+              <p class="text-[10px] text-slate-400">Due ${b.dueDate} • <span class="uppercase text-brand-400 font-semibold">${b.priority || 'important'}</span></p>
             </div>
           </div>
-        `).join('');
-      }
+          <div class="text-right">
+            <p class="text-xs font-bold text-rose-400">${formatCurrency(b.amount)}</p>
+            <button onclick="completeBill('${b.id}')" class="text-[10px] text-brand-400 hover:underline font-semibold">Mark Complete</button>
+          </div>
+        </div>
+      `).join('');
 
       // Recent Activity List
-      const activityListEl = document.getElementById('dash-recent-activity-list');
+      const actContainer = document.getElementById('dash-recent-activity-list');
       const recentActs = state.activityLog.slice(0, 4);
-      if (recentActs.length === 0) {
-        activityListEl.innerHTML = `<div class="p-4 bg-slate-900/60 rounded-2xl border border-slate-800 text-center text-xs text-slate-400">No recent activity logged yet. Transactions and syncs will appear here.</div>`;
-      } else {
-        activityListEl.innerHTML = recentActs.map(a => `
-          <div class="flex items-center justify-between p-3 bg-slate-900/80 rounded-xl border border-slate-800 text-xs">
-            <div>
-              <p class="font-bold text-white">${a.action}</p>
-              <p class="text-[10px] text-slate-400 truncate max-w-[200px]">${a.details}</p>
-            </div>
-            <span class="text-[10px] text-slate-500">${new Date(a.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+      actContainer.innerHTML = recentActs.length === 0 ? '<p class="text-slate-500 text-xs">No recent activity recorded.</p>' : recentActs.map(a => `
+        <div class="flex justify-between items-center p-3 bg-slate-900/80 rounded-2xl border border-slate-800/80 text-xs">
+          <div>
+            <p class="font-bold text-white">${a.action}</p>
+            <p class="text-[10px] text-slate-400 truncate max-w-[200px]">${a.details}</p>
           </div>
-        `).join('');
-      }
+          <span class="text-[10px] text-slate-500">${new Date(a.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+        </div>
+      `).join('');
 
       lucide.createIcons();
     }
 
-    // ACCOUNTS & CASH PAGE (Checking=Emerald, Savings=Blue, Cash=Amber, Credit=Rose)
+    // RENDER ACCOUNTS PAGE
     function renderAccountsPage() {
-      const totalCash = state.accounts.reduce((sum, a) => sum + (a.type !== 'credit' ? a.balance : 0), 0);
-      document.getElementById('accounts-page-total-cash').innerText = formatCurrency(totalCash);
-      document.getElementById('accounts-total-count').innerText = state.accounts.length;
-
       const grid = document.getElementById('accounts-page-grid');
-      if (state.accounts.length === 0) {
-        grid.innerHTML = `
-          <div class="col-span-full glass-card p-10 rounded-3xl border border-slate-800 text-center space-y-4">
-            <div class="w-12 h-12 bg-brand-500/15 text-brand-400 rounded-full flex items-center justify-center mx-auto">
-              <i data-lucide="wallet" class="w-6 h-6"></i>
-            </div>
-            <h3 class="font-bold text-white text-base">No Accounts Connected Yet</h3>
-            <p class="text-xs text-slate-400 max-w-sm mx-auto">Connect checking, savings, cash, or credit accounts to track balances and fund allocation.</p>
-            <button onclick="openAddAccountModal()" class="px-4 py-2.5 bg-brand-500 text-slate-950 font-bold rounded-xl text-xs">Add First Account</button>
-          </div>
-        `;
-      } else {
-        grid.innerHTML = state.accounts.map(acc => {
-          const typeColors = {
-            checking: 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10',
-            savings: 'text-blue-400 border-blue-500/30 bg-blue-500/10',
-            cash: 'text-amber-400 border-amber-500/30 bg-amber-500/10',
-            credit: 'text-rose-400 border-rose-500/30 bg-rose-500/10'
-          };
-          const badgeClass = typeColors[acc.type] || 'text-brand-400 border-brand-500/30 bg-brand-500/10';
-
-          return `
-            <div class="glass-card p-5 rounded-3xl border border-slate-800 flex flex-col justify-between space-y-4">
-              <div class="flex justify-between items-start">
-                <div class="space-y-1">
-                  <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border ${badgeClass}">${acc.type}</span>
-                  <h3 class="font-bold text-white text-base mt-2">${acc.name}</h3>
-                </div>
-                <div class="flex gap-1">
-                  <button onclick="openAddAccountModal('${acc.id}')" class="p-1.5 text-slate-400 hover:text-white"><i data-lucide="pencil" class="w-4 h-4"></i></button>
-                  <button onclick="deleteAccount('${acc.id}')" class="p-1.5 text-slate-400 hover:text-rose-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                </div>
-              </div>
-              <div class="flex justify-between items-end pt-2 border-t border-slate-800/80">
-                <span class="text-xs text-slate-400">Current Balance:</span>
-                <strong class="text-xl font-bold ${acc.type === 'credit' ? 'text-rose-400' : 'text-white'}">${formatCurrency(acc.balance)}</strong>
-              </div>
-            </div>
-          `;
-        }).join('');
-      }
-
-      // Health Bars Allocation
+      const totalCashEl = document.getElementById('accounts-page-total-cash');
+      const countEl = document.getElementById('accounts-total-count');
       const healthBarsContainer = document.getElementById('accounts-health-bars-container');
-      const checkingTotal = state.accounts.filter(a => a.type === 'checking').reduce((s,a) => s+a.balance, 0);
-      const savingsTotal = state.accounts.filter(a => a.type === 'savings').reduce((s,a) => s+a.balance, 0);
-      const cashTotal = state.accounts.filter(a => a.type === 'cash').reduce((s,a) => s+a.balance, 0);
-      const creditTotal = state.accounts.filter(a => a.type === 'credit').reduce((s,a) => s+a.balance, 0);
-      const grandSum = Math.max(1, checkingTotal + savingsTotal + cashTotal);
+
+      const fin = calculateFinancials();
+      totalCashEl.innerText = formatCurrency(fin.totalCash);
+      countEl.innerText = state.accounts.length;
+
+      grid.innerHTML = state.accounts.length === 0 ? '<p class="text-slate-500 text-xs">No accounts added yet.</p>' : state.accounts.map(a => `
+        <div class="glass-card p-5 rounded-2xl border border-slate-800 flex justify-between items-center">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full ${a.type === 'checking' ? 'bg-emerald-400' : a.type === 'savings' ? 'bg-blue-400' : a.type === 'cash' ? 'bg-amber-400' : 'bg-rose-400'}"></span>
+              <h4 class="font-bold text-white text-sm">${a.name}</h4>
+            </div>
+            <p class="text-[11px] text-slate-400 uppercase tracking-wider">${a.type}</p>
+          </div>
+          <div class="text-right space-y-1">
+            <p class="text-base font-black ${a.type === 'credit' ? 'text-rose-400' : 'text-white'}">${formatCurrency(a.balance)}</p>
+            <div class="flex gap-2 justify-end">
+              <button onclick="openAddAccountModal('${a.id}')" class="text-[11px] text-brand-400 hover:underline">Edit</button>
+              <button onclick="deleteAccount('${a.id}')" class="text-[11px] text-rose-400 hover:underline">Delete</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      // Allocation progress bars
+      let checkingTotal = 0, savingsTotal = 0, cashTotal = 0, creditTotal = 0;
+      state.accounts.forEach(a => {
+        const b = parseFloat(a.balance || 0);
+        if (a.type === 'checking') checkingTotal += b;
+        else if (a.type === 'savings') savingsTotal += b;
+        else if (a.type === 'cash') cashTotal += b;
+        else if (a.type === 'credit') creditTotal += b;
+      });
 
       healthBarsContainer.innerHTML = `
         <div class="space-y-1.5 text-xs">
-          <div class="flex justify-between"><span class="text-emerald-400 font-semibold">Checking (Emerald):</span> <strong>${formatCurrency(checkingTotal)}</strong></div>
-          <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden"><div class="bg-emerald-500 h-full" style="width: ${(checkingTotal/grandSum)*100}%"></div></div>
-          
-          <div class="flex justify-between pt-1"><span class="text-blue-400 font-semibold">Savings (Blue):</span> <strong>${formatCurrency(savingsTotal)}</strong></div>
-          <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden"><div class="bg-blue-500 h-full" style="width: ${(savingsTotal/grandSum)*100}%"></div></div>
-
-          <div class="flex justify-between pt-1"><span class="text-amber-400 font-semibold">Cash (Amber):</span> <strong>${formatCurrency(cashTotal)}</strong></div>
-          <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden"><div class="bg-amber-500 h-full" style="width: ${(cashTotal/grandSum)*100}%"></div></div>
-
-          <div class="flex justify-between pt-1"><span class="text-rose-400 font-semibold">Credit (Rose):</span> <strong>${formatCurrency(creditTotal)}</strong></div>
+          <div class="flex justify-between text-slate-300"><span>Checking</span> <strong class="text-emerald-400">${formatCurrency(checkingTotal)}</strong></div>
+          <div class="flex justify-between text-slate-300"><span>Savings</span> <strong class="text-blue-400">${formatCurrency(savingsTotal)}</strong></div>
+          <div class="flex justify-between text-slate-300"><span>Cash</span> <strong class="text-amber-400">${formatCurrency(cashTotal)}</strong></div>
+          <div class="flex justify-between text-slate-300"><span>Credit Debt</span> <strong class="text-rose-400">${formatCurrency(creditTotal)}</strong></div>
         </div>
       `;
-
-      lucide.createIcons();
     }
 
-    function handleSaveAccount(e) {
-      e.preventDefault();
-      const editId = document.getElementById('account-edit-id').value;
-      const name = document.getElementById('acc-form-name').value;
-      const balance = parseFloat(document.getElementById('acc-form-balance').value || "0");
-      const type = document.getElementById('acc-form-type').value;
-
-      if (editId) {
-        state.accounts = state.accounts.map(a => a.id === editId ? { ...a, name, balance, type } : a);
-        logActivity("Account Updated", `Updated account ${name}`);
-        showToast("Account updated successfully", "success");
-      } else {
-        const newAcc = { id: 'acc_' + Date.now(), name, balance, type };
-        state.accounts.push(newAcc);
-        logActivity("Account Added", `Added account ${name}`);
-        showToast("Account added successfully", "success");
-      }
-
-      saveStateToStorage();
-      closeModals();
-      navigateTo('accounts');
-    }
-
-    function deleteAccount(id) {
-      const acc = state.accounts.find(a => a.id === id);
-      state.accounts = state.accounts.filter(a => a.id !== id);
-      saveStateToStorage();
-      renderAccountsPage();
-      setUndoBuffer(acc, (restored) => {
-        state.accounts.push(restored);
-        saveStateToStorage();
-        renderAccountsPage();
-      });
-    }
-
-    // COMING UP / BILLS PAGE
+    // RENDER COMING UP PAGE
     function renderComingUp() {
-      const listEl = document.getElementById('coming-up-timeline-list');
-      if (state.bills.length === 0) {
-        listEl.innerHTML = `
-          <div class="glass-card p-10 rounded-3xl border border-slate-800 text-center space-y-4">
-            <div class="w-12 h-12 bg-rose-500/15 text-rose-400 rounded-full flex items-center justify-center mx-auto">
-              <i data-lucide="receipt" class="w-6 h-6"></i>
-            </div>
-            <h3 class="font-bold text-white text-base">No Upcoming Bills Scheduled</h3>
-            <p class="text-xs text-slate-400 max-w-sm mx-auto">Add recurring monthly bills or subscriptions so Paycheck Pilot can reserve cash before payday.</p>
-            <button onclick="openAddBillModal()" class="px-4 py-2.5 bg-brand-500 text-slate-950 font-bold rounded-xl text-xs">Add First Bill</button>
-          </div>
-        `;
-        return;
-      }
-
-      listEl.innerHTML = state.bills.map(b => `
-        <div class="glass-card p-4 sm:p-5 rounded-2xl border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div class="flex items-center gap-4">
-            <div class="w-10 h-10 rounded-xl bg-rose-500/15 text-rose-400 flex items-center justify-center shrink-0">
+      const container = document.getElementById('coming-up-timeline-list');
+      container.innerHTML = state.bills.length === 0 ? '<p class="text-slate-500 text-xs">No scheduled bills.</p>' : state.bills.map(b => `
+        <div class="glass-card p-4 rounded-2xl border border-slate-800 flex justify-between items-center">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-brand-400 font-bold">
               <i data-lucide="receipt" class="w-5 h-5"></i>
             </div>
             <div>
-              <div class="flex items-center gap-2">
-                <h4 class="font-bold text-white text-sm">${b.title}</h4>
-                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-800 text-slate-300">${b.category}</span>
-                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-brand-500/20 text-brand-400">${b.priority || 'important'}</span>
-              </div>
-              <p class="text-xs text-slate-400 mt-0.5">Due: ${b.dueDate} ${b.completed ? '• <span class="text-emerald-400 font-semibold">Completed</span>' : ''}</p>
+              <p class="font-bold text-white text-sm">${b.title}</p>
+              <p class="text-xs text-slate-400">Due: <span class="text-slate-200 font-medium">${b.dueDate}</span> • Priority: <span class="uppercase text-brand-400 font-bold">${b.priority || 'important'}</span></p>
             </div>
           </div>
-          <div class="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800">
-            <span class="text-base font-bold text-rose-400">${formatCurrency(b.amount)}</span>
-            <div class="flex items-center gap-1.5">
-              ${!b.completed ? `<button onclick="completeBill('${b.id}')" class="px-3 py-1.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Mark Complete</button>` : ''}
-              <button onclick="deleteBill('${b.id}')" class="p-2 text-slate-400 hover:text-rose-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+          <div class="text-right space-y-1">
+            <p class="font-bold text-rose-400 text-sm">${formatCurrency(b.amount)}</p>
+            <div class="flex gap-2 justify-end">
+              ${!b.completed ? `<button onclick="completeBill('${b.id}')" class="px-2.5 py-1 bg-brand-500/20 text-brand-400 rounded-lg text-[11px] font-semibold">Complete</button>` : `<span class="text-xs text-emerald-400 font-bold">Paid</span>`}
+              <button onclick="deleteBill('${b.id}')" class="px-2.5 py-1 bg-rose-500/20 text-rose-400 rounded-lg text-[11px] font-semibold">Delete</button>
             </div>
           </div>
         </div>
       `).join('');
-
       lucide.createIcons();
     }
 
-    function handleSaveBill(e) {
-      e.preventDefault();
-      const title = document.getElementById('bill-title').value;
-      const amount = parseFloat(document.getElementById('bill-amount').value || "0");
-      const dueDate = document.getElementById('bill-date').value;
-      const category = document.getElementById('bill-category').value;
-      const priority = document.getElementById('bill-priority').value;
-
-      const newBill = { id: 'bill_' + Date.now(), title, amount, dueDate, category, priority, completed: false };
-      state.bills.push(newBill);
-      logActivity("Bill Added", `Added bill ${title} for ${formatCurrency(amount)}`);
-      saveStateToStorage();
-      closeModals();
-      navigateTo('coming-up');
-      showToast("Bill added successfully", "success");
-    }
-
-    function completeBill(id) {
-      state.bills = state.bills.map(b => {
-        if (b.id === id) {
-          b.completed = true;
-          // Log into ledger as expense transaction
-          state.transactions.unshift({
-            id: 'tx_' + Date.now(),
-            title: b.title,
-            amount: b.amount,
-            type: 'expense',
-            category: b.category,
-            date: new Date().toISOString().split('T')[0]
-          });
-        }
-        return b;
-      });
-      saveStateToStorage();
-      renderComingUp();
-      showToast("Bill marked complete and logged to ledger", "success");
-    }
-
-    function deleteBill(id) {
-      const bill = state.bills.find(b => b.id === id);
-      state.bills = state.bills.filter(b => b.id !== id);
-      saveStateToStorage();
-      renderComingUp();
-      setUndoBuffer(bill, (restored) => {
-        state.bills.push(restored);
-        saveStateToStorage();
-        renderComingUp();
-      });
-    }
-
-    // TRANSACTIONS / LEDGER PAGE
+    // RENDER LEDGER / TRANSACTIONS
     function renderLedger() {
-      const searchQuery = (document.getElementById('ledger-search-input')?.value || '').toLowerCase();
-      const filterCategory = document.getElementById('ledger-filter-category')?.value || 'ALL';
       const tbody = document.getElementById('ledger-table-body');
+      const search = (document.getElementById('ledger-search-input')?.value || '').toLowerCase();
+      const filterCat = document.getElementById('ledger-filter-category')?.value || 'ALL';
 
-      let filtered = state.transactions.filter(tx => {
-        const matchesSearch = tx.title.toLowerCase().includes(searchQuery);
-        const matchesCat = filterCategory === 'ALL' || tx.category === filterCategory;
+      const filtered = state.transactions.filter(t => {
+        const matchesSearch = t.title.toLowerCase().includes(search) || t.category.toLowerCase().includes(search);
+        const matchesCat = filterCat === 'ALL' || t.category === filterCat;
         return matchesSearch && matchesCat;
       });
 
-      if (filtered.length === 0) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="5" class="p-8 text-center text-slate-400">
-              <div class="space-y-2">
-                <i data-lucide="receipt" class="w-8 h-8 text-slate-500 mx-auto"></i>
-                <p class="font-bold text-white text-sm">No Transactions Found</p>
-                <p class="text-xs text-slate-500">Record income or expenses using the Quick Transaction button above.</p>
-              </div>
-            </td>
-          </tr>
-        `;
-        lucide.createIcons();
-        return;
-      }
-
-      tbody.innerHTML = filtered.map(tx => `
-        <tr class="hover:bg-slate-900/40 transition-all border-b border-slate-800/60">
-          <td class="p-4 text-slate-300">${tx.date}</td>
-          <td class="p-4 font-bold text-white">${tx.title}</td>
-          <td class="p-4"><span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-slate-800 text-slate-300">${tx.category}</span></td>
-          <td class="p-4 text-right font-bold ${tx.type === 'income' ? 'text-brand-400' : 'text-slate-100'}">${tx.type === 'income' ? '+' : '-'}${formatCurrency(tx.amount)}</td>
+      tbody.innerHTML = filtered.length === 0 ? `<tr><td colspan="5" class="p-4 text-center text-slate-500">No transactions recorded.</td></tr>` : filtered.map(t => `
+        <tr class="hover:bg-slate-900/50 transition-colors">
+          <td class="p-4 text-slate-300">${t.date}</td>
+          <td class="p-4 font-bold text-white">${t.title}</td>
+          <td class="p-4"><span class="px-2 py-0.5 rounded-full text-[10px] bg-slate-800 text-slate-300 font-semibold">${t.category}</span></td>
+          <td class="p-4 text-right font-bold ${t.type === 'income' ? 'text-brand-400' : 'text-slate-100'}">${t.type === 'income' ? '+' : '-'}${formatCurrency(t.amount)}</td>
           <td class="p-4 text-center">
-            <button onclick="deleteTransaction('${tx.id}')" class="p-1.5 text-slate-400 hover:text-rose-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            <button onclick="deleteTransaction('${t.id}')" class="text-rose-400 hover:underline">Delete</button>
           </td>
         </tr>
       `).join('');
-
-      lucide.createIcons();
     }
 
-    function handleSaveTransaction(e) {
-      e.preventDefault();
-      const title = document.getElementById('tx-title').value;
-      const amount = parseFloat(document.getElementById('tx-amount').value || "0");
-      const type = document.getElementById('tx-type').value;
-      const category = document.getElementById('tx-category').value;
-      const date = document.getElementById('tx-date').value;
-
-      const newTx = { id: 'tx_' + Date.now(), title, amount, type, category, date };
-      state.transactions.unshift(newTx);
-      logActivity("Transaction Logged", `Logged ${type} ${title} for ${formatCurrency(amount)}`);
-      saveStateToStorage();
-      closeModals();
-      navigateTo('ledger');
-      showToast("Transaction recorded successfully", "success");
-    }
-
-    function deleteTransaction(id) {
-      const tx = state.transactions.find(t => t.id === id);
-      state.transactions = state.transactions.filter(t => t.id !== id);
-      saveStateToStorage();
-      renderLedger();
-      setUndoBuffer(tx, (restored) => {
-        state.transactions.unshift(restored);
-        saveStateToStorage();
-        renderLedger();
-      });
-    }
-
-    // GOALS PAGE (Actual contribution history ETA & Goal Completion Celebration)
+    // RENDER GOALS (With Real Contribution History & ETAs)
     function renderGoals() {
       const grid = document.getElementById('goals-grid');
-      if (state.goals.length === 0) {
-        grid.innerHTML = `
-          <div class="col-span-full glass-card p-10 rounded-3xl border border-slate-800 text-center space-y-4">
-            <div class="w-12 h-12 bg-brand-500/15 text-brand-400 rounded-full flex items-center justify-center mx-auto">
-              <i data-lucide="target" class="w-6 h-6"></i>
-            </div>
-            <h3 class="font-bold text-white text-base">No Financial Goals Yet</h3>
-            <p class="text-xs text-slate-400 max-w-sm mx-auto">Create savings goals with automatic contribution history projection and completion celebrations.</p>
-            <button onclick="openAddGoalModal()" class="px-4 py-2.5 bg-brand-500 text-slate-950 font-bold rounded-xl text-xs">Create First Goal</button>
-          </div>
-        `;
-        return;
-      }
+      grid.innerHTML = state.goals.length === 0 ? '<p class="text-slate-500 text-xs">No savings goals created.</p>' : state.goals.map(g => {
+        const current = g.current || 0;
+        const target = g.target || 100;
+        const pct = Math.min(100, Math.round((current / target) * 100));
 
-      grid.innerHTML = state.goals.map(g => {
-        const percent = Math.min(100, Math.max(0, (g.current / g.target) * 100));
-        const isCompleted = g.current >= g.target;
-
-        if (isCompleted) {
-          setTimeout(() => {
-            if (typeof confetti === 'function') confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
-          }, 200);
+        // ETA calculation based on actual contribution history
+        let etaText = "Calculate via contributions";
+        if (g.contributions && g.contributions.length > 0) {
+          const totalContributed = g.contributions.reduce((s, c) => s + c.amount, 0);
+          const avgContribution = totalContributed / g.contributions.length;
+          const remaining = target - current;
+          if (remaining <= 0) {
+            etaText = "Goal Achieved! 🎉";
+          } else {
+            const estimatedPaychecksNeeded = Math.ceil(remaining / Math.max(1, avgContribution));
+            etaText = `Est. ${estimatedPaychecksNeeded} deposits remaining`;
+          }
         }
 
         return `
-          <div class="glass-card p-6 rounded-3xl border ${isCompleted ? 'border-brand-500 glow-emerald' : 'border-slate-800'} space-y-4 relative overflow-hidden">
-            ${isCompleted ? `<div class="absolute top-3 right-3 px-3 py-1 bg-brand-500 text-slate-950 font-extrabold rounded-full text-[10px] uppercase tracking-wider flex items-center gap-1"><i data-lucide="party-popper" class="w-3 h-3"></i> 🎉 Goal Completed</div>` : ''}
-            
-            <div class="flex justify-between items-start">
-              <div>
-                <h3 class="font-bold text-white text-lg">${g.title}</h3>
-                <p class="text-xs text-slate-400 mt-0.5">Target: ${formatCurrency(g.target)}</p>
-              </div>
-              <button onclick="deleteGoal('${g.id}')" class="p-1.5 text-slate-400 hover:text-rose-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+          <div class="glass-card p-6 rounded-3xl border border-slate-800 space-y-4">
+            <div class="flex justify-between items-center">
+              <h4 class="font-bold text-white text-base">${g.title}</h4>
+              <span class="text-xs font-bold text-brand-400">${pct}%</span>
             </div>
-
-            <div class="space-y-2">
-              <div class="flex justify-between text-xs">
-                <span class="text-slate-400">Saved: <strong class="text-emerald-400">${formatCurrency(g.current)}</strong></span>
-                <span class="font-bold text-slate-200">${percent.toFixed(0)}%</span>
+            <div class="space-y-1.5">
+              <div class="flex justify-between text-xs text-slate-400">
+                <span>Saved: <strong class="text-white">${formatCurrency(current)}</strong></span>
+                <span>Target: <strong class="text-slate-200">${formatCurrency(target)}</strong></span>
               </div>
               <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
-                <div class="bg-brand-500 h-full transition-all" style="width: ${percent}%"></div>
+                <div class="bg-brand-500 h-full transition-all" style="width: ${pct}%"></div>
               </div>
             </div>
-
-            <div class="pt-3 border-t border-slate-800/80 flex justify-between items-center text-xs">
-              <span class="text-slate-400">ETA Projection:</span>
-              <strong class="text-slate-200">${g.contributionHistory && g.contributionHistory > 0 ? `Est. ${( (g.target - g.current) / g.contributionHistory ).toFixed(1)} paydays` : 'No projection available yet.'}</strong>
-            </div>
-
-            <div class="flex gap-2 pt-2">
-              <button onclick="contributeGoal('${g.id}', 50)" class="flex-1 py-2 bg-slate-900 hover:bg-slate-800 text-slate-200 rounded-xl text-xs font-semibold">+ $50</button>
-              <button onclick="contributeGoal('${g.id}', 200)" class="flex-1 py-2 bg-slate-900 hover:bg-slate-800 text-slate-200 rounded-xl text-xs font-semibold">+ $200</button>
+            <div class="p-3 bg-slate-900 rounded-xl text-[11px] text-slate-300 flex justify-between items-center">
+              <span>ETA: <strong class="text-brand-400">${etaText}</strong></span>
+              <button onclick="openGoalDepositModal('${g.id}')" class="px-3 py-1.5 bg-brand-500 text-slate-950 font-bold rounded-lg text-xs">Deposit Funds</button>
             </div>
           </div>
         `;
       }).join('');
-
-      lucide.createIcons();
     }
 
-    function handleSaveGoal(e) {
-      e.preventDefault();
-      const title = document.getElementById('goal-title').value;
-      const target = parseFloat(document.getElementById('goal-target').value || "0");
-      const current = parseFloat(document.getElementById('goal-current').value || "0");
-
-      const newGoal = { id: 'goal_' + Date.now(), title, target, current, contributionHistory: 50 };
-      state.goals.push(newGoal);
-      logActivity("Goal Created", `Created savings goal ${title}`);
-      saveStateToStorage();
-      closeModals();
-      navigateTo('goals');
-      showToast("Goal created successfully", "success");
-    }
-
-    function contributeGoal(id, amount) {
-      state.goals = state.goals.map(g => {
-        if (g.id === id) {
-          g.current += amount;
-          g.contributionHistory = amount;
-        }
-        return g;
-      });
-      saveStateToStorage();
-      renderGoals();
-      showToast(`Contributed ${formatCurrency(amount)} to goal`, "success");
-    }
-
-    function deleteGoal(id) {
-      state.goals = state.goals.filter(g => g.id !== id);
-      saveStateToStorage();
-      renderGoals();
-      showToast("Goal deleted", "info");
-    }
-
-    // FORECAST PAGE (Strict Math, Flight Path Animation, Markers, Summary Cards)
+    // RENDER FORECAST & ANIMATED FLIGHT SYSTEM
     function renderForecast() {
-      const f = calculateFinancials();
-      const totalCash = f.totalCash;
+      const fin = calculateFinancials();
+      let runningBalance = fin.totalCash;
+      let lowest = runningBalance;
+      let highest = runningBalance;
 
-      let balance = totalCash;
-      let lowest = balance;
-      let highest = balance;
-      let chartLabels = [];
-      let chartData = [];
-      let markerEvents = [];
+      const labels = [];
+      const dataPoints = [];
+      const milestones = [];
 
-      const today = new Date();
       for (let i = 0; i <= 60; i++) {
-        let d = new Date(today);
-        d.setDate(today.getDate() + i);
-        let dateStr = d.toISOString().split('T')[0];
+        const d = new Date();
+        d.setDate(d.getDate() + i);
+        const dateStr = d.toISOString().split('T')[0];
+        labels.push(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
 
-        // Apply scheduled paychecks if matching date
-        const isPayday = state.income.nextDate && dateStr === state.income.nextDate;
-        if (isPayday) {
-          balance += (state.income.amount || 0);
-          markerEvents.push({ day: i, label: '💰 Payday', amount: state.income.amount });
+        // Check if payday
+        if (state.income.nextDate && dateStr === state.income.nextDate) {
+          runningBalance += parseFloat(state.income.amount || 0);
+          milestones.push({ day: i, label: '💰 Payday', amount: runningBalance });
         }
 
-        // Apply scheduled bills due on date
+        // Check bills
         state.bills.forEach(b => {
-          if (b.dueDate === dateStr && !b.completed) {
-            balance -= b.amount;
-            markerEvents.push({ day: i, label: `🏠 ${b.title}`, amount: b.amount });
+          if (!b.completed && b.dueDate === dateStr) {
+            runningBalance -= parseFloat(b.amount || 0);
+            milestones.push({ day: i, label: `🏠 ${b.title}`, amount: runningBalance });
           }
         });
 
-        if (balance < lowest) lowest = balance;
-        if (balance > highest) highest = balance;
-
-        chartLabels.push(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-        chartData.push(balance);
+        dataPoints.push(runningBalance);
+        if (runningBalance < lowest) lowest = runningBalance;
+        if (runningBalance > highest) highest = runningBalance;
       }
 
       document.getElementById('forecast-card-lowest').innerText = formatCurrency(lowest);
       document.getElementById('forecast-card-highest').innerText = formatCurrency(highest);
-      document.getElementById('forecast-card-payday').innerText = formatCurrency(balance);
-      document.getElementById('forecast-card-health').innerText = lowest < 0 ? "Turbulence / Risk" : "Stable Flight";
+      document.getElementById('forecast-card-payday').innerText = formatCurrency(dataPoints[dataPoints.length - 1]);
+      document.getElementById('forecast-card-health').innerText = lowest >= 0 ? 'Stable' : 'Deficit Risk';
 
-      // Markers Legend
-      const legendEl = document.getElementById('forecast-markers-legend');
-      legendEl.innerHTML = markerEvents.length === 0 
-        ? `<span class="text-slate-500">No scheduled paydays or bills in the 60-day window.</span>`
-        : markerEvents.map(m => `<span class="px-2.5 py-1 bg-slate-900 border border-slate-800 rounded-lg font-medium">${m.label} (+${m.day}d)</span>`).join('');
+      const legend = document.getElementById('forecast-markers-legend');
+      legend.innerHTML = milestones.slice(0, 6).map(m => `
+        <span class="px-2 py-1 bg-slate-900 border border-slate-800 rounded-lg">Day ${m.day}: <strong>${m.label}</strong> (${formatCurrency(m.amount)})</span>
+      `).join('');
 
-      // Render Chart with Flight Path
+      // Chart.js render
       const ctx = document.getElementById('forecastChart').getContext('2d');
       if (forecastChartInstance) forecastChartInstance.destroy();
 
       forecastChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
-          labels: chartLabels,
+          labels: labels,
           datasets: [{
-            label: 'Projected Cash Flow ($)',
-            data: chartData,
-            borderColor: '#34d399',
-            backgroundColor: 'rgba(52, 211, 153, 0.1)',
-            borderWidth: 3,
+            label: 'Projected Cash Flow',
+            data: dataPoints,
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
             fill: true,
             tension: 0.3,
-            pointRadius: 2
+            borderWidth: 3,
+            pointRadius: 0
           }]
         },
         options: {
@@ -2611,168 +2230,373 @@
         }
       });
 
-      lucide.createIcons();
+      // Animated Plane Flight Path positioning over chart
+      const planeContainer = document.getElementById('forecast-plane-container');
+      if (planeContainer) {
+        planeContainer.classList.remove('hidden');
+        let currentStep = 0;
+        setInterval(() => {
+          currentStep = (currentStep + 1) % 60;
+          const pctX = (currentStep / 60) * 100;
+          planeContainer.style.left = `${pctX}%`;
+          planeContainer.style.top = `${30 + Math.sin(currentStep * 0.2) * 15}%`;
+          document.getElementById('forecast-plane-label').innerText = `Day ${currentStep}`;
+        }, 1200);
+      }
     }
 
-    // ACTIVITY PAGE
+    // RENDER ACTIVITY PAGE
     function renderActivityPage() {
-      const container = document.getElementById('activity-log-timeline');
-      if (state.activityLog.length === 0) {
-        container.innerHTML = `<div class="glass-card p-8 rounded-3xl border border-slate-800 text-center text-slate-400 text-xs">No activity logged yet.</div>`;
-        return;
-      }
-
-      container.innerHTML = state.activityLog.map(act => `
-        <div class="glass-card p-4 rounded-2xl border border-slate-800 flex items-center justify-between text-xs">
-          <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded-xl bg-brand-500/15 text-brand-400 flex items-center justify-center shrink-0">
-              <i data-lucide="activity" class="w-4 h-4"></i>
-            </div>
-            <div>
-              <p class="font-bold text-white">${act.action}</p>
-              <p class="text-[11px] text-slate-400">${act.details}</p>
-            </div>
+      const timeline = document.getElementById('activity-log-timeline');
+      timeline.innerHTML = state.activityLog.length === 0 ? '<p class="text-slate-500 text-xs">No activity logged.</p>' : state.activityLog.map(a => `
+        <div class="glass-card p-4 rounded-2xl border border-slate-800 flex justify-between items-center text-xs">
+          <div>
+            <p class="font-bold text-white">${a.action}</p>
+            <p class="text-slate-400 mt-0.5">${a.details}</p>
           </div>
-          <span class="text-[10px] text-slate-500">${new Date(act.timestamp).toLocaleString()}</span>
+          <span class="text-slate-500">${new Date(a.timestamp).toLocaleString()}</span>
         </div>
       `).join('');
-
-      lucide.createIcons();
     }
 
-    // RECONCILE PAGE
+    // RENDER RECONCILE PAGE
     function renderReconcile() {
       const container = document.getElementById('reconcile-accounts-list');
-      if (state.accounts.length === 0) {
-        container.innerHTML = `<p class="text-xs text-slate-500">No accounts to reconcile.</p>`;
-        return;
-      }
-
-      container.innerHTML = state.accounts.map(acc => `
-        <div class="flex items-center justify-between p-3 bg-slate-900 rounded-xl border border-slate-800 text-xs">
-          <div>
-            <p class="font-bold text-white">${acc.name}</p>
-            <p class="text-[10px] text-slate-400 capitalize">${acc.type}</p>
-          </div>
-          <div class="flex items-center gap-2">
-            <input type="number" step="0.01" value="${acc.balance}" id="recon_bal_${acc.id}" class="w-24 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-brand-400 font-bold outline-none" />
-            <button onclick="updateReconciledBalance('${acc.id}')" class="px-3 py-1 bg-brand-500 text-slate-950 font-bold rounded-lg text-xs">Save</button>
-          </div>
+      container.innerHTML = state.accounts.map(a => `
+        <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
+          <span class="font-bold text-white">${a.name}</span>
+          <span class="text-brand-400 font-bold">${formatCurrency(a.balance)}</span>
         </div>
       `).join('');
     }
 
-    function updateReconciledBalance(id) {
-      const val = parseFloat(document.getElementById(`recon_bal_${id}`).value || "0");
-      state.accounts = state.accounts.map(a => a.id === id ? { ...a, balance: val } : a);
+    // RENDER DEV TOOLS
+    function renderDevTools() {
+      const sponsorList = document.getElementById('sponsor-management-list');
+      sponsorList.innerHTML = state.sponsors.map(s => `
+        <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
+          <div>
+            <p class="font-bold text-white">${s.name} - ${s.title}</p>
+            <p class="text-[10px] text-slate-400">Impressions: ${s.impressions} | Clicks: ${s.clicks}</p>
+          </div>
+          <button onclick="toggleSponsor('${s.id}')" class="px-2.5 py-1 rounded text-[11px] font-bold ${s.enabled ? 'bg-brand-500 text-slate-950' : 'bg-slate-800 text-slate-400'}">${s.enabled ? 'Active' : 'Disabled'}</button>
+        </div>
+      `).join('');
+    }
+
+    // RENDER SETTINGS & HOUSEHOLD
+    function renderSettings() {
+      if (state.user) {
+        document.getElementById('settings-email-display').value = state.user.email;
+      }
+      document.getElementById('hh-name').innerText = state.household.name || "Solo Pilot";
+      document.getElementById('hh-owner').innerText = state.household.owner || "You";
+      document.getElementById('hh-invite-code').innerText = state.household.inviteCode || "Generate Invite Code";
+      document.getElementById('hh-members').innerText = `${state.household.members || 1} Member(s)`;
+
+      // Account Mode mutually exclusive radio buttons
+      const sharedRadio = document.getElementById('radio-shared-accounts');
+      const indivRadio = document.getElementById('radio-indiv-accounts');
+      if (sharedRadio && indivRadio) {
+        sharedRadio.checked = state.household.accountMode === 'shared';
+        indivRadio.checked = state.household.accountMode === 'individual';
+      }
+
+      const memberContainer = document.getElementById('hh-member-list-container');
+      if (state.household.memberList && state.household.memberList.length > 0) {
+        memberContainer.innerHTML = state.household.memberList.map(m => `
+          <div class="flex justify-between items-center p-2 bg-slate-900 rounded-xl border border-slate-800 text-xs">
+            <div>
+              <p class="font-bold text-white">${m.name}</p>
+              <p class="text-[10px] text-slate-400 uppercase">${m.role} • ${m.email}</p>
+            </div>
+            ${m.role !== 'owner' ? `<button onclick="removeHouseholdMember('${m.email}')" class="text-rose-400 hover:underline text-[11px]">Remove</button>` : `<span class="text-[10px] text-brand-400 font-semibold">Owner</span>`}
+          </div>
+        `).join('');
+      } else {
+        memberContainer.innerHTML = '<p class="text-slate-500 text-xs">No members.</p>';
+      }
+    }
+
+    // ONBOARDING WIZARD
+    function switchAuthTab(tab) {
+      authMode = tab;
+      const loginBtn = document.getElementById('auth-tab-login');
+      const signupBtn = document.getElementById('auth-tab-signup');
+      const submitBtn = document.getElementById('auth-submit-btn');
+
+      if (tab === 'login') {
+        loginBtn.className = "flex-1 py-2.5 rounded-lg text-white transition-all bg-brand-600 shadow-md";
+        signupBtn.className = "flex-1 py-2.5 rounded-lg text-slate-400 hover:text-slate-200 transition-all";
+        submitBtn.querySelector('span').innerText = "Sign In to Pilot";
+      } else {
+        signupBtn.className = "flex-1 py-2.5 rounded-lg text-white transition-all bg-brand-600 shadow-md";
+        loginBtn.className = "flex-1 py-2.5 rounded-lg text-slate-400 hover:text-slate-200 transition-all";
+        submitBtn.querySelector('span').innerText = "Create Account & Start";
+      }
+    }
+
+    function handleAuthSubmit(event) {
+      event.preventDefault();
+      const email = document.getElementById('auth-email').value;
+      state.user = { id: 'usr_' + Date.now(), email };
       saveStateToStorage();
-      renderReconcile();
-      showToast("Account balance reconciled successfully", "success");
+      showToast("Authentication successful", "success");
+
+      if (!state.onboardingCompleted) {
+        showScreen('screen-onboarding');
+        renderOnboardingStep();
+      } else {
+        showScreen('screen-app');
+        navigateTo('dashboard');
+        checkAdminOwnerStatus();
+      }
+    }
+
+    function loginAsDemo() {
+      state.user = { id: 'usr_demo_123', email: 'pilot@demo.com' };
+      state.accounts = [
+        { id: 'acc_1', name: 'Primary Checking', balance: 2450.00, type: 'checking' },
+        { id: 'acc_2', name: 'Emergency Fund', balance: 5000.00, type: 'savings' }
+      ];
+      state.bills = [
+        { id: 'bill_1', title: 'Apartment Rent', amount: 1200.00, dueDate: new Date(Date.now() + 5 * 86400000).toISOString().split('T')[0], priority: 'critical', completed: false },
+        { id: 'bill_2', title: 'Electric Utility', amount: 95.00, dueDate: new Date(Date.now() + 8 * 86400000).toISOString().split('T')[0], priority: 'important', completed: false },
+        { id: 'bill_3', title: 'Netflix Subscription', amount: 15.99, dueDate: new Date(Date.now() + 10 * 86400000).toISOString().split('T')[0], priority: 'flexible', completed: false }
+      ];
+      state.goals = [
+        { id: 'goal_1', title: 'Emergency Cash Reserve', target: 5000, current: 1500, contributions: [{ amount: 500, date: new Date().toISOString() }] }
+      ];
+      state.onboardingCompleted = true;
+      saveStateToStorage();
+      showScreen('screen-app');
+      navigateTo('dashboard');
+      checkAdminOwnerStatus();
+      showToast("Welcome to Demo Mode!", "success");
+    }
+
+    function handleLogout() {
+      state.user = null;
+      saveStateToStorage();
+      showScreen('screen-auth');
+      showToast("Logged out successfully", "info");
+    }
+
+    function renderOnboardingStep() {
+      const step = state.currentOnboardStep;
+      document.getElementById('onboard-step-indicator').innerText = `Step ${step} of 4`;
+      document.getElementById('onboard-progress-bar').style.width = `${(step / 4) * 100}%`;
+
+      document.querySelectorAll('.onboard-step-content').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`onboard-step-${step}`).classList.remove('hidden');
+
+      const prevBtn = document.getElementById('onboard-prev-btn');
+      const nextBtn = document.getElementById('onboard-next-btn');
+
+      if (step === 1) prevBtn.classList.add('hidden');
+      else prevBtn.classList.remove('hidden');
+
+      if (step === 4) {
+        nextBtn.querySelector('span').innerText = "Launch Pilot Dashboard";
+        const fin = calculateFinancials();
+        document.getElementById('summary-cash').innerText = formatCurrency(fin.totalCash);
+        document.getElementById('summary-bills').innerText = formatCurrency(fin.billsSumBeforePayday);
+        document.getElementById('summary-safespend').innerText = formatCurrency(fin.safeSpend);
+      } else {
+        nextBtn.querySelector('span').innerText = "Continue";
+      }
+
+      if (step === 1) {
+        const list = document.getElementById('onboard-accounts-list');
+        list.innerHTML = state.accounts.map(a => `
+          <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
+            <span class="font-bold text-white">${a.name} (${a.type})</span>
+            <span class="text-brand-400 font-bold">${formatCurrency(a.balance)}</span>
+          </div>
+        `).join('') || '<p class="text-slate-500 text-xs">No accounts added yet.</p>';
+      } else if (step === 3) {
+        const list = document.getElementById('onboard-bills-list');
+        list.innerHTML = state.bills.map(b => `
+          <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
+            <span class="font-bold text-white">${b.title}</span>
+            <span class="text-rose-400 font-bold">${formatCurrency(b.amount)}</span>
+          </div>
+        `).join('') || '<p class="text-slate-500 text-xs">No bills added yet.</p>';
+      }
+      lucide.createIcons();
+    }
+
+    function nextOnboardStep() {
+      if (state.currentOnboardStep < 4) {
+        state.currentOnboardStep++;
+        renderOnboardingStep();
+      } else {
+        state.onboardingCompleted = true;
+        saveStateToStorage();
+        showScreen('screen-app');
+        navigateTo('dashboard');
+        checkAdminOwnerStatus();
+        showToast("Welcome aboard Paycenter Pilot!", "success");
+      }
+    }
+
+    function prevOnboardStep() {
+      if (state.currentOnboardStep > 1) {
+        state.currentOnboardStep--;
+        renderOnboardingStep();
+      }
+    }
+
+    function restartOnboarding() {
+      state.onboardingCompleted = false;
+      state.currentOnboardStep = 1;
+      saveStateToStorage();
+      showScreen('screen-onboarding');
+      renderOnboardingStep();
+    }
+
+    function clearAllData() {
+      localStorage.clear();
+      location.reload();
+    }
+
+    // FORM HANDLERS
+    function handleSaveAccount(event) {
+      event.preventDefault();
+      const editId = document.getElementById('account-edit-id').value;
+      const name = document.getElementById('acc-form-name').value;
+      const balance = parseFloat(document.getElementById('acc-form-balance').value) || 0;
+      const type = document.getElementById('acc-form-type').value;
+
+      if (editId) {
+        state.accounts = state.accounts.map(a => a.id === editId ? { ...a, name, balance, type } : a);
+        logActivity("Account Updated", `Updated account ${name}`);
+      } else {
+        state.accounts.push({ id: 'acc_' + Date.now(), name, balance, type });
+        logActivity("Account Added", `Added account ${name}`);
+      }
+
+      saveStateToStorage();
+      closeModals();
+      if (!state.onboardingCompleted) renderOnboardingStep();
+      else if (getCurrentPageId() === 'accounts') renderAccountsPage();
+      else renderDashboard();
+      showToast("Account saved successfully", "success");
+    }
+
+    function deleteAccount(id) {
+      state.accounts = state.accounts.filter(a => a.id !== id);
+      saveStateToStorage();
+      renderAccountsPage();
+      showToast("Account deleted", "info");
+    }
+
+    function handleSaveBill(event) {
+      event.preventDefault();
+      const title = document.getElementById('bill-title').value;
+      const amount = parseFloat(document.getElementById('bill-amount').value) || 0;
+      const dueDate = document.getElementById('bill-date').value;
+      const category = document.getElementById('bill-category').value;
+      const priority = document.getElementById('bill-priority').value;
+
+      state.bills.push({ id: 'bill_' + Date.now(), title, amount, dueDate, category, priority, completed: false });
+      saveStateToStorage();
+      closeModals();
+      logActivity("Bill Added", `Added bill ${title} (${formatCurrency(amount)})`);
+      if (!state.onboardingCompleted) renderOnboardingStep();
+      else navigateTo(getCurrentPageId());
+      showToast("Bill added successfully", "success");
+    }
+
+    function completeBill(id) {
+      const bill = state.bills.find(b => b.id === id);
+      if (bill) {
+        bill.completed = true;
+        state.transactions.push({
+          id: 'tx_' + Date.now(),
+          title: bill.title,
+          amount: bill.amount,
+          type: 'expense',
+          category: bill.category || 'Utilities',
+          date: new Date().toISOString().split('T')[0]
+        });
+        saveStateToStorage();
+        logActivity("Bill Completed", `Marked bill ${bill.title} as paid.`);
+        navigateTo(getCurrentPageId());
+        showToast(`Marked ${bill.title} as paid`, "success");
+      }
+    }
+
+    function deleteBill(id) {
+      const bill = state.bills.find(b => b.id === id);
+      state.bills = state.bills.filter(b => b.id !== id);
+      saveStateToStorage();
+      setUndoBuffer(bill, (restored) => { state.bills.push(restored); });
+      navigateTo(getCurrentPageId());
+    }
+
+    function handleSaveTransaction(event) {
+      event.preventDefault();
+      const title = document.getElementById('tx-title').value;
+      const amount = parseFloat(document.getElementById('tx-amount').value) || 0;
+      const type = document.getElementById('tx-type').value;
+      const category = document.getElementById('tx-category').value;
+      const date = document.getElementById('tx-date').value;
+
+      state.transactions.push({ id: 'tx_' + Date.now(), title, amount, type, category, date });
+      saveStateToStorage();
+      closeModals();
+      logActivity("Transaction Logged", `Logged ${type} ${title} (${formatCurrency(amount)})`);
+      navigateTo(getCurrentPageId());
+      showToast("Transaction logged successfully", "success");
+    }
+
+    function deleteTransaction(id) {
+      state.transactions = state.transactions.filter(t => t.id !== id);
+      saveStateToStorage();
+      renderLedger();
+      showToast("Transaction deleted", "info");
+    }
+
+    function handleSaveGoal(event) {
+      event.preventDefault();
+      const title = document.getElementById('goal-title').value;
+      const target = parseFloat(document.getElementById('goal-target').value) || 0;
+      const current = parseFloat(document.getElementById('goal-current').value) || 0;
+
+      state.goals.push({ id: 'goal_' + Date.now(), title, target, current, contributions: current > 0 ? [{ amount: current, date: new Date().toISOString() }] : [] });
+      saveStateToStorage();
+      closeModals();
+      renderGoals();
+      showToast("Goal created successfully", "success");
     }
 
     function exportDataJSON() {
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
-      const dlAnchor = document.createElement('a');
-      dlAnchor.setAttribute("href", dataStr);
-      dlAnchor.setAttribute("download", "paycheck_pilot_backup_" + new Date().toISOString().split('T')[0] + ".json");
-      document.body.appendChild(dlAnchor);
-      dlAnchor.click();
-      dlAnchor.remove();
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `paycheck_pilot_backup_${new Date().toISOString().split('T')[0]}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
       showToast("Backup exported successfully", "success");
     }
 
-    function importDataJSON(e) {
-      const file = e.target.files[0];
+    function importDataJSON(event) {
+      const file = event.target.files[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = function(evt) {
+      reader.onload = function(e) {
         try {
-          const parsed = JSON.parse(evt.target.result);
+          const parsed = JSON.parse(e.target.result);
           state = { ...state, ...parsed };
           saveStateToStorage();
-          showToast("Data imported successfully", "success");
-          navigateTo('dashboard');
-        } catch(err) {
+          location.reload();
+        } catch (err) {
           showToast("Invalid JSON backup file", "error");
         }
       };
       reader.readAsText(file);
-    }
-
-    // DEVELOPER TOOLS & SPONSORS
-    function renderDevTools() {
-      const sponsorList = document.getElementById('sponsor-management-list');
-      sponsorList.innerHTML = state.sponsors.map(s => `
-        <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 text-xs space-y-2">
-          <div class="flex justify-between items-center font-bold text-white">
-            <span>${s.name} (${s.title})</span>
-            <span class="text-brand-400">Clicks: ${s.clicks}</span>
-          </div>
-          <p class="text-[11px] text-slate-400">${s.description}</p>
-          <div class="flex justify-between items-center pt-1">
-            <span class="text-[10px] text-slate-500">Priority: ${s.priority}</span>
-            <button onclick="toggleSponsor('${s.id}')" class="px-2.5 py-1 rounded text-[10px] font-bold ${s.enabled ? 'bg-brand-500/20 text-brand-400' : 'bg-slate-800 text-slate-400'}">${s.enabled ? 'Active' : 'Disabled'}</button>
-          </div>
-        </div>
-      `).join('');
-
-      const totalClicks = state.sponsors.reduce((sum, s) => sum + s.clicks, 0);
-      const totalImpressions = Math.max(1, state.sponsors.reduce((sum, s) => sum + (s.impressions || 10), 0));
-      const ctr = ((totalClicks / totalImpressions) * 100).toFixed(1);
-      document.getElementById('sponsor-ctr-summary').innerText = `CTR: ${ctr}%`;
-    }
-
-    function toggleSponsor(id) {
-      state.sponsors = state.sponsors.map(s => s.id === id ? { ...s, enabled: !s.enabled } : s);
-      saveStateToStorage();
-      renderDevTools();
-      showToast("Sponsor status updated", "success");
-    }
-
-    function clearAllData() {
-      openCustomModal(
-        "Reset All Local Data",
-        "Are you sure you want to clear all local app data and restart? This cannot be undone.",
-        [
-          { label: "Reset All", primary: true, onclick: "executeResetAllData()" },
-          { label: "Cancel", primary: false, onclick: "closeModals()" }
-        ]
-      );
-    }
-
-    function executeResetAllData() {
-      localStorage.removeItem('paycheck_pilot_state');
-      location.reload();
-    }
-
-    // SETTINGS PAGE RENDER
-    function renderSettings() {
-      if (state.user) {
-        document.getElementById('settings-email-display').value = state.user.email;
-        document.getElementById('user-display-email').innerText = state.user.email;
-      }
-      document.getElementById('hh-name').innerText = state.household.name;
-      document.getElementById('hh-owner').innerText = state.household.owner || 'You';
-      document.getElementById('hh-invite-code').innerText = state.household.inviteCode;
-      document.getElementById('hh-members').innerText = `${state.household.members} Member(s)`;
-
-      document.getElementById('toggle-shared-accounts').checked = state.household.sharedAccountsEnabled;
-      document.getElementById('toggle-indiv-accounts').checked = state.household.individualAccountsEnabled;
-
-      const memberListContainer = document.getElementById('hh-member-list-container');
-      if (memberListContainer && state.household.memberList) {
-        memberListContainer.innerHTML = state.household.memberList.map(m => `
-          <div class="flex items-center justify-between p-2 bg-slate-900 rounded-lg text-xs">
-            <div>
-              <span class="text-white font-medium">${m.email || m.name}</span>
-              <span class="ml-2 px-1.5 py-0.5 rounded text-[9px] uppercase font-bold bg-brand-500/20 text-brand-400">${m.role}</span>
-            </div>
-            ${m.role !== 'owner' ? `<button onclick="removeHouseholdMember('${m.email}')" class="text-rose-400 hover:underline text-[10px]">Remove</button>` : ''}
-          </div>
-        `).join('');
-      }
-
-      lucide.createIcons();
     }
   </script>
 </body>
