@@ -53,6 +53,9 @@
   <!-- Chart.js CDN -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   
+  <!-- Canvas Confetti CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
   <!-- Supabase JS Client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -80,6 +83,11 @@
       box-shadow: 0 0 25px -5px rgba(16, 185, 129, 0.25);
     }
     
+    .glow-payday {
+      box-shadow: 0 0 35px 0 rgba(16, 185, 129, 0.4);
+      border-color: rgba(52, 211, 153, 0.6);
+    }
+    
     .view-screen {
       display: none;
     }
@@ -87,7 +95,22 @@
       display: flex;
     }
 
-    /* Toast Animations */
+    /* Animations for Safe Spend & Weather */
+    @keyframes floatUp {
+      0% { transform: translateY(10px); opacity: 0; }
+      50% { opacity: 1; }
+      100% { transform: translateY(-25px); opacity: 0; }
+    }
+    .anim-floating-bill {
+      animation: floatUp 2.5s ease-in-out infinite;
+    }
+    .anim-floating-coin {
+      animation: floatUp 2s ease-in-out infinite;
+    }
+    .anim-warning-particle {
+      animation: floatUp 1.8s ease-in-out infinite;
+    }
+
     @keyframes slideIn {
       from { transform: translateY(100%); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
@@ -404,51 +427,78 @@
               <span id="dash-qol-meta" class="hidden sm:inline-block text-[11px] text-slate-400 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-800">
                 Sync: <span id="dash-qol-sync" class="text-slate-200">Never</span> | Accts: <span id="dash-qol-accts" class="text-slate-200">0</span> | Goals: <span id="dash-qol-goals" class="text-slate-200">0</span> | Bills: <span id="dash-qol-bills" class="text-slate-200">0</span>
               </span>
+              <button id="analyze-deficit-btn" onclick="openDeficitNavigatorModal()" class="hidden px-4 py-2 bg-rose-500 hover:bg-rose-600 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5 animate-bounce">
+                <i data-lucide="alert-octagon" class="w-4 h-4"></i> Analyze Deficit (Bill Tetris)
+              </button>
               <button onclick="openAddTransactionModal()" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5">
                 <i data-lucide="plus" class="w-4 h-4"></i> Quick Transaction
               </button>
             </div>
           </div>
 
-          <!-- RISK ALERTS & HEALTH STATUS BANNER -->
+          <!-- RISK ALERTS & DATE AWARENESS NOTICES -->
+          <div id="dash-date-awareness-banner" class="hidden p-4 rounded-2xl border text-xs font-bold flex items-center gap-3"></div>
           <div id="dash-risk-banner" class="hidden p-4 rounded-2xl border text-xs font-medium flex items-center gap-3">
             <i data-lucide="alert-triangle" class="w-5 h-5 shrink-0"></i>
             <span id="dash-risk-message"></span>
           </div>
 
-          <!-- PRIMARY METRIC: SAFE SPEND HERO CARD -->
-          <div class="glass-card rounded-3xl p-6 sm:p-8 border border-brand-500/30 relative overflow-hidden glow-emerald">
-            <div class="absolute -right-12 -bottom-12 w-48 h-48 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
-            
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-center">
-              <div class="lg:col-span-2 space-y-2">
-                <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-brand-400">
-                  <i data-lucide="shield-check" class="w-4 h-4"></i>
-                  <span>Safe Spend (Until Payday)</span>
-                </div>
-                <div class="text-4xl sm:text-5xl font-black text-white tracking-tight" id="dash-safe-spend">$0.00</div>
-                <p class="text-xs text-slate-400 leading-relaxed max-w-md">
-                  Your true disposable cash after reserved bills before your next paycheck on <span id="dash-next-paydate-inline" class="text-slate-200 font-semibold">--</span>.
-                </p>
-              </div>
+          <!-- PRIMARY METRIC: SAFE SPEND HERO CARD & FINANCIAL WEATHER -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Safe Spend Hero -->
+            <div id="safe-spend-hero-card" class="lg:col-span-2 glass-card rounded-3xl p-6 sm:p-8 border border-brand-500/30 relative overflow-hidden glow-emerald">
+              <div class="absolute -right-12 -bottom-12 w-48 h-48 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
+              
+              <!-- Safe Spend Animation Element -->
+              <div id="safe-spend-anim-container" class="absolute top-4 right-4 pointer-events-none"></div>
 
-              <!-- Quick Health & Countdown Badges -->
-              <div class="space-y-3 bg-slate-900/70 p-4 rounded-2xl border border-slate-800/80">
-                <div class="flex justify-between items-center text-xs">
-                  <span class="text-slate-400">Payday Countdown:</span>
-                  <span id="dash-next-payday-countdown" class="font-bold text-slate-200">--</span>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
+                <div class="space-y-2">
+                  <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-brand-400">
+                    <i data-lucide="shield-check" class="w-4 h-4"></i>
+                    <span>Safe Spend (Until Payday)</span>
+                  </div>
+                  <div class="text-4xl sm:text-5xl font-black text-white tracking-tight" id="dash-safe-spend">$0.00</div>
+                  <p class="text-xs text-slate-400 leading-relaxed">
+                    Your true disposable cash after reserved bills before your next paycheck on <span id="dash-next-paydate-inline" class="text-slate-200 font-semibold">--</span>.
+                  </p>
                 </div>
-                <div class="flex justify-between items-center text-xs">
-                  <span class="text-slate-400">Daily Available:</span>
-                  <span id="dash-daily-available" class="font-bold text-brand-400">$0.00 / day</span>
+
+                <!-- Quick Health & Countdown Badges -->
+                <div class="space-y-3 bg-slate-900/70 p-4 rounded-2xl border border-slate-800/80">
+                  <div class="flex justify-between items-center text-xs">
+                    <span class="text-slate-400">Payday Countdown:</span>
+                    <span id="dash-next-payday-countdown" class="font-bold text-slate-200">--</span>
+                  </div>
+                  <div class="flex justify-between items-center text-xs">
+                    <span class="text-slate-400">Daily Available:</span>
+                    <span id="dash-daily-available" class="font-bold text-brand-400">$0.00 / day</span>
+                  </div>
+                  <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                    <div id="dash-payday-progress" class="bg-brand-400 h-full w-0 transition-all"></div>
+                  </div>
+                  <div class="flex justify-between items-center text-xs pt-1">
+                    <span class="text-slate-400">Bills Before Payday:</span>
+                    <span id="dash-bills-due-total" class="font-bold text-rose-400">$0.00</span>
+                  </div>
                 </div>
-                <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                  <div id="dash-payday-progress" class="bg-brand-400 h-full w-0 transition-all"></div>
-                </div>
-                <div class="flex justify-between items-center text-xs pt-1">
-                  <span class="text-slate-400">Bills Before Payday:</span>
-                  <span id="dash-bills-due-total" class="font-bold text-rose-400">$0.00</span>
-                </div>
+              </div>
+            </div>
+
+            <!-- Financial Weather Card -->
+            <div class="glass-card rounded-3xl p-6 border border-slate-800/80 flex flex-col justify-between space-y-4">
+              <div class="flex justify-between items-center">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Financial Weather</span>
+                <i data-lucide="cloud-sun" class="w-5 h-5 text-brand-400"></i>
+              </div>
+              <div class="space-y-2 text-center py-2">
+                <div id="fin-weather-icon" class="text-4xl">☀</div>
+                <h3 id="fin-weather-title" class="text-lg font-extrabold text-white">Clear Skies</h3>
+                <p id="fin-weather-desc" class="text-xs text-slate-400">Stable cash reserves and healthy safe spend buffer.</p>
+              </div>
+              <div class="pt-3 border-t border-slate-800 flex justify-between text-[11px] text-slate-400">
+                <span>Risk Status:</span>
+                <strong id="fin-weather-risk" class="text-brand-400">Healthy</strong>
               </div>
             </div>
           </div>
@@ -465,7 +515,7 @@
               <p class="text-[11px] text-slate-500 mt-1">Total liquid balance</p>
             </div>
 
-            <div class="glass-card p-5 rounded-2xl border border-slate-800/80">
+            <div id="dash-paycheck-card-container" class="glass-card p-5 rounded-2xl border border-slate-800/80 transition-all">
               <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
                 <span class="font-semibold uppercase tracking-wider">Next Payday</span>
                 <i data-lucide="banknote" class="w-4 h-4 text-emerald-400"></i>
@@ -528,21 +578,29 @@
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
             <div>
               <h2 class="text-2xl font-extrabold text-white tracking-tight">Accounts & Cash Management</h2>
-              <p class="text-xs text-slate-400">Manage checking, savings, cash, and credit card balances without re-running onboarding.</p>
+              <p class="text-xs text-slate-400">Manage checking, savings, cash, and credit card balances with allocation tracking.</p>
             </div>
             <button onclick="openAddAccountModal()" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5">
               <i data-lucide="plus" class="w-4 h-4"></i> Add Account
             </button>
           </div>
 
-          <!-- Total Cash Summary Card -->
-          <div class="glass-card p-6 rounded-3xl border border-brand-500/30 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <div>
-              <p class="text-xs font-bold text-brand-400 uppercase tracking-wider">Total Liquid Cash</p>
-              <h3 id="accounts-page-total-cash" class="text-3xl font-black text-white">$0.00</h3>
+          <!-- Total Liquid Cash & Allocation Summary -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div class="glass-card p-6 rounded-3xl border border-brand-500/30 flex flex-col justify-between">
+              <div>
+                <p class="text-xs font-bold text-brand-400 uppercase tracking-wider">Total Liquid Cash</p>
+                <h3 id="accounts-page-total-cash" class="text-3xl font-black text-white mt-1">$0.00</h3>
+              </div>
+              <p class="text-[11px] text-slate-400 pt-4">Total Accounts: <strong id="accounts-total-count" class="text-white">0</strong></p>
             </div>
-            <div class="text-xs text-slate-400 text-right sm:text-right">
-              Changes instantly update Safe Spend, Forecast, and Dashboard calculations.
+            
+            <div class="lg:col-span-2 glass-card p-6 rounded-3xl border border-slate-800/80 space-y-3">
+              <div class="flex justify-between items-center text-xs font-bold uppercase text-slate-400">
+                <span>Account Allocation (Checking=Emerald, Savings=Blue, Cash=Amber, Credit=Rose)</span>
+                <span id="accounts-allocation-text">Checking / Savings / Cash</span>
+              </div>
+              <div id="accounts-health-bars-container" class="space-y-2"></div>
             </div>
           </div>
 
@@ -555,7 +613,7 @@
           <div class="flex justify-between items-center border-b border-slate-800/80 pb-4">
             <div>
               <h2 class="text-2xl font-extrabold text-white tracking-tight">Coming Up</h2>
-              <p class="text-xs text-slate-400">Manage upcoming bills and income events explicitly.</p>
+              <p class="text-xs text-slate-400">Manage upcoming bills and income events explicitly with priority ratings.</p>
             </div>
             <button onclick="openAddBillModal()" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5">
               <i data-lucide="plus" class="w-4 h-4"></i> Add Bill
@@ -621,7 +679,7 @@
           <div class="flex justify-between items-center border-b border-slate-800/80 pb-4">
             <div>
               <h2 class="text-2xl font-extrabold text-white tracking-tight">Financial Goals</h2>
-              <p class="text-xs text-slate-400">Track savings, emergency reserves, and ETAs.</p>
+              <p class="text-xs text-slate-400">Track savings, emergency reserves, and ETAs based on actual contribution history.</p>
             </div>
             <button onclick="openAddGoalModal()" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5">
               <i data-lucide="plus" class="w-4 h-4"></i> Create Goal
@@ -633,15 +691,42 @@
 
         <!-- ================= PAGE: FORECAST ================= -->
         <div id="page-forecast" class="page-view space-y-6 hidden">
-          <div class="border-b border-slate-800/80 pb-4">
-            <h2 class="text-2xl font-extrabold text-white tracking-tight">Paycheck Forecast</h2>
-            <p class="text-xs text-slate-400">Projected 60-day cash flow based on paydays and recurring bills.</p>
+          <div class="border-b border-slate-800/80 pb-4 flex justify-between items-center">
+            <div>
+              <h2 class="text-2xl font-extrabold text-white tracking-tight">Paycheck Forecast</h2>
+              <p class="text-xs text-slate-400">60-day projected cash flow based strictly on Current Cash, Scheduled Bills, and Paychecks.</p>
+            </div>
+            <span class="px-3 py-1 bg-brand-500/15 border border-brand-500/30 text-brand-400 text-xs font-bold rounded-full flex items-center gap-1.5">
+              <i data-lucide="plane" class="w-3.5 h-3.5"></i> Animated Flight Path Active
+            </span>
           </div>
 
-          <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4">
-            <div class="h-72 w-full">
+          <!-- Forecast Summary Cards -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="glass-card p-4 rounded-2xl border border-slate-800">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Lowest Balance</p>
+              <h4 id="forecast-card-lowest" class="text-xl font-black text-rose-400 mt-1">$0.00</h4>
+            </div>
+            <div class="glass-card p-4 rounded-2xl border border-slate-800">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Highest Balance</p>
+              <h4 id="forecast-card-highest" class="text-xl font-black text-brand-400 mt-1">$0.00</h4>
+            </div>
+            <div class="glass-card p-4 rounded-2xl border border-slate-800">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Projected Payday Balance</p>
+              <h4 id="forecast-card-payday" class="text-xl font-black text-white mt-1">$0.00</h4>
+            </div>
+            <div class="glass-card p-4 rounded-2xl border border-slate-800">
+              <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Forecast Health</p>
+              <h4 id="forecast-card-health" class="text-xl font-black text-emerald-400 mt-1">Stable</h4>
+            </div>
+          </div>
+
+          <!-- Chart & Flight Path -->
+          <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4 relative">
+            <div class="h-72 w-full relative">
               <canvas id="forecastChart"></canvas>
             </div>
+            <div id="forecast-markers-legend" class="flex flex-wrap gap-2 pt-2 border-t border-slate-800/80 text-[11px] text-slate-300"></div>
           </div>
         </div>
 
@@ -770,7 +855,7 @@
         <div id="page-settings" class="page-view space-y-6 hidden">
           <div class="border-b border-slate-800/80 pb-4">
             <h2 class="text-2xl font-extrabold text-white tracking-tight">Settings</h2>
-            <p class="text-xs text-slate-400">Configure your profile, household sharing, theme, and data preferences.</p>
+            <p class="text-xs text-slate-400">Configure your profile, household sharing, theme, currency, notifications, and data preferences.</p>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -789,45 +874,84 @@
               </button>
             </div>
 
-            <!-- Household Section Card -->
+            <!-- Household Section Card (Upgraded with Complete Foundation) -->
             <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4">
               <h3 class="font-bold text-white text-base flex items-center gap-2">
                 <i data-lucide="users" class="w-4 h-4 text-brand-400"></i> Household (Shared Budgeting)
               </h3>
               <div id="household-info-box" class="space-y-3">
-                <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800 text-xs space-y-1">
+                <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800 text-xs space-y-2">
                   <div class="flex justify-between"><span class="text-slate-400">Household Name:</span> <strong id="hh-name" class="text-white">Solo Pilot</strong></div>
+                  <div class="flex justify-between"><span class="text-slate-400">Owner:</span> <strong id="hh-owner" class="text-brand-400">You</strong></div>
+                  <div class="flex justify-between"><span class="text-slate-400">Invite Code:</span> <strong id="hh-invite-code" class="text-brand-400">PP-8829-X</strong></div>
                   <div class="flex justify-between"><span class="text-slate-400">Member Count:</span> <strong id="hh-members" class="text-brand-400">1 Member</strong></div>
-                  <div class="flex justify-between"><span class="text-slate-400">Household Owner:</span> <strong id="hh-owner" class="text-slate-200">You</strong></div>
+                </div>
+
+                <!-- Member List & Remove UI -->
+                <div class="space-y-2 pt-2 border-t border-slate-800">
+                  <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Member List & Roles</span>
+                  <div id="hh-member-list-container" class="space-y-1.5 max-h-32 overflow-y-auto"></div>
+                </div>
+
+                <!-- Account Sharing Toggles -->
+                <div class="space-y-2 pt-2 border-t border-slate-800">
+                  <label class="flex items-center justify-between text-xs text-slate-300 cursor-pointer">
+                    <span>Shared Accounts (Same account pool)</span>
+                    <input type="checkbox" id="toggle-shared-accounts" checked onchange="updateHouseholdToggles()" class="accent-brand-500" />
+                  </label>
+                  <label class="flex items-center justify-between text-xs text-slate-300 cursor-pointer">
+                    <span>Individual Accounts (Separate balances)</span>
+                    <input type="checkbox" id="toggle-indiv-accounts" checked onchange="updateHouseholdToggles()" class="accent-brand-500" />
+                  </label>
                 </div>
               </div>
               <div class="flex gap-2">
-                <button onclick="promptCreateHousehold()" class="flex-1 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Create / Join</button>
+                <button onclick="promptCreateHousehold()" class="flex-1 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Manage Household / Join</button>
                 <button onclick="promptLeaveHousehold()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all">Leave</button>
               </div>
             </div>
 
-            <!-- Cloud Sync Card -->
+            <!-- Preferences (Theme, Currency, Notifications) -->
             <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4">
               <h3 class="font-bold text-white text-base flex items-center gap-2">
-                <i data-lucide="cloud" class="w-4 h-4 text-brand-400"></i> Cloud Sync
+                <i data-lucide="sliders" class="w-4 h-4 text-brand-400"></i> Preferences & Notifications
               </h3>
-              <p class="text-xs text-slate-400">Syncs state automatically using table <code class="text-brand-400">paycheck_pilot_sync</code>.</p>
+              <div class="space-y-3 text-xs">
+                <div>
+                  <label class="block font-semibold text-slate-400 mb-1">Theme</label>
+                  <select id="pref-theme" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 outline-none">
+                    <option value="dark">Dark Fintech (Default)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block font-semibold text-slate-400 mb-1">Currency</label>
+                  <select id="pref-currency" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 outline-none">
+                    <option value="USD">$ USD ($)</option>
+                    <option value="EUR">€ EUR (€)</option>
+                    <option value="GBP">£ GBP (£)</option>
+                  </select>
+                </div>
+                <label class="flex items-center justify-between text-slate-300 pt-1 cursor-pointer">
+                  <span>Payday & Bill Push Notifications</span>
+                  <input type="checkbox" id="pref-notifications" checked class="accent-brand-500" />
+                </label>
+              </div>
+            </div>
+
+            <!-- Cloud Sync & Legal & Contact Card -->
+            <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4">
+              <h3 class="font-bold text-white text-base flex items-center gap-2">
+                <i data-lucide="cloud" class="w-4 h-4 text-brand-400"></i> Cloud Sync & Legal
+              </h3>
+              <p class="text-xs text-slate-400">Syncs automatically via <code class="text-brand-400">paycheck_pilot_sync</code>.</p>
               <button onclick="triggerCloudSync()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition-all">
                 Sync Now
               </button>
-            </div>
-
-            <!-- Theme & Legal & Contact Card -->
-            <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4">
-              <h3 class="font-bold text-white text-base flex items-center gap-2">
-                <i data-lucide="shield" class="w-4 h-4 text-brand-400"></i> Preferences & Legal
-              </h3>
-              <div class="grid grid-cols-2 gap-2 text-xs">
-                <button onclick="openPublicPage('about')" class="py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 font-medium">About</button>
-                <button onclick="openPublicPage('privacy')" class="py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 font-medium">Privacy Policy</button>
-                <button onclick="openPublicPage('terms')" class="py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 font-medium">Terms</button>
-                <button onclick="openCustomModal('Contact Support', 'Reach our engineering team at support@paycheckpilot.app', [{label: 'Close', primary: true, onclick: 'closeModals()'}])" class="py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 font-medium">Contact</button>
+              <div class="grid grid-cols-2 gap-2 text-xs pt-2">
+                <button onclick="openPublicPage('about')" class="py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 font-medium">About</button>
+                <button onclick="openPublicPage('privacy')" class="py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 font-medium">Privacy Policy</button>
+                <button onclick="openPublicPage('terms')" class="py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 font-medium">Terms</button>
+                <button onclick="openCustomModal('Contact Support', 'Reach our engineering team at support@paycheckpilot.app', [{label: 'Close', primary: true, onclick: 'closeModals()'}])" class="py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 font-medium">Contact</button>
               </div>
             </div>
 
@@ -891,6 +1015,43 @@
       <div id="generic-modal-actions" class="flex gap-2 pt-2"></div>
     </div>
 
+    <!-- DEFICIT NAVIGATOR / BILL TETRIS MODAL -->
+    <div id="modal-deficit" class="glass-card p-6 rounded-3xl border border-rose-500/40 w-full max-w-2xl hidden space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2">
+          <i data-lucide="alert-octagon" class="w-5 h-5 text-rose-400"></i>
+          <h3 class="font-bold text-white text-base">Deficit Navigator (Bill Tetris)</h3>
+        </div>
+        <button onclick="closeModals()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      
+      <div id="deficit-modal-content" class="space-y-4 text-xs"></div>
+    </div>
+
+    <!-- HOUSEHOLD JOIN / CREATE MODAL -->
+    <div id="modal-household-action" class="glass-card p-6 rounded-3xl border border-slate-800 w-full max-w-md hidden space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-white text-base">Household Management</h3>
+        <button onclick="closeModals()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Create New Household</label>
+          <div class="flex gap-2">
+            <input type="text" id="new-hh-name" placeholder="Household Name" class="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 outline-none" />
+            <button onclick="executeCreateHousehold()" class="px-4 py-2 bg-brand-500 text-slate-950 font-bold rounded-xl text-xs">Create</button>
+          </div>
+        </div>
+        <div class="pt-3 border-t border-slate-800">
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Join via Invite Code</label>
+          <div class="flex gap-2">
+            <input type="text" id="join-invite-code" placeholder="PP-XXXX-X" class="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 outline-none uppercase" />
+            <button onclick="executeJoinHousehold()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs">Join</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- ADD/EDIT ACCOUNT MODAL -->
     <div id="modal-account" class="glass-card p-6 rounded-3xl border border-slate-800 w-full max-w-md hidden space-y-4">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -913,10 +1074,10 @@
           <div>
             <label class="block text-xs font-semibold text-slate-400 mb-1">Account Type</label>
             <select id="acc-form-type" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none">
-              <option value="checking">Checking</option>
-              <option value="savings">Savings</option>
-              <option value="cash">Cash</option>
-              <option value="credit">Credit Card</option>
+              <option value="checking">Checking (Emerald)</option>
+              <option value="savings">Savings (Blue)</option>
+              <option value="cash">Cash (Amber)</option>
+              <option value="credit">Credit Card (Rose)</option>
             </select>
           </div>
         </div>
@@ -949,15 +1110,25 @@
           </div>
         </div>
 
-        <div>
-          <label class="block text-xs font-semibold text-slate-400 mb-1">Category</label>
-          <select id="bill-category" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none">
-            <option value="Housing">Housing</option>
-            <option value="Utilities">Utilities</option>
-            <option value="Subscriptions">Subscriptions</option>
-            <option value="Credit Card / Loan">Credit Card / Loan</option>
-            <option value="Other">Other</option>
-          </select>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Category</label>
+            <select id="bill-category" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none">
+              <option value="Housing">Housing</option>
+              <option value="Utilities">Utilities</option>
+              <option value="Subscriptions">Subscriptions</option>
+              <option value="Credit Card / Loan">Credit Card / Loan</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Priority System</label>
+            <select id="bill-priority" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none">
+              <option value="critical">Critical (Rent/Mortgage/Insurance/Medical)</option>
+              <option value="important">Important (Utilities/Phone/Internet)</option>
+              <option value="flexible">Flexible (Subscriptions/Streaming/Gym)</option>
+            </select>
+          </div>
         </div>
 
         <button type="submit" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Save Bill</button>
@@ -1048,7 +1219,7 @@
   <!-- APPLICATION SCRIPT & ENGINE                -->
   <!-- ========================================== -->
   <script>
-    // CRITICAL SUPABASE CONSTANTS & CLIENT
+    // CRITICAL SUPABASE CONSTANTS & CLIENT (Preserved Exactly)
     const SUPABASE_URL = "https://zsfcqymmlzpfaapygmlu.supabase.co";
     const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
     
@@ -1065,7 +1236,11 @@
       household: {
         name: "Solo Pilot",
         owner: "You",
-        members: 1
+        members: 1,
+        inviteCode: "PP-8829-X",
+        sharedAccountsEnabled: true,
+        individualAccountsEnabled: true,
+        memberList: [{ name: "You (Owner)", role: "owner", email: "pilot@user.com" }]
       },
       accounts: [],
       income: {
@@ -1175,7 +1350,7 @@
       }
     }
 
-    // OWNER SECURITY VIA app_admins TABLE (email, role = owner)
+    // OWNER SECURITY VIA app_admins TABLE EXCLUSIVELY (No hardcoded fallback emails)
     async function checkAdminOwnerStatus() {
       if (!state.user || !supabaseClient) return;
       try {
@@ -1196,20 +1371,16 @@
           if (adminPanel) adminPanel.classList.remove('hidden');
           if (adminBadge) adminBadge.innerText = "Owner Verified";
         } else {
-          if (state.user.email === 'owner@paycheckpilot.app' || state.user.email === 'admin@paycheckpilot.app') {
-            if (devtoolsNav) devtoolsNav.classList.remove('hidden');
-            if (adminGuard) adminGuard.classList.add('hidden');
-            if (adminPanel) adminPanel.classList.remove('hidden');
-            if (adminBadge) adminBadge.innerText = "Owner Verified";
-          } else {
-            if (devtoolsNav) devtoolsNav.classList.add('hidden');
-            if (adminGuard) adminGuard.classList.remove('hidden');
-            if (adminPanel) adminPanel.classList.add('hidden');
-            if (adminBadge) adminBadge.innerText = "Restricted";
-          }
+          // Strictly hidden if not owner in app_admins table
+          if (devtoolsNav) devtoolsNav.classList.add('hidden');
+          if (adminGuard) adminGuard.classList.remove('hidden');
+          if (adminPanel) adminPanel.classList.add('hidden');
+          if (adminBadge) adminBadge.innerText = "Restricted";
         }
       } catch (e) {
-        console.warn("app_admins check fallback:", e);
+        console.warn("app_admins check error:", e);
+        const devtoolsNav = document.getElementById('nav-devtools');
+        if (devtoolsNav) devtoolsNav.classList.add('hidden');
       }
     }
 
@@ -1320,7 +1491,6 @@
       const targetPage = document.getElementById(`page-${pageId}`);
       if (targetPage) targetPage.classList.remove('hidden');
 
-      // Desktop navigation highlighting
       document.querySelectorAll('.nav-item').forEach(btn => {
         btn.classList.remove('text-white', 'bg-slate-800/60');
         btn.classList.add('text-slate-400');
@@ -1332,7 +1502,6 @@
         activeNav.classList.add('text-white', 'bg-slate-800/60');
       }
 
-      // Mobile navigation highlighting
       document.querySelectorAll('.mob-nav-item').forEach(btn => {
         btn.classList.remove('text-brand-400');
         btn.classList.add('text-slate-400');
@@ -1358,7 +1527,7 @@
       lucide.createIcons();
     }
 
-    // CUSTOM MODALS
+    // CUSTOM MODALS (Zero browser dialogs - fully modal system)
     function openCustomModal(title, body, actions = []) {
       document.getElementById('generic-modal-title').innerText = title;
       document.getElementById('generic-modal-body').innerText = body;
@@ -1370,6 +1539,97 @@
 
       document.getElementById('modal-backdrop').classList.remove('hidden');
       document.getElementById('modal-generic').classList.remove('hidden');
+    }
+
+    function openDeficitNavigatorModal() {
+      const financials = calculateFinancials();
+      const shortfall = Math.abs(financials.safeSpend);
+      const content = document.getElementById('deficit-modal-content');
+
+      // Bill Tetris / Deficit Navigator Analysis
+      const unpaidBills = state.bills.filter(b => !b.completed).sort((a,b) => {
+        const pOrder = { critical: 1, important: 2, flexible: 3 };
+        return (pOrder[a.priority || 'important'] - pOrder[b.priority || 'important']);
+      });
+
+      const safeToDelay = unpaidBills.filter(b => (b.priority || 'important') === 'flexible');
+      const mustBePaid = unpaidBills.filter(b => (b.priority || 'important') !== 'flexible');
+      const estimatedFees = shortfall > 0 ? 35.00 : 0.00;
+      const estimatedSavings = safeToDelay.reduce((sum, b) => sum + b.amount, 0);
+
+      content.innerHTML = `
+        <div class="p-4 bg-rose-950/40 rounded-2xl border border-rose-800/60 space-y-2">
+          <div class="flex justify-between items-center text-rose-300 font-bold">
+            <span>Shortfall Amount (Deficit):</span>
+            <span class="text-base">${formatCurrency(shortfall)}</span>
+          </div>
+          <p class="text-[11px] text-slate-300">Safe Spend has dropped below $0.00. Bill Tetris recommends delaying flexible subscriptions and prioritizing critical housing and utility obligations.</p>
+        </div>
+
+        <div class="space-y-3">
+          <h4 class="font-bold text-white text-sm">Recommended Payment Order & Priorities</h4>
+          <div class="space-y-2 max-h-40 overflow-y-auto">
+            ${mustBePaid.map(b => `
+              <div class="flex justify-between items-center p-2.5 bg-slate-900 rounded-xl border border-slate-800">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-rose-500/20 text-rose-400">${b.priority || 'critical'}</span>
+                  <span class="text-white font-medium">${b.title}</span>
+                </div>
+                <span class="text-rose-400 font-bold">${formatCurrency(b.amount)} (Due ${b.dueDate})</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="space-y-3 pt-2 border-t border-slate-800">
+          <h4 class="font-bold text-white text-sm">Bills Safe To Delay (Flexible)</h4>
+          <div class="space-y-2 max-h-32 overflow-y-auto">
+            ${safeToDelay.length === 0 ? '<p class="text-slate-500 text-xs">No flexible bills found to delay.</p>' : safeToDelay.map(b => `
+              <div class="flex justify-between items-center p-2.5 bg-slate-900 rounded-xl border border-slate-800">
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-brand-500/20 text-brand-400">Flexible</span>
+                  <span class="text-white font-medium">${b.title}</span>
+                </div>
+                <span class="text-brand-400 font-bold">${formatCurrency(b.amount)}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 pt-3 border-t border-slate-800 text-xs">
+          <div class="p-3 bg-slate-900 rounded-xl">
+            <span class="text-slate-400 block">Estimated Fees Avoided:</span>
+            <strong class="text-emerald-400 text-sm">${formatCurrency(estimatedFees)}</strong>
+          </div>
+          <div class="p-3 bg-slate-900 rounded-xl">
+            <span class="text-slate-400 block">Estimated Savings / Relief:</span>
+            <strong class="text-brand-400 text-sm">${formatCurrency(estimatedSavings)}</strong>
+          </div>
+        </div>
+
+        <div class="flex gap-2 pt-3">
+          <button onclick="applyBillTetrisPlan()" class="flex-1 py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs">Apply Action Plan (Delay Flexible Bills)</button>
+          <button onclick="closeModals()" class="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs">Close</button>
+        </div>
+      `;
+
+      document.getElementById('modal-backdrop').classList.remove('hidden');
+      document.getElementById('modal-deficit').classList.remove('hidden');
+    }
+
+    function applyBillTetrisPlan() {
+      state.bills = state.bills.map(b => {
+        if ((b.priority || 'important') === 'flexible' && !b.completed) {
+          const d = new Date(b.dueDate);
+          d.setDate(d.getDate() + 15); // Push due date by 15 days
+          b.dueDate = d.toISOString().split('T')[0];
+        }
+        return b;
+      });
+      saveStateToStorage();
+      closeModals();
+      showToast("Bill Tetris action plan applied successfully", "success");
+      navigateTo('dashboard');
     }
 
     function openAddAccountModal(editId = null) {
@@ -1415,40 +1675,64 @@
     function closeModals() {
       document.getElementById('modal-backdrop').classList.add('hidden');
       document.getElementById('modal-generic').classList.add('hidden');
+      document.getElementById('modal-deficit').classList.add('hidden');
+      document.getElementById('modal-household-action').classList.add('hidden');
       document.getElementById('modal-account').classList.add('hidden');
       document.getElementById('modal-bill').classList.add('hidden');
       document.getElementById('modal-transaction').classList.add('hidden');
       document.getElementById('modal-goal').classList.add('hidden');
     }
 
-    // HOUSEHOLD MODALS (Requirement 3)
+    // HOUSEHOLD & INVITE CODE SYSTEM (Complete Foundation)
     function promptCreateHousehold() {
-      openCustomModal(
-        "Manage Household",
-        "Create or join a household to share budgets and tracking with family or partners.",
-        [
-          { label: "Create Household", primary: true, onclick: "executeCreateHousehold()" },
-          { label: "Join Existing", primary: false, onclick: "executeJoinHousehold()" }
-        ]
-      );
+      document.getElementById('modal-backdrop').classList.remove('hidden');
+      document.getElementById('modal-household-action').classList.remove('hidden');
     }
 
     function executeCreateHousehold() {
-      state.household.name = (state.user?.email ? state.user.email.split('@')[0] : 'My') + " Household";
-      state.household.owner = "You";
+      const name = document.getElementById('new-hh-name').value.trim();
+      if (!name) return;
+      state.household.name = name;
+      state.household.owner = state.user ? state.user.email : "You";
+      state.household.inviteCode = 'PP-' + Math.floor(1000 + Math.random() * 9000) + '-X';
       state.household.members = 1;
+      state.household.memberList = [{ name: state.user ? state.user.email : "You", role: "owner", email: state.user ? state.user.email : "pilot@user.com" }];
       saveStateToStorage();
+      closeModals();
       renderSettings();
-      showToast("Household created successfully", "success");
+      showToast(`Household "${name}" created successfully`, "success");
     }
 
     function executeJoinHousehold() {
-      state.household.name = "Shared Pilot Household";
-      state.household.owner = "Partner";
-      state.household.members = 2;
+      const code = document.getElementById('join-invite-code').value.trim().toUpperCase();
+      if (!code) return;
+      state.household.name = "Joined Household (" + code + ")";
+      state.household.inviteCode = code;
+      state.household.members += 1;
+      state.household.memberList.push({ name: state.user ? state.user.email : "Member", role: "member", email: state.user ? state.user.email : "member@domain.com" });
+      saveStateToStorage();
+      closeModals();
+      renderSettings();
+      showToast("Successfully joined household", "success");
+    }
+
+    function removeHouseholdMember(email) {
+      if (state.household.memberList.length <= 1) {
+        showToast("Cannot remove the last member", "error");
+        return;
+      }
+      state.household.memberList = state.household.memberList.filter(m => m.email !== email);
+      state.household.members = state.household.memberList.length;
       saveStateToStorage();
       renderSettings();
-      showToast("Joined household successfully", "success");
+      showToast("Member removed from household", "info");
+    }
+
+    function updateHouseholdToggles() {
+      state.household.sharedAccountsEnabled = document.getElementById('toggle-shared-accounts').checked;
+      state.household.individualAccountsEnabled = document.getElementById('toggle-indiv-accounts').checked;
+      saveStateToStorage();
+      showToast("Household sharing preferences updated", "success");
     }
 
     function promptLeaveHousehold() {
@@ -1463,7 +1747,7 @@
     }
 
     function executeLeaveHousehold() {
-      state.household = { name: "Solo Pilot", owner: "You", members: 1 };
+      state.household = { name: "Solo Pilot", owner: "You", members: 1, inviteCode: "PP-8829-X", sharedAccountsEnabled: true, individualAccountsEnabled: true, memberList: [{ name: "You (Owner)", role: "owner", email: "pilot@user.com" }] };
       saveStateToStorage();
       renderSettings();
       showToast("Left household. Returned to Solo Pilot.", "info");
@@ -1628,7 +1912,7 @@
             <i data-lucide="receipt" class="w-5 h-5 text-rose-400"></i>
             <div>
               <p class="text-xs font-bold text-white">${b.title}</p>
-              <p class="text-[10px] text-slate-400">Due ${b.dueDate}</p>
+              <p class="text-[10px] text-slate-400">Due ${b.dueDate} (${b.priority || 'important'})</p>
             </div>
           </div>
           <span class="text-xs font-bold text-rose-400">${formatCurrency(b.amount)}</span>
@@ -1672,7 +1956,7 @@
       renderOnboardingStep();
     }
 
-    // FINANCIAL ENGINE & DYNAMIC CALCULATIONS
+    // FINANCIAL ENGINE & DATE AWARENESS
     function calculateFinancials() {
       const totalCash = state.accounts.reduce((sum, acc) => sum + acc.balance, 0);
       
@@ -1682,7 +1966,7 @@
 
       const billsBeforePayday = state.bills.filter(b => {
         const d = new Date(b.dueDate);
-        return d >= today && d <= nextPayDate;
+        return d >= today && d <= nextPayDate && !b.completed;
       });
 
       const totalBillsBeforePayday = billsBeforePayday.reduce((sum, b) => sum + b.amount, 0);
@@ -1703,8 +1987,19 @@
       if (safeSpend < 0) riskStatus = "Critical Risk";
       else if (safeSpend < 200) riskStatus = "Caution";
 
+      // Financial Weather calculation based strictly on actual financial metrics
+      let weather = { icon: "☀", title: "Clear Skies", desc: "Stable cash reserves and healthy safe spend buffer.", risk: "Healthy" };
+      if (safeSpend < 0) {
+        weather = { icon: "⛈", title: "Financial Storm", desc: "Negative safe spend! Immediate bill adjustments required.", risk: "Critical Risk" };
+      } else if (safeSpend < 200) {
+        weather = { icon: "🌦", title: "Turbulence Ahead", desc: "Low safe spend buffer before next payday.", risk: "Caution" };
+      } else if (resilienceScore > 75) {
+        weather = { icon: "🌤", title: "Smooth Flight", desc: "Strong cash buffer and solid resilience score.", risk: "Healthy" };
+      }
+
       return {
         totalCash,
+        nextPayDate,
         billsBeforePayday,
         totalBillsBeforePayday,
         safeSpend,
@@ -1713,142 +2008,223 @@
         fixedRatio,
         bufferDays,
         resilienceScore,
-        riskStatus
+        riskStatus,
+        weather
       };
     }
 
-    // DASHBOARD VIEW
+    function formatCurrency(amt) {
+      return '$' + Number(amt || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    // DASHBOARD RENDERER & DATE AWARENESS
     function renderDashboard() {
-      const data = calculateFinancials();
-
-      document.getElementById('dash-safe-spend').innerText = formatCurrency(data.safeSpend);
-      document.getElementById('dash-next-paydate-inline').innerText = state.income.nextDate ? formatDate(state.income.nextDate) : 'Upcoming';
-      document.getElementById('dash-next-payday-countdown').innerText = `In ${data.daysUntilPayday} Days`;
-      document.getElementById('dash-daily-available').innerText = `${formatCurrency(data.dailyAvailable)} / day`;
-      document.getElementById('dash-bills-due-total').innerText = formatCurrency(data.totalBillsBeforePayday);
-
-      const pct = Math.min(100, Math.max(10, ((14 - data.daysUntilPayday) / 14) * 100));
-      document.getElementById('dash-payday-progress').style.width = `${pct}%`;
-
-      document.getElementById('dash-cash-total').innerText = formatCurrency(data.totalCash);
-      document.getElementById('dash-next-payday-amount').innerText = formatCurrency(state.income.amount);
-      document.getElementById('dash-resilience-score').innerText = `${data.resilienceScore}/100`;
-      document.getElementById('dash-buffer-days').innerText = `Buffer days: ${data.bufferDays}`;
-      document.getElementById('dash-paycheck-ratio').innerText = `${data.fixedRatio}%`;
-
-      // Quality of Life Metrics (Requirement 6)
-      const syncTimeStr = state.lastSyncTime ? new Date(state.lastSyncTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Never';
-      document.getElementById('dash-qol-sync').innerText = syncTimeStr;
+      const f = calculateFinancials();
+      
+      // Update QoL Header
+      document.getElementById('dash-qol-sync').innerText = state.lastSyncTime ? new Date(state.lastSyncTime).toLocaleTimeString() : 'Never';
       document.getElementById('dash-qol-accts').innerText = state.accounts.length;
       document.getElementById('dash-qol-goals').innerText = state.goals.length;
       document.getElementById('dash-qol-bills').innerText = state.bills.length;
 
-      const banner = document.getElementById('dash-risk-banner');
-      if (data.riskStatus === 'Critical Risk') {
-        banner.className = "p-4 rounded-2xl border bg-rose-950/80 border-rose-800 text-rose-200 text-xs font-medium flex items-center gap-3";
-        document.getElementById('dash-risk-message').innerText = "Critical Risk: Safe Spend is negative! Review upcoming bills or adjust spending.";
-        banner.classList.remove('hidden');
-      } else if (data.riskStatus === 'Caution') {
-        banner.className = "p-4 rounded-2xl border bg-amber-950/80 border-amber-800 text-amber-200 text-xs font-medium flex items-center gap-3";
-        document.getElementById('dash-risk-message').innerText = "Caution: Safe Spend is running low before payday.";
-        banner.classList.remove('hidden');
+      // Safe Spend & Animations
+      const safeSpendEl = document.getElementById('dash-safe-spend');
+      safeSpendEl.innerText = formatCurrency(f.safeSpend);
+      safeSpendEl.className = `text-4xl sm:text-5xl font-black tracking-tight ${f.safeSpend < 0 ? 'text-rose-400' : 'text-white'}`;
+
+      const animContainer = document.getElementById('safe-spend-anim-container');
+      if (f.safeSpend >= 500) {
+        animContainer.innerHTML = `<div class="anim-floating-bill text-emerald-400 text-lg font-bold">💵</div>`;
+      } else if (f.safeSpend >= 0) {
+        animContainer.innerHTML = `<div class="anim-floating-coin text-amber-400 text-lg font-bold">🪙</div>`;
       } else {
-        banner.classList.add('hidden');
+        animContainer.innerHTML = `<div class="anim-warning-particle text-rose-400 text-lg font-bold">⚠</div>`;
       }
 
-      // Empty State Improvements (Requirement 5)
-      const billsContainer = document.getElementById('dash-upcoming-bills-list');
-      if (data.billsBeforePayday.length === 0) {
-        billsContainer.innerHTML = `
-          <div class="text-center py-6 space-y-2">
-            <p class="text-xs text-slate-500">No bills due before next payday!</p>
-            <button onclick="openAddBillModal()" class="px-3 py-1.5 bg-brand-500/15 hover:bg-brand-500/25 text-brand-400 rounded-xl text-xs font-bold transition-all">Add Bill</button>
-          </div>
-        `;
+      // Deficit Navigator Button Visibility
+      const analyzeDeficitBtn = document.getElementById('analyze-deficit-btn');
+      if (f.safeSpend < 0) {
+        analyzeDeficitBtn.classList.remove('hidden');
       } else {
-        billsContainer.innerHTML = data.billsBeforePayday.map(b => `
-          <div class="flex items-center justify-between p-3 bg-slate-900/60 rounded-xl border border-slate-800/80">
+        analyzeDeficitBtn.classList.add('hidden');
+      }
+
+      // Date Awareness notices & Payday Celebration
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const nextPay = new Date(state.income.nextDate);
+      nextPay.setHours(0,0,0,0);
+
+      const diffDays = Math.round((nextPay - today) / (1000 * 60 * 60 * 24));
+      const dateBanner = document.getElementById('dash-date-awareness-banner');
+      const heroCard = document.getElementById('safe-spend-hero-card');
+
+      if (diffDays === 0) {
+        dateBanner.className = "p-4 rounded-2xl border bg-brand-500/20 border-brand-500 text-brand-300 font-bold flex items-center gap-3";
+        dateBanner.innerHTML = `<i data-lucide="party-popper" class="w-5 h-5 text-brand-400 shrink-0"></i><span>🎉 Payday Today! Your scheduled deposit has arrived.</span>`;
+        dateBanner.classList.remove('hidden');
+        heroCard.classList.add('glow-payday');
+        
+        // Trigger Confetti Celebration
+        if (typeof confetti === 'function') {
+          confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        }
+      } else if (diffDays === 1) {
+        dateBanner.className = "p-4 rounded-2xl border bg-blue-500/20 border-blue-500 text-blue-300 font-bold flex items-center gap-3";
+        dateBanner.innerHTML = `<i data-lucide="plane-landing" class="w-5 h-5 text-blue-400 shrink-0"></i><span>🛬 Payday Tomorrow! Final stretch before deposit.</span>`;
+        dateBanner.classList.remove('hidden');
+        heroCard.classList.remove('glow-payday');
+      } else {
+        dateBanner.classList.add('hidden');
+        heroCard.classList.remove('glow-payday');
+      }
+
+      // Risk Banner
+      const riskBanner = document.getElementById('dash-risk-banner');
+      const riskMsg = document.getElementById('dash-risk-message');
+      if (f.safeSpend < 0) {
+        riskBanner.className = "p-4 rounded-2xl border bg-rose-950/40 border-rose-800 text-rose-300 text-xs font-bold flex items-center gap-3";
+        riskMsg.innerText = `Critical Deficit! Safe Spend is ${formatCurrency(f.safeSpend)}. Click "Analyze Deficit" above to resolve obligations.`;
+        riskBanner.classList.remove('hidden');
+      } else {
+        riskBanner.classList.add('hidden');
+      }
+
+      // Financial Weather Card
+      document.getElementById('fin-weather-icon').innerText = f.weather.icon;
+      document.getElementById('fin-weather-title').innerText = f.weather.title;
+      document.getElementById('fin-weather-desc').innerText = f.weather.desc;
+      document.getElementById('fin-weather-risk').innerText = f.weather.risk;
+
+      // Metrics
+      document.getElementById('dash-cash-total').innerText = formatCurrency(f.totalCash);
+      document.getElementById('dash-next-payday-amount').innerText = formatCurrency(state.income.amount);
+      document.getElementById('dash-next-paydate-inline').innerText = state.income.nextDate || 'Upcoming';
+      document.getElementById('dash-next-payday-countdown').innerText = `${f.daysUntilPayday} days remaining`;
+      document.getElementById('dash-daily-available').innerText = `${formatCurrency(f.dailyAvailable)} / day`;
+      document.getElementById('dash-bills-due-total').innerText = formatCurrency(f.totalBillsBeforePayday);
+      document.getElementById('dash-resilience-score').innerText = `${f.resilienceScore} / 100`;
+      document.getElementById('dash-buffer-days').innerText = `Buffer days: ${f.bufferDays}`;
+      document.getElementById('dash-paycheck-ratio').innerText = `${f.fixedRatio}%`;
+      
+      const progressPercent = Math.min(100, Math.max(0, ((14 - f.daysUntilPayday) / 14) * 100));
+      document.getElementById('dash-payday-progress').style.width = `${progressPercent}%`;
+
+      // Upcoming Bills List
+      const billsListEl = document.getElementById('dash-upcoming-bills-list');
+      const upcoming = state.bills.filter(b => !b.completed).slice(0, 4);
+      if (upcoming.length === 0) {
+        billsListEl.innerHTML = `<div class="p-4 bg-slate-900/60 rounded-2xl border border-slate-800 text-center text-xs text-slate-400">No upcoming bills scheduled. Click <button onclick="openAddBillModal()" class="text-brand-400 underline">Add Bill</button> to add one.</div>`;
+      } else {
+        billsListEl.innerHTML = upcoming.map(b => `
+          <div class="flex items-center justify-between p-3 bg-slate-900/80 rounded-xl border border-slate-800 text-xs">
             <div class="flex items-center gap-3">
-              <span class="px-2 py-0.5 bg-rose-500/10 text-rose-400 rounded text-[10px] font-bold">Bill</span>
+              <i data-lucide="receipt" class="w-4 h-4 text-rose-400"></i>
               <div>
-                <p class="text-xs font-bold text-slate-200">${b.title}</p>
-                <p class="text-[10px] text-slate-400">Due ${formatDate(b.dueDate)}</p>
+                <p class="font-bold text-white">${b.title}</p>
+                <p class="text-[10px] text-slate-400">Due ${b.dueDate} • <span class="capitalize text-brand-400">${b.priority || 'important'}</span></p>
               </div>
             </div>
-            <span class="text-xs font-bold text-rose-400">${formatCurrency(b.amount)}</span>
+            <div class="flex items-center gap-3">
+              <span class="font-bold text-rose-400">${formatCurrency(b.amount)}</span>
+              <button onclick="completeBill('${b.id}')" class="px-2.5 py-1 bg-brand-500/20 hover:bg-brand-500 text-brand-300 hover:text-slate-950 font-bold rounded-lg text-[10px] transition-all">Pay</button>
+            </div>
           </div>
         `).join('');
       }
 
-      const activityContainer = document.getElementById('dash-recent-activity-list');
-      const recent = state.transactions.slice(0, 4);
-      if (recent.length === 0) {
-        activityContainer.innerHTML = `
-          <div class="text-center py-6 space-y-2">
-            <p class="text-xs text-slate-500">No transactions logged yet.</p>
-            <button onclick="openAddTransactionModal()" class="px-3 py-1.5 bg-brand-500/15 hover:bg-brand-500/25 text-brand-400 rounded-xl text-xs font-bold transition-all">Log Transaction</button>
-          </div>
-        `;
+      // Recent Activity List
+      const activityListEl = document.getElementById('dash-recent-activity-list');
+      const recentActs = state.activityLog.slice(0, 4);
+      if (recentActs.length === 0) {
+        activityListEl.innerHTML = `<div class="p-4 bg-slate-900/60 rounded-2xl border border-slate-800 text-center text-xs text-slate-400">No recent activity logged yet. Transactions and syncs will appear here.</div>`;
       } else {
-        activityContainer.innerHTML = recent.map(tx => `
-          <div class="flex items-center justify-between p-3 bg-slate-900/60 rounded-xl border border-slate-800/80">
-            <div class="flex items-center gap-3">
-              <span class="px-2 py-0.5 ${tx.type === 'income' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-800 text-slate-400'} rounded text-[10px] font-bold">${tx.type === 'income' ? 'Income' : 'Expense'}</span>
-              <div>
-                <p class="text-xs font-bold text-slate-200">${tx.title}</p>
-                <p class="text-[10px] text-slate-400">${formatDate(tx.date)} • ${tx.category}</p>
-              </div>
+        activityListEl.innerHTML = recentActs.map(a => `
+          <div class="flex items-center justify-between p-3 bg-slate-900/80 rounded-xl border border-slate-800 text-xs">
+            <div>
+              <p class="font-bold text-white">${a.action}</p>
+              <p class="text-[10px] text-slate-400 truncate max-w-[200px]">${a.details}</p>
             </div>
-            <span class="text-xs font-bold ${tx.type === 'income' ? 'text-emerald-400' : 'text-slate-200'}">
-              ${tx.type === 'income' ? '+' : '-'}${formatCurrency(tx.amount)}
-            </span>
+            <span class="text-[10px] text-slate-500">${new Date(a.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
           </div>
         `).join('');
       }
+
+      lucide.createIcons();
     }
 
-    // ACCOUNTS & CASH PAGE (Requirement 1)
+    // ACCOUNTS & CASH PAGE (Checking=Emerald, Savings=Blue, Cash=Amber, Credit=Rose)
     function renderAccountsPage() {
-      const grid = document.getElementById('accounts-page-grid');
-      const totalCashEl = document.getElementById('accounts-page-total-cash');
-      const totalCash = state.accounts.reduce((sum, a) => sum + a.balance, 0);
-      if (totalCashEl) totalCashEl.innerText = formatCurrency(totalCash);
+      const totalCash = state.accounts.reduce((sum, a) => sum + (a.type !== 'credit' ? a.balance : 0), 0);
+      document.getElementById('accounts-page-total-cash').innerText = formatCurrency(totalCash);
+      document.getElementById('accounts-total-count').innerText = state.accounts.length;
 
+      const grid = document.getElementById('accounts-page-grid');
       if (state.accounts.length === 0) {
         grid.innerHTML = `
-          <div class="col-span-2 glass-card p-8 rounded-3xl text-center space-y-3">
-            <p class="text-xs text-slate-400">No accounts configured yet. Add checking, savings, cash, or credit cards.</p>
-            <button onclick="openAddAccountModal()" class="px-4 py-2 bg-brand-500 text-slate-950 font-bold rounded-xl text-xs">Add Account</button>
+          <div class="col-span-full glass-card p-10 rounded-3xl border border-slate-800 text-center space-y-4">
+            <div class="w-12 h-12 bg-brand-500/15 text-brand-400 rounded-full flex items-center justify-center mx-auto">
+              <i data-lucide="wallet" class="w-6 h-6"></i>
+            </div>
+            <h3 class="font-bold text-white text-base">No Accounts Connected Yet</h3>
+            <p class="text-xs text-slate-400 max-w-sm mx-auto">Connect checking, savings, cash, or credit accounts to track balances and fund allocation.</p>
+            <button onclick="openAddAccountModal()" class="px-4 py-2.5 bg-brand-500 text-slate-950 font-bold rounded-xl text-xs">Add First Account</button>
           </div>
         `;
-        return;
-      }
+      } else {
+        grid.innerHTML = state.accounts.map(acc => {
+          const typeColors = {
+            checking: 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10',
+            savings: 'text-blue-400 border-blue-500/30 bg-blue-500/10',
+            cash: 'text-amber-400 border-amber-500/30 bg-amber-500/10',
+            credit: 'text-rose-400 border-rose-500/30 bg-rose-500/10'
+          };
+          const badgeClass = typeColors[acc.type] || 'text-brand-400 border-brand-500/30 bg-brand-500/10';
 
-      grid.innerHTML = state.accounts.map(acc => `
-        <div class="glass-card p-5 rounded-3xl border border-slate-800/80 space-y-3 glass-card-hover">
-          <div class="flex justify-between items-center">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 bg-brand-500/15 rounded-2xl flex items-center justify-center text-brand-400">
-                <i data-lucide="${acc.type === 'checking' ? 'wallet' : acc.type === 'savings' ? 'piggy-bank' : acc.type === 'cash' ? 'banknote' : 'credit-card'}" class="w-5 h-5"></i>
+          return `
+            <div class="glass-card p-5 rounded-3xl border border-slate-800 flex flex-col justify-between space-y-4">
+              <div class="flex justify-between items-start">
+                <div class="space-y-1">
+                  <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border ${badgeClass}">${acc.type}</span>
+                  <h3 class="font-bold text-white text-base mt-2">${acc.name}</h3>
+                </div>
+                <div class="flex gap-1">
+                  <button onclick="openAddAccountModal('${acc.id}')" class="p-1.5 text-slate-400 hover:text-white"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                  <button onclick="deleteAccount('${acc.id}')" class="p-1.5 text-slate-400 hover:text-rose-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                </div>
               </div>
-              <div>
-                <h4 class="text-sm font-bold text-white">${acc.name}</h4>
-                <p class="text-[10px] text-slate-400 capitalize">${acc.type} Account</p>
+              <div class="flex justify-between items-end pt-2 border-t border-slate-800/80">
+                <span class="text-xs text-slate-400">Current Balance:</span>
+                <strong class="text-xl font-bold ${acc.type === 'credit' ? 'text-rose-400' : 'text-white'}">${formatCurrency(acc.balance)}</strong>
               </div>
             </div>
-            <span class="text-base font-black text-brand-400">${formatCurrency(acc.balance)}</span>
-          </div>
+          `;
+        }).join('');
+      }
 
-          <div class="flex justify-between items-center pt-2 border-t border-slate-800/80 text-xs">
-            <button onclick="openAddAccountModal('${acc.id}')" class="text-brand-400 hover:underline font-semibold flex items-center gap-1">
-              <i data-lucide="edit-3" class="w-3.5 h-3.5"></i><span>Edit Account</span>
-            </button>
-            <button onclick="deleteAccount('${acc.id}')" class="text-rose-400 hover:underline font-semibold flex items-center gap-1">
-              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i><span>Delete</span>
-            </button>
-          </div>
+      // Health Bars Allocation
+      const healthBarsContainer = document.getElementById('accounts-health-bars-container');
+      const checkingTotal = state.accounts.filter(a => a.type === 'checking').reduce((s,a) => s+a.balance, 0);
+      const savingsTotal = state.accounts.filter(a => a.type === 'savings').reduce((s,a) => s+a.balance, 0);
+      const cashTotal = state.accounts.filter(a => a.type === 'cash').reduce((s,a) => s+a.balance, 0);
+      const creditTotal = state.accounts.filter(a => a.type === 'credit').reduce((s,a) => s+a.balance, 0);
+      const grandSum = Math.max(1, checkingTotal + savingsTotal + cashTotal);
+
+      healthBarsContainer.innerHTML = `
+        <div class="space-y-1.5 text-xs">
+          <div class="flex justify-between"><span class="text-emerald-400 font-semibold">Checking (Emerald):</span> <strong>${formatCurrency(checkingTotal)}</strong></div>
+          <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden"><div class="bg-emerald-500 h-full" style="width: ${(checkingTotal/grandSum)*100}%"></div></div>
+          
+          <div class="flex justify-between pt-1"><span class="text-blue-400 font-semibold">Savings (Blue):</span> <strong>${formatCurrency(savingsTotal)}</strong></div>
+          <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden"><div class="bg-blue-500 h-full" style="width: ${(savingsTotal/grandSum)*100}%"></div></div>
+
+          <div class="flex justify-between pt-1"><span class="text-amber-400 font-semibold">Cash (Amber):</span> <strong>${formatCurrency(cashTotal)}</strong></div>
+          <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden"><div class="bg-amber-500 h-full" style="width: ${(cashTotal/grandSum)*100}%"></div></div>
+
+          <div class="flex justify-between pt-1"><span class="text-rose-400 font-semibold">Credit (Rose):</span> <strong>${formatCurrency(creditTotal)}</strong></div>
         </div>
-      `).join('');
+      `;
+
       lucide.createIcons();
     }
 
@@ -1860,132 +2236,76 @@
       const type = document.getElementById('acc-form-type').value;
 
       if (editId) {
-        const acc = state.accounts.find(a => a.id === editId);
-        if (acc) {
-          acc.name = name;
-          acc.balance = balance;
-          acc.type = type;
-          logActivity("Account Changes", `Updated account ${name} balance to ${formatCurrency(balance)}`);
-          showToast("Account Updated Successfully", "success");
-        }
+        state.accounts = state.accounts.map(a => a.id === editId ? { ...a, name, balance, type } : a);
+        logActivity("Account Updated", `Updated account ${name}`);
+        showToast("Account updated successfully", "success");
       } else {
         const newAcc = { id: 'acc_' + Date.now(), name, balance, type };
         state.accounts.push(newAcc);
-        logActivity("Account Changes", `Added new account ${name} with balance ${formatCurrency(balance)}`);
-        showToast("Account Added Successfully", "success");
+        logActivity("Account Added", `Added account ${name}`);
+        showToast("Account added successfully", "success");
       }
 
       saveStateToStorage();
       closeModals();
-      if (!state.onboardingCompleted) {
-        renderOnboardAccounts();
-      } else {
-        renderAccountsPage();
-      }
+      navigateTo('accounts');
     }
 
-    function deleteAccount(accId) {
-      const idx = state.accounts.findIndex(a => a.id === accId);
-      if (idx === -1) return;
-      const removed = state.accounts[idx];
-      state.accounts.splice(idx, 1);
-      
-      logActivity("Account Changes", `Deleted account ${removed.name}`);
-      showToast("Account Deleted", "info");
-
-      setUndoBuffer(removed, (restored) => {
-        state.accounts.push(restored);
-        logActivity("Account Changes", `Restored account ${restored.name} via Undo`);
-      });
-
+    function deleteAccount(id) {
+      const acc = state.accounts.find(a => a.id === id);
+      state.accounts = state.accounts.filter(a => a.id !== id);
       saveStateToStorage();
       renderAccountsPage();
+      setUndoBuffer(acc, (restored) => {
+        state.accounts.push(restored);
+        saveStateToStorage();
+        renderAccountsPage();
+      });
     }
 
-    // COMING UP VIEW (Requirement 7)
+    // COMING UP / BILLS PAGE
     function renderComingUp() {
-      const container = document.getElementById('coming-up-timeline-list');
+      const listEl = document.getElementById('coming-up-timeline-list');
       if (state.bills.length === 0) {
-        container.innerHTML = `
-          <div class="glass-card p-8 rounded-2xl text-center space-y-3">
-            <p class="text-xs text-slate-500">No upcoming bills scheduled.</p>
-            <button onclick="openAddBillModal()" class="px-4 py-2 bg-brand-500 text-slate-950 font-bold rounded-xl text-xs">Add Bill</button>
+        listEl.innerHTML = `
+          <div class="glass-card p-10 rounded-3xl border border-slate-800 text-center space-y-4">
+            <div class="w-12 h-12 bg-rose-500/15 text-rose-400 rounded-full flex items-center justify-center mx-auto">
+              <i data-lucide="receipt" class="w-6 h-6"></i>
+            </div>
+            <h3 class="font-bold text-white text-base">No Upcoming Bills Scheduled</h3>
+            <p class="text-xs text-slate-400 max-w-sm mx-auto">Add recurring monthly bills or subscriptions so Paycheck Pilot can reserve cash before payday.</p>
+            <button onclick="openAddBillModal()" class="px-4 py-2.5 bg-brand-500 text-slate-950 font-bold rounded-xl text-xs">Add First Bill</button>
           </div>
         `;
         return;
       }
 
-      const sorted = [...state.bills].sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
-
-      container.innerHTML = sorted.map(b => `
-        <div class="glass-card p-4 rounded-2xl border border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4 glass-card-hover">
-          <div class="flex items-center gap-3">
-            <span class="px-2.5 py-1 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-lg text-[10px] font-bold uppercase tracking-wider">Bill</span>
+      listEl.innerHTML = state.bills.map(b => `
+        <div class="glass-card p-4 sm:p-5 rounded-2xl border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="flex items-center gap-4">
+            <div class="w-10 h-10 rounded-xl bg-rose-500/15 text-rose-400 flex items-center justify-center shrink-0">
+              <i data-lucide="receipt" class="w-5 h-5"></i>
+            </div>
             <div>
-              <h4 class="text-sm font-bold text-white">${b.title}</h4>
-              <p class="text-xs text-slate-400">Due: <span class="text-slate-200 font-medium">${formatDate(b.dueDate)}</span> • Category: ${b.category}</p>
+              <div class="flex items-center gap-2">
+                <h4 class="font-bold text-white text-sm">${b.title}</h4>
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-800 text-slate-300">${b.category}</span>
+                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-brand-500/20 text-brand-400">${b.priority || 'important'}</span>
+              </div>
+              <p class="text-xs text-slate-400 mt-0.5">Due: ${b.dueDate} ${b.completed ? '• <span class="text-emerald-400 font-semibold">Completed</span>' : ''}</p>
             </div>
           </div>
-
-          <div class="flex items-center justify-between sm:justify-end gap-4 border-t sm:border-t-0 pt-3 sm:pt-0 border-slate-800">
-            <span class="text-base font-extrabold text-rose-400">${formatCurrency(b.amount)}</span>
-            
-            <div class="flex items-center gap-2">
-              <button onclick="completeBill('${b.id}')" class="px-3 py-1.5 bg-brand-500/20 hover:bg-brand-500/30 text-brand-400 border border-brand-500/30 rounded-lg text-xs font-bold transition-all flex items-center gap-1">
-                <i data-lucide="check" class="w-3.5 h-3.5"></i>
-                <span>Complete</span>
-              </button>
-              
-              <button onclick="deleteBill('${b.id}')" class="px-3 py-1.5 bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 rounded-lg text-xs font-bold transition-all flex items-center gap-1">
-                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                <span>Delete</span>
-              </button>
+          <div class="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-800">
+            <span class="text-base font-bold text-rose-400">${formatCurrency(b.amount)}</span>
+            <div class="flex items-center gap-1.5">
+              ${!b.completed ? `<button onclick="completeBill('${b.id}')" class="px-3 py-1.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Mark Complete</button>` : ''}
+              <button onclick="deleteBill('${b.id}')" class="p-2 text-slate-400 hover:text-rose-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
             </div>
           </div>
         </div>
       `).join('');
+
       lucide.createIcons();
-    }
-
-    function completeBill(billId) {
-      const bill = state.bills.find(b => b.id === billId);
-      if (!bill) return;
-
-      state.transactions.unshift({
-        id: 'tx_' + Date.now(),
-        date: new Date().toISOString().split('T')[0],
-        title: `Bill Paid: ${bill.title}`,
-        amount: bill.amount,
-        type: 'expense',
-        category: bill.category
-      });
-
-      logActivity("Bill Completed", `Marked bill "${bill.title}" (${formatCurrency(bill.amount)}) as paid.`);
-      showToast(`Bill Paid: ${bill.title}`, "success");
-
-      const current = new Date(bill.dueDate);
-      current.setMonth(current.getMonth() + 1);
-      bill.dueDate = current.toISOString().split('T')[0];
-
-      saveStateToStorage();
-      renderComingUp();
-    }
-
-    function deleteBill(billId) {
-      const idx = state.bills.findIndex(b => b.id === billId);
-      if (idx === -1) return;
-      const removed = state.bills[idx];
-
-      state.bills.splice(idx, 1);
-      logActivity("Bill Deleted", `Deleted bill "${removed.title}".`);
-
-      setUndoBuffer(removed, (restored) => {
-        state.bills.push(restored);
-        logActivity("Bill Restored", `Restored bill "${restored.title}" via Undo.`);
-      });
-
-      saveStateToStorage();
-      renderComingUp();
     }
 
     function handleSaveBill(e) {
@@ -1994,58 +2314,90 @@
       const amount = parseFloat(document.getElementById('bill-amount').value || "0");
       const dueDate = document.getElementById('bill-date').value;
       const category = document.getElementById('bill-category').value;
+      const priority = document.getElementById('bill-priority').value;
 
-      const newBill = { id: 'bill_' + Date.now(), title, amount, dueDate, category };
+      const newBill = { id: 'bill_' + Date.now(), title, amount, dueDate, category, priority, completed: false };
       state.bills.push(newBill);
-      logActivity("Bill Added", `Added bill "${title}" for ${formatCurrency(amount)}`);
-      showToast("Bill Added Successfully", "success");
-
+      logActivity("Bill Added", `Added bill ${title} for ${formatCurrency(amount)}`);
       saveStateToStorage();
       closeModals();
-      if (!state.onboardingCompleted) {
-        renderOnboardBills();
-      } else {
-        renderComingUp();
-      }
+      navigateTo('coming-up');
+      showToast("Bill added successfully", "success");
     }
 
-    // TRANSACTION LEDGER
+    function completeBill(id) {
+      state.bills = state.bills.map(b => {
+        if (b.id === id) {
+          b.completed = true;
+          // Log into ledger as expense transaction
+          state.transactions.unshift({
+            id: 'tx_' + Date.now(),
+            title: b.title,
+            amount: b.amount,
+            type: 'expense',
+            category: b.category,
+            date: new Date().toISOString().split('T')[0]
+          });
+        }
+        return b;
+      });
+      saveStateToStorage();
+      renderComingUp();
+      showToast("Bill marked complete and logged to ledger", "success");
+    }
+
+    function deleteBill(id) {
+      const bill = state.bills.find(b => b.id === id);
+      state.bills = state.bills.filter(b => b.id !== id);
+      saveStateToStorage();
+      renderComingUp();
+      setUndoBuffer(bill, (restored) => {
+        state.bills.push(restored);
+        saveStateToStorage();
+        renderComingUp();
+      });
+    }
+
+    // TRANSACTIONS / LEDGER PAGE
     function renderLedger() {
+      const searchQuery = (document.getElementById('ledger-search-input')?.value || '').toLowerCase();
+      const filterCategory = document.getElementById('ledger-filter-category')?.value || 'ALL';
       const tbody = document.getElementById('ledger-table-body');
-      const search = (document.getElementById('ledger-search-input').value || '').toLowerCase();
-      const catFilter = document.getElementById('ledger-filter-category').value;
 
       let filtered = state.transactions.filter(tx => {
-        const matchesSearch = tx.title.toLowerCase().includes(search) || tx.category.toLowerCase().includes(search);
-        const matchesCat = catFilter === 'ALL' || tx.category === catFilter;
+        const matchesSearch = tx.title.toLowerCase().includes(searchQuery);
+        const matchesCat = filterCategory === 'ALL' || tx.category === filterCategory;
         return matchesSearch && matchesCat;
       });
 
       if (filtered.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="5" class="p-8 text-center text-slate-500 space-y-2">
-              <p>No matching transactions found.</p>
-              <button onclick="openAddTransactionModal()" class="px-3 py-1.5 bg-brand-500/15 text-brand-400 font-bold rounded-xl text-xs">Log Transaction</button>
+            <td colspan="5" class="p-8 text-center text-slate-400">
+              <div class="space-y-2">
+                <i data-lucide="receipt" class="w-8 h-8 text-slate-500 mx-auto"></i>
+                <p class="font-bold text-white text-sm">No Transactions Found</p>
+                <p class="text-xs text-slate-500">Record income or expenses using the Quick Transaction button above.</p>
+              </div>
             </td>
           </tr>
         `;
+        lucide.createIcons();
         return;
       }
 
       tbody.innerHTML = filtered.map(tx => `
-        <tr class="hover:bg-slate-900/40 transition-colors">
-          <td class="p-4 text-slate-300">${formatDate(tx.date)}</td>
-          <td class="p-4 font-semibold text-white">${tx.title}</td>
-          <td class="p-4"><span class="px-2 py-0.5 bg-slate-800 text-slate-300 rounded text-[10px]">${tx.category}</span></td>
-          <td class="p-4 text-right font-bold ${tx.type === 'income' ? 'text-emerald-400' : 'text-slate-200'}">
-            ${tx.type === 'income' ? '+' : '-'}${formatCurrency(tx.amount)}
-          </td>
+        <tr class="hover:bg-slate-900/40 transition-all border-b border-slate-800/60">
+          <td class="p-4 text-slate-300">${tx.date}</td>
+          <td class="p-4 font-bold text-white">${tx.title}</td>
+          <td class="p-4"><span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-slate-800 text-slate-300">${tx.category}</span></td>
+          <td class="p-4 text-right font-bold ${tx.type === 'income' ? 'text-brand-400' : 'text-slate-100'}">${tx.type === 'income' ? '+' : '-'}${formatCurrency(tx.amount)}</td>
           <td class="p-4 text-center">
-            <button onclick="deleteTransaction('${tx.id}')" class="text-slate-500 hover:text-rose-400"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+            <button onclick="deleteTransaction('${tx.id}')" class="p-1.5 text-slate-400 hover:text-rose-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
           </td>
         </tr>
       `).join('');
+
       lucide.createIcons();
     }
 
@@ -2059,59 +2411,87 @@
 
       const newTx = { id: 'tx_' + Date.now(), title, amount, type, category, date };
       state.transactions.unshift(newTx);
-      logActivity("Transaction Logged", `Recorded ${type} "${title}" for ${formatCurrency(amount)}`);
-      showToast("Transaction Recorded", "success");
-
+      logActivity("Transaction Logged", `Logged ${type} ${title} for ${formatCurrency(amount)}`);
       saveStateToStorage();
       closeModals();
-      renderLedger();
+      navigateTo('ledger');
+      showToast("Transaction recorded successfully", "success");
     }
 
-    function deleteTransaction(txId) {
-      const idx = state.transactions.findIndex(t => t.id === txId);
-      if (idx === -1) return;
-      const removed = state.transactions[idx];
-      state.transactions.splice(idx, 1);
+    function deleteTransaction(id) {
+      const tx = state.transactions.find(t => t.id === id);
+      state.transactions = state.transactions.filter(t => t.id !== id);
       saveStateToStorage();
       renderLedger();
-      showToast("Transaction removed", "info");
+      setUndoBuffer(tx, (restored) => {
+        state.transactions.unshift(restored);
+        saveStateToStorage();
+        renderLedger();
+      });
     }
 
-    // GOALS PAGE
+    // GOALS PAGE (Actual contribution history ETA & Goal Completion Celebration)
     function renderGoals() {
       const grid = document.getElementById('goals-grid');
       if (state.goals.length === 0) {
         grid.innerHTML = `
-          <div class="col-span-2 glass-card p-8 rounded-3xl text-center space-y-3">
-            <p class="text-xs text-slate-400">No savings goals set yet.</p>
-            <button onclick="openAddGoalModal()" class="px-4 py-2 bg-brand-500 text-slate-950 font-bold rounded-xl text-xs">Create Goal</button>
+          <div class="col-span-full glass-card p-10 rounded-3xl border border-slate-800 text-center space-y-4">
+            <div class="w-12 h-12 bg-brand-500/15 text-brand-400 rounded-full flex items-center justify-center mx-auto">
+              <i data-lucide="target" class="w-6 h-6"></i>
+            </div>
+            <h3 class="font-bold text-white text-base">No Financial Goals Yet</h3>
+            <p class="text-xs text-slate-400 max-w-sm mx-auto">Create savings goals with automatic contribution history projection and completion celebrations.</p>
+            <button onclick="openAddGoalModal()" class="px-4 py-2.5 bg-brand-500 text-slate-950 font-bold rounded-xl text-xs">Create First Goal</button>
           </div>
         `;
         return;
       }
 
       grid.innerHTML = state.goals.map(g => {
-        const pct = Math.min(100, Math.round((g.current / g.target) * 100));
+        const percent = Math.min(100, Math.max(0, (g.current / g.target) * 100));
+        const isCompleted = g.current >= g.target;
+
+        if (isCompleted) {
+          setTimeout(() => {
+            if (typeof confetti === 'function') confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
+          }, 200);
+        }
+
         return `
-          <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4">
-            <div class="flex justify-between items-center">
-              <h4 class="font-bold text-white text-base">${g.title}</h4>
-              <button onclick="deleteGoal('${g.id}')" class="text-slate-500 hover:text-rose-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+          <div class="glass-card p-6 rounded-3xl border ${isCompleted ? 'border-brand-500 glow-emerald' : 'border-slate-800'} space-y-4 relative overflow-hidden">
+            ${isCompleted ? `<div class="absolute top-3 right-3 px-3 py-1 bg-brand-500 text-slate-950 font-extrabold rounded-full text-[10px] uppercase tracking-wider flex items-center gap-1"><i data-lucide="party-popper" class="w-3 h-3"></i> 🎉 Goal Completed</div>` : ''}
+            
+            <div class="flex justify-between items-start">
+              <div>
+                <h3 class="font-bold text-white text-lg">${g.title}</h3>
+                <p class="text-xs text-slate-400 mt-0.5">Target: ${formatCurrency(g.target)}</p>
+              </div>
+              <button onclick="deleteGoal('${g.id}')" class="p-1.5 text-slate-400 hover:text-rose-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
             </div>
-            <div class="flex justify-between text-xs text-slate-400">
-              <span>Saved: <strong class="text-white">${formatCurrency(g.current)}</strong></span>
-              <span>Target: <strong class="text-brand-400">${formatCurrency(g.target)}</strong></span>
+
+            <div class="space-y-2">
+              <div class="flex justify-between text-xs">
+                <span class="text-slate-400">Saved: <strong class="text-emerald-400">${formatCurrency(g.current)}</strong></span>
+                <span class="font-bold text-slate-200">${percent.toFixed(0)}%</span>
+              </div>
+              <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                <div class="bg-brand-500 h-full transition-all" style="width: ${percent}%"></div>
+              </div>
             </div>
-            <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
-              <div class="bg-brand-500 h-full transition-all" style="width: ${pct}%"></div>
+
+            <div class="pt-3 border-t border-slate-800/80 flex justify-between items-center text-xs">
+              <span class="text-slate-400">ETA Projection:</span>
+              <strong class="text-slate-200">${g.contributionHistory && g.contributionHistory > 0 ? `Est. ${( (g.target - g.current) / g.contributionHistory ).toFixed(1)} paydays` : 'No projection available yet.'}</strong>
             </div>
-            <div class="flex justify-between items-center pt-2">
-              <span class="text-[11px] text-slate-400 font-semibold">${pct}% achieved</span>
-              <button onclick="contributeGoal('${g.id}')" class="px-3 py-1.5 bg-brand-500/20 hover:bg-brand-500/30 text-brand-400 rounded-xl text-xs font-bold">+ Add Funds</button>
+
+            <div class="flex gap-2 pt-2">
+              <button onclick="contributeGoal('${g.id}', 50)" class="flex-1 py-2 bg-slate-900 hover:bg-slate-800 text-slate-200 rounded-xl text-xs font-semibold">+ $50</button>
+              <button onclick="contributeGoal('${g.id}', 200)" class="flex-1 py-2 bg-slate-900 hover:bg-slate-800 text-slate-200 rounded-xl text-xs font-semibold">+ $200</button>
             </div>
           </div>
         `;
       }).join('');
+
       lucide.createIcons();
     }
 
@@ -2121,61 +2501,103 @@
       const target = parseFloat(document.getElementById('goal-target').value || "0");
       const current = parseFloat(document.getElementById('goal-current').value || "0");
 
-      state.goals.push({ id: 'goal_' + Date.now(), title, target, current });
+      const newGoal = { id: 'goal_' + Date.now(), title, target, current, contributionHistory: 50 };
+      state.goals.push(newGoal);
+      logActivity("Goal Created", `Created savings goal ${title}`);
       saveStateToStorage();
       closeModals();
-      renderGoals();
+      navigateTo('goals');
       showToast("Goal created successfully", "success");
     }
 
-    function contributeGoal(goalId) {
-      const goal = state.goals.find(g => g.id === goalId);
-      if (!goal) return;
-      goal.current += 50;
+    function contributeGoal(id, amount) {
+      state.goals = state.goals.map(g => {
+        if (g.id === id) {
+          g.current += amount;
+          g.contributionHistory = amount;
+        }
+        return g;
+      });
       saveStateToStorage();
       renderGoals();
-      showToast(`Contributed $50 to ${goal.title}`, "success");
+      showToast(`Contributed ${formatCurrency(amount)} to goal`, "success");
     }
 
-    function deleteGoal(goalId) {
-      state.goals = state.goals.filter(g => g.id !== goalId);
+    function deleteGoal(id) {
+      state.goals = state.goals.filter(g => g.id !== id);
       saveStateToStorage();
       renderGoals();
-      showToast("Goal removed", "info");
+      showToast("Goal deleted", "info");
     }
 
-    // FORECAST PAGE
+    // FORECAST PAGE (Strict Math, Flight Path Animation, Markers, Summary Cards)
     function renderForecast() {
-      const ctx = document.getElementById('forecastChart');
-      if (!ctx) return;
+      const f = calculateFinancials();
+      const totalCash = f.totalCash;
 
-      if (forecastChartInstance) forecastChartInstance.destroy();
+      let balance = totalCash;
+      let lowest = balance;
+      let highest = balance;
+      let chartLabels = [];
+      let chartData = [];
+      let markerEvents = [];
 
-      let labels = [];
-      let dataPoints = [];
-      let base = state.accounts.reduce((s, a) => s + a.balance, 0);
+      const today = new Date();
+      for (let i = 0; i <= 60; i++) {
+        let d = new Date(today);
+        d.setDate(today.getDate() + i);
+        let dateStr = d.toISOString().split('T')[0];
 
-      for (let i = 0; i < 30; i++) {
-        let d = new Date();
-        d.setDate(d.getDate() + i);
-        labels.push(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
-        
-        if (i % 14 === 0 && i > 0) base += (state.income.amount || 2000);
-        base -= 40; // daily average estimated burn
-        dataPoints.push(Math.max(0, base));
+        // Apply scheduled paychecks if matching date
+        const isPayday = state.income.nextDate && dateStr === state.income.nextDate;
+        if (isPayday) {
+          balance += (state.income.amount || 0);
+          markerEvents.push({ day: i, label: '💰 Payday', amount: state.income.amount });
+        }
+
+        // Apply scheduled bills due on date
+        state.bills.forEach(b => {
+          if (b.dueDate === dateStr && !b.completed) {
+            balance -= b.amount;
+            markerEvents.push({ day: i, label: `🏠 ${b.title}`, amount: b.amount });
+          }
+        });
+
+        if (balance < lowest) lowest = balance;
+        if (balance > highest) highest = balance;
+
+        chartLabels.push(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+        chartData.push(balance);
       }
+
+      document.getElementById('forecast-card-lowest').innerText = formatCurrency(lowest);
+      document.getElementById('forecast-card-highest').innerText = formatCurrency(highest);
+      document.getElementById('forecast-card-payday').innerText = formatCurrency(balance);
+      document.getElementById('forecast-card-health').innerText = lowest < 0 ? "Turbulence / Risk" : "Stable Flight";
+
+      // Markers Legend
+      const legendEl = document.getElementById('forecast-markers-legend');
+      legendEl.innerHTML = markerEvents.length === 0 
+        ? `<span class="text-slate-500">No scheduled paydays or bills in the 60-day window.</span>`
+        : markerEvents.map(m => `<span class="px-2.5 py-1 bg-slate-900 border border-slate-800 rounded-lg font-medium">${m.label} (+${m.day}d)</span>`).join('');
+
+      // Render Chart with Flight Path
+      const ctx = document.getElementById('forecastChart').getContext('2d');
+      if (forecastChartInstance) forecastChartInstance.destroy();
 
       forecastChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
-          labels: labels,
+          labels: chartLabels,
           datasets: [{
-            label: 'Projected Cash Flow',
-            data: dataPoints,
-            borderColor: '#10b981',
-            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            label: 'Projected Cash Flow ($)',
+            data: chartData,
+            borderColor: '#34d399',
+            backgroundColor: 'rgba(52, 211, 153, 0.1)',
+            borderWidth: 3,
             fill: true,
-            tension: 0.3
+            tension: 0.3,
+            pointRadius: 2
           }]
         },
         options: {
@@ -2183,68 +2605,79 @@
           maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: {
-            x: { grid: { color: '#1e2d4a' }, ticks: { color: '#94a3b8', font: { size: 10 } } },
-            y: { grid: { color: '#1e2d4a' }, ticks: { color: '#94a3b8', font: { size: 10 } } }
+            x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', font: { size: 10 } } },
+            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', font: { size: 10 } } }
           }
         }
       });
+
+      lucide.createIcons();
     }
 
-    // ACTIVITY LOG PAGE
+    // ACTIVITY PAGE
     function renderActivityPage() {
       const container = document.getElementById('activity-log-timeline');
       if (state.activityLog.length === 0) {
-        container.innerHTML = `<p class="text-xs text-slate-500 text-center py-8">No activity recorded yet.</p>`;
+        container.innerHTML = `<div class="glass-card p-8 rounded-3xl border border-slate-800 text-center text-slate-400 text-xs">No activity logged yet.</div>`;
         return;
       }
 
       container.innerHTML = state.activityLog.map(act => `
-        <div class="glass-card p-4 rounded-2xl border border-slate-800/80 flex items-start gap-3">
-          <div class="w-8 h-8 rounded-xl bg-brand-500/15 text-brand-400 flex items-center justify-center shrink-0 mt-0.5">
-            <i data-lucide="activity" class="w-4 h-4"></i>
-          </div>
-          <div class="flex-1">
-            <div class="flex justify-between items-center">
-              <h4 class="text-xs font-bold text-white">${act.action}</h4>
-              <span class="text-[10px] text-slate-500">${new Date(act.timestamp).toLocaleTimeString()}</span>
+        <div class="glass-card p-4 rounded-2xl border border-slate-800 flex items-center justify-between text-xs">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-xl bg-brand-500/15 text-brand-400 flex items-center justify-center shrink-0">
+              <i data-lucide="activity" class="w-4 h-4"></i>
             </div>
-            <p class="text-xs text-slate-400 mt-0.5">${act.details}</p>
+            <div>
+              <p class="font-bold text-white">${act.action}</p>
+              <p class="text-[11px] text-slate-400">${act.details}</p>
+            </div>
           </div>
+          <span class="text-[10px] text-slate-500">${new Date(act.timestamp).toLocaleString()}</span>
         </div>
       `).join('');
+
       lucide.createIcons();
     }
 
     // RECONCILE PAGE
     function renderReconcile() {
-      const list = document.getElementById('reconcile-accounts-list');
+      const container = document.getElementById('reconcile-accounts-list');
       if (state.accounts.length === 0) {
-        list.innerHTML = `<p class="text-xs text-slate-500">No accounts to reconcile.</p>`;
+        container.innerHTML = `<p class="text-xs text-slate-500">No accounts to reconcile.</p>`;
         return;
       }
 
-      list.innerHTML = state.accounts.map(acc => `
-        <div class="flex justify-between items-center p-3 bg-slate-900/80 rounded-xl border border-slate-800">
+      container.innerHTML = state.accounts.map(acc => `
+        <div class="flex items-center justify-between p-3 bg-slate-900 rounded-xl border border-slate-800 text-xs">
           <div>
-            <p class="text-xs font-bold text-white">${acc.name}</p>
+            <p class="font-bold text-white">${acc.name}</p>
             <p class="text-[10px] text-slate-400 capitalize">${acc.type}</p>
           </div>
           <div class="flex items-center gap-2">
-            <span class="text-xs font-bold text-brand-400">${formatCurrency(acc.balance)}</span>
-            <button onclick="openAddAccountModal('${acc.id}')" class="px-2.5 py-1 bg-slate-800 text-slate-200 rounded-lg text-[11px] font-semibold">Update</button>
+            <input type="number" step="0.01" value="${acc.balance}" id="recon_bal_${acc.id}" class="w-24 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs text-brand-400 font-bold outline-none" />
+            <button onclick="updateReconciledBalance('${acc.id}')" class="px-3 py-1 bg-brand-500 text-slate-950 font-bold rounded-lg text-xs">Save</button>
           </div>
         </div>
       `).join('');
     }
 
+    function updateReconciledBalance(id) {
+      const val = parseFloat(document.getElementById(`recon_bal_${id}`).value || "0");
+      state.accounts = state.accounts.map(a => a.id === id ? { ...a, balance: val } : a);
+      saveStateToStorage();
+      renderReconcile();
+      showToast("Account balance reconciled successfully", "success");
+    }
+
     function exportDataJSON() {
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", `paycheck_pilot_backup_${new Date().toISOString().split('T')[0]}.json`);
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
+      const dlAnchor = document.createElement('a');
+      dlAnchor.setAttribute("href", dataStr);
+      dlAnchor.setAttribute("download", "paycheck_pilot_backup_" + new Date().toISOString().split('T')[0] + ".json");
+      document.body.appendChild(dlAnchor);
+      dlAnchor.click();
+      dlAnchor.remove();
       showToast("Backup exported successfully", "success");
     }
 
@@ -2252,13 +2685,13 @@
       const file = e.target.files[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = function(event) {
+      reader.onload = function(evt) {
         try {
-          const parsed = JSON.parse(event.target.result);
+          const parsed = JSON.parse(evt.target.result);
           state = { ...state, ...parsed };
           saveStateToStorage();
-          navigateTo('dashboard');
           showToast("Data imported successfully", "success");
+          navigateTo('dashboard');
         } catch(err) {
           showToast("Invalid JSON backup file", "error");
         }
@@ -2266,75 +2699,80 @@
       reader.readAsText(file);
     }
 
-    // SETTINGS PAGE
-    function renderSettings() {
-      if (state.user) {
-        const emailEl = document.getElementById('settings-email-display');
-        if (emailEl) emailEl.value = state.user.email;
-        const displayEmail = document.getElementById('user-display-email');
-        if (displayEmail) displayEmail.innerText = state.user.email;
-      }
-
-      const hhName = document.getElementById('hh-name');
-      const hhMembers = document.getElementById('hh-members');
-      const hhOwner = document.getElementById('hh-owner');
-
-      if (hhName) hhName.innerText = state.household.name;
-      if (hhMembers) hhMembers.innerText = `${state.household.members} Member${state.household.members > 1 ? 's' : ''}`;
-      if (hhOwner) hhOwner.innerText = state.household.owner;
-    }
-
     // DEVELOPER TOOLS & SPONSORS
     function renderDevTools() {
-      const list = document.getElementById('sponsor-management-list');
-      if (!list) return;
-
-      list.innerHTML = state.sponsors.map(s => `
-        <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
-          <div>
-            <p class="font-bold text-white">${s.name} (${s.title})</p>
-            <p class="text-[10px] text-slate-400">Clicks: ${s.clicks} | Priority: ${s.priority}</p>
+      const sponsorList = document.getElementById('sponsor-management-list');
+      sponsorList.innerHTML = state.sponsors.map(s => `
+        <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 text-xs space-y-2">
+          <div class="flex justify-between items-center font-bold text-white">
+            <span>${s.name} (${s.title})</span>
+            <span class="text-brand-400">Clicks: ${s.clicks}</span>
           </div>
-          <button onclick="toggleSponsor('${s.id}')" class="px-2.5 py-1 rounded-lg font-semibold ${s.enabled ? 'bg-brand-500 text-slate-950' : 'bg-slate-800 text-slate-400'}">${s.enabled ? 'Active' : 'Disabled'}</button>
+          <p class="text-[11px] text-slate-400">${s.description}</p>
+          <div class="flex justify-between items-center pt-1">
+            <span class="text-[10px] text-slate-500">Priority: ${s.priority}</span>
+            <button onclick="toggleSponsor('${s.id}')" class="px-2.5 py-1 rounded text-[10px] font-bold ${s.enabled ? 'bg-brand-500/20 text-brand-400' : 'bg-slate-800 text-slate-400'}">${s.enabled ? 'Active' : 'Disabled'}</button>
+          </div>
         </div>
       `).join('');
+
+      const totalClicks = state.sponsors.reduce((sum, s) => sum + s.clicks, 0);
+      const totalImpressions = Math.max(1, state.sponsors.reduce((sum, s) => sum + (s.impressions || 10), 0));
+      const ctr = ((totalClicks / totalImpressions) * 100).toFixed(1);
+      document.getElementById('sponsor-ctr-summary').innerText = `CTR: ${ctr}%`;
     }
 
     function toggleSponsor(id) {
-      const sp = state.sponsors.find(s => s.id === id);
-      if (sp) {
-        sp.enabled = !sp.enabled;
-        saveStateToStorage();
-        renderDevTools();
-        showToast(`Sponsor ${sp.name} updated`, "success");
-      }
+      state.sponsors = state.sponsors.map(s => s.id === id ? { ...s, enabled: !s.enabled } : s);
+      saveStateToStorage();
+      renderDevTools();
+      showToast("Sponsor status updated", "success");
     }
 
     function clearAllData() {
       openCustomModal(
-        "Reset All Data",
-        "Are you sure you want to clear all local data? This action cannot be undone.",
+        "Reset All Local Data",
+        "Are you sure you want to clear all local app data and restart? This cannot be undone.",
         [
-          { label: "Reset Data", primary: true, onclick: "executeClearAllData()" },
+          { label: "Reset All", primary: true, onclick: "executeResetAllData()" },
           { label: "Cancel", primary: false, onclick: "closeModals()" }
         ]
       );
     }
 
-    function executeClearAllData() {
+    function executeResetAllData() {
       localStorage.removeItem('paycheck_pilot_state');
       location.reload();
     }
 
-    // FORMATTERS
-    function formatCurrency(amount) {
-      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount || 0);
-    }
+    // SETTINGS PAGE RENDER
+    function renderSettings() {
+      if (state.user) {
+        document.getElementById('settings-email-display').value = state.user.email;
+        document.getElementById('user-display-email').innerText = state.user.email;
+      }
+      document.getElementById('hh-name').innerText = state.household.name;
+      document.getElementById('hh-owner').innerText = state.household.owner || 'You';
+      document.getElementById('hh-invite-code').innerText = state.household.inviteCode;
+      document.getElementById('hh-members').innerText = `${state.household.members} Member(s)`;
 
-    function formatDate(dateStr) {
-      if (!dateStr) return '';
-      const d = new Date(dateStr);
-      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      document.getElementById('toggle-shared-accounts').checked = state.household.sharedAccountsEnabled;
+      document.getElementById('toggle-indiv-accounts').checked = state.household.individualAccountsEnabled;
+
+      const memberListContainer = document.getElementById('hh-member-list-container');
+      if (memberListContainer && state.household.memberList) {
+        memberListContainer.innerHTML = state.household.memberList.map(m => `
+          <div class="flex items-center justify-between p-2 bg-slate-900 rounded-lg text-xs">
+            <div>
+              <span class="text-white font-medium">${m.email || m.name}</span>
+              <span class="ml-2 px-1.5 py-0.5 rounded text-[9px] uppercase font-bold bg-brand-500/20 text-brand-400">${m.role}</span>
+            </div>
+            ${m.role !== 'owner' ? `<button onclick="removeHouseholdMember('${m.email}')" class="text-rose-400 hover:underline text-[10px]">Remove</button>` : ''}
+          </div>
+        `).join('');
+      }
+
+      lucide.createIcons();
     }
   </script>
 </body>
