@@ -15,7 +15,7 @@
   <!-- Inter Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -74,27 +74,56 @@
     
     .glass-card-hover:hover {
       border-color: rgba(52, 211, 153, 0.4);
-      transform: translateY(-2px);
-      box-shadow: 0 12px 30px -10px rgba(16, 185, 129, 0.15);
+      transform: translateY(-3px) scale(1.005);
+      box-shadow: 0 16px 35px -10px rgba(16, 185, 129, 0.2);
+    }
+
+    .btn-interact {
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .btn-interact:active {
+      transform: scale(0.96);
     }
     
     .glow-emerald {
-      box-shadow: 0 0 30px -5px rgba(16, 185, 129, 0.3);
-    }
-    
-    .glow-payday {
-      box-shadow: 0 0 35px 0 rgba(16, 185, 129, 0.4);
-      border-color: rgba(52, 211, 153, 0.6);
+      box-shadow: 0 0 35px -5px rgba(16, 185, 129, 0.35);
     }
 
     .glow-warning {
-      box-shadow: 0 0 35px 0 rgba(245, 158, 11, 0.4);
+      box-shadow: 0 0 35px -5px rgba(245, 158, 11, 0.35);
       border-color: rgba(245, 158, 11, 0.6);
     }
 
     .glow-danger {
-      box-shadow: 0 0 35px 0 rgba(239, 68, 68, 0.4);
+      box-shadow: 0 0 35px -5px rgba(239, 68, 68, 0.4);
       border-color: rgba(239, 68, 68, 0.6);
+    }
+
+    /* Mission Control Deficit Beacon */
+    @keyframes pulseBeacon {
+      0%, 100% { box-shadow: 0 0 15px rgba(244, 63, 94, 0.6), inset 0 0 10px rgba(244, 63, 94, 0.4); border-color: rgba(244, 63, 94, 0.9); }
+      50% { box-shadow: 0 0 30px rgba(244, 63, 94, 0.9), inset 0 0 20px rgba(244, 63, 94, 0.7); border-color: rgba(251, 113, 133, 1); }
+    }
+    .beacon-warning {
+      animation: pulseBeacon 1.8s infinite ease-in-out;
+    }
+
+    /* Financial Runway Visual Track */
+    @keyframes runwayLights {
+      0% { background-position: 0 0; }
+      100% { background-position: 40px 0; }
+    }
+    .runway-track-healthy {
+      background: repeating-linear-gradient(90deg, rgba(16,185,129,0.4) 0, rgba(16,185,129,0.4) 12px, transparent 12px, transparent 24px);
+      animation: runwayLights 1.2s linear infinite;
+    }
+    .runway-track-warning {
+      background: repeating-linear-gradient(90deg, rgba(245,158,11,0.4) 0, rgba(245,158,11,0.4) 12px, transparent 12px, transparent 24px);
+      animation: runwayLights 1.8s linear infinite;
+    }
+    .runway-track-danger {
+      background: repeating-linear-gradient(90deg, rgba(239,68,68,0.5) 0, rgba(239,68,68,0.5) 12px, transparent 12px, transparent 24px);
+      animation: runwayLights 0.7s linear infinite;
     }
     
     .view-screen {
@@ -138,8 +167,8 @@
 
       <!-- Auth Tabs -->
       <div class="flex bg-slate-900/80 p-1 rounded-xl border border-slate-800 text-xs font-semibold">
-        <button id="auth-tab-login" onclick="switchAuthTab('login')" class="flex-1 py-2.5 rounded-lg text-white transition-all bg-brand-600 shadow-md">Sign In</button>
-        <button id="auth-tab-signup" onclick="switchAuthTab('signup')" class="flex-1 py-2.5 rounded-lg text-slate-400 hover:text-slate-200 transition-all">Create Account</button>
+        <button id="auth-tab-login" onclick="switchAuthTab('login')" class="flex-1 py-2.5 rounded-lg text-white transition-all bg-brand-600 shadow-md btn-interact">Sign In</button>
+        <button id="auth-tab-signup" onclick="switchAuthTab('signup')" class="flex-1 py-2.5 rounded-lg text-slate-400 hover:text-slate-200 transition-all btn-interact">Create Account</button>
       </div>
 
       <!-- Form Container -->
@@ -163,7 +192,7 @@
           </div>
         </div>
 
-        <button type="submit" id="auth-submit-btn" class="w-full py-3.5 px-4 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl shadow-lg glow-emerald transition-all transform active:scale-[0.98] flex items-center justify-center gap-2">
+        <button type="submit" id="auth-submit-btn" class="w-full py-3.5 px-4 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl shadow-lg glow-emerald transition-all btn-interact flex items-center justify-center gap-2">
           <span>Sign In to Pilot</span>
           <i data-lucide="arrow-right" class="w-4 h-4"></i>
         </button>
@@ -171,7 +200,7 @@
 
       <!-- Quick Demo Sign-in -->
       <div class="pt-3 border-t border-slate-800/80 text-center space-y-2">
-        <button onclick="loginAsDemo()" class="text-xs text-slate-300 hover:text-brand-400 transition-colors inline-flex items-center gap-1.5 py-1 font-medium">
+        <button onclick="loginAsDemo()" class="text-xs text-slate-300 hover:text-brand-400 transition-colors inline-flex items-center gap-1.5 py-1 font-medium btn-interact">
           <i data-lucide="play-circle" class="w-4 h-4 text-brand-400"></i>
           <span>Continue with Clean Demo Mode</span>
         </button>
@@ -222,7 +251,7 @@
 
           <div id="onboard-accounts-list" class="space-y-3 max-h-60 overflow-y-auto pr-1"></div>
 
-          <button onclick="openAddAccountModal()" class="w-full py-3 border border-dashed border-slate-700 hover:border-brand-500 text-slate-300 hover:text-brand-400 rounded-xl flex items-center justify-center gap-2 text-sm font-medium transition-all">
+          <button onclick="openAddAccountModal()" class="w-full py-3 border border-dashed border-slate-700 hover:border-brand-500 text-slate-300 hover:text-brand-400 rounded-xl flex items-center justify-center gap-2 text-sm font-medium transition-all btn-interact">
             <i data-lucide="plus-circle" class="w-4 h-4"></i> Add Cash or Credit Account
           </button>
         </div>
@@ -267,7 +296,7 @@
 
           <div id="onboard-bills-list" class="space-y-3 max-h-60 overflow-y-auto pr-1"></div>
 
-          <button onclick="openAddBillModal()" class="w-full py-3 border border-dashed border-slate-700 hover:border-brand-500 text-slate-300 hover:text-brand-400 rounded-xl flex items-center justify-center gap-2 text-sm font-medium transition-all">
+          <button onclick="openAddBillModal()" class="w-full py-3 border border-dashed border-slate-700 hover:border-brand-500 text-slate-300 hover:text-brand-400 rounded-xl flex items-center justify-center gap-2 text-sm font-medium transition-all btn-interact">
             <i data-lucide="plus-circle" class="w-4 h-4"></i> Add Bill
           </button>
         </div>
@@ -290,9 +319,9 @@
 
         <!-- Navigation Buttons -->
         <div class="flex justify-between items-center pt-6 mt-6 border-t border-slate-800">
-          <button id="onboard-prev-btn" onclick="prevOnboardStep()" class="px-5 py-2.5 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 text-sm font-semibold transition-all hidden">Back</button>
+          <button id="onboard-prev-btn" onclick="prevOnboardStep()" class="px-5 py-2.5 rounded-xl border border-slate-700 text-slate-300 hover:bg-slate-800 text-sm font-semibold transition-all hidden btn-interact">Back</button>
           <div></div>
-          <button id="onboard-next-btn" onclick="nextOnboardStep()" class="px-6 py-2.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-sm transition-all shadow-md flex items-center gap-2">
+          <button id="onboard-next-btn" onclick="nextOnboardStep()" class="px-6 py-2.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-sm transition-all shadow-md flex items-center gap-2 btn-interact">
             <span>Continue</span>
             <i data-lucide="arrow-right" class="w-4 h-4"></i>
           </button>
@@ -322,47 +351,47 @@
 
         <!-- Primary Navigation -->
         <nav class="space-y-1">
-          <button onclick="navigateTo('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
+          <button onclick="navigateTo('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all btn-interact">
             <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
             <span>Dashboard</span>
           </button>
 
-          <button onclick="navigateTo('accounts')" id="nav-accounts" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
+          <button onclick="navigateTo('accounts')" id="nav-accounts" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all btn-interact">
             <i data-lucide="wallet" class="w-4 h-4"></i>
             <span>Accounts & Cash</span>
           </button>
           
-          <button onclick="navigateTo('coming-up')" id="nav-coming-up" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
+          <button onclick="navigateTo('coming-up')" id="nav-coming-up" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all btn-interact">
             <i data-lucide="calendar-clock" class="w-4 h-4"></i>
             <span>Coming Up</span>
           </button>
 
-          <button onclick="navigateTo('ledger')" id="nav-ledger" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
+          <button onclick="navigateTo('ledger')" id="nav-ledger" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all btn-interact">
             <i data-lucide="receipt" class="w-4 h-4"></i>
             <span>Transactions</span>
           </button>
 
-          <button onclick="navigateTo('goals')" id="nav-goals" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
+          <button onclick="navigateTo('goals')" id="nav-goals" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all btn-interact">
             <i data-lucide="target" class="w-4 h-4"></i>
             <span>Goals</span>
           </button>
 
-          <button onclick="navigateTo('forecast')" id="nav-forecast" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
+          <button onclick="navigateTo('forecast')" id="nav-forecast" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all btn-interact">
             <i data-lucide="line-chart" class="w-4 h-4"></i>
             <span>Forecast</span>
           </button>
 
-          <button onclick="navigateTo('activity')" id="nav-activity" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
+          <button onclick="navigateTo('activity')" id="nav-activity" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all btn-interact">
             <i data-lucide="activity" class="w-4 h-4"></i>
             <span>Activity Log</span>
           </button>
 
-          <button onclick="navigateTo('reconcile')" id="nav-reconcile" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
+          <button onclick="navigateTo('reconcile')" id="nav-reconcile" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all btn-interact">
             <i data-lucide="scale" class="w-4 h-4"></i>
             <span>Reconcile & Data</span>
           </button>
 
-          <button onclick="navigateTo('devtools')" id="nav-devtools" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all hidden">
+          <button onclick="navigateTo('devtools')" id="nav-devtools" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all btn-interact hidden">
             <i data-lucide="terminal" class="w-4 h-4"></i>
             <span>Developer Tools</span>
           </button>
@@ -371,7 +400,7 @@
 
       <!-- Footer / Settings & Profile -->
       <div class="pt-4 border-t border-slate-800/80 space-y-2">
-        <button onclick="navigateTo('settings')" id="nav-settings" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all">
+        <button onclick="navigateTo('settings')" id="nav-settings" class="nav-item w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-slate-400 hover:text-white hover:bg-slate-800/60 transition-all btn-interact">
           <i data-lucide="settings" class="w-4 h-4"></i>
           <span>Settings</span>
         </button>
@@ -381,7 +410,7 @@
             <p id="user-display-email" class="text-xs font-semibold text-slate-200 truncate">pilot@user.com</p>
             <p class="text-[10px] text-brand-400">Pro Flight Plan</p>
           </div>
-          <button onclick="handleLogout()" title="Sign Out" class="text-slate-400 hover:text-rose-400 p-1.5 transition-colors">
+          <button onclick="handleLogout()" title="Sign Out" class="text-slate-400 hover:text-rose-400 p-1.5 transition-colors btn-interact">
             <i data-lucide="log-out" class="w-4 h-4"></i>
           </button>
         </div>
@@ -410,7 +439,7 @@
             <div>
               <div class="flex items-center gap-2">
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-brand-500/15 text-brand-400 border border-brand-500/30">
-                  <span class="w-1.5 h-1.5 rounded-full bg-brand-400 mr-1.5 animate-pulse"></span> FLIGHT CONTROL
+                  <span class="w-1.5 h-1.5 rounded-full bg-brand-400 mr-1.5 animate-pulse"></span> FLIGHT CONTROL 3.0
                 </span>
                 <span id="current-date-display" class="text-xs text-slate-400 font-medium"></span>
               </div>
@@ -420,11 +449,12 @@
               <span id="dash-qol-meta" class="hidden sm:inline-block text-[11px] text-slate-400 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-800">
                 Sync: <span id="dash-qol-sync" class="text-slate-200">Never</span> | Accts: <span id="dash-qol-accts" class="text-slate-200">0</span> | Goals: <span id="dash-qol-goals" class="text-slate-200">0</span> | Bills: <span id="dash-qol-bills" class="text-slate-200">0</span>
               </span>
-              <!-- Deficit Navigator 2.0 Button -->
-              <button id="analyze-deficit-btn" onclick="openDeficitNavigatorModal()" class="hidden px-4 py-2 bg-rose-500 hover:bg-rose-600 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5 animate-bounce">
-                <i data-lucide="alert-octagon" class="w-4 h-4"></i> Analyze Deficit
+              <!-- Deficit Navigator 3.0 Mission Control Warning Button -->
+              <button id="analyze-deficit-btn" onclick="openDeficitNavigatorModal()" class="hidden px-4 py-2 bg-rose-500/90 hover:bg-rose-500 text-white font-bold rounded-xl text-xs transition-all shadow-lg flex items-center gap-2 border border-rose-400/50 beacon-warning btn-interact">
+                <i data-lucide="radar" class="w-4 h-4 text-rose-200 animate-spin"></i>
+                <span>MISSION CONTROL: DEFICIT ALERT</span>
               </button>
-              <button onclick="openAddTransactionModal()" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5">
+              <button onclick="openAddTransactionModal()" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5 btn-interact">
                 <i data-lucide="plus" class="w-4 h-4"></i> Quick Transaction
               </button>
             </div>
@@ -440,33 +470,31 @@
             <span id="dash-risk-message"></span>
           </div>
 
-          <!-- PRIMARY METRIC: SAFE SPEND HERO CARD & FINANCIAL WEATHER -->
+          <!-- PRIMARY METRIC: SAFE SPEND HERO CARD & FINANCIAL WEATHER 3.0 -->
           <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Safe Spend Hero -->
-            <div id="safe-spend-hero-card" class="lg:col-span-2 glass-card rounded-3xl p-6 sm:p-8 border border-brand-500/30 relative overflow-hidden glow-emerald">
+            <!-- Safe Spend Hero 3.0 -->
+            <div id="safe-spend-hero-card" class="lg:col-span-2 glass-card rounded-3xl p-6 sm:p-8 border border-brand-500/30 relative overflow-hidden glow-emerald glass-card-hover">
+              <canvas id="safeSpendCanvas" class="absolute inset-0 pointer-events-none w-full h-full z-0"></canvas>
+              
               <div class="absolute -right-12 -bottom-12 w-48 h-48 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
 
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center relative z-10">
                 <div class="space-y-2">
-                  <canvas id="safeSpendCanvas" class="absolute inset-0 pointer-events-none w-full h-full z-0"></canvas>
-
-                  <div class="relative z-10 flex flex-col gap-2">
-                    <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-brand-400">
-                      <i data-lucide="shield-check" class="w-4 h-4"></i>
-                      <span>Safe Spend (Until Payday)</span>
-                    </div>
-
-                    <div class="text-4xl sm:text-5xl font-black text-white tracking-tight" id="dash-safe-spend">$0.00</div>
-
-                    <p class="text-xs text-slate-400 leading-relaxed">
-                      Your true disposable cash after reserved bills before your next paycheck on
-                      <span id="dash-next-paydate-inline" class="text-slate-200 font-semibold">--</span>.
-                    </p>
+                  <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-brand-400">
+                    <i data-lucide="shield-check" class="w-4 h-4"></i>
+                    <span>Safe Spend (Until Payday)</span>
                   </div>
+
+                  <div class="text-4xl sm:text-5xl font-black text-white tracking-tight" id="dash-safe-spend">$0.00</div>
+
+                  <p class="text-xs text-slate-400 leading-relaxed">
+                    Your true disposable cash after reserved bills before your next paycheck on
+                    <span id="dash-next-paydate-inline" class="text-slate-200 font-semibold">--</span>.
+                  </p>
                 </div>
 
                 <!-- Quick Health & Countdown Badges -->
-                <div class="space-y-3 bg-slate-900/70 p-4 rounded-2xl border border-slate-800/80">
+                <div class="space-y-3 bg-slate-900/80 backdrop-blur-md p-4 rounded-2xl border border-slate-800/80 shadow-lg">
                   <div class="flex justify-between items-center text-xs">
                     <span class="text-slate-400">Payday Countdown:</span>
                     <span id="dash-next-payday-countdown" class="font-bold text-slate-200">--</span>
@@ -476,7 +504,7 @@
                     <span id="dash-daily-available" class="font-bold text-brand-400">$0.00 / day</span>
                   </div>
                   <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                    <div id="dash-payday-progress" class="bg-brand-400 h-full w-0 transition-all"></div>
+                    <div id="dash-payday-progress" class="bg-brand-400 h-full w-0 transition-all duration-500"></div>
                   </div>
                   <div class="flex justify-between items-center text-xs pt-1">
                     <span class="text-slate-400">Bills Before Payday:</span>
@@ -486,36 +514,40 @@
               </div>
             </div>
 
-            <!-- Financial Weather Card 2.0 -->
-            <div class="glass-card rounded-3xl p-6 border border-slate-800/80 flex flex-col justify-between space-y-4 relative overflow-hidden">
+            <!-- Financial Weather Card 3.0 -->
+            <div id="fin-weather-card" class="glass-card rounded-3xl p-6 border border-slate-800/80 flex flex-col justify-between space-y-4 relative overflow-hidden glass-card-hover group">
+              <canvas id="weatherCanvas" class="absolute inset-0 pointer-events-none w-full h-full z-0"></canvas>
+              
               <div class="flex justify-between items-center z-10">
-                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Financial Weather 2.0</span>
-                <i data-lucide="cloud-sun" class="w-5 h-5 text-brand-400"></i>
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Financial Weather 3.0</span>
+                <i data-lucide="cloud-sun" id="fin-weather-header-icon" class="w-5 h-5 text-brand-400"></i>
               </div>
               <div class="space-y-2 text-center py-2 z-10">
-                <div id="fin-weather-icon" class="text-4xl animate-bounce">☀</div>
+                <div id="fin-weather-icon" class="text-4xl transition-transform duration-500 hover:scale-110 inline-block drop-shadow-md">☀</div>
                 <h3 id="fin-weather-title" class="text-lg font-extrabold text-white">Clear Skies</h3>
                 <p id="fin-weather-desc" class="text-xs text-slate-400">Stable cash reserves and healthy safe spend buffer.</p>
               </div>
-              <div class="pt-3 border-t border-slate-800 flex justify-between text-[11px] text-slate-400 z-10">
-                <span>Risk Status:</span>
+              <div class="pt-3 border-t border-slate-800/80 flex justify-between text-[11px] text-slate-400 z-10">
+                <span>Atmospheric Risk:</span>
                 <strong id="fin-weather-risk" class="text-brand-400">Healthy</strong>
               </div>
             </div>
           </div>
 
-          <!-- 4-GRID METRICS -->
+          <!-- 4-GRID METRICS (RUNWAY 3.0 UPGRADED) -->
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="glass-card p-5 rounded-2xl border border-slate-800/80">
-              <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
-                <span class="font-semibold uppercase tracking-wider">Financial Runway</span>
-                <i data-lucide="hourglass" class="w-4 h-4 text-brand-400"></i>
+            <!-- Runway 3.0 Card -->
+            <div id="dash-runway-card" class="glass-card p-5 rounded-2xl border border-slate-800/80 relative overflow-hidden transition-all glass-card-hover">
+              <div id="runway-lights-strip" class="absolute bottom-0 left-0 right-0 h-1.5 opacity-80"></div>
+              <div class="flex items-center justify-between text-xs text-slate-400 mb-2 relative z-10">
+                <span class="font-semibold uppercase tracking-wider">Financial Runway 3.0</span>
+                <i data-lucide="plane-takeoff" id="runway-icon" class="w-4 h-4 text-brand-400"></i>
               </div>
-              <div id="dash-runway-remaining" class="text-2xl font-bold text-white">21 Days</div>
-              <p class="text-[11px] text-slate-500 mt-1">Safe Operate Duration</p>
+              <div id="dash-runway-remaining" class="text-2xl font-bold text-white relative z-10">21 Days</div>
+              <p class="text-[11px] text-slate-500 mt-1 relative z-10" id="dash-runway-status-sub">Safe Operate Duration</p>
             </div>
 
-            <div id="dash-paycheck-card-container" class="glass-card p-5 rounded-2xl border border-slate-800/80 transition-all">
+            <div id="dash-paycheck-card-container" class="glass-card p-5 rounded-2xl border border-slate-800/80 transition-all glass-card-hover">
               <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
                 <span class="font-semibold uppercase tracking-wider">Next Payday</span>
                 <i data-lucide="banknote" class="w-4 h-4 text-emerald-400"></i>
@@ -524,7 +556,7 @@
               <p id="dash-next-payday-sub" class="text-[11px] text-slate-500 mt-1">Scheduled deposit</p>
             </div>
 
-            <div class="glass-card p-5 rounded-2xl border border-slate-800/80">
+            <div class="glass-card p-5 rounded-2xl border border-slate-800/80 glass-card-hover">
               <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
                 <span class="font-semibold uppercase tracking-wider">Resilience Score</span>
                 <i data-lucide="shield" class="w-4 h-4 text-blue-400"></i>
@@ -533,7 +565,7 @@
               <p class="text-[11px] text-slate-500 mt-1" id="dash-buffer-days">Buffer days: 0</p>
             </div>
 
-            <div class="glass-card p-5 rounded-2xl border border-slate-800/80">
+            <div class="glass-card p-5 rounded-2xl border border-slate-800/80 glass-card-hover">
               <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
                 <span class="font-semibold uppercase tracking-wider">Paycheck To Paycheck</span>
                 <i data-lucide="gauge" class="w-4 h-4 text-amber-400"></i>
@@ -551,7 +583,7 @@
                   <i data-lucide="clock" class="w-4 h-4 text-brand-400"></i>
                   <span>Bills Before Payday</span>
                 </h3>
-                <button onclick="navigateTo('coming-up')" class="text-xs text-brand-400 hover:underline">View All</button>
+                <button onclick="navigateTo('coming-up')" class="text-xs text-brand-400 hover:underline btn-interact">View All</button>
               </div>
               <div id="dash-upcoming-bills-list" class="space-y-2.5"></div>
             </div>
@@ -562,7 +594,7 @@
                   <i data-lucide="activity" class="w-4 h-4 text-brand-400"></i>
                   <span>Recent Activity</span>
                 </h3>
-                <button onclick="navigateTo('activity')" class="text-xs text-brand-400 hover:underline">Full Log</button>
+                <button onclick="navigateTo('activity')" class="text-xs text-brand-400 hover:underline btn-interact">Full Log</button>
               </div>
               <div id="dash-recent-activity-list" class="space-y-2.5"></div>
             </div>
@@ -577,7 +609,7 @@
               <h2 class="text-2xl font-extrabold text-white tracking-tight">Accounts & Cash Management</h2>
               <p class="text-xs text-slate-400">Manage checking, savings, cash, and credit card balances with allocation tracking.</p>
             </div>
-            <button onclick="openAddAccountModal()" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5">
+            <button onclick="openAddAccountModal()" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5 btn-interact">
               <i data-lucide="plus" class="w-4 h-4"></i> Add Account
             </button>
           </div>
@@ -612,7 +644,7 @@
               <h2 class="text-2xl font-extrabold text-white tracking-tight">Coming Up</h2>
               <p class="text-xs text-slate-400">Manage upcoming bills and income events explicitly with priority ratings.</p>
             </div>
-            <button onclick="openAddBillModal()" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5">
+            <button onclick="openAddBillModal()" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5 btn-interact">
               <i data-lucide="plus" class="w-4 h-4"></i> Add Bill
             </button>
           </div>
@@ -632,7 +664,7 @@
               <h2 class="text-2xl font-extrabold text-white tracking-tight">Transaction History</h2>
               <p class="text-xs text-slate-400">Complete record of posted income, expenses, and payments.</p>
             </div>
-            <button onclick="openAddTransactionModal()" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5">
+            <button onclick="openAddTransactionModal()" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5 btn-interact">
               <i data-lucide="plus" class="w-4 h-4"></i> Log Transaction
             </button>
           </div>
@@ -678,7 +710,7 @@
               <h2 class="text-2xl font-extrabold text-white tracking-tight">Financial Goals</h2>
               <p class="text-xs text-slate-400">Track savings, emergency reserves, and ETAs based on actual contribution history.</p>
             </div>
-            <button onclick="openAddGoalModal()" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5">
+            <button onclick="openAddGoalModal()" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5 btn-interact">
               <i data-lucide="plus" class="w-4 h-4"></i> Create Goal
             </button>
           </div>
@@ -690,8 +722,8 @@
         <div id="page-forecast" class="page-view space-y-6 hidden">
           <div class="border-b border-slate-800/80 pb-4 flex justify-between items-center">
             <div>
-              <h2 class="text-2xl font-extrabold text-white tracking-tight">Forecast Flight System</h2>
-              <p class="text-xs text-slate-400">Interactive 60-day cash flow flight path with real moving aircraft and milestone waypoints.</p>
+              <h2 class="text-2xl font-extrabold text-white tracking-tight">Forecast Flight System 3.0</h2>
+              <p class="text-xs text-slate-400">Interactive 60-day cash flow flight path with moving aircraft route trail and verified milestone waypoints.</p>
             </div>
             <span class="px-3 py-1 bg-brand-500/15 border border-brand-500/30 text-brand-400 text-xs font-bold rounded-full flex items-center gap-1.5">
               <i data-lucide="plane" class="w-3.5 h-3.5 animate-pulse"></i> Flight Path Active
@@ -700,19 +732,19 @@
 
           <!-- Forecast Summary Cards -->
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="glass-card p-4 rounded-2xl border border-slate-800">
+            <div class="glass-card p-4 rounded-2xl border border-slate-800 glass-card-hover">
               <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Lowest Balance</p>
               <h4 id="forecast-card-lowest" class="text-xl font-black text-rose-400 mt-1">$0.00</h4>
             </div>
-            <div class="glass-card p-4 rounded-2xl border border-slate-800">
+            <div class="glass-card p-4 rounded-2xl border border-slate-800 glass-card-hover">
               <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Highest Balance</p>
               <h4 id="forecast-card-highest" class="text-xl font-black text-brand-400 mt-1">$0.00</h4>
             </div>
-            <div class="glass-card p-4 rounded-2xl border border-slate-800">
+            <div class="glass-card p-4 rounded-2xl border border-slate-800 glass-card-hover">
               <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Projected Payday Balance</p>
               <h4 id="forecast-card-payday" class="text-xl font-black text-white mt-1">$0.00</h4>
             </div>
-            <div class="glass-card p-4 rounded-2xl border border-slate-800">
+            <div class="glass-card p-4 rounded-2xl border border-slate-800 glass-card-hover">
               <p class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Forecast Health</p>
               <h4 id="forecast-card-health" class="text-xl font-black text-emerald-400 mt-1">Stable</h4>
             </div>
@@ -726,12 +758,13 @@
               </span>
             </div>
 
-            <div id="forecast-plane-container" class="absolute z-30 pointer-events-none transition-all duration-500 ease-out">
-              <div class="flex items-center gap-2 bg-gradient-to-r from-brand-600 to-brand-400 text-slate-950 px-3 py-1.5 rounded-full text-xs font-extrabold shadow-[0_0_25px_rgba(16,185,129,0.8)] ring-4 ring-brand-500/30 transform -translate-x-1/2 -translate-y-1/2">
-                <i data-lucide="plane" class="w-4 h-4 animate-bounce text-slate-950"></i>
-                <span id="forecast-plane-label">✈ Payday Pilot Flight</span>
+            <!-- Aircraft Motion Avatar Overlay -->
+            <div id="forecast-plane-container" class="absolute z-30 pointer-events-none transition-all duration-700 ease-out">
+              <div class="flex items-center gap-2 bg-gradient-to-r from-brand-600 via-brand-500 to-emerald-400 text-slate-950 px-3.5 py-1.5 rounded-full text-xs font-black shadow-[0_0_25px_rgba(16,185,129,0.8)] ring-4 ring-brand-500/30 transform -translate-x-1/2 -translate-y-1/2">
+                <i data-lucide="plane" class="w-4 h-4 text-slate-950"></i>
+                <span id="forecast-plane-label">✈ Payday Flight</span>
               </div>
-              <div class="w-1 h-8 bg-brand-400/80 mx-auto blur-sm animate-pulse"></div>
+              <div class="w-0.5 h-10 bg-gradient-to-b from-brand-400 to-transparent mx-auto blur-[1px] animate-pulse"></div>
             </div>
 
             <div class="h-80 w-full relative">
@@ -741,19 +774,19 @@
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-slate-800/80 text-[11px]">
               <div class="p-2 bg-slate-900/80 rounded-xl border border-slate-800 flex items-center gap-2">
                 <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span class="text-slate-300 font-medium">Payday Stop (Deposit)</span>
+                <span class="text-slate-300 font-medium">💰 Payday Event</span>
               </div>
               <div class="p-2 bg-slate-900/80 rounded-xl border border-slate-800 flex items-center gap-2">
                 <span class="w-2.5 h-2.5 rounded-full bg-rose-400 animate-pulse"></span>
-                <span class="text-slate-300 font-medium">Rent / Housing Stop</span>
+                <span class="text-slate-300 font-medium">🏠 Rent / Housing</span>
               </div>
               <div class="p-2 bg-slate-900/80 rounded-xl border border-slate-800 flex items-center gap-2">
                 <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
-                <span class="text-slate-300 font-medium">Utility / Bill Stop</span>
+                <span class="text-slate-300 font-medium">⚡ Utility / Bill</span>
               </div>
               <div class="p-2 bg-slate-900/80 rounded-xl border border-slate-800 flex items-center gap-2">
                 <span class="w-2.5 h-2.5 rounded-full bg-blue-400 animate-pulse"></span>
-                <span class="text-slate-300 font-medium">Goal Funding Milestone</span>
+                <span class="text-slate-300 font-medium">🎯 Goal Funding</span>
               </div>
             </div>
             <div id="forecast-markers-legend" class="flex flex-wrap gap-3 pt-2 text-[11px] text-slate-400"></div>
@@ -767,7 +800,7 @@
               <h2 class="text-2xl font-extrabold text-white tracking-tight">Activity Log</h2>
               <p class="text-xs text-slate-400">Chronological history of all system events, syncs, and financial actions.</p>
             </div>
-            <button onclick="clearActivityLog()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold">Clear Log</button>
+            <button onclick="clearActivityLog()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold btn-interact">Clear Log</button>
           </div>
 
           <div id="activity-log-timeline" class="space-y-3"></div>
@@ -791,11 +824,11 @@
               <p class="text-xs text-slate-400">Export your local financial data for backup or import past transactions via JSON.</p>
               
               <div class="space-y-3 pt-2">
-                <button onclick="exportDataJSON()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all">
+                <button onclick="exportDataJSON()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 transition-all btn-interact">
                   <i data-lucide="download" class="w-4 h-4"></i> Export Backup (.JSON)
                 </button>
                 
-                <label class="w-full py-2.5 border border-slate-700 hover:border-brand-500 text-slate-300 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer transition-all">
+                <label class="w-full py-2.5 border border-slate-700 hover:border-brand-500 text-slate-300 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer transition-all btn-interact">
                   <i data-lucide="upload" class="w-4 h-4"></i> Import JSON Data
                   <input type="file" id="import-json-file" accept=".json" onchange="importDataJSON(event)" class="hidden" />
                 </label>
@@ -820,7 +853,7 @@
             </div>
             <h3 class="font-bold text-white text-base">Restricted Area (app_admins Owner Only)</h3>
             <p class="text-xs text-slate-400 max-w-sm mx-auto">Your account role in the <code class="text-brand-400">app_admins</code> table must be set to <code class="text-brand-400">owner</code> to access developer tools.</p>
-            <button onclick="checkAdminOwnerStatus()" class="px-4 py-2 bg-brand-500 text-slate-950 font-bold rounded-xl text-xs">Verify Owner Role in Supabase</button>
+            <button onclick="checkAdminOwnerStatus()" class="px-4 py-2 bg-brand-500 text-slate-950 font-bold rounded-xl text-xs btn-interact">Verify Owner Role in Supabase</button>
           </div>
 
           <div id="admin-content-panel" class="grid grid-cols-1 lg:grid-cols-2 gap-6 hidden">
@@ -842,7 +875,7 @@
                 <div class="space-y-2 text-xs">
                   <div class="flex justify-between p-2.5 bg-slate-900/80 rounded-xl">
                     <span class="text-slate-400">Version:</span>
-                    <strong class="text-white">v2.5.0 Fintech Launch</strong>
+                    <strong class="text-white">v3.0 Wow Factor Engine</strong>
                   </div>
                   <div class="flex justify-between p-2.5 bg-slate-900/80 rounded-xl">
                     <span class="text-slate-400">Supabase:</span>
@@ -864,13 +897,13 @@
               </div>
 
               <div class="space-y-2 pt-4 border-t border-slate-800/80">
-                <button onclick="triggerCloudSync()" class="w-full py-2.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">
+                <button onclick="triggerCloudSync()" class="w-full py-2.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all btn-interact">
                   Sync Now (`paycheck_pilot_sync`)
                 </button>
-                <button onclick="restartOnboarding()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all">
+                <button onclick="restartOnboarding()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all btn-interact">
                   Rerun Onboarding Wizard
                 </button>
-                <button onclick="clearAllData()" class="w-full py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl text-xs font-semibold transition-all">
+                <button onclick="clearAllData()" class="w-full py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl text-xs font-semibold transition-all btn-interact">
                   Reset All Local Data
                 </button>
               </div>
@@ -896,7 +929,7 @@
                 <label class="block text-xs font-semibold text-slate-400 mb-1">Email Address</label>
                 <input type="text" id="settings-email-display" readonly class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-300 outline-none" />
               </div>
-              <button onclick="handleLogout()" class="w-full py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2">
+              <button onclick="handleLogout()" class="w-full py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2 btn-interact">
                 <i data-lucide="log-out" class="w-4 h-4"></i> Logout
               </button>
             </div>
@@ -934,8 +967,8 @@
                 </div>
               </div>
               <div class="flex gap-2">
-                <button onclick="promptCreateHousehold()" class="flex-1 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Manage Household / Join</button>
-                <button onclick="promptLeaveHousehold()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all">Leave</button>
+                <button onclick="promptCreateHousehold()" class="flex-1 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all btn-interact">Manage Household / Join</button>
+                <button onclick="promptLeaveHousehold()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all btn-interact">Leave</button>
               </div>
             </div>
 
@@ -972,14 +1005,14 @@
                 <i data-lucide="cloud" class="w-4 h-4 text-brand-400"></i> Cloud Sync & Legal
               </h3>
               <p class="text-xs text-slate-400">Syncs automatically via <code class="text-brand-400">paycheck_pilot_sync</code>.</p>
-              <button onclick="triggerCloudSync()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition-all">
+              <button onclick="triggerCloudSync()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition-all btn-interact">
                 Sync Now
               </button>
               <div class="grid grid-cols-2 gap-2 text-xs pt-2">
-                <button onclick="openPublicPage('about')" class="py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 font-medium">About</button>
-                <button onclick="openPublicPage('privacy')" class="py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 font-medium">Privacy Policy</button>
-                <button onclick="openPublicPage('terms')" class="py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 font-medium">Terms</button>
-                <button onclick="openCustomModal('Contact Support', 'Reach our engineering team at support@paycheckpilot.app', [{label: 'Close', primary: true, onclick: 'closeModals()'}])" class="py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 font-medium">Contact</button>
+                <button onclick="openPublicPage('about')" class="py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 font-medium btn-interact">About</button>
+                <button onclick="openPublicPage('privacy')" class="py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 font-medium btn-interact">Privacy Policy</button>
+                <button onclick="openPublicPage('terms')" class="py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 font-medium btn-interact">Terms</button>
+                <button onclick="openCustomModal('Contact Support', 'Reach our engineering team at support@paycheckpilot.app', [{label: 'Close', primary: true, onclick: 'closeModals()'}])" class="py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 font-medium btn-interact">Contact</button>
               </div>
             </div>
 
@@ -990,7 +1023,7 @@
         <div id="page-public" class="view-screen space-y-6 hidden">
           <div class="flex justify-between items-center border-b border-slate-800/80 pb-4">
             <h2 id="public-page-title" class="text-2xl font-extrabold text-white tracking-tight">Public Document</h2>
-            <button onclick="closePublicPage()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold">Back</button>
+            <button onclick="closePublicPage()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold btn-interact">Back</button>
           </div>
           <div id="public-page-content" class="glass-card p-6 sm:p-8 rounded-3xl border border-slate-800/80 space-y-4 text-xs sm:text-sm text-slate-300 leading-relaxed"></div>
         </div>
@@ -1067,8 +1100,8 @@
       </div>
 
       <div class="flex gap-3 pt-2">
-        <button onclick="triggerPwaInstallPrompt()" class="flex-1 py-3.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs shadow-lg transition-all">Install Now</button>
-        <button onclick="dismissPwaModal()" class="px-5 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl text-xs transition-all">Maybe Later</button>
+        <button onclick="triggerPwaInstallPrompt()" class="flex-1 py-3.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs shadow-lg transition-all btn-interact">Install Now</button>
+        <button onclick="dismissPwaModal()" class="px-5 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold rounded-xl text-xs transition-all btn-interact">Maybe Later</button>
       </div>
     </div>
 
@@ -1106,14 +1139,14 @@
           <label class="block text-xs font-semibold text-slate-400 mb-1">Create New Household</label>
           <div class="flex gap-2">
             <input type="text" id="new-hh-name" placeholder="Household Name" class="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 outline-none" />
-            <button onclick="executeCreateHousehold()" class="px-4 py-2 bg-brand-500 text-slate-950 font-bold rounded-xl text-xs">Create</button>
+            <button onclick="executeCreateHousehold()" class="px-4 py-2 bg-brand-500 text-slate-950 font-bold rounded-xl text-xs btn-interact">Create</button>
           </div>
         </div>
         <div class="pt-3 border-t border-slate-800">
           <label class="block text-xs font-semibold text-slate-400 mb-1">Join via Invite Code</label>
           <div class="flex gap-2">
             <input type="text" id="join-invite-code" placeholder="PP-XXXX-X" class="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 outline-none uppercase" />
-            <button onclick="executeJoinHousehold()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs">Join</button>
+            <button onclick="executeJoinHousehold()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl text-xs btn-interact">Join</button>
           </div>
         </div>
       </div>
@@ -1149,7 +1182,7 @@
           </div>
         </div>
 
-        <button type="submit" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Save Account</button>
+        <button type="submit" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all btn-interact">Save Account</button>
       </form>
     </div>
 
@@ -1198,7 +1231,7 @@
           </div>
         </div>
 
-        <button type="submit" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Save Bill</button>
+        <button type="submit" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all btn-interact">Save Bill</button>
       </form>
     </div>
 
@@ -1247,7 +1280,7 @@
           </div>
         </div>
 
-        <button type="submit" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Record Transaction</button>
+        <button type="submit" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all btn-interact">Record Transaction</button>
       </form>
     </div>
 
@@ -1275,7 +1308,7 @@
           </div>
         </div>
 
-        <button type="submit" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Create Goal</button>
+        <button type="submit" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all btn-interact">Create Goal</button>
       </form>
     </div>
 
@@ -1294,7 +1327,7 @@
           <input type="number" step="0.01" id="deposit-amount-input" required placeholder="e.g. 150.00" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-3 text-lg font-bold text-brand-400 outline-none focus:border-brand-500" />
           <p class="text-[10px] text-slate-500 mt-1">Enter any amount. Stored in real contribution history for precise ETA calculations.</p>
         </div>
-        <button type="submit" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Confirm Deposit</button>
+        <button type="submit" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all btn-interact">Confirm Deposit</button>
       </form>
     </div>
 
@@ -1391,66 +1424,199 @@
       });
 
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('service-worker.js').catch(err => console.log('SW registration failed', err));
+        navigator.serviceWorker.register('service-worker.js').catch(err => console.log('SW registration skipped', err));
       }
+
+      initSafeSpendHeroCanvas();
+      initFinancialWeatherCanvas();
     });
 
-    // Safe Spend Canvas Particle Engine
-    const canvas = document.getElementById('safeSpendCanvas');
-    if (canvas) {
+    // ==========================================
+    // SAFE SPEND HERO 3.0 CANVAS ENGINE
+    // ==========================================
+    let safeSpendParticles = [];
+    function initSafeSpendHeroCanvas() {
+      const canvas = document.getElementById('safeSpendCanvas');
+      if (!canvas) return;
       const ctx = canvas.getContext('2d');
-      let particles = [];
 
-      function resizeCanvas() {
-        const rect = canvas.parentElement.getBoundingClientRect();
-        canvas.width = rect.width;
-        canvas.height = rect.height;
+      function resize() {
+        if (!canvas.parentElement) return;
+        canvas.width = canvas.parentElement.clientWidth;
+        canvas.height = canvas.parentElement.clientHeight;
+      }
+      resize();
+      window.addEventListener('resize', resize);
+
+      for (let i = 0; i < 35; i++) {
+        safeSpendParticles.push({
+          x: Math.random() * (canvas.width || 400),
+          y: Math.random() * (canvas.height || 200),
+          radius: Math.random() * 2 + 0.8,
+          alpha: Math.random() * 0.6 + 0.2,
+          vx: (Math.random() - 0.5) * 0.5,
+          vy: -Math.random() * 0.8 - 0.2,
+          char: Math.random() > 0.6 ? '$' : ''
+        });
       }
 
-      function createParticles() {
-        particles = [];
-        const particleCount = Math.floor(canvas.width / 15);
-        for (let i = 0; i < particleCount; i++) {
-          particles.push({
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height,
-            radius: Math.random() * 1.5 + 0.5,
-            alpha: Math.random() * 0.5 + 0.1,
-            speedY: - Math.random() * 0.3 - 0.1,
-            speedX: (Math.random() - 0.5) * 0.2
-          });
-        }
-      }
-
-      function animate() {
+      function render() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        particles.forEach(p => {
-          p.y += p.speedY;
-          p.x += p.speedX;
+        const safeSpend = getTotalLiquidCash() - getUpcomingBillsTotal();
 
-          if (p.y < 0) {
-            p.y = canvas.height;
-            p.x = Math.random() * canvas.width;
+        let particleColor = '16, 185, 129'; // Healthy Emerald
+        let speedMultiplier = 1;
+
+        if (safeSpend < 0) {
+          particleColor = '239, 68, 68'; // Critical Red Storm
+          speedMultiplier = 2.5;
+        } else if (safeSpend < 200) {
+          particleColor = '245, 158, 11'; // Warning Amber
+          speedMultiplier = 1.6;
+        }
+
+        safeSpendParticles.forEach(p => {
+          if (safeSpend < 0) {
+            // Financial Vortex movement
+            const cx = canvas.width / 2;
+            const cy = canvas.height / 2;
+            const dx = p.x - cx;
+            const dy = p.y - cy;
+            const angle = Math.atan2(dy, dx) + 0.05 * speedMultiplier;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            p.x = cx + Math.cos(angle) * (dist < 20 ? canvas.width / 2 : dist - 0.2);
+            p.y = cy + Math.sin(angle) * (dist < 20 ? canvas.height / 2 : dist - 0.2);
+          } else {
+            // Ambient or Wind motion
+            p.y += p.vy * speedMultiplier;
+            p.x += (safeSpend < 200 ? p.vx * 3 : p.vx);
+
+            if (p.y < 0) {
+              p.y = canvas.height;
+              p.x = Math.random() * canvas.width;
+            }
+            if (p.x < 0) p.x = canvas.width;
+            if (p.x > canvas.width) p.x = 0;
           }
-          if (p.x < 0) p.x = canvas.width;
-          if (p.x > canvas.width) p.x = 0;
 
           ctx.beginPath();
-          ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(16, 185, 129, ${p.alpha})`;
-          ctx.fill();
+          if (p.char) {
+            ctx.font = '10px Inter, sans-serif';
+            ctx.fillStyle = `rgba(${particleColor}, ${p.alpha})`;
+            ctx.fillText(p.char, p.x, p.y);
+          } else {
+            ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(${particleColor}, ${p.alpha})`;
+            ctx.fill();
+          }
         });
-        requestAnimationFrame(animate);
+
+        requestAnimationFrame(render);
+      }
+      render();
+    }
+
+    // ==========================================
+    // FINANCIAL WEATHER 3.0 CANVAS ENGINE
+    // ==========================================
+    let weatherCanvasParticles = [];
+    let weatherFlashAlpha = 0;
+
+    function initFinancialWeatherCanvas() {
+      const canvas = document.getElementById('weatherCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+
+      function resize() {
+        if (!canvas.parentElement) return;
+        canvas.width = canvas.parentElement.clientWidth;
+        canvas.height = canvas.parentElement.clientHeight;
+      }
+      resize();
+      window.addEventListener('resize', resize);
+
+      for (let i = 0; i < 30; i++) {
+        weatherCanvasParticles.push({
+          x: Math.random() * (canvas.width || 300),
+          y: Math.random() * (canvas.height || 200),
+          size: Math.random() * 20 + 10,
+          speed: Math.random() * 0.4 + 0.1,
+          alpha: Math.random() * 0.3 + 0.1
+        });
       }
 
-      window.addEventListener('resize', () => {
-        resizeCanvas();
-        createParticles();
-      });
+      function render() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const safeSpend = getTotalLiquidCash() - getUpcomingBillsTotal();
 
-      resizeCanvas();
-      createParticles();
-      animate();
+        if (safeSpend >= 500) {
+          // CLEAR SKIES: Sun rays & ambient warmth
+          ctx.save();
+          const gradient = ctx.createRadialGradient(canvas.width, 0, 5, canvas.width, 0, canvas.width * 0.8);
+          gradient.addColorStop(0, 'rgba(52, 211, 153, 0.25)');
+          gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          ctx.fillStyle = gradient;
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.restore();
+
+          weatherCanvasParticles.forEach(p => {
+            p.x -= p.speed * 0.3;
+            if (p.x < -20) p.x = canvas.width + 20;
+            ctx.fillStyle = `rgba(52, 211, 153, ${p.alpha * 0.5})`;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size * 0.2, 0, Math.PI * 2);
+            ctx.fill();
+          });
+        } else if (safeSpend >= 200) {
+          // SMOOTH FLIGHT: Drifting cloud silhouettes
+          weatherCanvasParticles.forEach(p => {
+            p.x += p.speed * 0.5;
+            if (p.x > canvas.width + 30) p.x = -30;
+            ctx.fillStyle = `rgba(148, 163, 184, ${p.alpha * 0.3})`;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.fill();
+          });
+        } else if (safeSpend >= 0) {
+          // TURBULENCE: Fast wind streaks
+          ctx.strokeStyle = 'rgba(245, 158, 11, 0.25)';
+          ctx.lineWidth = 1.5;
+          weatherCanvasParticles.forEach(p => {
+            p.x += p.speed * 3.5;
+            if (p.x > canvas.width) p.x = -40;
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p.x + 30, p.y - 5);
+            ctx.stroke();
+          });
+        } else {
+          // FINANCIAL STORM: Rain streaks & lightning flashes
+          if (Math.random() < 0.02) weatherFlashAlpha = 0.4;
+          if (weatherFlashAlpha > 0) {
+            ctx.fillStyle = `rgba(239, 68, 68, ${weatherFlashAlpha})`;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            weatherFlashAlpha -= 0.03;
+          }
+
+          ctx.strokeStyle = 'rgba(239, 68, 68, 0.4)';
+          ctx.lineWidth = 1;
+          weatherCanvasParticles.forEach(p => {
+            p.y += p.speed * 6;
+            p.x -= p.speed * 1.5;
+            if (p.y > canvas.height) {
+              p.y = -10;
+              p.x = Math.random() * canvas.width;
+            }
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p.x - 8, p.y + 15);
+            ctx.stroke();
+          });
+        }
+
+        requestAnimationFrame(render);
+      }
+      render();
     }
 
     // FINANCIAL CALCULATIONS
@@ -1656,7 +1822,7 @@
           <i data-lucide="${icon}" class="w-4 h-4 ${iconColor} shrink-0"></i>
           <span>${message}</span>
         </div>
-        ${undoBuffer ? `<button onclick="executeUndo()" class="px-2.5 py-1 bg-white/10 hover:bg-white/25 rounded-lg text-[11px] underline">Undo</button>` : ''}
+        ${undoBuffer ? `<button onclick="executeUndo()" class="px-2.5 py-1 bg-white/10 hover:bg-white/25 rounded-lg text-[11px] underline btn-interact">Undo</button>` : ''}
       `;
 
       container.appendChild(toast);
@@ -1699,7 +1865,7 @@
       return 'dashboard';
     }
 
-    // SCREEN & ROUTER MANAGER
+    // ROUTING & SCREEN NAVIGATION
     function showScreen(screenId) {
       document.querySelectorAll('.view-screen').forEach(screen => {
         screen.classList.remove('active');
@@ -1720,93 +1886,60 @@
       if (targetPage) targetPage.classList.remove('hidden');
 
       document.querySelectorAll('.nav-item').forEach(btn => {
-        btn.classList.remove('text-white', 'bg-slate-800/60');
+        btn.classList.remove('text-brand-400', 'bg-slate-800/80', 'border-l-2', 'border-brand-500');
         btn.classList.add('text-slate-400');
       });
 
       const activeNav = document.getElementById(`nav-${pageId}`);
       if (activeNav) {
         activeNav.classList.remove('text-slate-400');
-        activeNav.classList.add('text-white', 'bg-slate-800/60');
-      }
-
-      document.querySelectorAll('.mob-nav-item').forEach(btn => {
-        btn.classList.remove('text-brand-400');
-        btn.classList.add('text-slate-400');
-      });
-
-      const activeMobNav = document.getElementById(`mob-nav-${pageId}`);
-      if (activeMobNav) {
-        activeMobNav.classList.remove('text-slate-400');
-        activeMobNav.classList.add('text-brand-400');
+        activeNav.classList.add('text-brand-400', 'bg-slate-800/80', 'border-l-2', 'border-brand-500');
       }
 
       if (pageId === 'dashboard') renderDashboard();
-      if (pageId === 'accounts') renderAccountsPage();
+      if (pageId === 'accounts') renderAccounts();
       if (pageId === 'coming-up') renderComingUp();
       if (pageId === 'ledger') renderLedger();
       if (pageId === 'goals') renderGoals();
-      if (pageId === 'forecast') renderForecast();
+      if (pageId === 'forecast') renderForecastChart();
       if (pageId === 'activity') renderActivityPage();
-      if (pageId === 'reconcile') renderReconcile();
-      if (pageId === 'devtools') renderDevTools();
-      if (pageId === 'settings') renderSettings();
-
-      lucide.createIcons();
-    }
-
-    // CUSTOM MODALS
-    function openCustomModal(title, body, actions = []) {
-      document.getElementById('generic-modal-title').innerText = title;
-      document.getElementById('generic-modal-body').innerText = body;
-      const actionsEl = document.getElementById('generic-modal-actions');
+      if (pageId === 'reconcile') renderReconcilePage();
+      if (pageId === 'devtools') renderDevToolsPage();
+      if (pageId === 'settings') renderSettingsPage();
       
-      actionsEl.innerHTML = actions.map(a => `
-        <button onclick="${a.onclick}; closeModals();" class="flex-1 py-2.5 rounded-xl text-xs font-bold ${a.primary ? 'bg-brand-500 text-slate-950 hover:bg-brand-600' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'} transition-all">${a.label}</button>
-      `).join('');
-
-      document.getElementById('modal-backdrop').classList.remove('hidden');
-      document.getElementById('modal-generic').classList.remove('hidden');
       lucide.createIcons();
     }
 
-    function closeModals() {
-      const backdrop = document.getElementById('modal-backdrop');
-      if (backdrop) backdrop.classList.add('hidden');
-      const modals = [
-        'modal-pwa-install', 'modal-generic', 'modal-deficit',
-        'modal-household-action', 'modal-account', 'modal-bill',
-        'modal-transaction', 'modal-goal', 'modal-goal-deposit'
-      ];
-      modals.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.classList.add('hidden');
-      });
-    }
-
-    // AUTH HANDLERS
-    function switchAuthTab(mode) {
-      authMode = mode;
+    // AUTHENTICATION
+    function switchAuthTab(tab) {
+      authMode = tab;
       const loginTab = document.getElementById('auth-tab-login');
       const signupTab = document.getElementById('auth-tab-signup');
       const submitBtn = document.getElementById('auth-submit-btn');
 
-      if (mode === 'login') {
-        loginTab.className = "flex-1 py-2.5 rounded-lg text-white transition-all bg-brand-600 shadow-md";
-        signupTab.className = "flex-1 py-2.5 rounded-lg text-slate-400 hover:text-slate-200 transition-all";
-        if (submitBtn) submitBtn.querySelector('span').innerText = "Sign In to Pilot";
+      if (tab === 'login') {
+        loginTab.className = "flex-1 py-2.5 rounded-lg text-white transition-all bg-brand-600 shadow-md btn-interact";
+        signupTab.className = "flex-1 py-2.5 rounded-lg text-slate-400 hover:text-slate-200 transition-all btn-interact";
+        submitBtn.innerHTML = `<span>Sign In to Pilot</span><i data-lucide="arrow-right" class="w-4 h-4"></i>`;
       } else {
-        signupTab.className = "flex-1 py-2.5 rounded-lg text-white transition-all bg-brand-600 shadow-md";
-        loginTab.className = "flex-1 py-2.5 rounded-lg text-slate-400 hover:text-slate-200 transition-all";
-        if (submitBtn) submitBtn.querySelector('span').innerText = "Create Account";
+        signupTab.className = "flex-1 py-2.5 rounded-lg text-white transition-all bg-brand-600 shadow-md btn-interact";
+        loginTab.className = "flex-1 py-2.5 rounded-lg text-slate-400 hover:text-slate-200 transition-all btn-interact";
+        submitBtn.innerHTML = `<span>Create Account</span><i data-lucide="user-plus" class="w-4 h-4"></i>`;
       }
+      lucide.createIcons();
     }
 
     function handleAuthSubmit(e) {
       e.preventDefault();
       const email = document.getElementById('auth-email').value;
-      state.user = { email, id: 'usr_' + Date.now() };
+      
+      state.user = {
+        id: 'usr_' + Date.now(),
+        email: email
+      };
+
       saveStateToStorage();
+      logActivity("Authentication", `User signed in as ${email}`);
 
       if (!state.onboardingCompleted) {
         showScreen('screen-onboarding');
@@ -1814,107 +1947,109 @@
       } else {
         showScreen('screen-app');
         navigateTo('dashboard');
-        checkAdminOwnerStatus();
       }
-      showToast(`Welcome ${email}!`, "success");
     }
 
     function loginAsDemo() {
-      state.user = { email: 'demo@paycheckpilot.app', id: 'usr_demo' };
+      state.user = {
+        id: 'usr_demo',
+        email: 'demo.pilot@fintech.app'
+      };
       state.onboardingCompleted = true;
       saveStateToStorage();
+      logActivity("Demo Access", "Entered clean demo mode.");
       showScreen('screen-app');
       navigateTo('dashboard');
-      checkAdminOwnerStatus();
-      showToast("Logged in as Clean Demo User", "success");
     }
 
     function handleLogout() {
       state.user = null;
       saveStateToStorage();
       showScreen('screen-auth');
-      showToast("Logged out successfully", "info");
+      showToast("Signed out successfully", "info");
     }
 
     function simulatePasswordReset() {
-      showToast("Password reset instructions sent to your email.", "info");
-    }
-
-    // PUBLIC PAGES
-    function openPublicPage(title) {
-      const titles = {
-        privacy: "Privacy Policy",
-        terms: "Terms of Service",
-        about: "About Paycheck Pilot"
-      };
-      const contents = {
-        privacy: "<p>Your privacy is paramount. Paycheck Pilot stores your financial data locally in your browser and syncs securely using encrypted Supabase cloud connections when enabled. We never sell your personal financial records.</p>",
-        terms: "<p>By using Paycheck Pilot, you agree to track your finances responsibly. Paycheck Pilot provides cash flow planning tools and safe spend estimates for informational purposes only.</p>",
-        about: "<p>Paycheck Pilot is designed to give working individuals real-time clarity over their liquid cash before their next payday. Navigate every payday with confidence!</p>"
-      };
-
-      document.getElementById('public-page-title').innerText = titles[title] || "Public Document";
-      document.getElementById('public-page-content').innerHTML = contents[title] || "<p>Information coming soon.</p>";
-
-      showScreen('screen-app');
-      document.querySelectorAll('.page-view').forEach(p => p.classList.add('hidden'));
-      const pubPage = document.getElementById('page-public');
-      if (pubPage) pubPage.classList.remove('hidden');
-    }
-
-    function closePublicPage() {
-      document.getElementById('page-public').classList.add('hidden');
-      navigateTo('settings');
+      closeModals();
+      showToast("Reset link sent if account exists.", "info");
     }
 
     // ONBOARDING WIZARD
     function renderOnboardingStep() {
       const step = state.currentOnboardStep;
-      document.getElementById('onboard-step-indicator').innerText = `Step ${step} of 4`;
-      
-      const titles = ['Accounts & Cash', 'Income & Payday', 'Recurring Bills', 'Pilot Ready'];
-      document.getElementById('onboard-step-title').innerText = titles[step - 1];
-      
-      document.getElementById('onboard-progress-bar').style.width = `${(step / 4) * 100}%`;
+      document.querySelectorAll('.onboard-step-content').forEach((el, idx) => {
+        if (idx + 1 === step) el.classList.remove('hidden');
+        else el.classList.add('hidden');
+      });
 
-      for (let i = 1; i <= 4; i++) {
-        const el = document.getElementById(`onboard-step-${i}`);
-        if (el) {
-          if (i === step) el.classList.remove('hidden');
-          else el.classList.add('hidden');
-        }
-      }
-
+      const indicator = document.getElementById('onboard-step-indicator');
+      const progressBar = document.getElementById('onboard-progress-bar');
       const prevBtn = document.getElementById('onboard-prev-btn');
       const nextBtn = document.getElementById('onboard-next-btn');
 
-      if (step === 1) prevBtn.classList.add('hidden');
-      else prevBtn.classList.remove('hidden');
+      if (indicator) indicator.innerText = `Step ${step} of 4`;
+      if (progressBar) progressBar.style.width = `${(step / 4) * 100}%`;
 
-      if (step === 4) {
-        nextBtn.querySelector('span').innerText = "Enter Flight Control";
-        updateOnboardSummary();
-      } else {
-        nextBtn.querySelector('span').innerText = "Continue";
+      if (prevBtn) {
+        if (step === 1) prevBtn.classList.add('hidden');
+        else prevBtn.classList.remove('hidden');
       }
 
-      if (step === 1) renderOnboardAccounts();
-      if (step === 3) renderOnboardBills();
+      if (nextBtn) {
+        if (step === 4) {
+          nextBtn.innerHTML = `<span>Launch Flight Control</span><i data-lucide="rocket" class="w-4 h-4"></i>`;
+        } else {
+          nextBtn.innerHTML = `<span>Continue</span><i data-lucide="arrow-right" class="w-4 h-4"></i>`;
+        }
+      }
+
+      if (step === 1) renderOnboardAccountsList();
+      if (step === 3) renderOnboardBillsList();
+      if (step === 4) {
+        const cash = getTotalLiquidCash();
+        const bills = getUpcomingBillsTotal();
+        const safeSpend = cash - bills;
+        document.getElementById('summary-cash').innerText = `$${cash.toFixed(2)}`;
+        document.getElementById('summary-bills').innerText = `$${bills.toFixed(2)}`;
+        document.getElementById('summary-safespend').innerText = `$${safeSpend.toFixed(2)}`;
+      }
+      lucide.createIcons();
+    }
+
+    function renderOnboardAccountsList() {
+      const container = document.getElementById('onboard-accounts-list');
+      if (!container) return;
+      container.innerHTML = state.accounts.map(acc => `
+        <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
+          <div>
+            <strong class="text-white block">${acc.name}</strong>
+            <span class="text-slate-400 capitalize">${acc.type}</span>
+          </div>
+          <span class="font-bold text-brand-400">$${acc.balance.toFixed(2)}</span>
+        </div>
+      `).join('');
+    }
+
+    function renderOnboardBillsList() {
+      const container = document.getElementById('onboard-bills-list');
+      if (!container) return;
+      container.innerHTML = state.bills.map(b => `
+        <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
+          <div>
+            <strong class="text-white block">${b.title}</strong>
+            <span class="text-slate-400">Due ${b.dueDate}</span>
+          </div>
+          <span class="font-bold text-rose-400">$${b.amount.toFixed(2)}</span>
+        </div>
+      `).join('');
     }
 
     function nextOnboardStep() {
       if (state.currentOnboardStep === 2) {
-        const amt = parseFloat(document.getElementById('onboard-paycheck-amount').value);
+        const amt = parseFloat(document.getElementById('onboard-paycheck-amount').value) || 2500;
         const freq = document.getElementById('onboard-pay-frequency').value;
-        const nextD = document.getElementById('onboard-next-payday').value;
-
-        if (isNaN(amt) || amt <= 0) {
-          showToast("Please enter a valid paycheck amount", "error");
-          return;
-        }
-        state.income.amount = amt;
-        state.income.frequency = freq;
-        state.income.nextDate = nextD || new Date().toISOString().split('T')[0];
+        const date = document.getElementById('onboard-next-payday').value || new Date().toISOString().split('T')[0];
+        state.income = { amount: amt, frequency: freq, nextDate: date };
       }
 
       if (state.currentOnboardStep < 4) {
@@ -1925,7 +2060,7 @@
         saveStateToStorage();
         showScreen('screen-app');
         navigateTo('dashboard');
-        showToast("Flight Plan Active! Welcome to Paycheck Pilot.", "success");
+        showToast("Welcome to Paycheck Pilot Flight Control!", "success");
       }
     }
 
@@ -1936,52 +2071,6 @@
       }
     }
 
-    function renderOnboardAccounts() {
-      const container = document.getElementById('onboard-accounts-list');
-      if (!container) return;
-      if (state.accounts.length === 0) {
-        container.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">No accounts added yet.</p>`;
-        return;
-      }
-      container.innerHTML = state.accounts.map(a => `
-        <div class="flex items-center justify-between p-3 bg-slate-900 rounded-xl border border-slate-800 text-xs">
-          <div>
-            <span class="font-bold text-white">${a.name}</span>
-            <span class="text-[10px] text-slate-400 block capitalize">${a.type}</span>
-          </div>
-          <span class="font-bold ${a.type === 'credit' ? 'text-rose-400' : 'text-brand-400'}">$${Number(a.balance).toFixed(2)}</span>
-        </div>
-      `).join('');
-    }
-
-    function renderOnboardBills() {
-      const container = document.getElementById('onboard-bills-list');
-      if (!container) return;
-      if (state.bills.length === 0) {
-        container.innerHTML = `<p class="text-xs text-slate-500 text-center py-4">No recurring bills added yet.</p>`;
-        return;
-      }
-      container.innerHTML = state.bills.map(b => `
-        <div class="flex items-center justify-between p-3 bg-slate-900 rounded-xl border border-slate-800 text-xs">
-          <div>
-            <span class="font-bold text-white">${b.title}</span>
-            <span class="text-[10px] text-slate-400 block">Due ${b.dueDate}</span>
-          </div>
-          <span class="font-bold text-rose-400">$${Number(b.amount).toFixed(2)}</span>
-        </div>
-      `).join('');
-    }
-
-    function updateOnboardSummary() {
-      const liquid = getTotalLiquidCash();
-      const bills = getUpcomingBillsTotal();
-      const safeSpend = liquid - bills;
-
-      document.getElementById('summary-cash').innerText = `$${liquid.toFixed(2)}`;
-      document.getElementById('summary-bills').innerText = `$${bills.toFixed(2)}`;
-      document.getElementById('summary-safespend').innerText = `$${safeSpend.toFixed(2)}`;
-    }
-
     function restartOnboarding() {
       state.onboardingCompleted = false;
       state.currentOnboardStep = 1;
@@ -1990,189 +2079,227 @@
       renderOnboardingStep();
     }
 
-    // DASHBOARD RENDERER
+    // DASHBOARD RENDERING
     function renderDashboard() {
-      const liquid = getTotalLiquidCash();
+      const liquidCash = getTotalLiquidCash();
       const upcomingBills = getUpcomingBillsTotal();
-      const safeSpend = liquid - upcomingBills;
-      const daysUntilPayday = getDaysUntilPayday();
+      const safeSpend = liquidCash - upcomingBills;
+      const daysToPayday = getDaysUntilPayday();
 
       const safeSpendEl = document.getElementById('dash-safe-spend');
       if (safeSpendEl) {
         safeSpendEl.innerText = `$${safeSpend.toFixed(2)}`;
-        if (safeSpend < 0) {
-          safeSpendEl.className = "text-4xl sm:text-5xl font-black text-rose-400 tracking-tight";
-        } else {
-          safeSpendEl.className = "text-4xl sm:text-5xl font-black text-white tracking-tight";
-        }
+        safeSpendEl.className = `text-4xl sm:text-5xl font-black tracking-tight ${safeSpend < 0 ? 'text-rose-400' : 'text-white'}`;
       }
 
-      const payDateInline = document.getElementById('dash-next-paydate-inline');
-      if (payDateInline) payDateInline.innerText = state.income.nextDate || '--';
+      const nextPayInline = document.getElementById('dash-next-paydate-inline');
+      if (nextPayInline) nextPayInline.innerText = state.income.nextDate || '--';
 
       const countdownEl = document.getElementById('dash-next-payday-countdown');
-      if (countdownEl) countdownEl.innerText = `${daysUntilPayday} Day${daysUntilPayday === 1 ? '' : 's'}`;
+      if (countdownEl) countdownEl.innerText = `${daysToPayday} Days`;
 
-      const dailyAvail = daysUntilPayday > 0 ? (safeSpend > 0 ? safeSpend / daysUntilPayday : 0) : safeSpend;
       const dailyAvailEl = document.getElementById('dash-daily-available');
-      if (dailyAvailEl) dailyAvailEl.innerText = `$${dailyAvail.toFixed(2)} / day`;
+      if (dailyAvailEl) {
+        const daily = daysToPayday > 0 ? (safeSpend / daysToPayday) : safeSpend;
+        dailyAvailEl.innerText = `$${daily.toFixed(2)} / day`;
+      }
+
+      const progressEl = document.getElementById('dash-payday-progress');
+      if (progressEl) {
+        const maxDays = state.income.frequency === 'weekly' ? 7 : 14;
+        const pct = Math.max(0, Math.min(100, ((maxDays - daysToPayday) / maxDays) * 100));
+        progressEl.style.width = `${pct}%`;
+      }
 
       const billsTotalEl = document.getElementById('dash-bills-due-total');
       if (billsTotalEl) billsTotalEl.innerText = `$${upcomingBills.toFixed(2)}`;
 
+      // DEFICIT ALERT MISSION CONTROL BEACON BUTTON
       const deficitBtn = document.getElementById('analyze-deficit-btn');
       if (deficitBtn) {
-        if (safeSpend < 0) deficitBtn.classList.remove('hidden');
-        else deficitBtn.classList.add('hidden');
+        if (safeSpend < 0) {
+          deficitBtn.classList.remove('hidden');
+        } else {
+          deficitBtn.classList.add('hidden');
+        }
       }
 
+      // FINANCIAL WEATHER 3.0 LOGIC
+      const weatherIcon = document.getElementById('fin-weather-icon');
+      const weatherTitle = document.getElementById('fin-weather-title');
+      const weatherDesc = document.getElementById('fin-weather-desc');
+      const weatherRisk = document.getElementById('fin-weather-risk');
+      const weatherCard = document.getElementById('fin-weather-card');
+
+      if (weatherTitle && weatherDesc && weatherRisk && weatherIcon) {
+        if (safeSpend >= 500) {
+          weatherIcon.innerText = '☀';
+          weatherTitle.innerText = 'Clear Skies';
+          weatherDesc.innerText = 'Optimal liquidity buffer with minimal payday stress.';
+          weatherRisk.innerText = 'Healthy';
+          weatherRisk.className = 'text-brand-400 font-bold';
+        } else if (safeSpend >= 200) {
+          weatherIcon.innerText = '🌤';
+          weatherTitle.innerText = 'Smooth Flight';
+          weatherDesc.innerText = 'Cash flow stable. Keep an eye on non-essential spending.';
+          weatherRisk.innerText = 'Moderate';
+          weatherRisk.className = 'text-blue-400 font-bold';
+        } else if (safeSpend >= 0) {
+          weatherIcon.innerText = '💨';
+          weatherTitle.innerText = 'Turbulence Ahead';
+          weatherDesc.innerText = 'Safe spend buffer thin before payday. Reserve discretionary funds.';
+          weatherRisk.innerText = 'Warning';
+          weatherRisk.className = 'text-amber-400 font-bold';
+        } else {
+          weatherIcon.innerText = '⛈';
+          weatherTitle.innerText = 'Financial Storm';
+          weatherDesc.innerText = 'Deficit detected! Immediate bill prioritizing required.';
+          weatherRisk.innerText = 'Critical Deficit';
+          weatherRisk.className = 'text-rose-400 font-bold';
+        }
+      }
+
+      // FINANCIAL RUNWAY 3.0 VISUAL TRACK UPGRADE
+      const runwayDays = Math.max(0, Math.round(liquidCash / Math.max(30, (upcomingBills / Math.max(1, daysToPayday)))));
       const runwayEl = document.getElementById('dash-runway-remaining');
-      if (runwayEl) runwayEl.innerText = `${Math.max(0, Math.floor(daysUntilPayday + (safeSpend > 0 ? safeSpend / 50 : 0)))} Days`;
+      const runwayCard = document.getElementById('dash-runway-card');
+      const runwayLights = document.getElementById('runway-lights-strip');
+      const runwayIcon = document.getElementById('runway-icon');
 
-      const payAmtEl = document.getElementById('dash-next-payday-amount');
-      if (payAmtEl) payAmtEl.innerText = `$${Number(state.income.amount || 0).toFixed(2)}`;
+      if (runwayEl) runwayEl.innerText = `${runwayDays} Days`;
+      if (runwayLights && runwayCard) {
+        if (runwayDays >= 30) {
+          runwayLights.className = 'absolute bottom-0 left-0 right-0 h-1.5 opacity-80 runway-track-healthy';
+          if (runwayIcon) runwayIcon.className = 'w-4 h-4 text-emerald-400';
+        } else if (runwayDays >= 14) {
+          runwayLights.className = 'absolute bottom-0 left-0 right-0 h-1.5 opacity-80 runway-track-warning';
+          if (runwayIcon) runwayIcon.className = 'w-4 h-4 text-amber-400';
+        } else {
+          runwayLights.className = 'absolute bottom-0 left-0 right-0 h-1.5 opacity-80 runway-track-danger';
+          if (runwayIcon) runwayIcon.className = 'w-4 h-4 text-rose-400 animate-pulse';
+        }
+      }
 
-      const resScoreEl = document.getElementById('dash-resilience-score');
-      const bufferDaysEl = document.getElementById('dash-buffer-days');
-      const score = Math.min(100, Math.max(0, Math.round((liquid / Math.max(1, upcomingBills)) * 50)));
-      if (resScoreEl) resScoreEl.innerText = `${score} / 100`;
-      if (bufferDaysEl) bufferDaysEl.innerText = `Buffer days: ${Math.floor(liquid / Math.max(1, (state.income.amount / 14)))}`;
+      const nextPayAmtEl = document.getElementById('dash-next-payday-amount');
+      if (nextPayAmtEl) nextPayAmtEl.innerText = `$${state.income.amount.toFixed(2)}`;
+
+      const scoreEl = document.getElementById('dash-resilience-score');
+      if (scoreEl) scoreEl.innerText = safeSpend > 0 ? '92/100' : '45/100';
 
       const ratioEl = document.getElementById('dash-paycheck-ratio');
-      const ratio = state.income.amount > 0 ? Math.round((upcomingBills / state.income.amount) * 100) : 0;
-      if (ratioEl) ratioEl.innerText = `${ratio}%`;
-
-      const wIcon = document.getElementById('fin-weather-icon');
-      const wTitle = document.getElementById('fin-weather-title');
-      const wDesc = document.getElementById('fin-weather-desc');
-      const wRisk = document.getElementById('fin-weather-risk');
-
-      if (safeSpend < 0) {
-        if (wIcon) wIcon.innerText = "⛈";
-        if (wTitle) wTitle.innerText = "Stormy Cash Flow";
-        if (wDesc) wDesc.innerText = "Bills before payday exceed liquid cash reserves. Use Deficit Navigator!";
-        if (wRisk) { wRisk.innerText = "High Deficit Risk"; wRisk.className = "text-rose-400 font-bold"; }
-      } else if (safeSpend < 200) {
-        if (wIcon) wIcon.innerText = "⛅";
-        if (wTitle) wTitle.innerText = "Partly Cloudy";
-        if (wDesc) wDesc.innerText = "Thin cash buffer remaining before payday. Avoid unexpected spending.";
-        if (wRisk) { wRisk.innerText = "Moderate Risk"; wRisk.className = "text-amber-400 font-bold"; }
-      } else {
-        if (wIcon) wIcon.innerText = "☀";
-        if (wTitle) wTitle.innerText = "Clear Skies";
-        if (wDesc) wDesc.innerText = "Stable cash reserves and healthy safe spend buffer.";
-        if (wRisk) { wRisk.innerText = "Healthy"; wRisk.className = "text-brand-400 font-bold"; }
+      if (ratioEl) {
+        const ratio = state.income.amount > 0 ? (upcomingBills / state.income.amount) * 100 : 0;
+        ratioEl.innerText = `${Math.min(100, ratio).toFixed(0)}%`;
       }
 
-      const billsListEl = document.getElementById('dash-upcoming-bills-list');
-      if (billsListEl) {
-        const list = getUpcomingBills();
-        if (list.length === 0) {
-          billsListEl.innerHTML = `<p class="text-xs text-slate-500 py-3">No pending bills before payday!</p>`;
+      // Render Dashboard Lists
+      const billsList = document.getElementById('dash-upcoming-bills-list');
+      if (billsList) {
+        const upcoming = getUpcomingBills();
+        if (upcoming.length === 0) {
+          billsList.innerHTML = `<p class="text-xs text-slate-500 italic py-2">No pending bills before payday!</p>`;
         } else {
-          billsListEl.innerHTML = list.slice(0, 4).map(b => `
-            <div class="flex items-center justify-between p-3 bg-slate-900/80 rounded-2xl border border-slate-800 text-xs">
-              <div>
-                <h4 class="font-bold text-white">${b.title}</h4>
-                <p class="text-[10px] text-slate-400">Due ${b.dueDate} • <span class="capitalize text-slate-300">${b.priority}</span></p>
+          billsList.innerHTML = upcoming.slice(0, 4).map(b => `
+            <div class="p-3 bg-slate-900/80 rounded-2xl border border-slate-800/80 flex items-center justify-between text-xs glass-card-hover">
+              <div class="flex items-center gap-2.5">
+                <span class="p-2 rounded-xl bg-slate-800 text-brand-400"><i data-lucide="receipt" class="w-4 h-4"></i></span>
+                <div>
+                  <strong class="text-white block">${b.title}</strong>
+                  <span class="text-[10px] text-slate-400">Due ${b.dueDate}</span>
+                </div>
               </div>
-              <span class="font-extrabold text-rose-400">$${Number(b.amount).toFixed(2)}</span>
+              <span class="font-bold text-slate-200">$${b.amount.toFixed(2)}</span>
             </div>
           `).join('');
         }
       }
 
-      const recentActEl = document.getElementById('dash-recent-activity-list');
-      if (recentActEl) {
+      const actList = document.getElementById('dash-recent-activity-list');
+      if (actList) {
         const recent = (state.activityLog || []).slice(0, 4);
         if (recent.length === 0) {
-          recentActEl.innerHTML = `<p class="text-xs text-slate-500 py-3">No recent activity logged.</p>`;
+          actList.innerHTML = `<p class="text-xs text-slate-500 italic py-2">No recent system activity.</p>`;
         } else {
-          recentActEl.innerHTML = recent.map(act => `
-            <div class="p-2.5 bg-slate-900/80 rounded-2xl border border-slate-800 text-xs flex justify-between items-center">
+          actList.innerHTML = recent.map(act => `
+            <div class="p-2.5 bg-slate-900/80 rounded-2xl border border-slate-800/80 text-xs flex justify-between items-center">
               <div>
-                <h5 class="font-semibold text-slate-200">${act.action}</h5>
-                <p class="text-[10px] text-slate-400 truncate max-w-[200px]">${act.details}</p>
+                <strong class="text-slate-200 block">${act.action}</strong>
+                <span class="text-[10px] text-slate-400">${act.details}</span>
               </div>
-              <span class="text-[9px] text-slate-500">${new Date(act.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+              <span class="text-[10px] text-slate-500">${new Date(act.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
             </div>
           `).join('');
         }
       }
 
-      if (document.getElementById('dash-qol-accts')) document.getElementById('dash-qol-accts').innerText = state.accounts.length;
-      if (document.getElementById('dash-qol-goals')) document.getElementById('dash-qol-goals').innerText = state.goals.length;
-      if (document.getElementById('dash-qol-bills')) document.getElementById('dash-qol-bills').innerText = state.bills.length;
-      if (document.getElementById('dash-qol-sync')) document.getElementById('dash-qol-sync').innerText = state.lastSyncTime ? new Date(state.lastSyncTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'Local';
+      lucide.createIcons();
     }
 
     // ACCOUNTS PAGE
-    function renderAccountsPage() {
+    function renderAccounts() {
       const totalCash = getTotalLiquidCash();
-      const totalCashEl = document.getElementById('accounts-page-total-cash');
-      if (totalCashEl) totalCashEl.innerText = `$${totalCash.toFixed(2)}`;
-
-      const totalCountEl = document.getElementById('accounts-total-count');
-      if (totalCountEl) totalCountEl.innerText = state.accounts.length;
-
-      const allocContainer = document.getElementById('accounts-health-bars-container');
-      if (allocContainer) {
-        const totalPos = state.accounts.reduce((sum, a) => sum + Math.max(0, Number(a.balance)), 0) || 1;
-        allocContainer.innerHTML = `
-          <div class="w-full bg-slate-900 h-3 rounded-full overflow-hidden flex">
-            ${state.accounts.map(a => {
-              const pct = (Math.max(0, Number(a.balance)) / totalPos) * 100;
-              let color = 'bg-brand-500';
-              if (a.type === 'savings') color = 'bg-blue-500';
-              if (a.type === 'cash') color = 'bg-amber-500';
-              if (a.type === 'credit') color = 'bg-rose-500';
-              return `<div style="width: ${pct}%" class="${color} h-full" title="${a.name}: $${Number(a.balance).toFixed(2)} (${pct.toFixed(0)}%)"></div>`;
-            }).join('')}
-          </div>
-        `;
-      }
+      const totalEl = document.getElementById('accounts-page-total-cash');
+      const countEl = document.getElementById('accounts-total-count');
+      if (totalEl) totalEl.innerText = `$${totalCash.toFixed(2)}`;
+      if (countEl) countEl.innerText = state.accounts.length;
 
       const grid = document.getElementById('accounts-page-grid');
       if (grid) {
-        if (state.accounts.length === 0) {
-          grid.innerHTML = `<div class="col-span-2 glass-card p-8 rounded-3xl text-center text-xs text-slate-400">No accounts added yet.</div>`;
-        } else {
-          grid.innerHTML = state.accounts.map(a => `
-            <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4">
-              <div class="flex justify-between items-start">
-                <div>
-                  <span class="text-[10px] uppercase font-bold text-brand-400 tracking-wider">${a.type}</span>
-                  <h3 class="font-extrabold text-lg text-white mt-0.5">${a.name}</h3>
-                </div>
-                <div class="flex gap-1">
-                  <button onclick="openAddAccountModal('${a.id}')" class="p-1.5 text-slate-400 hover:text-white transition-colors"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
-                  <button onclick="deleteAccount('${a.id}')" class="p-1.5 text-slate-400 hover:text-rose-400 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                </div>
+        grid.innerHTML = state.accounts.map(acc => `
+          <div class="glass-card p-5 rounded-3xl border border-slate-800/80 flex flex-col justify-between space-y-4 glass-card-hover">
+            <div class="flex justify-between items-start">
+              <div>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${acc.type === 'credit' ? 'bg-rose-500/15 text-rose-400 border border-rose-500/30' : 'bg-brand-500/15 text-brand-400 border border-brand-500/30'}">${acc.type}</span>
+                <h4 class="text-lg font-bold text-white mt-1">${acc.name}</h4>
               </div>
-              <div class="text-2xl font-black ${a.type === 'credit' ? 'text-rose-400' : 'text-white'}">$${Number(a.balance).toFixed(2)}</div>
+              <div class="flex gap-1">
+                <button onclick="openEditAccountModal('${acc.id}')" class="p-1.5 text-slate-400 hover:text-white btn-interact"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                <button onclick="deleteAccount('${acc.id}')" class="p-1.5 text-slate-400 hover:text-rose-400 btn-interact"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+              </div>
             </div>
-          `).join('');
-          lucide.createIcons();
-        }
+            <div class="text-2xl font-black text-white">$${acc.balance.toFixed(2)}</div>
+          </div>
+        `).join('');
       }
+
+      const barsContainer = document.getElementById('accounts-health-bars-container');
+      if (barsContainer) {
+        barsContainer.innerHTML = state.accounts.map(acc => {
+          const pct = totalCash > 0 ? (acc.balance / totalCash) * 100 : 0;
+          return `
+            <div class="space-y-1 text-xs">
+              <div class="flex justify-between text-slate-300">
+                <span>${acc.name}</span>
+                <strong>${pct.toFixed(1)}%</strong>
+              </div>
+              <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                <div class="bg-brand-400 h-full" style="width: ${Math.min(100, Math.max(0, pct))}%"></div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      lucide.createIcons();
     }
 
-    function openAddAccountModal(editId = null) {
-      document.getElementById('account-edit-id').value = editId || '';
-      if (editId) {
-        const acc = state.accounts.find(a => a.id === editId);
-        if (acc) {
-          document.getElementById('account-modal-title').innerText = "Edit Account";
-          document.getElementById('acc-form-name').value = acc.name;
-          document.getElementById('acc-form-balance').value = acc.balance;
-          document.getElementById('acc-form-type').value = acc.type;
-        }
-      } else {
-        document.getElementById('account-modal-title').innerText = "Add Account";
-        document.getElementById('acc-form-name').value = '';
-        document.getElementById('acc-form-balance').value = '';
-        document.getElementById('acc-form-type').value = 'checking';
-      }
+    function openAddAccountModal() {
+      document.getElementById('account-modal-title').innerText = "Add Account";
+      document.getElementById('account-edit-id').value = "";
+      document.getElementById('acc-form-name').value = "";
+      document.getElementById('acc-form-balance').value = "";
+      document.getElementById('modal-backdrop').classList.remove('hidden');
+      document.getElementById('modal-account').classList.remove('hidden');
+    }
+
+    function openEditAccountModal(id) {
+      const acc = state.accounts.find(a => a.id === id);
+      if (!acc) return;
+      document.getElementById('account-modal-title').innerText = "Edit Account";
+      document.getElementById('account-edit-id').value = acc.id;
+      document.getElementById('acc-form-name').value = acc.name;
+      document.getElementById('acc-form-balance').value = acc.balance;
+      document.getElementById('acc-form-type').value = acc.type;
       document.getElementById('modal-backdrop').classList.remove('hidden');
       document.getElementById('modal-account').classList.remove('hidden');
     }
@@ -2190,74 +2317,73 @@
           acc.name = name;
           acc.balance = balance;
           acc.type = type;
-          logActivity("Account Updated", `Updated ${name} balance to $${balance.toFixed(2)}`);
         }
       } else {
-        const newAcc = { id: 'acc_' + Date.now(), name, balance, type };
-        state.accounts.push(newAcc);
-        logActivity("Account Added", `Added account ${name} with balance $${balance.toFixed(2)}`);
+        state.accounts.push({
+          id: 'acc_' + Date.now(),
+          name,
+          balance,
+          type
+        });
       }
 
       saveStateToStorage();
       closeModals();
+      renderAccounts();
       showToast("Account saved successfully", "success");
-      renderAccountsPage();
-      if (getCurrentPageId() === 'dashboard') renderDashboard();
+      logActivity("Account Update", `Saved account ${name} with balance $${balance.toFixed(2)}`);
     }
 
     function deleteAccount(id) {
-      const accIndex = state.accounts.findIndex(a => a.id === id);
-      if (accIndex > -1) {
-        const deleted = state.accounts.splice(accIndex, 1)[0];
-        saveStateToStorage();
-        setUndoBuffer(deleted, (restored) => {
-          state.accounts.push(restored);
-          saveStateToStorage();
-          renderAccountsPage();
-        });
-        renderAccountsPage();
-      }
+      const acc = state.accounts.find(a => a.id === id);
+      if (!acc) return;
+      const oldState = [...state.accounts];
+      state.accounts = state.accounts.filter(a => a.id !== id);
+      setUndoBuffer(oldState, (data) => { state.accounts = data; });
+      saveStateToStorage();
+      renderAccounts();
     }
 
     // COMING UP PAGE
     function renderComingUp() {
-      const timeline = document.getElementById('coming-up-timeline-list');
-      if (!timeline) return;
+      const list = document.getElementById('coming-up-timeline-list');
+      if (!list) return;
 
       if (state.bills.length === 0) {
-        timeline.innerHTML = `<div class="glass-card p-8 rounded-3xl text-center text-xs text-slate-400">No bills recorded.</div>`;
+        list.innerHTML = `<p class="text-xs text-slate-500 italic py-4 text-center">No upcoming bills configured.</p>`;
         return;
       }
 
-      const sorted = [...state.bills].sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
-
-      timeline.innerHTML = sorted.map(b => `
-        <div class="glass-card p-4 rounded-2xl border ${b.completed ? 'border-slate-800 opacity-60' : 'border-slate-800/80'} flex items-center justify-between gap-4">
+      list.innerHTML = state.bills.map(b => `
+        <div class="glass-card p-4 rounded-2xl border border-slate-800 flex items-center justify-between text-xs glass-card-hover">
           <div class="flex items-center gap-3">
-            <button onclick="toggleBillComplete('${b.id}')" class="w-6 h-6 rounded-lg border ${b.completed ? 'bg-brand-500 border-brand-500 text-slate-950' : 'border-slate-700 hover:border-brand-500'} flex items-center justify-center transition-all">
-              ${b.completed ? '<i data-lucide="check" class="w-4 h-4 font-bold"></i>' : ''}
+            <button onclick="toggleBillComplete('${b.id}')" class="w-6 h-6 rounded-lg border ${b.completed ? 'bg-brand-500 border-brand-500 text-slate-950' : 'border-slate-700 hover:border-brand-500'} flex items-center justify-center transition-all btn-interact">
+              ${b.completed ? '<i data-lucide="check" class="w-4 h-4"></i>' : ''}
             </button>
             <div>
-              <h4 class="font-bold text-xs text-white ${b.completed ? 'line-through' : ''}">${b.title}</h4>
-              <p class="text-[10px] text-slate-400">Due ${b.dueDate} • Category: ${b.category} • Priority: <span class="capitalize text-slate-200">${b.priority}</span></p>
+              <strong class="text-white block text-sm ${b.completed ? 'line-through opacity-50' : ''}">${b.title}</strong>
+              <div class="flex items-center gap-2 text-[10px] text-slate-400 mt-0.5">
+                <span>Due: ${b.dueDate}</span>
+                <span>•</span>
+                <span class="capitalize text-brand-400">${b.category}</span>
+                <span>•</span>
+                <span class="uppercase font-bold ${b.priority === 'critical' ? 'text-rose-400' : 'text-amber-400'}">${b.priority}</span>
+              </div>
             </div>
           </div>
           <div class="flex items-center gap-3">
-            <span class="font-extrabold text-sm ${b.completed ? 'text-slate-400' : 'text-rose-400'}">$${Number(b.amount).toFixed(2)}</span>
-            <button onclick="deleteBill('${b.id}')" class="text-slate-500 hover:text-rose-400 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            <span class="text-base font-bold text-slate-200">$${b.amount.toFixed(2)}</span>
+            <button onclick="deleteBill('${b.id}')" class="p-1.5 text-slate-500 hover:text-rose-400 btn-interact"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
           </div>
         </div>
       `).join('');
+
       lucide.createIcons();
     }
 
     function openAddBillModal() {
-      document.getElementById('bill-title').value = '';
-      document.getElementById('bill-amount').value = '';
-      document.getElementById('bill-date').value = new Date().toISOString().split('T')[0];
-      document.getElementById('bill-category').value = 'Housing';
-      document.getElementById('bill-priority').value = 'critical';
-
+      document.getElementById('bill-title').value = "";
+      document.getElementById('bill-amount').value = "";
       document.getElementById('modal-backdrop').classList.remove('hidden');
       document.getElementById('modal-bill').classList.remove('hidden');
     }
@@ -2270,102 +2396,89 @@
       const category = document.getElementById('bill-category').value;
       const priority = document.getElementById('bill-priority').value;
 
-      const newBill = {
+      state.bills.push({
         id: 'bill_' + Date.now(),
-        title, amount, dueDate, category, priority, completed: false
-      };
+        title,
+        amount,
+        dueDate,
+        category,
+        priority,
+        completed: false
+      });
 
-      state.bills.push(newBill);
       saveStateToStorage();
-      logActivity("Bill Added", `Added ${title} ($${amount.toFixed(2)}) due ${dueDate}`);
       closeModals();
-      showToast("Bill saved successfully", "success");
       renderComingUp();
+      showToast("Bill added to timeline", "success");
+      logActivity("Bill Created", `Added bill ${title} for $${amount.toFixed(2)} due ${dueDate}`);
     }
 
     function toggleBillComplete(id) {
-      const bill = state.bills.find(b => b.id === id);
-      if (bill) {
-        bill.completed = !bill.completed;
-        if (bill.completed) {
-          logActivity("Bill Completed", `Marked ${bill.title} ($${bill.amount.toFixed(2)}) as paid.`);
-          state.transactions.unshift({
-            id: 'tx_' + Date.now(),
-            title: bill.title,
-            amount: bill.amount,
-            type: 'expense',
-            category: bill.category,
-            date: new Date().toISOString().split('T')[0]
-          });
-        }
-        saveStateToStorage();
-        renderComingUp();
+      const b = state.bills.find(item => item.id === id);
+      if (!b) return;
+      b.completed = !b.completed;
+
+      if (b.completed) {
+        state.transactions.unshift({
+          id: 'tx_' + Date.now(),
+          title: `Bill Payment: ${b.title}`,
+          amount: b.amount,
+          type: 'expense',
+          category: b.category,
+          date: new Date().toISOString().split('T')[0]
+        });
+        showToast(`Marked ${b.title} complete & logged transaction`, "success");
       }
+
+      saveStateToStorage();
+      renderComingUp();
     }
 
     function deleteBill(id) {
-      const idx = state.bills.findIndex(b => b.id === id);
-      if (idx > -1) {
-        const deleted = state.bills.splice(idx, 1)[0];
-        saveStateToStorage();
-        setUndoBuffer(deleted, (restored) => {
-          state.bills.push(restored);
-          saveStateToStorage();
-          renderComingUp();
-        });
-        renderComingUp();
-      }
+      const oldBills = [...state.bills];
+      state.bills = state.bills.filter(b => b.id !== id);
+      setUndoBuffer(oldBills, (data) => { state.bills = data; });
+      saveStateToStorage();
+      renderComingUp();
     }
 
-    // LEDGER PAGE
+    // LEDGER / TRANSACTIONS PAGE
     function renderLedger() {
-      const body = document.getElementById('ledger-table-body');
-      if (!body) return;
+      const tbody = document.getElementById('ledger-table-body');
+      if (!tbody) return;
 
-      const searchInput = document.getElementById('ledger-search-input');
-      const catSelect = document.getElementById('ledger-filter-category');
+      const search = (document.getElementById('ledger-search-input')?.value || '').toLowerCase();
+      const catFilter = document.getElementById('ledger-filter-category')?.value || 'ALL';
 
-      const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
-      const catFilter = catSelect ? catSelect.value : 'ALL';
+      let filtered = state.transactions.filter(tx => {
+        const matchesSearch = tx.title.toLowerCase().includes(search) || tx.category.toLowerCase().includes(search);
+        const matchesCat = catFilter === 'ALL' || tx.category === catFilter;
+        return matchesSearch && matchesCat;
+      });
 
-      let list = [...state.transactions];
-
-      if (catFilter !== 'ALL') {
-        list = list.filter(t => t.category === catFilter);
-      }
-
-      if (query) {
-        list = list.filter(t => t.title.toLowerCase().includes(query) || (t.category && t.category.toLowerCase().includes(query)));
-      }
-
-      if (list.length === 0) {
-        body.innerHTML = `<tr><td colspan="5" class="p-6 text-center text-slate-500">No transactions match filter.</td></tr>`;
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500 italic">No transactions recorded.</td></tr>`;
         return;
       }
 
-      body.innerHTML = list.map(tx => `
+      tbody.innerHTML = filtered.map(tx => `
         <tr class="hover:bg-slate-900/50 transition-colors">
-          <td class="p-4 text-slate-400">${tx.date}</td>
-          <td class="p-4 font-bold text-white">${tx.title}</td>
-          <td class="p-4"><span class="px-2 py-1 rounded-lg text-[10px] bg-slate-800 text-slate-300">${tx.category || 'General'}</span></td>
-          <td class="p-4 text-right font-bold ${tx.type === 'income' ? 'text-emerald-400' : 'text-rose-400'}">
-            ${tx.type === 'income' ? '+' : '-'}$${Number(tx.amount).toFixed(2)}
-          </td>
+          <td class="p-4 text-slate-300 font-medium">${tx.date}</td>
+          <td class="p-4 text-white font-bold">${tx.title}</td>
+          <td class="p-4 text-slate-400"><span class="px-2 py-0.5 rounded-full text-[10px] bg-slate-800 border border-slate-700">${tx.category}</span></td>
+          <td class="p-4 text-right font-black ${tx.type === 'income' ? 'text-brand-400' : 'text-rose-400'}">${tx.type === 'income' ? '+' : '-'}$${tx.amount.toFixed(2)}</td>
           <td class="p-4 text-center">
-            <button onclick="deleteTransaction('${tx.id}')" class="text-slate-500 hover:text-rose-400"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+            <button onclick="deleteTransaction('${tx.id}')" class="p-1 text-slate-500 hover:text-rose-400 btn-interact"><i data-lucide="trash" class="w-4 h-4"></i></button>
           </td>
         </tr>
       `).join('');
+
       lucide.createIcons();
     }
 
     function openAddTransactionModal() {
-      document.getElementById('tx-title').value = '';
-      document.getElementById('tx-amount').value = '';
-      document.getElementById('tx-type').value = 'expense';
-      document.getElementById('tx-category').value = 'Food & Dining';
-      document.getElementById('tx-date').value = new Date().toISOString().split('T')[0];
-
+      document.getElementById('tx-title').value = "";
+      document.getElementById('tx-amount').value = "";
       document.getElementById('modal-backdrop').classList.remove('hidden');
       document.getElementById('modal-transaction').classList.remove('hidden');
     }
@@ -2378,76 +2491,90 @@
       const category = document.getElementById('tx-category').value;
       const date = document.getElementById('tx-date').value;
 
-      const newTx = { id: 'tx_' + Date.now(), title, amount, type, category, date };
-      state.transactions.unshift(newTx);
-      logActivity("Transaction Logged", `${type === 'income' ? 'Income' : 'Expense'}: ${title} ($${amount.toFixed(2)})`);
+      state.transactions.unshift({
+        id: 'tx_' + Date.now(),
+        title,
+        amount,
+        type,
+        category,
+        date
+      });
 
       saveStateToStorage();
       closeModals();
-      showToast("Transaction recorded", "success");
       renderLedger();
+      showToast("Transaction logged", "success");
+      logActivity("Transaction", `Logged ${type} of $${amount.toFixed(2)}: ${title}`);
     }
 
     function deleteTransaction(id) {
-      const idx = state.transactions.findIndex(t => t.id === id);
-      if (idx > -1) {
-        const deleted = state.transactions.splice(idx, 1)[0];
-        saveStateToStorage();
-        setUndoBuffer(deleted, (restored) => {
-          state.transactions.unshift(restored);
-          saveStateToStorage();
-          renderLedger();
-        });
-        renderLedger();
-      }
+      const oldTxs = [...state.transactions];
+      state.transactions = state.transactions.filter(t => t.id !== id);
+      setUndoBuffer(oldTxs, (data) => { state.transactions = data; });
+      saveStateToStorage();
+      renderLedger();
     }
 
-    // GOALS PAGE
+    // GOALS PAGE WITH ENHANCED CELEBRATION EXPERIENCE
     function renderGoals() {
       const grid = document.getElementById('goals-grid');
       if (!grid) return;
 
       if (state.goals.length === 0) {
-        grid.innerHTML = `<div class="col-span-2 glass-card p-8 rounded-3xl text-center text-xs text-slate-400">No savings goals created yet.</div>`;
+        grid.innerHTML = `<p class="text-xs text-slate-500 italic col-span-2 text-center py-6">No savings goals created yet.</p>`;
         return;
       }
 
       grid.innerHTML = state.goals.map(g => {
-        const pct = Math.min(100, Math.round(((g.current || 0) / (g.target || 1)) * 100));
+        const pct = Math.min(100, Math.max(0, (g.current / g.target) * 100));
+        const isComplete = g.current >= g.target;
+
+        // Trigger persistent celebration badge & confetti launch
+        if (isComplete && !g.completedCelebrated) {
+          g.completedCelebrated = true;
+          saveStateToStorage();
+          confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+        }
+
         return `
-          <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4">
+          <div class="glass-card p-6 rounded-3xl border ${isComplete ? 'border-brand-400 glow-emerald' : 'border-slate-800/80'} space-y-4 glass-card-hover relative overflow-hidden">
+            ${isComplete ? '<div class="absolute top-0 right-0 bg-brand-500 text-slate-950 px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-bl-xl shadow-lg">🏆 Goal Achieved!</div>' : ''}
+            
             <div class="flex justify-between items-start">
               <div>
-                <h3 class="font-extrabold text-base text-white">${g.title}</h3>
-                <p class="text-xs text-slate-400 mt-0.5">$${Number(g.current || 0).toFixed(2)} of $${Number(g.target || 0).toFixed(2)}</p>
+                <h4 class="text-lg font-bold text-white">${g.title}</h4>
+                <p class="text-xs text-slate-400">$${g.current.toFixed(2)} of $${g.target.toFixed(2)}</p>
               </div>
-              <button onclick="deleteGoal('${g.id}')" class="text-slate-500 hover:text-rose-400 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+              <button onclick="deleteGoal('${g.id}')" class="p-1.5 text-slate-500 hover:text-rose-400 btn-interact"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
             </div>
 
-            <div class="space-y-1.5">
+            <div class="space-y-1">
               <div class="flex justify-between text-xs font-semibold">
-                <span class="text-brand-400">${pct}% Completed</span>
-                <span class="text-slate-400">$${Math.max(0, g.target - g.current).toFixed(2)} Remaining</span>
+                <span class="text-slate-400">Progress</span>
+                <span class="text-brand-400">${pct.toFixed(1)}%</span>
               </div>
-              <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
-                <div style="width: ${pct}%" class="bg-brand-500 h-full transition-all duration-500"></div>
+              <div class="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+                <div class="bg-brand-500 h-full transition-all duration-500" style="width: ${pct}%"></div>
               </div>
             </div>
 
-            <button onclick="openGoalDepositModal('${g.id}')" class="w-full py-2 bg-brand-500/20 hover:bg-brand-500/30 text-brand-300 border border-brand-500/30 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all">
-              <i data-lucide="plus-circle" class="w-4 h-4"></i> Deposit Funds
-            </button>
+            <div class="pt-2 flex justify-between items-center border-t border-slate-800">
+              <span class="text-[11px] text-slate-400">${isComplete ? 'Target fully funded' : 'Pacing: On Track'}</span>
+              <button onclick="openGoalDepositModal('${g.id}')" class="px-3 py-1.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all btn-interact">
+                + Deposit Funds
+              </button>
+            </div>
           </div>
         `;
       }).join('');
+
       lucide.createIcons();
     }
 
     function openAddGoalModal() {
-      document.getElementById('goal-title').value = '';
-      document.getElementById('goal-target').value = '';
-      document.getElementById('goal-current').value = '0';
-
+      document.getElementById('goal-title').value = "";
+      document.getElementById('goal-target').value = "";
+      document.getElementById('goal-current').value = "";
       document.getElementById('modal-backdrop').classList.remove('hidden');
       document.getElementById('modal-goal').classList.remove('hidden');
     }
@@ -2458,121 +2585,128 @@
       const target = parseFloat(document.getElementById('goal-target').value) || 0;
       const current = parseFloat(document.getElementById('goal-current').value) || 0;
 
-      const newGoal = { id: 'goal_' + Date.now(), title, target, current, completedCelebrated: false };
-      state.goals.push(newGoal);
-      saveStateToStorage();
-      logActivity("Goal Created", `Created goal ${title} with target $${target.toFixed(2)}`);
+      state.goals.push({
+        id: 'goal_' + Date.now(),
+        title,
+        target,
+        current,
+        completedCelebrated: current >= target
+      });
 
+      saveStateToStorage();
       closeModals();
-      showToast("Goal created successfully", "success");
       renderGoals();
+      showToast("Goal created", "success");
     }
 
-    function openGoalDepositModal(goalId) {
-      document.getElementById('deposit-goal-id').value = goalId;
-      document.getElementById('deposit-amount-input').value = '';
-
+    function openGoalDepositModal(id) {
+      document.getElementById('deposit-goal-id').value = id;
+      document.getElementById('deposit-amount-input').value = "";
       document.getElementById('modal-backdrop').classList.remove('hidden');
       document.getElementById('modal-goal-deposit').classList.remove('hidden');
     }
 
     function handleGoalDepositSubmit(e) {
       e.preventDefault();
-      const goalId = document.getElementById('deposit-goal-id').value;
+      const id = document.getElementById('deposit-goal-id').value;
       const amt = parseFloat(document.getElementById('deposit-amount-input').value) || 0;
+      const goal = state.goals.find(g => g.id === id);
 
-      const goal = state.goals.find(g => g.id === goalId);
       if (goal) {
-        goal.current = (goal.current || 0) + amt;
-        logActivity("Goal Contribution", `Deposited $${amt.toFixed(2)} into ${goal.title}`);
-        if (goal.current >= goal.target && !goal.completedCelebrated && window.confetti) {
-          confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        goal.current += amt;
+        if (goal.current >= goal.target && !goal.completedCelebrated) {
           goal.completedCelebrated = true;
-          showToast(`🎉 Congratulations! You reached your goal: ${goal.title}!`, "success");
-        } else {
-          showToast(`Deposited $${amt.toFixed(2)} into ${goal.title}`, "success");
+          confetti({ particleCount: 150, spread: 90, origin: { y: 0.5 } });
         }
         saveStateToStorage();
+        closeModals();
+        renderGoals();
+        showToast(`Deposited $${amt.toFixed(2)} to ${goal.title}`, "success");
+        logActivity("Goal Contribution", `Added $${amt.toFixed(2)} to ${goal.title}`);
       }
-
-      closeModals();
-      renderGoals();
     }
 
     function deleteGoal(id) {
-      const idx = state.goals.findIndex(g => g.id === id);
-      if (idx > -1) {
-        state.goals.splice(idx, 1);
-        saveStateToStorage();
-        renderGoals();
-        showToast("Goal removed", "info");
-      }
+      const oldGoals = [...state.goals];
+      state.goals = state.goals.filter(g => g.id !== id);
+      setUndoBuffer(oldGoals, (data) => { state.goals = data; });
+      saveStateToStorage();
+      renderGoals();
     }
 
-    // FORECAST FLIGHT SYSTEM
-    function renderForecast() {
+    // FORECAST FLIGHT SYSTEM 3.0 & AIRCRAFT ROUTE ENGINE
+    function renderForecastChart() {
       const canvasEl = document.getElementById('forecastChart');
       if (!canvasEl) return;
 
       const labels = [];
-      const points = [];
-      let currBalance = getTotalLiquidCash();
+      const dataPoints = [];
+      let currentBal = getTotalLiquidCash();
 
-      const lowestEl = document.getElementById('forecast-card-lowest');
-      const highestEl = document.getElementById('forecast-card-highest');
-      const paydayEl = document.getElementById('forecast-card-payday');
-      const healthEl = document.getElementById('forecast-card-health');
+      const today = new Date();
+      let lowest = currentBal;
+      let highest = currentBal;
 
-      let lowest = currBalance;
-      let highest = currBalance;
+      // Clean, meaningful waypoints ONLY (💰 Payday, 🏠 Rent, ⚡ Utilities, 🎯 Goal Funding)
+      const waypoints = [];
 
-      for (let i = 0; i < 60; i++) {
-        const d = new Date();
-        d.setDate(d.getDate() + i);
-        const dateStr = d.toISOString().split('T')[0];
-        
-        if (state.income.nextDate && dateStr === state.income.nextDate) {
-          currBalance += Number(state.income.amount || 0);
+      for (let i = 0; i <= 60; i++) {
+        const simDate = new Date(today.getTime() + i * 86400000);
+        const isoDate = simDate.toISOString().split('T')[0];
+        labels.push(simDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+
+        if (isoDate === state.income.nextDate) {
+          currentBal += state.income.amount;
+          waypoints.push({ dayIndex: i, label: '💰 Payday', amount: state.income.amount, type: 'income' });
         }
 
-        const billsDue = state.bills.filter(b => b.dueDate === dateStr && !b.completed);
-        billsDue.forEach(b => { currBalance -= Number(b.amount || 0); });
+        state.bills.forEach(b => {
+          if (!b.completed && b.dueDate === isoDate) {
+            currentBal -= b.amount;
+            let icon = '⚡ Utility';
+            if (b.category === 'Housing') icon = '🏠 Rent';
+            waypoints.push({ dayIndex: i, label: `${icon} (${b.title})`, amount: b.amount, type: 'bill' });
+          }
+        });
 
-        labels.push(`Day ${i + 1}`);
-        points.push(currBalance);
-
-        if (currBalance < lowest) lowest = currBalance;
-        if (currBalance > highest) highest = currBalance;
+        dataPoints.push(currentBal);
+        if (currentBal < lowest) lowest = currentBal;
+        if (currentBal > highest) highest = currentBal;
       }
 
-      if (lowestEl) lowestEl.innerText = `$${lowest.toFixed(2)}`;
-      if (highestEl) highestEl.innerText = `$${highest.toFixed(2)}`;
-      if (paydayEl) paydayEl.innerText = `$${points[14] ? points[14].toFixed(2) : currBalance.toFixed(2)}`;
-      
-      if (healthEl) {
-        if (lowest < 0) {
-          healthEl.innerText = "Deficit Danger";
-          healthEl.className = "text-xl font-black text-rose-400 mt-1";
-        } else {
-          healthEl.innerText = "Stable";
-          healthEl.className = "text-xl font-black text-emerald-400 mt-1";
-        }
-      }
+      document.getElementById('forecast-card-lowest').innerText = `$${lowest.toFixed(2)}`;
+      document.getElementById('forecast-card-highest').innerText = `$${highest.toFixed(2)}`;
+      document.getElementById('forecast-card-payday').innerText = `$${dataPoints[14].toFixed(2)}`;
 
       if (forecastChartInstance) forecastChartInstance.destroy();
 
       const ctx = canvasEl.getContext('2d');
+      const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+      gradient.addColorStop(0, 'rgba(16, 185, 129, 0.4)');
+      gradient.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+
       forecastChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
           labels,
           datasets: [{
-            label: 'Projected Cash Flow',
-            data: points,
-            borderColor: '#10b981',
-            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            label: 'Projected Cash Flow ($)',
+            data: dataPoints,
+            borderColor: '#34d399',
+            borderWidth: 3,
             fill: true,
-            tension: 0.3
+            backgroundColor: gradient,
+            tension: 0.35,
+            pointRadius: (ctx) => {
+              const idx = ctx.dataIndex;
+              return waypoints.some(w => w.dayIndex === idx) ? 6 : 0;
+            },
+            pointBackgroundColor: (ctx) => {
+              const idx = ctx.dataIndex;
+              const wp = waypoints.find(w => w.dayIndex === idx);
+              if (!wp) return '#34d399';
+              return wp.type === 'income' ? '#34d399' : '#f43f5e';
+            }
           }]
         },
         options: {
@@ -2580,147 +2714,79 @@
           maintainAspectRatio: false,
           plugins: { legend: { display: false } },
           scales: {
-            x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b', maxTicksLimit: 10 } },
-            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } }
+            x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 10 } } },
+            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b', font: { size: 10 } } }
           }
         }
       });
+
+      // Position Aircraft along route trail
+      setTimeout(() => {
+        const planeContainer = document.getElementById('forecast-plane-container');
+        if (planeContainer && forecastChartInstance) {
+          const meta = forecastChartInstance.getDatasetMeta(0);
+          if (meta && meta.data && meta.data[10]) {
+            const point = meta.data[10];
+            planeContainer.style.left = `${point.x}px`;
+            planeContainer.style.top = `${point.y - 15}px`;
+          }
+        }
+      }, 300);
+
+      const legend = document.getElementById('forecast-markers-legend');
+      if (legend) {
+        legend.innerHTML = waypoints.slice(0, 6).map(w => `
+          <span class="px-2.5 py-1 bg-slate-900 rounded-lg border border-slate-800 text-slate-300">
+            ${w.label} - Day ${w.dayIndex}
+          </span>
+        `).join('');
+      }
     }
 
-    // DEFICIT NAVIGATOR MODAL
-    function openDeficitNavigatorModal() {
-      const content = document.getElementById('deficit-modal-content');
-      if (!content) return;
-
-      const liquid = getTotalLiquidCash();
-      const bills = getUpcomingBills();
-      const totalBills = bills.reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
-      const deficit = totalBills - liquid;
-
-      let html = `
-        <div class="p-4 bg-rose-500/10 border border-rose-500/30 rounded-2xl space-y-2">
-          <h4 class="font-bold text-rose-400 text-sm">Deficit Warning ($${deficit.toFixed(2)} Short)</h4>
-          <p class="text-slate-300">Your total liquid cash ($${liquid.toFixed(2)}) is less than upcoming bills ($${totalBills.toFixed(2)}). Here is a suggested strategy:</p>
-        </div>
-        
-        <div class="space-y-2 pt-2">
-          <h5 class="font-bold text-white text-xs uppercase tracking-wider">Suggested Actions (Bill Tetris)</h5>
-      `;
-
-      const flexible = bills.filter(b => b.priority === 'flexible');
-      const important = bills.filter(b => b.priority === 'important');
-
-      if (flexible.length > 0) {
-        html += `
-          <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 space-y-1">
-            <span class="font-bold text-amber-400">1. Defer Flexible Subscriptions</span>
-            <p class="text-slate-400">Consider pausing non-essential subscriptions before payday:</p>
-            <ul class="list-disc list-inside text-slate-300">
-              ${flexible.map(f => `<li>${f.title} ($${f.amount.toFixed(2)})</li>`).join('')}
-            </ul>
-          </div>
-        `;
-      }
-
-      if (important.length > 0) {
-        html += `
-          <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 space-y-1">
-            <span class="font-bold text-blue-400">2. Request Extension on Utilities</span>
-            <p class="text-slate-400">Call utility providers to shift due dates post payday:</p>
-            <ul class="list-disc list-inside text-slate-300">
-              ${important.map(i => `<li>${i.title} ($${i.amount.toFixed(2)})</li>`).join('')}
-            </ul>
-          </div>
-        `;
-      }
-
-      html += `</div>`;
-
-      content.innerHTML = html;
-      document.getElementById('modal-backdrop').classList.remove('hidden');
-      document.getElementById('modal-deficit').classList.remove('hidden');
-      lucide.createIcons();
-    }
-
-    // FIX PAGE 1: ACTIVITY LOG
+    // ACTIVITY LOG PAGE
     function renderActivityPage() {
       const container = document.getElementById('activity-log-timeline');
       if (!container) return;
 
       if (!state.activityLog || state.activityLog.length === 0) {
-        container.innerHTML = `
-          <div class="glass-card p-8 rounded-3xl text-center space-y-3 border border-slate-800">
-            <i data-lucide="activity" class="w-8 h-8 text-slate-600 mx-auto"></i>
-            <p class="text-xs text-slate-400">No activity recorded yet.</p>
-          </div>
-        `;
-        lucide.createIcons();
+        container.innerHTML = `<p class="text-xs text-slate-500 italic py-6 text-center">No system events logged.</p>`;
         return;
       }
 
-      container.innerHTML = state.activityLog.map(item => {
-        const dateStr = new Date(item.timestamp).toLocaleString('en-US', {
-          month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-        });
-        return `
-          <div class="glass-card p-4 rounded-2xl border border-slate-800/80 flex items-start justify-between gap-4">
-            <div class="flex items-start gap-3">
-              <div class="w-8 h-8 rounded-xl bg-brand-500/10 border border-brand-500/20 text-brand-400 flex items-center justify-center shrink-0 mt-0.5">
-                <i data-lucide="clock" class="w-4 h-4"></i>
-              </div>
-              <div>
-                <h4 class="font-bold text-xs text-white">${item.action}</h4>
-                <p class="text-[11px] text-slate-400 mt-0.5">${item.details}</p>
-              </div>
-            </div>
-            <span class="text-[10px] text-slate-500 whitespace-nowrap">${dateStr}</span>
-          </div>
-        `;
-      }).join('');
-      lucide.createIcons();
-    }
-
-    // FIX PAGE 2: RECONCILE & DATA
-    function renderReconcile() {
-      const container = document.getElementById('reconcile-accounts-list');
-      if (!container) return;
-
-      if (!state.accounts || state.accounts.length === 0) {
-        container.innerHTML = `<p class="text-xs text-slate-400">No accounts configured to reconcile.</p>`;
-        return;
-      }
-
-      container.innerHTML = state.accounts.map(acc => `
-        <div class="p-3.5 bg-slate-900/80 rounded-2xl border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      container.innerHTML = state.activityLog.map(act => `
+        <div class="p-4 glass-card rounded-2xl border border-slate-800 flex justify-between items-center text-xs">
           <div>
-            <h4 class="font-bold text-xs text-white">${acc.name}</h4>
-            <p class="text-[10px] text-slate-400 capitalize">${acc.type} account</p>
+            <strong class="text-white block font-bold">${act.action}</strong>
+            <p class="text-slate-400 mt-0.5">${act.details}</p>
           </div>
-          <div class="flex items-center gap-2">
-            <span class="text-xs text-slate-400">$</span>
-            <input type="number" step="0.01" id="reconcile-val-${acc.id}" value="${Number(acc.balance).toFixed(2)}" class="w-28 bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white text-right font-semibold outline-none focus:border-brand-500" />
-            <button onclick="saveReconciledAccountBalance('${acc.id}')" class="px-3 py-1.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold text-xs rounded-xl transition-all">Save</button>
-          </div>
+          <span class="text-[10px] text-slate-500">${new Date(act.timestamp).toLocaleString()}</span>
         </div>
       `).join('');
     }
 
-    function saveReconciledAccountBalance(accId) {
-      const input = document.getElementById(`reconcile-val-${accId}`);
-      if (!input) return;
-      const val = parseFloat(input.value);
-      if (isNaN(val)) {
-        showToast("Invalid balance amount", "error");
-        return;
-      }
-      const acc = state.accounts.find(a => a.id === accId);
+    // RECONCILE PAGE
+    function renderReconcilePage() {
+      const container = document.getElementById('reconcile-accounts-list');
+      if (!container) return;
+
+      container.innerHTML = state.accounts.map(acc => `
+        <div class="p-3 bg-slate-900/80 rounded-2xl border border-slate-800 flex justify-between items-center text-xs">
+          <div>
+            <strong class="text-white block">${acc.name}</strong>
+            <span class="text-slate-400">Current Balance</span>
+          </div>
+          <input type="number" step="0.01" value="${acc.balance}" onchange="updateAccountBalanceDirect('${acc.id}', this.value)" class="bg-slate-800 border border-slate-700 rounded-xl px-3 py-1.5 text-right font-bold text-brand-400 w-32 outline-none" />
+        </div>
+      `).join('');
+    }
+
+    function updateAccountBalanceDirect(id, newBal) {
+      const acc = state.accounts.find(a => a.id === id);
       if (acc) {
-        const oldVal = acc.balance;
-        acc.balance = val;
+        acc.balance = parseFloat(newBal) || 0;
         saveStateToStorage();
-        logActivity("Account Reconciled", `Updated ${acc.name} balance from $${Number(oldVal).toFixed(2)} to $${val.toFixed(2)}`);
-        showToast(`${acc.name} balance updated`, "success");
-        renderReconcile();
+        showToast("Account reconciled", "success");
+        logActivity("Reconcile", `Adjusted ${acc.name} to $${acc.balance.toFixed(2)}`);
       }
     }
 
@@ -2728,59 +2794,88 @@
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
       const dlAnchor = document.createElement('a');
       dlAnchor.setAttribute("href", dataStr);
-      dlAnchor.setAttribute("download", `paycheck_pilot_backup_${new Date().toISOString().split('T')[0]}.json`);
+      dlAnchor.setAttribute("download", `PaycheckPilot_Backup_${new Date().toISOString().split('T')[0]}.json`);
       document.body.appendChild(dlAnchor);
       dlAnchor.click();
       dlAnchor.remove();
-      logActivity("Data Exported", "Exported state JSON backup.");
-      showToast("Backup exported successfully", "success");
+      showToast("Data backup exported successfully", "success");
     }
 
-    function importDataJSON(event) {
-      const fileReader = new FileReader();
-      if (!event.target.files || event.target.files.length === 0) return;
-      fileReader.readAsText(event.target.files[0], "UTF-8");
-      fileReader.onload = (e) => {
+    function importDataJSON(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
         try {
-          const importedState = JSON.parse(e.target.result);
-          if (importedState && typeof importedState === 'object') {
-            state = { ...state, ...importedState };
+          const imported = JSON.parse(evt.target.result);
+          if (imported && imported.accounts) {
+            state = { ...state, ...imported };
             saveStateToStorage();
-            logActivity("Data Imported", "Restored data from JSON backup.");
-            showToast("Data imported successfully!", "success");
+            showToast("Backup imported successfully", "success");
             navigateTo('dashboard');
           }
-        } catch (err) {
-          showToast("Failed to parse JSON file", "error");
+        } catch(err) {
+          showToast("Failed to parse JSON backup file", "error");
         }
       };
+      reader.readAsText(file);
     }
 
-    // FIX PAGE 3: SETTINGS
-    function renderSettings() {
+    // DEVELOPER TOOLS & SPONSOR MANAGEMENT
+    function renderDevToolsPage() {
+      const list = document.getElementById('sponsor-management-list');
+      if (!list) return;
+
+      list.innerHTML = state.sponsors.map(s => `
+        <div class="p-3 bg-slate-900/80 rounded-2xl border border-slate-800 flex items-center justify-between text-xs">
+          <div>
+            <strong class="text-white block">${s.name} - ${s.title}</strong>
+            <p class="text-[10px] text-slate-400">${s.description}</p>
+          </div>
+          <button onclick="toggleSponsor('${s.id}')" class="px-3 py-1 rounded-xl text-xs font-bold ${s.enabled ? 'bg-brand-500 text-slate-950' : 'bg-slate-800 text-slate-400'} btn-interact">
+            ${s.enabled ? 'Active' : 'Disabled'}
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function toggleSponsor(id) {
+      const sp = state.sponsors.find(s => s.id === id);
+      if (sp) {
+        sp.enabled = !sp.enabled;
+        saveStateToStorage();
+        renderDevToolsPage();
+      }
+    }
+
+    function clearAllData() {
+      if (confirm("Reset all local Paycheck Pilot data? This cannot be undone.")) {
+        localStorage.removeItem('paycheck_pilot_state');
+        location.reload();
+      }
+    }
+
+    // SETTINGS & HOUSEHOLD MANAGEMENT
+    function renderSettingsPage() {
       const emailEl = document.getElementById('settings-email-display');
-      if (emailEl) emailEl.value = state.user ? state.user.email : 'pilot@user.com';
+      if (emailEl && state.user) emailEl.value = state.user.email;
 
-      const hh = state.household || { name: 'Solo Pilot', owner: 'You', inviteCode: 'PP-8829-X', members: 1, accountMode: 'shared', memberList: [] };
-      
       const hhName = document.getElementById('hh-name');
-      if (hhName) hhName.innerText = hh.name;
       const hhOwner = document.getElementById('hh-owner');
-      if (hhOwner) hhOwner.innerText = hh.owner;
-      const hhInvite = document.getElementById('hh-invite-code');
-      if (hhInvite) hhInvite.innerText = hh.inviteCode;
+      const hhCode = document.getElementById('hh-invite-code');
       const hhMembers = document.getElementById('hh-members');
-      if (hhMembers) hhMembers.innerText = `${hh.members || 1} Member${(hh.members || 1) > 1 ? 's' : ''}`;
 
-      const memberContainer = document.getElementById('hh-member-list-container');
-      if (memberContainer) {
-        const members = hh.memberList && hh.memberList.length > 0 ? hh.memberList : [
-          { name: state.user ? state.user.email.split('@')[0] : 'You', role: 'owner', email: state.user ? state.user.email : 'pilot@user.com' }
-        ];
-        memberContainer.innerHTML = members.map(m => `
-          <div class="flex items-center justify-between p-2 bg-slate-900/80 rounded-xl text-xs">
-            <span class="text-slate-200 font-medium">${m.name}</span>
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${m.role === 'owner' ? 'bg-brand-500/20 text-brand-300' : 'bg-slate-800 text-slate-400'}">${m.role}</span>
+      if (hhName) hhName.innerText = state.household.name;
+      if (hhOwner) hhOwner.innerText = state.household.owner;
+      if (hhCode) hhCode.innerText = state.household.inviteCode;
+      if (hhMembers) hhMembers.innerText = `${state.household.members} Member(s)`;
+
+      const memberList = document.getElementById('hh-member-list-container');
+      if (memberList) {
+        memberList.innerHTML = state.household.memberList.map(m => `
+          <div class="p-2 bg-slate-900/80 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
+            <span class="text-slate-200">${m.name} (${m.email})</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-500/20 text-brand-300 uppercase">${m.role}</span>
           </div>
         `).join('');
       }
@@ -2788,27 +2883,14 @@
       const radioShared = document.getElementById('radio-shared-accounts');
       const radioIndiv = document.getElementById('radio-indiv-accounts');
       if (radioShared && radioIndiv) {
-        if (hh.accountMode === 'individual') {
-          radioIndiv.checked = true;
-          radioShared.checked = false;
-        } else {
-          radioShared.checked = true;
-          radioIndiv.checked = false;
-        }
+        if (state.household.accountMode === 'shared') radioShared.checked = true;
+        else radioIndiv.checked = true;
       }
     }
 
-    function generateNewInviteCode() {
-      const code = 'PP-' + Math.floor(1000 + Math.random() * 9000) + '-X';
-      state.household.inviteCode = code;
-      saveStateToStorage();
-      renderSettings();
-      showToast(`New Invite Code generated: ${code}`, "success");
-    }
-
     function updateAccountMode() {
-      const radioIndiv = document.getElementById('radio-indiv-accounts');
-      state.household.accountMode = radioIndiv && radioIndiv.checked ? 'individual' : 'shared';
+      const radioShared = document.getElementById('radio-shared-accounts');
+      state.household.accountMode = radioShared.checked ? 'shared' : 'individual';
       saveStateToStorage();
       showToast(`Account mode set to ${state.household.accountMode}`, "info");
     }
@@ -2819,75 +2901,128 @@
     }
 
     function executeCreateHousehold() {
-      const nameInput = document.getElementById('new-hh-name');
-      if (!nameInput || !nameInput.value.trim()) {
-        showToast("Enter a household name", "error");
-        return;
+      const name = document.getElementById('new-hh-name').value;
+      if (name) {
+        state.household.name = name;
+        state.household.members = 1;
+        saveStateToStorage();
+        closeModals();
+        renderSettingsPage();
+        showToast(`Created household: ${name}`, "success");
       }
-      state.household.name = nameInput.value.trim();
-      state.household.owner = "You";
-      state.household.members = 1;
-      state.household.inviteCode = 'PP-' + Math.floor(1000 + Math.random() * 9000) + '-X';
-      saveStateToStorage();
-      closeModals();
-      renderSettings();
-      showToast(`Household "${state.household.name}" created!`, "success");
-      logActivity("Household Created", `Created household: ${state.household.name}`);
     }
 
     function executeJoinHousehold() {
-      const codeInput = document.getElementById('join-invite-code');
-      if (!codeInput || !codeInput.value.trim()) {
-        showToast("Enter invite code", "error");
-        return;
+      const code = document.getElementById('join-invite-code').value;
+      if (code) {
+        state.household.name = "Shared Household (" + code + ")";
+        state.household.members = 2;
+        saveStateToStorage();
+        closeModals();
+        renderSettingsPage();
+        showToast("Joined household successfully", "success");
       }
-      state.household.name = "Joined Household";
-      state.household.members = (state.household.members || 1) + 1;
-      saveStateToStorage();
-      closeModals();
-      renderSettings();
-      showToast(`Joined household successfully!`, "success");
-      logActivity("Household Joined", `Joined household via code ${codeInput.value.trim()}`);
     }
 
     function promptLeaveHousehold() {
-      openCustomModal("Leave Household", "Are you sure you want to leave this household?", [
-        { label: "Cancel", primary: false, onclick: "closeModals()" },
-        { label: "Leave", primary: true, onclick: "executeLeaveHousehold()" }
-      ]);
-    }
-
-    function executeLeaveHousehold() {
       state.household = {
         name: "Solo Pilot",
         owner: "You",
         members: 1,
-        inviteCode: 'PP-' + Math.floor(1000 + Math.random() * 9000) + '-X',
+        inviteCode: "PP-8829-X",
         accountMode: 'shared',
         memberList: [{ name: "You (Owner)", role: "owner", email: state.user ? state.user.email : "pilot@user.com" }]
       };
       saveStateToStorage();
-      closeModals();
-      renderSettings();
-      showToast("Left household. Switched to Solo Pilot mode.", "info");
-      logActivity("Household Left", "Returned to Solo Pilot mode.");
+      renderSettingsPage();
+      showToast("Returned to Solo Pilot mode", "info");
     }
 
-    // DEVELOPER TOOLS HANDLERS
-    function renderDevTools() {
-      checkAdminOwnerStatus();
+    function generateNewInviteCode() {
+      const newCode = "PP-" + Math.floor(1000 + Math.random() * 9000) + "-X";
+      state.household.inviteCode = newCode;
+      saveStateToStorage();
+      renderSettingsPage();
+      showToast("Generated new invite code", "success");
     }
 
-    function clearAllData() {
-      openCustomModal("Reset All Local Data", "This will reset all accounts, bills, transactions, and settings to factory defaults. Proceed?", [
-        { label: "Cancel", primary: false, onclick: "closeModals()" },
-        { label: "Reset Everything", primary: true, onclick: "executeClearAllData()" }
-      ]);
+    // DEFICIT NAVIGATOR 2.0 (BILL TETRIS) MODAL
+    function openDeficitNavigatorModal() {
+      const content = document.getElementById('deficit-modal-content');
+      if (!content) return;
+
+      const liquidCash = getTotalLiquidCash();
+      const upcoming = getUpcomingBills();
+      let accumulated = 0;
+
+      content.innerHTML = `
+        <div class="p-3 bg-rose-950/40 border border-rose-500/30 rounded-2xl space-y-1">
+          <strong class="text-rose-300 block font-bold">Deficit Warning System</strong>
+          <p class="text-slate-300">Your available liquid cash ($${liquidCash.toFixed(2)}) is insufficient to cover all upcoming bills prior to payday. Reorder or defer flexible bills below:</p>
+        </div>
+        <div class="space-y-2">
+          ${upcoming.map(b => {
+            accumulated += b.amount;
+            const fits = accumulated <= liquidCash;
+            return `
+              <div class="p-3 rounded-2xl border ${fits ? 'bg-slate-900/80 border-slate-800' : 'bg-rose-950/30 border-rose-800/80'} flex justify-between items-center text-xs">
+                <div>
+                  <strong class="text-white block">${b.title}</strong>
+                  <span class="text-slate-400">Due ${b.dueDate} • Priority: ${b.priority}</span>
+                </div>
+                <div class="text-right">
+                  <span class="font-bold ${fits ? 'text-brand-400' : 'text-rose-400'}">$${b.amount.toFixed(2)}</span>
+                  <span class="block text-[10px] ${fits ? 'text-emerald-400' : 'text-rose-400'}">${fits ? 'Covered' : 'Exceeds Cash'}</span>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+
+      document.getElementById('modal-backdrop').classList.remove('hidden');
+      document.getElementById('modal-deficit').classList.remove('hidden');
+      lucide.createIcons();
     }
 
-    function executeClearAllData() {
-      localStorage.removeItem('paycheck_pilot_state');
-      location.reload();
+    // GENERAL MODAL HELPERS
+    function openCustomModal(title, bodyText, actions = []) {
+      document.getElementById('generic-modal-title').innerText = title;
+      document.getElementById('generic-modal-body').innerText = bodyText;
+      const actionsDiv = document.getElementById('generic-modal-actions');
+      actionsDiv.innerHTML = actions.map(act => `
+        <button onclick="${act.onclick}" class="flex-1 py-2 px-3 rounded-xl text-xs font-bold ${act.primary ? 'bg-brand-500 text-slate-950' : 'bg-slate-800 text-slate-300'} btn-interact">${act.label}</button>
+      `).join('');
+      document.getElementById('modal-backdrop').classList.remove('hidden');
+      document.getElementById('modal-generic').classList.remove('hidden');
+    }
+
+    function closeModals() {
+      document.getElementById('modal-backdrop').classList.add('hidden');
+      document.querySelectorAll('#modal-backdrop > div').forEach(m => m.classList.add('hidden'));
+    }
+
+    function openPublicPage(pageType) {
+      const titleEl = document.getElementById('public-page-title');
+      const contentEl = document.getElementById('public-page-content');
+      if (!titleEl || !contentEl) return;
+
+      if (pageType === 'privacy') {
+        titleEl.innerText = "Privacy Policy";
+        contentEl.innerHTML = `<p>Paycheck Pilot values your financial privacy. All transaction logs and balance calculations remain encrypted locally or in your designated Supabase database.</p>`;
+      } else if (pageType === 'terms') {
+        titleEl.innerText = "Terms of Service";
+        contentEl.innerHTML = `<p>Paycheck Pilot is provided as a personal financial navigation assistant. Always verify dates and bank balances before issuing transfers.</p>`;
+      } else {
+        titleEl.innerText = "About Paycheck Pilot";
+        contentEl.innerHTML = `<p>Paycheck Pilot is engineered to solve the paycheck-to-paycheck cashflow dilemma with real-time Safe Spend analytics and flight path forecasting.</p>`;
+      }
+
+      showScreen('page-public');
+    }
+
+    function closePublicPage() {
+      showScreen('screen-app');
     }
   </script>
 </body>
