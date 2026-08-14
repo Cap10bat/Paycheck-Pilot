@@ -5074,6 +5074,76 @@
           return;
         }
 
+        // LEGACY TIMELINE IMPORT SUPPORT
+if (
+  parsed.timeline &&
+  Array.isArray(parsed.timeline) &&
+  !parsed.bills &&
+  !parsed.transactions
+) {
+
+  const legacyBills = [];
+  const legacyTransactions = [];
+  const legacyAccounts = [];
+
+  // Convert accounts object
+  if (parsed.accounts && typeof parsed.accounts === 'object') {
+
+    Object.entries(parsed.accounts).forEach(([name, balance]) => {
+
+      let accountType = 'checking';
+
+      if (name.toLowerCase().includes('savings')) {
+        accountType = 'savings';
+      }
+
+      legacyAccounts.push({
+        name: name
+          .replace(/([A-Z])/g, ' $1')
+          .replace(/^./, c => c.toUpperCase())
+          .trim(),
+        balance: Number(balance) || 0,
+        type: accountType
+      });
+    });
+  }
+
+  // Convert timeline items
+  parsed.timeline.forEach(item => {
+
+    if (item.type === 'expense') {
+
+      legacyBills.push({
+        title: item.desc,
+        amount: Number(item.amount) || 0,
+        dueDate: item.date,
+        category: 'Other',
+        priority: 'important',
+        completed: false
+      });
+
+    } else if (item.type === 'income') {
+
+      legacyTransactions.push({
+        title: item.desc,
+        amount: Number(item.amount) || 0,
+        type: 'income',
+        category: 'Income',
+        date: item.date
+      });
+
+    }
+
+  });
+
+  parsed = {
+    accounts: legacyAccounts,
+    bills: legacyBills,
+    transactions: legacyTransactions,
+    goals: parsed.goals || []
+  };
+}
+
         const categories = ['accounts', 'bills', 'transactions', 'goals'];
         let totalFound = 0;
         categories.forEach(kind => {
