@@ -241,6 +241,54 @@
       animation: rowFadeInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
     }
 
+    /* ===== SPLASH SCREEN — Cockpit startup sequence (~2.6s total) ===== */
+    @keyframes splashRadarSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .splash-radar-sweep {
+      background: conic-gradient(from 0deg, rgba(52,211,153,0.35), transparent 35%);
+      animation: splashRadarSpin 1.6s linear infinite;
+    }
+    @keyframes splashRadarFade {
+      0%, 45% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+    #splash-radar {
+      animation: splashRadarFade 1.3s ease-in forwards;
+    }
+    @keyframes splashRouteDraw {
+      to { stroke-dashoffset: 0; }
+    }
+    .splash-route-path {
+      animation: splashRouteDraw 1.1s ease-out forwards;
+    }
+    @keyframes splashLogoIn {
+      0%, 50% { opacity: 0; transform: scale(0.7); }
+      75% { opacity: 1; transform: scale(1.08); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    .splash-logo {
+      opacity: 0;
+      animation: splashLogoIn 1.3s cubic-bezier(0.34, 1.56, 0.64, 1) 0.3s forwards;
+    }
+    @keyframes splashWordmarkIn {
+      0%, 60% { opacity: 0; transform: translateY(6px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .splash-wordmark {
+      opacity: 0;
+      animation: splashWordmarkIn 1.3s ease-out 0.3s forwards;
+    }
+    @keyframes splashExit {
+      0% { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(1.12); }
+    }
+    #splash-screen.splash-exiting {
+      animation: splashExit 0.6s ease-in forwards;
+      pointer-events: none;
+    }
+
     /* ===== FINANCIAL WEATHER 3.0 — ambient effect layers ===== */
     /* All transform/opacity only — cheap on mobile, no canvas, no JS loop. */
     @keyframes weatherShimmer {
@@ -356,6 +404,33 @@
       </symbol>
     </defs>
   </svg>
+
+  <!-- ========================================== -->
+  <!-- SPLASH SCREEN — Cockpit startup sequence     -->
+  <!-- Pure visual overlay on its own timer. Does not touch routing/auth   -->
+  <!-- logic at all — the normal app init underneath runs completely      -->
+  <!-- unmodified and is simply revealed once this overlay clears.        -->
+  <!-- ========================================== -->
+  <div id="splash-screen" class="fixed inset-0 z-[9999] bg-[#070c18] flex flex-col items-center justify-center overflow-hidden cursor-pointer" onclick="dismissSplashScreen()">
+    <div id="splash-radar" class="absolute w-64 h-64 rounded-full border border-brand-500/20 flex items-center justify-center">
+      <div class="absolute inset-4 rounded-full border border-brand-500/15"></div>
+      <div class="absolute inset-10 rounded-full border border-brand-500/10"></div>
+      <div class="splash-radar-sweep absolute inset-0 rounded-full"></div>
+      <svg viewBox="0 0 256 256" class="absolute inset-0 w-full h-full">
+        <path class="splash-route-path" d="M 40 180 Q 90 60 128 128 T 220 70" fill="none" stroke="#34d399" stroke-width="2" stroke-linecap="round" stroke-dasharray="300" stroke-dashoffset="300" opacity="0.7"/>
+      </svg>
+    </div>
+
+    <div class="relative flex flex-col items-center gap-4">
+      <svg viewBox="0 0 100 100" class="splash-logo w-16 h-16 rounded-2xl shadow-[0_8px_40px_rgba(16,185,129,0.5)]" role="img" aria-label="Paycheck Pilot"><use href="#pp-logo-mark"></use></svg>
+      <div class="splash-wordmark text-center">
+        <p class="text-white font-extrabold tracking-[0.2em] text-sm">PAYCHECK PILOT</p>
+        <p class="text-[10px] text-slate-500 tracking-wider mt-1">NAVIGATE EVERY PAYDAY</p>
+      </div>
+    </div>
+
+    <button onclick="event.stopPropagation(); skipSplashScreenPermanently();" class="absolute bottom-6 right-6 text-[10px] text-slate-600 hover:text-slate-400 transition-colors">Skip intro next time →</button>
+  </div>
 
   <!-- ========================================== -->
   <!-- TOAST NOTIFICATION CONTAINER -->
@@ -1351,10 +1426,22 @@
                   <button onclick="openPublicPage('about')" class="py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 font-medium">About</button>
                   <button onclick="openPublicPage('privacy')" class="py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 font-medium">Privacy Policy</button>
                   <button onclick="openPublicPage('terms')" class="py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 font-medium">Terms</button>
-                  <button onclick="openCustomModal('Contact Support', 'Reach our engineering team at support@paycheckpilot.app', [{label: 'Close', primary: true, onclick: 'closeModals()'}])" class="py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 font-medium">Contact</button>
+                  <button onclick="openPublicPage('contact')" class="py-2 bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 font-medium">Contact</button>
                 </div>
               </div>
 
+            </div>
+
+            <!-- Flight School -->
+            <div class="glass-card p-4 sm:p-6 rounded-3xl border border-brand-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="flex items-center gap-3">
+                <svg viewBox="0 0 100 100" class="h-10 w-10 rounded-lg shrink-0" role="img" aria-label="Flight School"><use href="#pp-logo-mark"></use></svg>
+                <div>
+                  <h3 class="font-bold text-white text-base">✈ Flight School</h3>
+                  <p class="text-xs text-slate-400">Learn how Safe Spend, Forecast, Money Mayday, and the rest of Paycheck Pilot actually work.</p>
+                </div>
+              </div>
+              <button onclick="openFlightSchool()" class="shrink-0 px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Open Flight School</button>
             </div>
           </div>
 
@@ -1418,6 +1505,22 @@
   <!-- ========================================== -->
   <div id="modal-backdrop" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     
+    <!-- FLIGHT SCHOOL — built-in help/learning system -->
+    <div id="modal-flight-school" class="glass-card p-4 sm:p-6 rounded-3xl border border-brand-500/40 w-full max-w-lg hidden space-y-4 max-h-[85vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2">
+          <svg viewBox="0 0 100 100" class="h-8 w-8 rounded-lg shrink-0" role="img" aria-label="Flight School"><use href="#pp-logo-mark"></use></svg>
+          <div>
+            <h3 class="font-bold text-white text-base">✈ Flight School</h3>
+            <p id="flight-school-subtitle" class="text-[10px] text-slate-500">Understand how Paycheck Pilot works</p>
+          </div>
+        </div>
+        <button onclick="closeFlightSchool()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div id="flight-school-content" class="space-y-3"></div>
+    </div>
+
     <!-- PWA INSTALL MODAL -->
     <div id="modal-pwa-install" class="glass-card p-6 sm:p-8 rounded-3xl border border-brand-500/50 w-full max-w-md hidden space-y-6 glow-emerald max-h-[85vh] overflow-y-auto">
       <div class="text-center space-y-3">
@@ -1936,6 +2039,39 @@
   <!-- APPLICATION SCRIPT & ENGINE                -->
   <!-- ========================================== -->
   <script>
+    // ==========================================
+    // SPLASH SCREEN CONTROL
+    // Entirely self-contained: a local (per-device, non-synced) preference
+    // in localStorage, a fixed timer, and three small functions. Does not
+    // read or write `state`, does not call navigateTo/showScreen, and does
+    // not participate in the auth/routing decision at all — it just sits
+    // on top for a couple seconds and then gets out of the way.
+    // ==========================================
+    (function initSplashScreen() {
+      const splash = document.getElementById('splash-screen');
+      if (!splash) return;
+
+      if (localStorage.getItem('pp_skip_splash') === 'true') {
+        splash.style.display = 'none';
+        return;
+      }
+
+      window.__splashDismissTimer = setTimeout(() => dismissSplashScreen(), 2000);
+    })();
+
+    function dismissSplashScreen() {
+      const splash = document.getElementById('splash-screen');
+      if (!splash || splash.classList.contains('splash-exiting')) return;
+      if (window.__splashDismissTimer) clearTimeout(window.__splashDismissTimer);
+      splash.classList.add('splash-exiting');
+      setTimeout(() => { splash.style.display = 'none'; }, 650);
+    }
+
+    function skipSplashScreenPermanently() {
+      localStorage.setItem('pp_skip_splash', 'true');
+      dismissSplashScreen();
+    }
+
     // CRITICAL SUPABASE CONSTANTS & CLIENT
     const SUPABASE_URL = "https://zsfcqymmlzpfaapygmlu.supabase.co";
     const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_pr_leMR3cM00zA7lI7Tcmw_baAT4Zvp";
@@ -3956,6 +4092,217 @@
       document.querySelectorAll('#modal-backdrop > div').forEach(m => m.classList.add('hidden'));
     }
 
+    // ==========================================
+    // FLIGHT SCHOOL — built-in help & learning system
+    // Purely explanatory: reads nothing from state, calls no calculation
+    // functions, and modifies nothing. Six static topics plus an optional
+    // guided tour, all rendered into one shared modal content area.
+    // ==========================================
+    const FLIGHT_SCHOOL_TOPICS = [
+      {
+        icon: "shield-check",
+        title: "Safe Spend",
+        summary: "The one number that matters most.",
+        body: `
+          <p>Safe Spend is the amount you can safely spend right now without putting your upcoming bills at risk before your next paycheck arrives.</p>
+          <p class="mt-3"><strong class="text-white">How it's calculated:</strong></p>
+          <p>Safe Spend = your total liquid cash (checking, savings, and cash accounts) minus every bill still due before your next payday.</p>
+          <p class="mt-3">It updates the moment anything changes — add a bill, mark one paid, or your balance moves, and Safe Spend recalculates immediately. Every other feature in Paycheck Pilot exists to help you understand or protect this one number.</p>
+        `
+      },
+      {
+        icon: "plane",
+        title: "Forecast Flight System",
+        summary: "Your financial future, mapped day by day.",
+        body: `
+          <p>Forecast predicts your financial future by simulating your cash position day by day for the next 60 days — a real calculation from your actual bills and paydays, not a rough estimate.</p>
+          <p class="mt-3"><strong class="text-white">What you're looking at:</strong></p>
+          <p><span class="text-brand-400 font-semibold">The airplane</span> marks your projected position on that timeline, moving smoothly along the path as time passes.</p>
+          <p><span class="text-indigo-400 font-semibold">Waypoints</span> mark real events on the path — a bill coming due, a goal you could fund, a milestone worth noticing.</p>
+          <p><span class="text-emerald-400 font-semibold">Payday markers</span> show exactly when your next deposits land.</p>
+          <p>The path itself traces your <span class="text-white font-semibold">projected balance</span> — so a dip you'd otherwise only discover the hard way shows up here first, while you still have time to plan around it.</p>
+        `
+      },
+      {
+        icon: "life-buoy",
+        title: "Money Mayday",
+        summary: "A plan when the numbers don't add up.",
+        body: `
+          <p>🚨 Money Mayday activates automatically whenever your upcoming obligations add up to more than the cash you actually have available.</p>
+          <p class="mt-3"><strong class="text-white">What it gives you:</strong></p>
+          <p><span class="text-white font-semibold">Recovery paths</span> — your bills are split into what you must pay no matter what, and what you have room to delay.</p>
+          <p><span class="text-white font-semibold">Defer options</span> — push a flexible bill's due date back to free up breathing room before payday.</p>
+          <p><span class="text-white font-semibold">Projected outcomes</span> — see exactly what your position looks like once you've deferred what you can, so you know where you really stand.</p>
+          <p class="mt-3">It's built to help, not to alarm — Money Mayday shows you the path through, not just the problem.</p>
+        `
+      },
+      {
+        icon: "wallet",
+        title: "Payday Briefing",
+        summary: "What this paycheck needs to cover.",
+        body: `
+          <p>When your paycheck lands, Payday Briefing answers one question: what has to happen with this check before your next one arrives?</p>
+          <p class="mt-3"><strong class="text-white">How it works:</strong></p>
+          <p>A <span class="text-white font-semibold">checklist</span> is generated automatically from your real bills — only what's actually due before your next payday, nothing further out.</p>
+          <p>Each item is a genuine <span class="text-white font-semibold">obligation</span> pulled straight from your bill list, not a separate copy of it.</p>
+          <p>Checking one off is real <span class="text-white font-semibold">completion</span> — it pays the bill using the exact same system as everywhere else in the app, and your Safe Spend updates immediately.</p>
+          <p class="mt-3">Goals are never part of this checklist. Bills come first — goals stay optional.</p>
+        `
+      },
+      {
+        icon: "cloud-sun",
+        title: "Financial Weather",
+        summary: "A forecast, not a decoration.",
+        body: `
+          <p>Weather predicts your near-term financial conditions using the same Forecast data everywhere else in the app — a genuine prediction, not a mood icon.</p>
+          <div class="mt-3 space-y-2">
+            <p>☀ <span class="text-white font-semibold">Clear Skies</span> — stable finances, a healthy buffer, nothing pressing ahead.</p>
+            <p>⛅ <span class="text-white font-semibold">Partly Cloudy</span> — your buffer is thin right now.</p>
+            <p>🌧 <span class="text-white font-semibold">Rain Ahead</span> — you're fine today, but cash pressure is building later this month.</p>
+            <p>⛈ <span class="text-white font-semibold">Storm Warning</span> — a deficit is projected before your next paycheck.</p>
+            <p>🚨 <span class="text-white font-semibold">Emergency Deficit</span> — Money Mayday is active right now.</p>
+          </div>
+        `
+      },
+      {
+        icon: "users",
+        title: "Household Mode",
+        summary: "Share what makes sense — keep the rest yours.",
+        body: `
+          <p>Every account, bill, goal, and transaction in Paycheck Pilot carries an ownership label: <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-700/50 text-slate-300">Personal</span> or <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/20 text-indigo-300">Household</span>.</p>
+          <p class="mt-3"><strong class="text-white">Personal</strong> means only you can see it, even inside a shared household. <strong class="text-white">Household</strong> means everyone in your household sees it too.</p>
+          <p class="mt-3">Bills, Goals, and Forecast can be shared by default when you set up a household — a joint rent bill or a shared savings goal makes sense for everyone to see. Accounts, Transactions, and Income stay personal unless your household specifically opts them in — your own balances stay yours by default.</p>
+        `
+      }
+    ];
+
+    let flightSchoolTourActive = false;
+    let flightSchoolTopicIndex = 0;
+
+    function openFlightSchool() {
+      const backdrop = document.getElementById('modal-backdrop');
+      const modal = document.getElementById('modal-flight-school');
+      flightSchoolTourActive = false;
+      if (backdrop && modal) {
+        backdrop.classList.remove('hidden');
+        modal.classList.remove('hidden');
+      }
+      renderFlightSchoolHome();
+    }
+
+    function closeFlightSchool() {
+      closeModals();
+      flightSchoolTourActive = false;
+    }
+
+    function renderFlightSchoolHome() {
+      const content = document.getElementById('flight-school-content');
+      const subtitle = document.getElementById('flight-school-subtitle');
+      if (subtitle) subtitle.innerText = "Understand how Paycheck Pilot works";
+      if (!content) return;
+
+      content.innerHTML = `
+        <p class="text-xs text-slate-400">A short guide to the ideas behind Paycheck Pilot — browse a topic, or take the full guided tour.</p>
+        <button onclick="startFlightSchoolTour()" class="w-full py-2.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-2">
+          <i data-lucide="play-circle" class="w-4 h-4"></i> Start Guided Tour
+        </button>
+        <div class="space-y-2 pt-1">
+          ${FLIGHT_SCHOOL_TOPICS.map((t, i) => `
+            <button onclick="openFlightSchoolTopic(${i})" class="w-full p-3 bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-brand-500/40 rounded-xl text-left transition-all flex items-center justify-between gap-3">
+              <span class="flex items-center gap-3">
+                <span class="w-8 h-8 rounded-lg bg-brand-500/15 flex items-center justify-center shrink-0">
+                  <i data-lucide="${t.icon}" class="w-4 h-4 text-brand-400"></i>
+                </span>
+                <span>
+                  <span class="block text-sm font-semibold text-white">${t.title}</span>
+                  <span class="block text-[11px] text-slate-500">${t.summary}</span>
+                </span>
+              </span>
+              <i data-lucide="chevron-right" class="w-4 h-4 text-slate-600 shrink-0"></i>
+            </button>
+          `).join('')}
+        </div>
+      `;
+      lucide.createIcons();
+    }
+
+    function openFlightSchoolTopic(index) {
+      flightSchoolTourActive = false;
+      flightSchoolTopicIndex = index;
+      renderFlightSchoolTopic();
+    }
+
+    function startFlightSchoolTour() {
+      flightSchoolTourActive = true;
+      flightSchoolTopicIndex = 0;
+      renderFlightSchoolTopic();
+    }
+
+    function flightSchoolNext() {
+      if (flightSchoolTopicIndex < FLIGHT_SCHOOL_TOPICS.length - 1) {
+        flightSchoolTopicIndex++;
+        renderFlightSchoolTopic();
+      } else {
+        flightSchoolTourActive = false;
+        renderFlightSchoolHome();
+      }
+    }
+
+    function flightSchoolBack() {
+      if (flightSchoolTopicIndex > 0) {
+        flightSchoolTopicIndex--;
+        renderFlightSchoolTopic();
+      } else {
+        renderFlightSchoolHome();
+      }
+    }
+
+    function skipFlightSchoolTour() {
+      flightSchoolTourActive = false;
+      renderFlightSchoolHome();
+    }
+
+    function renderFlightSchoolTopic() {
+      const content = document.getElementById('flight-school-content');
+      const subtitle = document.getElementById('flight-school-subtitle');
+      const topic = FLIGHT_SCHOOL_TOPICS[flightSchoolTopicIndex];
+      if (!content || !topic) return;
+
+      if (subtitle) {
+        subtitle.innerText = flightSchoolTourActive
+          ? `Guided Tour · ${flightSchoolTopicIndex + 1} of ${FLIGHT_SCHOOL_TOPICS.length}`
+          : topic.title;
+      }
+
+      content.innerHTML = `
+        ${flightSchoolTourActive ? `
+          <div class="flex items-center gap-1.5">
+            ${FLIGHT_SCHOOL_TOPICS.map((_, i) => `<div class="h-1 flex-1 rounded-full ${i <= flightSchoolTopicIndex ? 'bg-brand-500' : 'bg-slate-800'}"></div>`).join('')}
+          </div>
+        ` : ''}
+        <div class="flex items-center gap-3 pt-1">
+          <span class="w-10 h-10 rounded-xl bg-brand-500/15 flex items-center justify-center shrink-0">
+            <i data-lucide="${topic.icon}" class="w-5 h-5 text-brand-400"></i>
+          </span>
+          <h4 class="text-base font-bold text-white">${topic.title}</h4>
+        </div>
+        <div class="text-xs text-slate-300 leading-relaxed">${topic.body}</div>
+        <div class="flex items-center gap-2 pt-3 border-t border-slate-800">
+          ${flightSchoolTourActive ? `
+            <button onclick="flightSchoolBack()" class="${flightSchoolTopicIndex === 0 ? 'invisible' : ''} px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all">Back</button>
+            <button onclick="skipFlightSchoolTour()" class="text-[11px] text-slate-500 hover:text-slate-300 px-2">Skip Tour</button>
+            <button onclick="flightSchoolNext()" class="ml-auto px-4 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">${flightSchoolTopicIndex === FLIGHT_SCHOOL_TOPICS.length - 1 ? 'Finish' : 'Next'}</button>
+          ` : `
+            <button onclick="renderFlightSchoolHome()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5">
+              <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> All Topics
+            </button>
+            <button onclick="startFlightSchoolTour()" class="ml-auto px-4 py-2 bg-brand-500/15 hover:bg-brand-500 hover:text-slate-950 text-brand-400 rounded-xl text-xs font-semibold transition-all">Start Guided Tour</button>
+          `}
+        </div>
+      `;
+      lucide.createIcons();
+    }
+
     function openCustomModal(title, body, actions = []) {
       const backdrop = document.getElementById('modal-backdrop');
       const generic = document.getElementById('modal-generic');
@@ -5131,13 +5478,55 @@
 
       if (pageKey === 'privacy') {
         titleEl.innerText = "Privacy Policy";
-        contentEl.innerHTML = `<p><strong>Paycheck Pilot Privacy Policy</strong></p><p>We prioritize your privacy. All financial data stored locally on your device or safely synced via encrypted connections to your Supabase cloud backend.</p>`;
+        contentEl.innerHTML = `
+          <p class="text-slate-500">Last updated: 2026</p>
+          <p><strong class="text-white">What we collect.</strong> Your email address (for sign-in), and the financial information you choose to enter — account balances, bills, transactions, goals, and income details. We don't collect anything beyond what you put into the app.</p>
+          <p><strong class="text-white">How it's stored.</strong> Your data syncs to a cloud database (Supabase) so it's available across your devices, transmitted over encrypted connections. It is not stored anywhere else, and we don't share it with data brokers or advertisers.</p>
+          <p><strong class="text-white">Household sharing.</strong> If you join or create a household, anything you mark <strong class="text-indigo-300">Household</strong> becomes visible to every member of that household. Anything marked <strong class="text-slate-300">Personal</strong> stays visible only to you, even inside a shared household. You choose the label on each item — nothing is shared automatically beyond what you tag.</p>
+          <p><strong class="text-white">What we don't do.</strong> Paycheck Pilot has no advertising, no ad tracking, and does not sell or rent your information to third parties.</p>
+          <p><strong class="text-white">Your data, your control.</strong> You can export a complete backup of your data at any time from Settings → Data Management. To request deletion of your account and associated data, contact us using the Contact page.</p>
+          <p><strong class="text-white">Children's privacy.</strong> Paycheck Pilot is not directed at children under 13, and we don't knowingly collect information from them.</p>
+          <p><strong class="text-white">Changes to this policy.</strong> If this policy changes in a meaningful way, we'll update the date above and, where appropriate, let you know in-app.</p>
+        `;
       } else if (pageKey === 'terms') {
         titleEl.innerText = "Terms of Service";
-        contentEl.innerHTML = `<p><strong>Terms of Service</strong></p><p>Paycheck Pilot is provided as a personal financial navigation assistant. Users are responsible for verifying accuracy with their financial institutions.</p>`;
+        contentEl.innerHTML = `
+          <p class="text-slate-500">Last updated: 2026</p>
+          <p><strong class="text-white">What Paycheck Pilot is.</strong> Paycheck Pilot is a personal financial navigation tool. It helps you plan, forecast, and understand your cash flow between paychecks. It is <strong class="text-white">not a bank, lender, or financial institution</strong>, does not move or hold real money, and does not initiate real transactions on your behalf.</p>
+          <p><strong class="text-white">Estimates, not guarantees.</strong> Safe Spend, Forecast, Money Mayday, Payday Briefing, and Financial Weather are all planning tools built from the information you enter. They're projections, not promises — always verify your actual balances and due dates with your bank or biller before making financial decisions.</p>
+          <p><strong class="text-white">Your responsibilities.</strong> You're responsible for the accuracy of what you enter, and for keeping your login credentials secure. Paycheck Pilot can only be as accurate as the data it's given.</p>
+          <p><strong class="text-white">Households.</strong> Joining a household is voluntary and reversible. When you join one, members can see anything you mark Household-visible. Leaving a household stops future sharing but doesn't retroactively hide data other members already saw.</p>
+          <p><strong class="text-white">Limitation of liability.</strong> Paycheck Pilot is provided "as is." We aren't liable for financial decisions made using the app, or for losses arising from inaccurate data, missed payments, or projections that didn't match reality.</p>
+          <p><strong class="text-white">Changes and termination.</strong> You may stop using Paycheck Pilot and delete your account at any time. We may update these terms from time to time; continued use after an update means you accept the revised terms.</p>
+        `;
+      } else if (pageKey === 'contact') {
+        titleEl.innerText = "Contact";
+        contentEl.innerHTML = `
+          <p>Have a question, found a bug, or want to request a feature? We'd like to hear from you.</p>
+          <div class="p-4 bg-slate-900/80 rounded-2xl border border-slate-800 flex items-center gap-3">
+            <i data-lucide="mail" class="w-5 h-5 text-brand-400 shrink-0"></i>
+            <div>
+              <p class="text-white font-semibold">support@paycheckpilot.app</p>
+              <p class="text-[11px] text-slate-500">We read every message and reply as quickly as we can.</p>
+            </div>
+          </div>
+          <p><strong class="text-white">Before you write in:</strong> a lot of "how does this work" questions are already answered in <strong class="text-brand-400">✈ Flight School</strong> (Settings → Flight School) — Safe Spend, Forecast, Money Mayday, Payday Briefing, Financial Weather, and Household sharing are all covered there.</p>
+          <p><strong class="text-white">For account or data requests</strong> (export, deletion, household issues), include the email address on your account so we can find you quickly.</p>
+        `;
+        lucide.createIcons();
       } else {
         titleEl.innerText = "About Paycheck Pilot";
-        contentEl.innerHTML = `<p><strong>Paycheck Pilot v2.5.0 Fintech Launch</strong></p><p>Built for paycheck-to-paycheck mastery. Designed to answer the core question: <em>Can I make it until payday?</em></p>`;
+        contentEl.innerHTML = `
+          <p><strong class="text-white text-sm">See your financial future. Know exactly what you can spend.</strong></p>
+          <p>Paycheck Pilot isn't a budgeting app — it's a financial navigation system. It exists to answer three questions: Can I spend it? Will I make it? How do I survive?</p>
+          <p><strong class="text-white">Safe Spend</strong> is the number everything else supports — what you can safely spend right now without endangering an upcoming bill.</p>
+          <p><strong class="text-white">Forecast</strong> simulates your cash position day by day for the next 60 days, so a dip shows up on the flight path before it shows up in your bank account.</p>
+          <p><strong class="text-white">Money Mayday</strong> steps in when obligations outpace available cash, with a real recovery plan instead of just a warning.</p>
+          <p><strong class="text-white">Payday Briefing</strong> tells you exactly what each paycheck needs to cover before the next one arrives.</p>
+          <p><strong class="text-white">Financial Weather</strong> translates your Forecast into a plain-language outlook — Clear Skies through Emergency Deficit.</p>
+          <p><strong class="text-white">Household</strong> lets you share what makes sense — bills, goals, forecast — while keeping accounts, transactions, and income personal by default.</p>
+          <p class="pt-2 text-slate-500">Want the full walkthrough? Open <strong class="text-brand-400">✈ Flight School</strong> from Settings.</p>
+        `;
       }
     }
 
@@ -5187,7 +5576,7 @@
     function resetImportWizardState() {
       importWizardState = {
         step: 1, fileName: '', valid: false,
-        categoryData: {}, categorySkipped: {},
+        categoryData: {}, categorySkipped: {}, skippedFutureIncomeCount: 0,
         destination: 'personal',
         selectedCategories: { accounts: true, bills: true, transactions: true, goals: true }
       };
@@ -5268,6 +5657,76 @@
           importWizardState.valid = false;
           openImportWizard();
           return;
+        }
+
+        // LEGACY TIMELINE IMPORT SUPPORT
+        // Some external exports use a different shape: a flat `timeline`
+        // array of dated income/expense entries, and `accounts` as a
+        // name->balance object rather than an array. Only detected when the
+        // native shape (bills/transactions arrays) is absent, so this never
+        // interferes with a normal Paycheck Pilot backup file.
+        importWizardState.skippedFutureIncomeCount = 0;
+        if (parsed.timeline && Array.isArray(parsed.timeline) && !parsed.bills && !parsed.transactions) {
+          const legacyAccounts = [];
+          if (parsed.accounts && typeof parsed.accounts === 'object' && !Array.isArray(parsed.accounts)) {
+            Object.entries(parsed.accounts).forEach(([name, balance]) => {
+              const readable = name.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, c => c.toUpperCase());
+              const type = name.toLowerCase().includes('savings') ? 'savings' : 'checking';
+              legacyAccounts.push({ name: readable, balance: Number(balance) || 0, type });
+            });
+          }
+
+          const legacyBills = [];
+          const legacyTransactions = [];
+          const todayStr = new Date().toISOString().split('T')[0];
+          let earliestFutureIncome = null;
+          let futureIncomeCount = 0;
+
+          parsed.timeline.forEach(item => {
+            if (!item || !item.date) return;
+            if (item.type === 'expense') {
+              // Each entry becomes its own bill — a faithful, lossless
+              // conversion since Paycheck Pilot bills have no recurrence
+              // grouping to collapse them into (see Part 1 of Bill
+              // Management for the actual recurrence model).
+              legacyBills.push({
+                title: item.desc || 'Imported Bill',
+                amount: Number(item.amount) || 0,
+                dueDate: item.date,
+                category: 'Other',
+                priority: 'important'
+              });
+            } else if (item.type === 'income') {
+              if (item.date <= todayStr) {
+                // Already received — real history, keep it as a transaction.
+                legacyTransactions.push({
+                  title: item.desc || 'Income',
+                  amount: Number(item.amount) || 0,
+                  type: 'income',
+                  category: 'Income',
+                  date: item.date
+                });
+              } else {
+                // Future paycheck — must NOT appear in Transaction History
+                // as if already received. The earliest one seeds the Payday
+                // schedule (only if not already set); any others beyond
+                // that are counted, not silently dropped.
+                futureIncomeCount++;
+                if (!earliestFutureIncome || item.date < earliestFutureIncome.date) {
+                  earliestFutureIncome = { date: item.date, amount: Number(item.amount) || 0 };
+                }
+              }
+            }
+          });
+
+          if (earliestFutureIncome && !state.income.nextDate) {
+            state.income.nextDate = earliestFutureIncome.date;
+            if (!state.income.amount) state.income.amount = earliestFutureIncome.amount;
+            futureIncomeCount--;
+          }
+          importWizardState.skippedFutureIncomeCount = Math.max(0, futureIncomeCount);
+
+          parsed = { accounts: legacyAccounts, bills: legacyBills, transactions: legacyTransactions, goals: [] };
         }
 
         const categories = ['accounts', 'bills', 'transactions', 'goals'];
@@ -5406,6 +5865,15 @@
             </div>
           `;
         }).join('');
+
+        if (importWizardState.skippedFutureIncomeCount > 0) {
+          countsEl.innerHTML += `
+            <div class="col-span-2 p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-start gap-2 text-[11px] text-amber-200">
+              <i data-lucide="info" class="w-3.5 h-3.5 shrink-0 mt-0.5"></i>
+              <span>${importWizardState.skippedFutureIncomeCount} future paycheck ${importWizardState.skippedFutureIncomeCount === 1 ? 'entry' : 'entries'} in this file won't be imported — Paycheck Pilot doesn't yet support multiple income schedules. Your earliest upcoming paycheck was used to set your Payday schedule instead.</span>
+            </div>
+          `;
+        }
       }
     }
 
