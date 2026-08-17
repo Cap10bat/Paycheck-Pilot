@@ -672,7 +672,7 @@
                 </div>
                 <h2 class="text-2xl font-extrabold text-white tracking-tight mt-1">Can I make it until payday?</h2>
               </div>
-              <div class="flex items-center gap-2">
+              <div class="flex items-center flex-wrap justify-end gap-2">
                 <span class="hidden sm:inline-block text-[11px] text-slate-400 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-800">
                   Sync: <span id="dash-qol-sync" class="text-slate-200">Never</span> | Accts: <span id="dash-qol-accts" class="text-slate-200">0</span> | Goals: <span id="dash-qol-goals" class="text-slate-200">0</span> | Bills: <span id="dash-qol-bills" class="text-slate-200">0</span>
                 </span>
@@ -846,7 +846,7 @@
 
             <!-- TWO COLUMN DETAILS -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4">
+              <div class="glass-card p-4 sm:p-6 rounded-3xl border border-slate-800/80 space-y-4">
                 <div class="flex justify-between items-center">
                   <h3 class="font-bold text-white text-base flex items-center gap-2">
                     <i data-lucide="clock" class="w-4 h-4 text-brand-400"></i>
@@ -857,7 +857,7 @@
                 <div id="dash-upcoming-bills-list" class="space-y-2.5"></div>
               </div>
 
-              <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4">
+              <div class="glass-card p-4 sm:p-6 rounded-3xl border border-slate-800/80 space-y-4">
                 <div class="flex justify-between items-center">
                   <h3 class="font-bold text-white text-base flex items-center gap-2">
                     <i data-lucide="activity" class="w-4 h-4 text-brand-400"></i>
@@ -885,7 +885,7 @@
 
             <!-- Total Liquid Cash & Allocation Summary -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <div class="glass-card p-6 rounded-3xl border border-brand-500/30 flex flex-col justify-between">
+              <div class="glass-card p-4 sm:p-6 rounded-3xl border border-brand-500/30 flex flex-col justify-between">
                 <div>
                   <p class="text-xs font-bold text-brand-400 uppercase tracking-wider">Total Liquid Cash</p>
                   <h3 id="accounts-page-total-cash" class="text-3xl font-black text-white mt-1">$0.00</h3>
@@ -1019,7 +1019,7 @@
               </div>
             </div>
 
-            <div class="glass-card p-6 rounded-3xl border border-brand-500/40 space-y-4 relative overflow-hidden glow-emerald">
+            <div class="glass-card p-4 sm:p-6 rounded-3xl border border-brand-500/40 space-y-4 relative overflow-hidden glow-emerald">
               <div class="absolute top-4 right-4 z-20 flex items-center gap-2">
                 <span id="flight-status-badge" class="status-pop px-3 py-1 bg-brand-500/20 text-brand-300 border border-brand-500/40 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-lg">
                   <span class="w-2 h-2 rounded-full bg-brand-400 animate-ping"></span>
@@ -1131,12 +1131,12 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4">
+              <div class="glass-card p-4 sm:p-6 rounded-3xl border border-slate-800/80 space-y-4">
                 <h3 class="font-bold text-white text-base">Account Balances</h3>
                 <div id="reconcile-accounts-list" class="space-y-3"></div>
               </div>
 
-              <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4">
+              <div class="glass-card p-4 sm:p-6 rounded-3xl border border-slate-800/80 space-y-4">
                 <h3 class="font-bold text-white text-base">Data Management</h3>
                 <p class="text-xs text-slate-400">Export your local financial data for backup, or import past data with a guided, reviewed walkthrough.</p>
                 
@@ -1175,7 +1175,7 @@
 
             <div id="admin-content-panel" class="grid grid-cols-1 lg:grid-cols-2 gap-6 hidden">
               <!-- Sponsor Network Management -->
-              <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4">
+              <div class="glass-card p-4 sm:p-6 rounded-3xl border border-slate-800/80 space-y-4">
                 <div class="flex justify-between items-center">
                   <h3 class="font-bold text-white text-base">Sponsor Network Management</h3>
                   <span class="text-xs text-brand-400 font-semibold">CTR: 0.0%</span>
@@ -1185,7 +1185,7 @@
               </div>
 
               <!-- Developer Diagnostics & Status -->
-              <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4 flex flex-col justify-between">
+              <div class="glass-card p-4 sm:p-6 rounded-3xl border border-slate-800/80 space-y-4 flex flex-col justify-between">
                 <div class="space-y-4">
                   <h3 class="font-bold text-white text-base">Developer Diagnostics</h3>
                   
@@ -1238,7 +1238,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               
               <!-- Profile Card -->
-              <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4">
+              <div class="glass-card p-4 sm:p-6 rounded-3xl border border-slate-800/80 space-y-4">
                 <h3 class="font-bold text-white text-base flex items-center gap-2">
                   <i data-lucide="user" class="w-4 h-4 text-brand-400"></i> Profile
                 </h3>
@@ -1252,7 +1252,7 @@
               </div>
 
               <!-- Household Section Card -->
-              <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4">
+              <div class="glass-card p-4 sm:p-6 rounded-3xl border border-slate-800/80 space-y-4">
                 <h3 class="font-bold text-white text-base flex items-center gap-2">
                   <i data-lucide="users" class="w-4 h-4 text-brand-400"></i> Household (Shared Budgeting)
                 </h3>
@@ -1306,7 +1306,7 @@
               </div>
 
               <!-- Preferences -->
-              <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4">
+              <div class="glass-card p-4 sm:p-6 rounded-3xl border border-slate-800/80 space-y-4">
                 <h3 class="font-bold text-white text-base flex items-center gap-2">
                   <i data-lucide="sliders" class="w-4 h-4 text-brand-400"></i> Preferences & Notifications
                 </h3>
@@ -1333,7 +1333,7 @@
               </div>
 
               <!-- Cloud Sync & Legal & Contact Card -->
-              <div class="glass-card p-6 rounded-3xl border border-slate-800/80 space-y-4">
+              <div class="glass-card p-4 sm:p-6 rounded-3xl border border-slate-800/80 space-y-4">
                 <h3 class="font-bold text-white text-base flex items-center gap-2">
                   <i data-lucide="cloud" class="w-4 h-4 text-brand-400"></i> Cloud Sync & Legal
                 </h3>
@@ -1458,7 +1458,7 @@
     </div>
 
     <!-- GENERIC CUSTOM MODAL -->
-    <div id="modal-generic" class="glass-card p-6 rounded-3xl border border-slate-800 w-full max-w-md hidden space-y-4 max-h-[85vh] overflow-y-auto">
+    <div id="modal-generic" class="glass-card p-4 sm:p-6 rounded-3xl border border-slate-800 w-full max-w-md hidden space-y-4 max-h-[85vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
         <h3 id="generic-modal-title" class="font-bold text-white text-base">Modal Title</h3>
         <button onclick="closeModals()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
@@ -1468,7 +1468,7 @@
     </div>
 
     <!-- FORGOT PASSWORD MODAL (REAL SUPABASE RESET) -->
-    <div id="modal-password-reset" class="glass-card p-6 rounded-3xl border border-slate-800 w-full max-w-md hidden space-y-4 max-h-[85vh] overflow-y-auto">
+    <div id="modal-password-reset" class="glass-card p-4 sm:p-6 rounded-3xl border border-slate-800 w-full max-w-md hidden space-y-4 max-h-[85vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
         <h3 class="font-bold text-white text-base flex items-center gap-2">
           <i data-lucide="key-round" class="w-4 h-4 text-brand-400"></i> Reset Your Password
@@ -1488,7 +1488,7 @@
     </div>
 
     <!-- SET NEW PASSWORD MODAL (SHOWN AFTER CLICKING RECOVERY EMAIL LINK) -->
-    <div id="modal-set-new-password" class="glass-card p-6 rounded-3xl border border-brand-500/40 w-full max-w-md hidden space-y-4 max-h-[85vh] overflow-y-auto">
+    <div id="modal-set-new-password" class="glass-card p-4 sm:p-6 rounded-3xl border border-brand-500/40 w-full max-w-md hidden space-y-4 max-h-[85vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
         <h3 class="font-bold text-white text-base flex items-center gap-2">
           <i data-lucide="shield-check" class="w-4 h-4 text-brand-400"></i> Choose a New Password
@@ -1510,7 +1510,7 @@
     <!-- IMPORT WIZARD MODAL — beginner-friendly guided import -->
     <!-- Uses .import-step-content (NOT .onboard-step-content) so its step -->
     <!-- toggling can never collide with the onboarding wizard's identical pattern. -->
-    <div id="modal-import-wizard" class="glass-card p-6 rounded-3xl border border-slate-800 w-full max-w-lg hidden space-y-5 max-h-[85vh] overflow-y-auto">
+    <div id="modal-import-wizard" class="glass-card p-4 sm:p-6 rounded-3xl border border-slate-800 w-full max-w-lg hidden space-y-5 max-h-[85vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
         <h3 class="font-bold text-white text-base flex items-center gap-2">
           <i data-lucide="upload" class="w-4 h-4 text-brand-400"></i> Import Data
@@ -1620,7 +1620,7 @@
     </div>
 
     <!-- DEFICIT NAVIGATOR 2.0 (BILL TETRIS) MODAL -->
-    <div id="modal-deficit" class="glass-card p-6 rounded-3xl border border-rose-500/40 w-full max-w-2xl hidden space-y-4 max-h-[90vh] overflow-y-auto">
+    <div id="modal-deficit" class="glass-card p-4 sm:p-6 rounded-3xl border border-rose-500/40 w-full max-w-2xl hidden space-y-4 max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
         <div class="flex items-center gap-2">
           <span class="text-xl leading-none">🚨</span>
@@ -1636,7 +1636,7 @@
     </div>
 
     <!-- PAYDAY BRIEFING MODAL -->
-    <div id="modal-payday-briefing" class="glass-card p-6 rounded-3xl border border-brand-500/40 w-full max-w-lg hidden space-y-4 max-h-[85vh] overflow-y-auto">
+    <div id="modal-payday-briefing" class="glass-card p-4 sm:p-6 rounded-3xl border border-brand-500/40 w-full max-w-lg hidden space-y-4 max-h-[85vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
         <div class="flex items-center gap-2">
           <span class="text-xl leading-none">💰</span>
@@ -1652,7 +1652,7 @@
     </div>
 
     <!-- HOUSEHOLD JOIN / CREATE MODAL -->
-    <div id="modal-household-action" class="glass-card p-6 rounded-3xl border border-slate-800 w-full max-w-md hidden space-y-4 max-h-[85vh] overflow-y-auto">
+    <div id="modal-household-action" class="glass-card p-4 sm:p-6 rounded-3xl border border-slate-800 w-full max-w-md hidden space-y-4 max-h-[85vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
         <h3 class="font-bold text-white text-base">Household Management</h3>
         <button onclick="closeModals()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
@@ -1701,7 +1701,7 @@
     </div>
 
     <!-- ADD/EDIT ACCOUNT MODAL -->
-    <div id="modal-account" class="glass-card p-6 rounded-3xl border border-slate-800 w-full max-w-md hidden space-y-4 max-h-[85vh] overflow-y-auto">
+    <div id="modal-account" class="glass-card p-4 sm:p-6 rounded-3xl border border-slate-800 w-full max-w-md hidden space-y-4 max-h-[85vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
         <h3 id="account-modal-title" class="font-bold text-white text-base">Add / Edit Account</h3>
         <button onclick="closeModals()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
@@ -1744,13 +1744,14 @@
     </div>
 
     <!-- ADD/EDIT BILL MODAL -->
-    <div id="modal-bill" class="glass-card p-6 rounded-3xl border border-slate-800 w-full max-w-md hidden space-y-4 max-h-[85vh] overflow-y-auto">
+    <div id="modal-bill" class="glass-card p-4 sm:p-6 rounded-3xl border border-slate-800 w-full max-w-md hidden space-y-4 max-h-[85vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="font-bold text-white text-base">Add Bill</h3>
+        <h3 id="bill-modal-title" class="font-bold text-white text-base">Add Bill</h3>
         <button onclick="closeModals()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
       </div>
       
       <form onsubmit="handleSaveBill(event)" class="space-y-4">
+        <input type="hidden" id="bill-edit-id" value="" />
         <div>
           <label class="block text-xs font-semibold text-slate-400 mb-1">Bill Name</label>
           <input type="text" id="bill-title" required placeholder="e.g. Electric Utility / Rent" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-brand-500" />
@@ -1788,6 +1789,19 @@
           </div>
         </div>
 
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Repeats</label>
+          <select id="bill-recurrence" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none">
+            <option value="none">One Time</option>
+            <option value="weekly">Weekly</option>
+            <option value="biweekly">Bi-Weekly</option>
+            <option value="monthly">Monthly (same day each month)</option>
+            <option value="quarterly">Quarterly</option>
+            <option value="yearly">Yearly</option>
+          </select>
+          <p class="text-[10px] text-slate-500 mt-1">When you mark a recurring bill paid, the next occurrence is scheduled automatically — nothing extra to add each cycle.</p>
+        </div>
+
         <div id="bill-scope-wrap" class="hidden">
           <label class="block text-xs font-semibold text-slate-400 mb-1">Visibility</label>
           <div class="flex bg-slate-900 border border-slate-800 rounded-xl p-1 text-xs">
@@ -1797,12 +1811,12 @@
           <input type="hidden" id="bill-scope" value="personal" />
         </div>
 
-        <button type="submit" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Save Bill</button>
+        <button type="submit" id="bill-save-btn" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Save Bill</button>
       </form>
     </div>
 
     <!-- ADD TRANSACTION MODAL -->
-    <div id="modal-transaction" class="glass-card p-6 rounded-3xl border border-slate-800 w-full max-w-md hidden space-y-4 max-h-[85vh] overflow-y-auto">
+    <div id="modal-transaction" class="glass-card p-4 sm:p-6 rounded-3xl border border-slate-800 w-full max-w-md hidden space-y-4 max-h-[85vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
         <h3 class="font-bold text-white text-base">Log Transaction</h3>
         <button onclick="closeModals()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
@@ -1860,7 +1874,7 @@
     </div>
 
     <!-- ADD GOAL MODAL -->
-    <div id="modal-goal" class="glass-card p-6 rounded-3xl border border-slate-800 w-full max-w-md hidden space-y-4 max-h-[85vh] overflow-y-auto">
+    <div id="modal-goal" class="glass-card p-4 sm:p-6 rounded-3xl border border-slate-800 w-full max-w-md hidden space-y-4 max-h-[85vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
         <h3 class="font-bold text-white text-base">New Savings Goal</h3>
         <button onclick="closeModals()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
@@ -1897,7 +1911,7 @@
     </div>
 
     <!-- GOAL DEPOSIT FUNDS MODAL -->
-    <div id="modal-goal-deposit" class="glass-card p-6 rounded-3xl border border-brand-500/40 w-full max-w-md hidden space-y-4 max-h-[85vh] overflow-y-auto">
+    <div id="modal-goal-deposit" class="glass-card p-4 sm:p-6 rounded-3xl border border-brand-500/40 w-full max-w-md hidden space-y-4 max-h-[85vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
         <h3 class="font-bold text-white text-base flex items-center gap-2">
           <i data-lucide="piggy-bank" class="w-4 h-4 text-brand-400"></i> Deposit Funds to Goal
@@ -2131,7 +2145,7 @@
     }
 
     function getUpcomingBills() {
-      const bills = visibleBills();
+      const bills = visibleBills().filter(b => !b.paused);
       if (!state.income.nextDate) return bills.filter(b => !b.completed);
       return bills.filter(b => !b.completed && b.dueDate <= state.income.nextDate);
     }
@@ -2310,6 +2324,41 @@
       const qolSyncEl = document.getElementById('dash-qol-sync');
       if (qolSyncEl && status === 'syncing') qolSyncEl.innerText = 'Syncing…';
       else if (qolSyncEl && state.lastSyncTime) qolSyncEl.innerText = new Date(state.lastSyncTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    }
+
+    // Household discovery — closes the gap where a device that never
+    // personally ran executeCreateHousehold()/executeJoinHousehold() had no
+    // way to learn it belongs to a household. A fresh state.household always
+    // defaults to solo (id: null), so getSyncKey() would resolve to the
+    // user's own row instead of the household's — even on a totally clean
+    // login. This runs once, before pullCloudState(), so getSyncKey() has
+    // the right id to work with on the very first pull.
+    //
+    // Read-only and additive: does not modify getSyncKey(), pullCloudState(),
+    // or triggerCloudSync(). If the user isn't a household member, or the
+    // lookup fails for any reason, it does nothing and state.household is
+    // left exactly as it already was — solo users see zero behavior change.
+    async function discoverHouseholdMembership() {
+      if (!state.user || state.isDemo || !supabaseClient) return;
+
+      try {
+        const { data, error } = await supabaseClient
+          .from('household_members')
+          .select('household_id')
+          .eq('user_id', state.user.id)
+          .limit(1)
+          .maybeSingle();
+
+        if (error || !data || !data.household_id) return;
+
+        // Just enough for getSyncKey() to resolve correctly — the upcoming
+        // pullCloudState() call fills in the rest (name, members, sharing,
+        // etc.) from the household's real synced data.
+        state.household.id = data.household_id;
+        state.household.accountMode = 'shared';
+      } catch (err) {
+        console.warn("Household discovery failed:", err);
+      }
     }
 
     // Pulls the shared/solo row down from paycheck_pilot_sync and merges it
@@ -2662,6 +2711,12 @@
       if (emailEl && state.user) emailEl.innerText = state.user.email || "pilot@user.com";
       if (settingsEmailEl && state.user) settingsEmailEl.value = state.user.email || "pilot@user.com";
 
+      // Discover real household membership BEFORE pulling — otherwise a
+      // device that's never personally joined/created this household
+      // locally has no way to know which row to pull from (see
+      // discoverHouseholdMembership()).
+      await discoverHouseholdMembership();
+
       // Pull any existing cloud data BEFORE deciding what to show or pushing
       // anything back up — this is what lets a second device (or a fresh
       // browser) converge on the same data instead of clobbering it.
@@ -2999,7 +3054,7 @@
               <div class="flex items-center gap-2.5">
                 <div class="w-2 h-2 rounded-full ${b.priority === 'critical' ? 'bg-rose-400' : b.priority === 'important' ? 'bg-amber-400' : 'bg-blue-400'}"></div>
                 <div>
-                  <strong class="text-white flex items-center gap-1.5 flex-wrap">${b.title} ${scopeBadgeHtml(b)}</strong>
+                  <strong class="text-white flex items-center gap-1.5 flex-wrap">${b.title} ${b.recurrence && b.recurrence !== 'none' ? `<i data-lucide="repeat" class="w-3 h-3 text-indigo-400" title="${recurrenceLabel(b.recurrence)}"></i>` : ''} ${scopeBadgeHtml(b)}</strong>
                   <span class="text-slate-400">Due: ${b.dueDate}</span>
                 </div>
               </div>
@@ -3119,23 +3174,35 @@
 
       const sorted = [...bills].sort((a,b) => new Date(a.dueDate) - new Date(b.dueDate));
       container.innerHTML = sorted.map(b => `
-        <div data-bill-row="${b.id}" class="glass-card p-4 rounded-2xl border ${b.completed ? 'border-slate-800/40 opacity-60' : 'border-slate-800'} flex items-center justify-between gap-4">
-          <div class="flex items-center gap-3">
-            <button onclick="completeBill('${b.id}')" class="w-6 h-6 rounded-lg border border-slate-700 flex items-center justify-center ${b.completed ? 'bg-brand-500 text-slate-950 border-brand-500' : 'hover:border-brand-500'}">
-              ${b.completed ? '<i data-lucide="check" class="w-4 h-4"></i>' : ''}
-            </button>
-            <div>
-              <div class="flex items-center gap-2 flex-wrap">
-                <h4 class="font-bold text-sm text-white ${b.completed ? 'line-through text-slate-400' : ''}">${b.title}</h4>
-                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${b.priority === 'critical' ? 'bg-rose-500/20 text-rose-300' : b.priority === 'important' ? 'bg-amber-500/20 text-amber-300' : 'bg-blue-500/20 text-blue-300'}">${b.priority}</span>
-                ${scopeBadgeHtml(b)}
+        <div data-bill-row="${b.id}" class="glass-card p-4 rounded-2xl border ${b.completed ? 'border-slate-800/40 opacity-60' : b.paused ? 'border-slate-700/50 opacity-70' : 'border-slate-800'} space-y-3">
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3 min-w-0">
+              <button onclick="completeBill('${b.id}')" class="shrink-0 w-6 h-6 rounded-lg border border-slate-700 flex items-center justify-center ${b.completed ? 'bg-brand-500 text-slate-950 border-brand-500' : 'hover:border-brand-500'}">
+                ${b.completed ? '<i data-lucide="check" class="w-4 h-4"></i>' : ''}
+              </button>
+              <div class="min-w-0">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <h4 class="font-bold text-sm text-white ${b.completed ? 'line-through text-slate-400' : ''}">${b.title}</h4>
+                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${b.priority === 'critical' ? 'bg-rose-500/20 text-rose-300' : b.priority === 'important' ? 'bg-amber-500/20 text-amber-300' : 'bg-blue-500/20 text-blue-300'}">${b.priority}</span>
+                  ${b.recurrence && b.recurrence !== 'none' ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/20 text-indigo-300 flex items-center gap-1"><i data-lucide="repeat" class="w-2.5 h-2.5"></i> ${recurrenceLabel(b.recurrence)}</span>` : ''}
+                  ${b.paused ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-700 text-slate-300">Paused</span>` : ''}
+                  ${scopeBadgeHtml(b)}
+                </div>
+                <p class="text-xs text-slate-400 mt-0.5">Category: ${b.category} • Due: <strong class="text-slate-200">${b.dueDate}</strong></p>
               </div>
-              <p class="text-xs text-slate-400 mt-0.5">Category: ${b.category} • Due: <strong class="text-slate-200">${b.dueDate}</strong></p>
             </div>
+            <span class="shrink-0 font-bold text-sm ${b.completed ? 'text-slate-400' : 'text-rose-400'}">$${formatCurrency(b.amount)}</span>
           </div>
-          <div class="flex items-center gap-4">
-            <span class="font-bold text-sm ${b.completed ? 'text-slate-400' : 'text-rose-400'}">$${formatCurrency(b.amount)}</span>
-            <button onclick="deleteBill('${b.id}')" class="text-slate-500 hover:text-rose-400 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+          <div class="flex items-center flex-wrap gap-1.5 pt-2 border-t border-slate-800/70">
+            <button onclick="openAddBillModal('${b.id}')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-[10px] font-semibold flex items-center gap-1"><i data-lucide="pencil" class="w-3 h-3"></i> Edit</button>
+            ${b.recurrence && b.recurrence !== 'none' ? `
+              <button onclick="skipBillOccurrence('${b.id}')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-[10px] font-semibold">Skip This Time</button>
+              ${b.paused
+                ? `<button onclick="resumeBill('${b.id}')" class="px-2.5 py-1 bg-brand-500/20 hover:bg-brand-500 hover:text-slate-950 text-brand-400 rounded-lg text-[10px] font-semibold">Resume</button>`
+                : `<button onclick="pauseBill('${b.id}')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-[10px] font-semibold">Pause</button>`
+              }
+            ` : ''}
+            <button onclick="deleteBill('${b.id}')" class="ml-auto text-slate-500 hover:text-rose-400 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
           </div>
         </div>
       `).join('');
@@ -3210,7 +3277,7 @@
         const pct = Math.min(100, Math.max(0, (g.current / g.target) * 100));
         const isComplete = pct >= 100;
         return `
-          <div data-goal-row="${g.id}" class="glass-card glass-card-hover relative p-6 rounded-3xl border ${isComplete ? 'border-brand-500/50 glow-emerald' : 'border-slate-800/80'} space-y-4">
+          <div data-goal-row="${g.id}" class="glass-card glass-card-hover relative p-4 sm:p-6 rounded-3xl border ${isComplete ? 'border-brand-500/50 glow-emerald' : 'border-slate-800/80'} space-y-4">
             <div class="flex justify-between items-start">
               <div>
                 <h3 class="font-bold text-white text-base flex items-center gap-1.5 flex-wrap">${g.title} ${isComplete ? '<i data-lucide="badge-check" class="w-4 h-4 text-brand-400"></i>' : ''} ${scopeBadgeHtml(g)}</h3>
@@ -3369,7 +3436,7 @@
         }
       }
 
-      const activeBills = visibleBills().filter(b => !b.completed);
+      const activeBills = visibleBills().filter(b => !b.completed && !b.paused);
       let running = startCash;
       const series = [];
 
@@ -4127,16 +4194,35 @@
     }
 
     // BILLS MODAL & LOGIC
-    function openAddBillModal() {
+    function openAddBillModal(editId = null) {
       const backdrop = document.getElementById('modal-backdrop');
       const modal = document.getElementById('modal-bill');
-      
-      document.getElementById('bill-title').value = '';
-      document.getElementById('bill-amount').value = '';
-      document.getElementById('bill-date').value = new Date().toISOString().split('T')[0];
-      // Bills default to Household when the household shares bills (the
-      // common case — rent/utilities are usually joint), otherwise Personal.
-      initScopePicker('bill', 'bills', 'household');
+      const titleEl = document.getElementById('bill-modal-title');
+
+      document.getElementById('bill-edit-id').value = editId || '';
+
+      if (editId) {
+        const bill = state.bills.find(b => b.id === editId);
+        if (bill) {
+          titleEl.innerText = "Edit Bill";
+          document.getElementById('bill-title').value = bill.title;
+          document.getElementById('bill-amount').value = bill.amount;
+          document.getElementById('bill-date').value = bill.dueDate;
+          document.getElementById('bill-category').value = bill.category;
+          document.getElementById('bill-priority').value = bill.priority;
+          document.getElementById('bill-recurrence').value = bill.recurrence || 'none';
+          initScopePicker('bill', 'bills', bill.scope || 'personal');
+        }
+      } else {
+        titleEl.innerText = "Add Bill";
+        document.getElementById('bill-title').value = '';
+        document.getElementById('bill-amount').value = '';
+        document.getElementById('bill-date').value = new Date().toISOString().split('T')[0];
+        document.getElementById('bill-recurrence').value = 'none';
+        // Bills default to Household when the household shares bills (the
+        // common case — rent/utilities are usually joint), otherwise Personal.
+        initScopePicker('bill', 'bills', 'household');
+      }
 
       if (backdrop && modal) {
         backdrop.classList.remove('hidden');
@@ -4146,26 +4232,121 @@
 
     function handleSaveBill(e) {
       e.preventDefault();
+      const editId = document.getElementById('bill-edit-id').value;
       const title = document.getElementById('bill-title').value;
       const amount = parseFloat(document.getElementById('bill-amount').value) || 0;
       const dueDate = document.getElementById('bill-date').value;
       const category = document.getElementById('bill-category').value;
       const priority = document.getElementById('bill-priority').value;
+      const recurrence = document.getElementById('bill-recurrence').value || 'none';
       const scope = document.getElementById('bill-scope') ? document.getElementById('bill-scope').value : 'personal';
 
-      const newBill = {
-        id: 'bill_' + Date.now(), title, amount, dueDate, category, priority, completed: false,
-        scope, ownerId: state.user ? state.user.id : null, ownerLabel: currentOwnerLabel()
-      };
-      state.bills.push(newBill);
-      logActivity("Bill Added", `Added ${title} for $${formatCurrency(amount)} due ${dueDate}.`);
+      if (editId) {
+        const bill = state.bills.find(b => b.id === editId);
+        if (bill) {
+          bill.title = title;
+          bill.amount = amount;
+          bill.dueDate = dueDate;
+          bill.category = category;
+          bill.priority = priority;
+          bill.recurrence = recurrence;
+          bill.scope = scope;
+          if (!bill.ownerId) bill.ownerId = state.user ? state.user.id : null;
+          if (!bill.ownerLabel) bill.ownerLabel = currentOwnerLabel();
+        }
+        logActivity("Bill Updated", `Updated ${title} — $${formatCurrency(amount)} due ${dueDate}.`);
+        showToast("Bill updated successfully", "success");
+      } else {
+        const newBill = {
+          id: 'bill_' + Date.now(), title, amount, dueDate, category, priority, recurrence,
+          paused: false, completed: false,
+          scope, ownerId: state.user ? state.user.id : null, ownerLabel: currentOwnerLabel()
+        };
+        state.bills.push(newBill);
+        logActivity("Bill Added", `Added ${title} for $${formatCurrency(amount)} due ${dueDate}.`);
+        showToast("Bill added successfully", "success");
+      }
 
       saveStateToStorage();
       closeModals();
-      showToast("Bill added successfully", "success");
 
       if (!state.onboardingCompleted) renderOnboardingStep();
       else navigateTo(getCurrentPageId());
+    }
+
+    // Computes the next occurrence date for a recurring bill, preserving the
+    // original day-of-month where the target month is short (e.g. a bill
+    // due the 31st rolls to the last day of a 30-day month, not into the
+    // following month).
+    // Display label for a bill's recurrence key — used on Coming Up badges.
+    function recurrenceLabel(key) {
+      const labels = { weekly: 'Weekly', biweekly: 'Bi-Weekly', monthly: 'Monthly', quarterly: 'Quarterly', yearly: 'Yearly' };
+      return labels[key] || key;
+    }
+
+    function getNextRecurrenceDate(dueDate, recurrence) {
+      if (!dueDate || !recurrence || recurrence === 'none') return null;
+      const d = new Date(dueDate + 'T00:00:00');
+      const originalDay = d.getDate();
+
+      if (recurrence === 'weekly') {
+        d.setDate(d.getDate() + 7);
+      } else if (recurrence === 'biweekly') {
+        d.setDate(d.getDate() + 14);
+      } else if (recurrence === 'monthly') {
+        d.setMonth(d.getMonth() + 1);
+        if (d.getDate() !== originalDay) d.setDate(0);
+      } else if (recurrence === 'quarterly') {
+        d.setMonth(d.getMonth() + 3);
+        if (d.getDate() !== originalDay) d.setDate(0);
+      } else if (recurrence === 'yearly') {
+        d.setFullYear(d.getFullYear() + 1);
+        if (d.getDate() !== originalDay) d.setDate(0);
+      } else {
+        return null;
+      }
+      return d.toISOString().split('T')[0];
+    }
+
+    // Skips just this occurrence of a recurring bill without marking it paid
+    // or deleting it — the due date rolls forward one cycle, same as if it
+    // had been paid, but with no transaction and no "completed" record.
+    function skipBillOccurrence(id) {
+      const bill = state.bills.find(b => b.id === id);
+      if (!bill || !bill.recurrence || bill.recurrence === 'none') return;
+
+      const nextDate = getNextRecurrenceDate(bill.dueDate, bill.recurrence);
+      if (!nextDate) return;
+
+      const skippedDate = bill.dueDate;
+      bill.dueDate = nextDate;
+      logActivity("Bill Occurrence Skipped", `Skipped ${bill.title} due ${skippedDate}. Next due ${nextDate}.`);
+      saveStateToStorage();
+      showToast(`Skipped this occurrence of ${bill.title}`, "info");
+      navigateTo(getCurrentPageId());
+    }
+
+    // Pausing keeps the bill (per the spec: never delete a paused bill) but
+    // takes it out of upcoming-bill and forecast calculations until resumed —
+    // e.g. "Netflix cancelled for two months."
+    function pauseBill(id) {
+      const bill = state.bills.find(b => b.id === id);
+      if (!bill) return;
+      bill.paused = true;
+      logActivity("Bill Paused", `Paused ${bill.title}. It won't count toward upcoming bills or forecasts until resumed.`);
+      saveStateToStorage();
+      showToast(`Paused ${bill.title}`, "info");
+      navigateTo(getCurrentPageId());
+    }
+
+    function resumeBill(id) {
+      const bill = state.bills.find(b => b.id === id);
+      if (!bill) return;
+      bill.paused = false;
+      logActivity("Bill Resumed", `Resumed ${bill.title}.`);
+      saveStateToStorage();
+      showToast(`Resumed ${bill.title}`, "success");
+      navigateTo(getCurrentPageId());
     }
 
     function completeBill(id) {
@@ -4191,6 +4372,21 @@
           ownerLabel: bill.ownerLabel || currentOwnerLabel()
         });
         logActivity("Bill Completed", `Marked ${bill.title} ($${formatCurrency(bill.amount)}) as paid.`);
+
+        // Recurring bills roll forward to their next occurrence automatically
+        // instead of sitting completed forever — the same bill record is
+        // reused (dueDate advanced, completed reset) rather than creating a
+        // new bill object each cycle, so state.bills never accumulates one
+        // row per past payment.
+        if (bill.recurrence && bill.recurrence !== 'none' && !bill.paused) {
+          const nextDate = getNextRecurrenceDate(bill.dueDate, bill.recurrence);
+          if (nextDate) {
+            bill.dueDate = nextDate;
+            bill.completed = false;
+            logActivity("Bill Recurred", `${bill.title} will recur on ${nextDate}.`);
+          }
+        }
+
         saveStateToStorage();
         showToast(`Completed bill: ${bill.title}`, "success");
         navigateTo(getCurrentPageId());
@@ -5073,76 +5269,6 @@
           openImportWizard();
           return;
         }
-
-        // LEGACY TIMELINE IMPORT SUPPORT
-if (
-  parsed.timeline &&
-  Array.isArray(parsed.timeline) &&
-  !parsed.bills &&
-  !parsed.transactions
-) {
-
-  const legacyBills = [];
-  const legacyTransactions = [];
-  const legacyAccounts = [];
-
-  // Convert accounts object
-  if (parsed.accounts && typeof parsed.accounts === 'object') {
-
-    Object.entries(parsed.accounts).forEach(([name, balance]) => {
-
-      let accountType = 'checking';
-
-      if (name.toLowerCase().includes('savings')) {
-        accountType = 'savings';
-      }
-
-      legacyAccounts.push({
-        name: name
-          .replace(/([A-Z])/g, ' $1')
-          .replace(/^./, c => c.toUpperCase())
-          .trim(),
-        balance: Number(balance) || 0,
-        type: accountType
-      });
-    });
-  }
-
-  // Convert timeline items
-  parsed.timeline.forEach(item => {
-
-    if (item.type === 'expense') {
-
-      legacyBills.push({
-        title: item.desc,
-        amount: Number(item.amount) || 0,
-        dueDate: item.date,
-        category: 'Other',
-        priority: 'important',
-        completed: false
-      });
-
-    } else if (item.type === 'income') {
-
-      legacyTransactions.push({
-        title: item.desc,
-        amount: Number(item.amount) || 0,
-        type: 'income',
-        category: 'Income',
-        date: item.date
-      });
-
-    }
-
-  });
-
-  parsed = {
-    accounts: legacyAccounts,
-    bills: legacyBills,
-    transactions: legacyTransactions,
-    goals: parsed.goals || []
-  };
-}
 
         const categories = ['accounts', 'bills', 'transactions', 'goals'];
         let totalFound = 0;
