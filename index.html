@@ -2264,12 +2264,15 @@
         showScreen('screen-app');
         navigateTo('dashboard');
         if (typeof checkAdminOwnerStatus === 'function') checkAdminOwnerStatus();
-        // Fresh app launches must pull the newest household/personal data —
-        // an already-authenticated session previously skipped this entirely
-        // and only ever showed whatever was last cached locally. Runs in the
-        // background (app opens instantly from cache) and only re-renders if
-        // the pull actually changed something.
-        pullCloudState().then(pulled => {
+        // Household membership must be (re-)discovered on EVERY launch, not
+        // just a fresh login — a session that's been continuously
+        // authenticated since before joining a household (or since before
+        // this discovery step existed) would otherwise keep its local
+        // household.id stuck at null forever, silently pushing every change
+        // to the user's own personal sync row instead of the shared
+        // household row. Runs in the background (app opens instantly from
+        // cache) and only re-renders if the pull actually changed something.
+        discoverHouseholdMembership().then(() => pullCloudState()).then(pulled => {
           if (pulled) navigateTo(getCurrentPageId());
         });
       }
