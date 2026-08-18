@@ -63,6 +63,7 @@
 
   <!-- Supabase JS Client -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
   <style>
     ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -1224,6 +1225,23 @@
                 </div>
               </div>
             </div>
+
+            <!-- FLIGHT RECORDER IMPORT — separate from JSON Import above -->
+            <div class="glass-card p-4 sm:p-6 rounded-3xl border border-indigo-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="flex items-center gap-3">
+                <span class="w-10 h-10 rounded-xl bg-indigo-500/15 flex items-center justify-center shrink-0">
+                  <i data-lucide="plane-landing" class="w-5 h-5 text-indigo-400"></i>
+                </span>
+                <div>
+                  <h3 class="font-bold text-white text-base">✈ Flight Recorder Import</h3>
+                  <p class="text-xs text-slate-400">Upload a bank statement (CSV) and let Paycheck Pilot find your paychecks, bills, and spending patterns — analyzed locally, nothing sent anywhere.</p>
+                </div>
+              </div>
+              <div class="shrink-0 flex flex-col sm:flex-row gap-2">
+                <button onclick="openImportHistoryModal()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all">Import History</button>
+                <button onclick="openStatementImportWizard()" class="px-4 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Upload Statement</button>
+              </div>
+            </div>
           </div>
 
           <!-- ================= PAGE: DEVELOPER TOOLS ================= -->
@@ -1286,7 +1304,7 @@
                 </div>
 
                 <div class="space-y-2 pt-4 border-t border-slate-800/80">
-                  <button onclick="triggerCloudSync()" class="w-full py-2.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">
+                  <button onclick="syncNow()" class="w-full py-2.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">
                     Sync Now (`paycheck_pilot_sync`)
                   </button>
                   <button onclick="restartOnboarding()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all">
@@ -1416,7 +1434,7 @@
                     <span class="sync-status-label font-semibold text-slate-400">Offline</span>
                   </span>
                 </div>
-                <button onclick="triggerCloudSync()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition-all">
+                <button onclick="syncNow()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition-all">
                   Sync Now
                 </button>
                 <div class="grid grid-cols-2 gap-2 text-xs pt-2">
@@ -1717,6 +1735,57 @@
         <button type="button" id="import-back-btn" onclick="importWizardBack()" class="hidden px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all">Back</button>
         <button type="button" id="import-next-btn" onclick="importWizardNext()" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-slate-800">Continue</button>
       </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- FLIGHT RECORDER IMPORT — Smart Statement Import (Privacy First) -->
+    <!-- A completely separate wizard from modal-import-wizard above.    -->
+    <!-- Uses .stmt-step-content (not .import-step-content / not          -->
+    <!-- .onboard-step-content) so its step toggling can never collide    -->
+    <!-- with either existing wizard's identical show/hide pattern.       -->
+    <!-- Nothing here writes to `state` until commitStatementImport() —   -->
+    <!-- the final step, and only on explicit confirmation. Parsing and   -->
+    <!-- detection are 100% client-side (PapaParse, run in this browser). -->
+    <!-- ============================================================ -->
+    <div id="modal-statement-import" class="glass-card p-4 sm:p-6 rounded-3xl border border-indigo-500/40 w-full max-w-lg hidden space-y-5 max-h-[85vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-white text-base flex items-center gap-2">
+          <i data-lucide="plane-landing" class="w-4 h-4 text-indigo-400"></i> ✈ Flight Recorder Import
+        </h3>
+        <button onclick="closeStatementImportWizard()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div class="flex items-center gap-1.5">
+        <div id="stmt-step-dot-1" class="h-1 flex-1 rounded-full bg-indigo-500"></div>
+        <div id="stmt-step-dot-2" class="h-1 flex-1 rounded-full bg-slate-800"></div>
+        <div id="stmt-step-dot-3" class="h-1 flex-1 rounded-full bg-slate-800"></div>
+        <div id="stmt-step-dot-4" class="h-1 flex-1 rounded-full bg-slate-800"></div>
+        <div id="stmt-step-dot-5" class="h-1 flex-1 rounded-full bg-slate-800"></div>
+        <div id="stmt-step-dot-6" class="h-1 flex-1 rounded-full bg-slate-800"></div>
+        <div id="stmt-step-dot-7" class="h-1 flex-1 rounded-full bg-slate-800"></div>
+        <div id="stmt-step-dot-8" class="h-1 flex-1 rounded-full bg-slate-800"></div>
+      </div>
+      <p id="stmt-step-label" class="text-[10px] font-bold uppercase tracking-wider text-indigo-400 -mt-3">Step 1 of 8 · Upload Statement</p>
+
+      <div id="stmt-import-content" class="space-y-4 text-xs"></div>
+
+      <div class="flex gap-2 pt-2 border-t border-slate-800">
+        <button type="button" id="stmt-back-btn" onclick="stmtWizardBack()" class="hidden px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all">Back</button>
+        <button type="button" id="stmt-next-btn" onclick="stmtWizardNext()" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition-all">Continue</button>
+      </div>
+    </div>
+
+    <!-- IMPORT HISTORY — Settings > Data Management > Import History. -->
+    <!-- Undo Import removes only items carrying a given importSessionId; -->
+    <!-- manually entered data never has that field, so it's never touched. -->
+    <div id="modal-import-history" class="glass-card p-4 sm:p-6 rounded-3xl border border-slate-800 w-full max-w-md hidden space-y-4 max-h-[80vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-white text-base flex items-center gap-2">
+          <i data-lucide="history" class="w-4 h-4 text-indigo-400"></i> Import History
+        </h3>
+        <button onclick="closeModals()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div id="import-history-content" class="space-y-2"></div>
     </div>
 
     <!-- DEFICIT NAVIGATOR 2.0 (BILL TETRIS) MODAL -->
@@ -2154,7 +2223,13 @@
         { id: 'awin', name: 'AWIN Partner', title: 'High-Yield Savings Boost', description: 'Earn 5.15% APY on liquid cash reserves.', url: 'https://example.com/awin', priority: 1, enabled: true, impressions: 0, clicks: 0, dismissals: 0 },
         { id: 'sharesale', name: 'ShareASale', title: 'Credit Builder Pro', description: 'Automate debt paydown safely before payday.', url: 'https://example.com/sharesale', priority: 2, enabled: true, impressions: 0, clicks: 0, dismissals: 0 },
         { id: 'cj', name: 'CJ Affiliate', title: 'Tax & Expense Shield', description: 'Quarterly tax estimation made foolproof.', url: 'https://example.com/cj', priority: 3, enabled: true, impressions: 0, clicks: 0, dismissals: 0 }
-      ]
+      ],
+      // Populated only by Flight Recorder Import (statement analysis).
+      // Informational — Forecast and Financial Weather do not read this.
+      spendingInsights: null,
+      // One entry per statement-import session, enabling Settings → Data
+      // Management → Import History → Undo Import.
+      importHistory: []
     };
 
     let forecastChartInstance = null;
@@ -2189,6 +2264,14 @@
         showScreen('screen-app');
         navigateTo('dashboard');
         if (typeof checkAdminOwnerStatus === 'function') checkAdminOwnerStatus();
+        // Fresh app launches must pull the newest household/personal data —
+        // an already-authenticated session previously skipped this entirely
+        // and only ever showed whatever was last cached locally. Runs in the
+        // background (app opens instantly from cache) and only re-renders if
+        // the pull actually changed something.
+        pullCloudState().then(pulled => {
+          if (pulled) navigateTo(getCurrentPageId());
+        });
       }
 
       window.addEventListener('beforeinstallprompt', (e) => {
@@ -2638,6 +2721,21 @@
         pendingSyncRetry = true;
         if (!isBackground) showToast("Cloud sync failed — changes saved locally.", "error");
       }
+    }
+
+    // "Sync Now" — pulls the household's/personal latest data down FIRST,
+    // then pushes local state back up. Previously the Sync Now button called
+    // triggerCloudSync() alone, which only pushes — meaning a household
+    // member's own changes were saved, but a second member pressing Sync
+    // Now would never actually pull anyone else's changes down, and could
+    // even overwrite them with their own stale local state. This wraps both
+    // existing, unmodified functions in the correct order and re-renders the
+    // current page so newly-pulled data is actually visible, not just sitting
+    // in memory.
+    async function syncNow() {
+      await pullCloudState(true);
+      await triggerCloudSync();
+      navigateTo(getCurrentPageId());
     }
 
     async function checkAdminOwnerStatus() {
@@ -6034,6 +6132,1083 @@
       if (confirmView) confirmView.classList.add('hidden');
       if (successView) successView.classList.remove('hidden');
       showToast("Import complete", "success");
+    }
+
+    // ============================================================
+    // FLIGHT RECORDER IMPORT — Smart Statement Import (Privacy First)
+    // Entirely separate from the JSON Import Wizard above. Parsing and
+    // detection are pure, client-side, and read-only — nothing here
+    // touches `state` until commitStatementImport(), which reuses
+    // stageImportCategory() (unmodified) for validation, exactly like
+    // the existing wizard does. Forecast, Safe Spend, Money Mayday,
+    // Payday Briefing, and Household logic are never called from here.
+    // ============================================================
+
+    let statementImportState = {
+      step: 1, files: [], transactions: [],
+      paycheckCandidate: null, useDetectedSchedule: false,
+      accountCandidates: [], accountChoices: {}, accountMergeTargets: {},
+      billCandidates: [], billSelected: {},
+      spendingInsights: null, destination: 'personal'
+    };
+
+    function resetStatementImportState() {
+      statementImportState = {
+        step: 1, files: [], transactions: [],
+        paycheckCandidate: null, useDetectedSchedule: false,
+        accountCandidates: [], accountChoices: {}, accountMergeTargets: {},
+        billCandidates: [], billSelected: {},
+        spendingInsights: null, destination: 'personal'
+      };
+    }
+
+    // ---------- Small shared helpers ----------
+    function normalizeDescription(desc) {
+      return String(desc || '').toLowerCase().replace(/[0-9]/g, '').replace(/\s+/g, ' ').trim();
+    }
+    function guessNameFromDescription(desc) {
+      let s = String(desc || '').replace(/payroll|direct dep(osit)?|\bdeposit\b|\bdep\b|ddp|adp|paychex|workday|gusto/gi, '').trim();
+      s = s.replace(/[#*]+[0-9]*$/, '').replace(/\s{2,}/g, ' ').trim();
+      return s || 'Unknown';
+    }
+    function median(arr) {
+      if (!arr.length) return 0;
+      const s = [...arr].sort((a, b) => a - b);
+      const mid = Math.floor(s.length / 2);
+      return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+    }
+    function classifyFrequency(gapDays) {
+      if (!gapDays || gapDays <= 0) return 'unknown';
+      if (Math.abs(gapDays - 7) <= 2) return 'weekly';
+      if (Math.abs(gapDays - 14) <= 2) return 'biweekly';
+      if (Math.abs(gapDays - 15) <= 3) return 'semimonthly';
+      if (Math.abs(gapDays - 30) <= 4) return 'monthly';
+      if (Math.abs(gapDays - 90) <= 8) return 'quarterly';
+      if (Math.abs(gapDays - 365) <= 12) return 'yearly';
+      return 'unknown';
+    }
+    function stepDaysFor(frequency) {
+      return frequency === 'weekly' ? 7 : frequency === 'biweekly' ? 14 : frequency === 'semimonthly' ? 15
+        : frequency === 'quarterly' ? 90 : frequency === 'yearly' ? 365 : 30;
+    }
+    function addDaysToDateString(dateStr, days) {
+      const d = new Date(dateStr + 'T00:00:00');
+      d.setDate(d.getDate() + Math.round(days));
+      return d.toISOString().split('T')[0];
+    }
+    // Maps a detected income-style frequency onto the Bill Management
+    // recurrence enum (weekly/biweekly/monthly/quarterly/yearly) — bills
+    // have no "semimonthly" option, so that case folds to monthly.
+    function mapFrequencyToRecurrence(frequency) {
+      return frequency === 'weekly' ? 'weekly'
+        : frequency === 'biweekly' ? 'biweekly'
+        : frequency === 'quarterly' ? 'quarterly'
+        : frequency === 'yearly' ? 'yearly'
+        : 'monthly';
+    }
+    function normalizeDateString(raw) {
+      const s = String(raw || '').trim();
+      if (!s) return null;
+      if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+      const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+      if (m) {
+        let [, mm, dd, yy] = m;
+        if (yy.length === 2) yy = (Number(yy) < 70 ? '20' : '19') + yy;
+        return `${yy}-${mm.padStart(2, '0')}-${dd.padStart(2, '0')}`;
+      }
+      const d = new Date(s);
+      if (!isNaN(d.getTime())) return d.toISOString().split('T')[0];
+      return null;
+    }
+
+    // ---------- CSV parsing (PapaParse) — real bank exports vary a lot in
+    // column naming, so this guesses common header patterns rather than
+    // requiring one exact format. ----------
+    function guessAccountNameFromFilename(fileName) {
+      const base = String(fileName || '').replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
+      return base || 'Imported Account';
+    }
+
+    // Reduces any account-number-like string down to just its last 4 digits,
+    // regardless of how it's formatted in the source file — applied
+    // unconditionally, so even a careless export with a full unmasked
+    // number never gets stored or shown as more than "••••1234".
+    function maskAccountNumber(raw) {
+      const digits = String(raw || '').replace(/[^0-9]/g, '');
+      if (digits.length < 4) return null;
+      return `••••${digits.slice(-4)}`;
+    }
+
+    function parseCSVStatement(csvText, fallbackAccountName) {
+      const parsed = Papa.parse(csvText, { header: true, skipEmptyLines: true });
+      const rows = parsed.data || [];
+      const headers = parsed.meta && parsed.meta.fields ? parsed.meta.fields : [];
+      const lower = headers.map(h => String(h).toLowerCase().trim());
+
+      const findCol = (candidates) => {
+        for (const cand of candidates) {
+          const idx = lower.findIndex(h => h.includes(cand));
+          if (idx !== -1) return headers[idx];
+        }
+        return null;
+      };
+
+      const dateCol = findCol(['date']);
+      const amountCol = findCol(['amount']);
+      const debitCol = findCol(['debit', 'withdrawal']);
+      const creditCol = findCol(['credit', 'deposit']);
+      const balanceCol = findCol(['balance']);
+      const institutionCol = findCol(['institution', 'bank name', 'bank']);
+      // Account NUMBER column determined first (specific keywords), so the
+      // account NAME column below can safely exclude it — a loose substring
+      // match on just "account" would otherwise mistake "Account Number"
+      // for the account name column, since both contain that word.
+      const acctNumCol = findCol(['account number', 'account #', 'acct number', 'acct #', 'account no']);
+      const accountCol = headers.find(h => {
+        if (h === acctNumCol) return false;
+        const lh = String(h).toLowerCase().trim();
+        return lh === 'account name' || lh === 'account';
+      }) || null;
+      // Description column excludes the account-name/number columns too,
+      // so a file with no real description-like header can't accidentally
+      // treat "Account Name" as the transaction description.
+      const descCol = headers.find(h => {
+        if (h === accountCol || h === acctNumCol) return false;
+        const lh = String(h).toLowerCase().trim();
+        return ['description', 'memo', 'payee', 'name'].some(c => lh.includes(c));
+      }) || null;
+
+      const transactions = [];
+      rows.forEach(row => {
+        if (!dateCol || !descCol) return;
+        const dateIso = normalizeDateString(row[dateCol]);
+        const desc = String(row[descCol] || '').trim();
+        if (!dateIso || !desc) return;
+
+        let amount = null, type = null;
+        if (amountCol && row[amountCol] !== undefined && row[amountCol] !== '') {
+          const parsedAmt = parseFloat(String(row[amountCol]).replace(/[^0-9.\-]/g, ''));
+          if (!isNaN(parsedAmt)) { amount = Math.abs(parsedAmt); type = parsedAmt >= 0 ? 'income' : 'expense'; }
+        } else if (debitCol || creditCol) {
+          const debitVal = debitCol ? parseFloat(String(row[debitCol] || '').replace(/[^0-9.\-]/g, '')) : NaN;
+          const creditVal = creditCol ? parseFloat(String(row[creditCol] || '').replace(/[^0-9.\-]/g, '')) : NaN;
+          if (!isNaN(creditVal) && creditVal > 0) { amount = creditVal; type = 'income'; }
+          else if (!isNaN(debitVal) && debitVal > 0) { amount = debitVal; type = 'expense'; }
+        }
+        if (amount === null || isNaN(amount)) return;
+
+        // Every transaction gets a real account tag — from an in-file
+        // column when present, otherwise from the file itself, so a user
+        // uploading one CSV per account still gets each detected separately.
+        transactions.push({
+          date: dateIso,
+          description: desc,
+          amount,
+          type,
+          account: accountCol ? (String(row[accountCol] || '').trim() || fallbackAccountName) : fallbackAccountName,
+          balance: balanceCol && row[balanceCol] !== '' ? parseFloat(String(row[balanceCol]).replace(/[^0-9.\-]/g, '')) : null,
+          institution: institutionCol ? (String(row[institutionCol] || '').trim() || null) : null,
+          maskedAccountNumber: acctNumCol ? maskAccountNumber(row[acctNumCol]) : null
+        });
+      });
+
+      return { transactions, hasAccountColumn: !!accountCol };
+    }
+
+    // ---------- Paycheck detection ----------
+    const PAYROLL_KEYWORDS = ['payroll', 'direct dep', 'ddp', 'adp', 'paychex', 'workday', 'gusto', 'salary', 'wages'];
+
+    function detectPaycheckCandidates(transactions) {
+      const incomeTx = transactions.filter(t => t.type === 'income');
+      if (!incomeTx.length) return null;
+
+      const groups = {};
+      incomeTx.forEach(t => {
+        const norm = normalizeDescription(t.description);
+        (groups[norm] = groups[norm] || []).push(t);
+      });
+
+      let best = null;
+      Object.values(groups).forEach(txs => {
+        if (txs.length < 2) return;
+        const norm = normalizeDescription(txs[0].description);
+        const hasKeyword = PAYROLL_KEYWORDS.some(k => norm.includes(k));
+        const amounts = txs.map(t => t.amount);
+        const avg = amounts.reduce((a, b) => a + b, 0) / amounts.length;
+        const amountSpread = Math.max(...amounts) - Math.min(...amounts);
+        const consistentAmount = avg > 0 && amountSpread <= avg * 0.15;
+        if (!hasKeyword && !consistentAmount) return;
+
+        const sorted = [...txs].sort((a, b) => new Date(a.date) - new Date(b.date));
+        const gaps = [];
+        for (let i = 1; i < sorted.length; i++) gaps.push((new Date(sorted[i].date) - new Date(sorted[i - 1].date)) / 86400000);
+        const gap = median(gaps);
+        const frequency = classifyFrequency(gap);
+
+        const candidate = {
+          employer: guessNameFromDescription(sorted[0].description),
+          frequency,
+          averageAmount: avg,
+          matches: sorted,
+          matchCount: sorted.length,
+          nextPredictedDate: addDaysToDateString(sorted[sorted.length - 1].date, gap || stepDaysFor(frequency)),
+          confidenceLevel: sorted.length >= 6 ? 'high' : sorted.length >= 3 ? 'medium' : 'low',
+          confidenceDetail: `${sorted.length} matching deposit${sorted.length === 1 ? '' : 's'}`
+        };
+        if (!best || candidate.matchCount > best.matchCount) best = candidate;
+      });
+      return best;
+    }
+
+    // ---------- Account discovery ----------
+    function guessAccountType(name) {
+      const n = String(name || '').toLowerCase();
+      if (n.includes('saving')) return 'savings';
+      if (n.includes('credit') || n.includes('card') || /\b(visa|mastercard|amex|discover|freedom|sapphire)\b/.test(n)) return 'credit';
+      if (n.includes('loan') || n.includes('mortgage')) return 'credit';
+      return 'checking';
+    }
+    // The real grouping key for "is this the same account." Name alone is
+    // NOT enough — two genuinely different accounts (e.g. an old closed
+    // checking account and a new one) can share an identical name. When an
+    // account number is available, it's folded into the key so same-named
+    // accounts with different numbers are correctly kept separate. Without
+    // an account number in the source file, name is the only signal
+    // available, so grouping falls back to it — a known, documented
+    // limitation rather than a silent collapse.
+    function computeAccountKey(t) {
+      const name = String(t.account || '').toLowerCase().trim();
+      const num = t.maskedAccountNumber ? String(t.maskedAccountNumber).trim() : '';
+      return num ? `${name}__${num}` : name;
+    }
+    function latestBalanceFor(relevantTransactions) {
+      const withBalance = relevantTransactions.filter(t => t.balance !== null && !isNaN(t.balance));
+      if (!withBalance.length) return 0;
+      const sorted = [...withBalance].sort((a, b) => new Date(a.date) - new Date(b.date));
+      return sorted[sorted.length - 1].balance;
+    }
+    // Most frequently seen non-empty value for a field across an account's
+    // transactions — used for institution/masked account number, which
+    // should be constant per account but we don't want one stray blank or
+    // mismatched row to blank out an otherwise-consistent value.
+    function mostCommonValue(values) {
+      const counts = {};
+      values.forEach(v => { if (v) counts[v] = (counts[v] || 0) + 1; });
+      let best = null, bestCount = 0;
+      Object.entries(counts).forEach(([v, c]) => { if (c > bestCount) { best = v; bestCount = c; } });
+      return best;
+    }
+    function detectAccountCandidates(transactions) {
+      const keys = [...new Set(transactions.map(t => computeAccountKey(t)).filter(Boolean))];
+      if (!keys.length) return [{ name: 'Imported Account', type: 'checking', balance: 0, institution: null, maskedAccountNumber: null, accountKey: 'imported-account' }];
+      return keys.map(key => {
+        const relevant = transactions.filter(t => computeAccountKey(t) === key);
+        const name = relevant[0].account;
+        const type = guessAccountType(name);
+        let balance = latestBalanceFor(relevant);
+        // Credit cards and loans are debts — represent the balance owed as
+        // negative, the same convention used everywhere else in the app,
+        // regardless of how the source file signed it.
+        if (type === 'credit' && balance > 0) balance = -balance;
+        return {
+          name,
+          type,
+          balance,
+          institution: mostCommonValue(relevant.map(t => t.institution)),
+          maskedAccountNumber: mostCommonValue(relevant.map(t => t.maskedAccountNumber)),
+          accountKey: key
+        };
+      });
+    }
+
+    // ---------- Recurring bill detection (fixed vs. variable) ----------
+    const BILL_CATEGORY_RULES = [
+      { category: 'Housing', keywords: ['rent', 'mortgage', 'apartment', 'landlord'] },
+      { category: 'Utilities', keywords: ['power', 'electric', 'water', 'gas company', 'utility', 'utilities', 'sewer', 'trash', 'internet', 'phone', 'wireless', 'mobile', 'cable', 'isp'] },
+      { category: 'Subscriptions', keywords: ['netflix', 'spotify', 'hulu', 'disney', 'subscription', 'prime video', 'youtube premium'] },
+      { category: 'Credit Card / Loan', keywords: ['visa', 'mastercard', 'amex', 'discover', 'card payment', 'loan', 'student loan'] },
+      { category: 'Other', keywords: ['insurance', 'geico', 'progressive', 'allstate', 'state farm'] }
+    ];
+    function categorizeBillDescription(desc) {
+      const d = String(desc || '').toLowerCase();
+      for (const rule of BILL_CATEGORY_RULES) {
+        if (rule.keywords.some(k => d.includes(k))) return rule.category;
+      }
+      return 'Other';
+    }
+    function detectRecurringBillCandidates(transactions) {
+      const expenseTx = transactions.filter(t => t.type === 'expense');
+      const groups = {};
+      expenseTx.forEach(t => {
+        // Grocery/gas visits recur regularly too, but they're spending
+        // patterns, not fixed obligations — they belong in the Financial
+        // Pattern Scan step, not suggested as bills.
+        const d = t.description.toLowerCase();
+        if (GROCERY_KEYWORDS.some(k => d.includes(k)) || GAS_KEYWORDS.some(k => d.includes(k))) return;
+        const norm = normalizeDescription(t.description);
+        (groups[norm] = groups[norm] || []).push(t);
+      });
+
+      const candidates = [];
+      Object.values(groups).forEach(txs => {
+        if (txs.length < 2) return;
+        const sorted = [...txs].sort((a, b) => new Date(a.date) - new Date(b.date));
+        const amounts = sorted.map(t => t.amount);
+        const avg = amounts.reduce((a, b) => a + b, 0) / amounts.length;
+        const min = Math.min(...amounts), max = Math.max(...amounts);
+        const variancePct = avg > 0 ? (max - min) / avg : 0;
+        const isFixed = variancePct <= 0.03;
+
+        const gaps = [];
+        for (let i = 1; i < sorted.length; i++) gaps.push((new Date(sorted[i].date) - new Date(sorted[i - 1].date)) / 86400000);
+        const gap = median(gaps);
+        const frequency = classifyFrequency(gap);
+        if (frequency === 'unknown') return;
+
+        const lastDate = sorted[sorted.length - 1].date;
+        candidates.push({
+          title: guessNameFromDescription(sorted[0].description),
+          category: categorizeBillDescription(sorted[0].description),
+          amountType: isFixed ? 'fixed' : 'variable',
+          averageAmount: avg,
+          rangeLow: min,
+          rangeHigh: max,
+          frequency,
+          recurrence: mapFrequencyToRecurrence(frequency),
+          likelyDueDate: addDaysToDateString(lastDate, gap || stepDaysFor(frequency)),
+          occurrenceCount: sorted.length,
+          occurrences: sorted
+        });
+      });
+
+      return candidates.sort((a, b) => b.occurrenceCount - a.occurrenceCount);
+    }
+
+    // ---------- Spending insights (informational only — nothing reads
+    // state.spendingInsights yet; Forecast/Weather/Safe Spend are untouched) ----------
+    const GROCERY_KEYWORDS = ['grocery', 'groceries', 'supermarket', 'kroger', 'safeway', 'whole foods', "trader joe", 'aldi', 'publix', 'walmart', 'costco'];
+    const GAS_KEYWORDS = ['gas station', 'fuel', 'shell', 'chevron', 'exxon', 'mobil', 'sunoco', 'speedway', 'texaco', 'bp#'];
+    function computeSpendingInsights(transactions, billNormsClaimed) {
+      const expenseTx = transactions.filter(t => t.type === 'expense');
+      if (!expenseTx.length) return null;
+
+      const buckets = { groceries: [], gas: [], discretionary: [] };
+      expenseTx.forEach(t => {
+        const norm = normalizeDescription(t.description);
+        if (billNormsClaimed.has(norm)) return;
+        const d = t.description.toLowerCase();
+        if (GROCERY_KEYWORDS.some(k => d.includes(k))) buckets.groceries.push(t.amount);
+        else if (GAS_KEYWORDS.some(k => d.includes(k))) buckets.gas.push(t.amount);
+        else buckets.discretionary.push(t.amount);
+      });
+
+      const monthsCovered = new Set(expenseTx.map(t => t.date.slice(0, 7))).size || 1;
+      const avg = (arr) => arr.length ? arr.reduce((a, b) => a + b, 0) / monthsCovered : 0;
+      const totalOutflow = expenseTx.reduce((a, t) => a + t.amount, 0);
+
+      return {
+        groceries: avg(buckets.groceries),
+        gas: avg(buckets.gas),
+        discretionary: avg(buckets.discretionary),
+        monthlyOutflow: totalOutflow / monthsCovered,
+        monthsCovered,
+        transactionCount: expenseTx.length,
+        computedAt: new Date().toISOString()
+      };
+    }
+
+    // ---------- Wizard control ----------
+    function openStatementImportWizard() {
+      resetStatementImportState();
+      const backdrop = document.getElementById('modal-backdrop');
+      const modal = document.getElementById('modal-statement-import');
+      if (backdrop && modal) { backdrop.classList.remove('hidden'); modal.classList.remove('hidden'); }
+      renderStmtStep();
+    }
+    function closeStatementImportWizard() {
+      closeModals();
+      resetStatementImportState();
+    }
+    function updateStmtNavButtons() {
+      const step = statementImportState.step;
+      const backBtn = document.getElementById('stmt-back-btn');
+      const nextBtn = document.getElementById('stmt-next-btn');
+      if (backBtn) backBtn.classList.toggle('hidden', step === 1);
+      if (nextBtn) nextBtn.classList.toggle('hidden', step === 1 || step === 2 || step === 8);
+    }
+    function stmtWizardNext() {
+      if (statementImportState.step < 8) { statementImportState.step++; renderStmtStep(); }
+    }
+    function stmtWizardBack() {
+      if (statementImportState.step > 1) { statementImportState.step--; renderStmtStep(); }
+    }
+    function renderStmtStep() {
+      const step = statementImportState.step;
+      const labels = ['Upload Statement', 'Privacy & Security', 'Income Radar', 'Account Discovery', 'Bill Detection', 'Financial Pattern Scan', 'Review', 'Import Confirmation'];
+      for (let i = 1; i <= 8; i++) {
+        const dot = document.getElementById(`stmt-step-dot-${i}`);
+        if (dot) dot.className = `h-1 flex-1 rounded-full ${i <= step ? 'bg-indigo-500' : 'bg-slate-800'}`;
+      }
+      const label = document.getElementById('stmt-step-label');
+      if (label) label.innerText = `Step ${step} of 8 · ${labels[step - 1]}`;
+
+      if (step === 1) renderStmtStep1();
+      else if (step === 2) renderStmtStep2();
+      else if (step === 3) renderStmtStep3();
+      else if (step === 4) renderStmtStep4();
+      else if (step === 5) renderStmtStep5();
+      else if (step === 6) renderStmtStep6();
+      else if (step === 7) renderStmtStep7();
+      else if (step === 8) renderStmtStep8();
+      lucide.createIcons();
+    }
+
+    function handleStatementFileSelected(event) {
+      const files = Array.from(event.target.files || []);
+      if (!files.length) return;
+      const nameEl = document.getElementById('stmt-file-name');
+      if (nameEl) nameEl.innerText = files.map(f => f.name).join(', ');
+
+      Promise.all(files.map(file => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve({ fileName: file.name, rawText: e.target.result });
+        reader.onerror = () => reject(new Error(`Could not read ${file.name}`));
+        reader.readAsText(file);
+      }))).then(results => {
+        statementImportState.files = results;
+        statementImportState.step = 2;
+        renderStmtStep();
+      }).catch(err => {
+        showToast(err.message || "Could not read one of the selected files", "error");
+      });
+    }
+
+    // Prevents accidental duplicate account creation — but a name match
+    // alone is weak evidence two accounts are really the same one (a closed
+    // account and its replacement often share a name). Three tiers, ordered
+    // by confidence; only tiers 1-2 are ever auto-selected. If a candidate
+    // and an existing same-named account both have a masked account number
+    // and those numbers DIFFER, that's a hard veto against auto-merge at any
+    // tier — known-different account numbers means known-different accounts.
+    function findLikelyExistingMatch(candidate) {
+      const norm = String(candidate.name || '').toLowerCase().trim();
+      if (!norm) return null;
+      const sameName = state.accounts.filter(a => a.name.toLowerCase().trim() === norm);
+      if (!sameName.length) return null;
+
+      const conflicts = (a) => a.maskedAccountNumber && candidate.maskedAccountNumber && a.maskedAccountNumber !== candidate.maskedAccountNumber;
+      const numbersMatch = (a) => a.maskedAccountNumber && candidate.maskedAccountNumber && a.maskedAccountNumber === candidate.maskedAccountNumber;
+
+      // Priority 1: Name + Account Number + Type
+      const p1 = sameName.find(a => a.type === candidate.type && numbersMatch(a));
+      if (p1) return { account: p1, tier: 1, autoSelect: true };
+
+      // Priority 2: Name + Type — but only where no conflicting account
+      // number has already told us these are different accounts.
+      const p2 = sameName.find(a => a.type === candidate.type && !conflicts(a));
+      if (p2) return { account: p2, tier: 2, autoSelect: true };
+
+      // Priority 3: Name only — surfaced as a warning so the user can still
+      // choose to merge manually, but never pre-selected for them.
+      const p3 = sameName.find(a => !conflicts(a)) || sameName[0];
+      return { account: p3, tier: 3, autoSelect: false };
+    }
+
+    // Duplicate-transaction detection. Paycheck Pilot's transaction records
+    // don't carry an account link (a pre-existing constraint of the data
+    // model, not something this import feature introduces), so matching is
+    // done on date + amount + description — the fields that actually
+    // persist on a stored transaction and can be compared against anything
+    // already in the ledger, whether from a prior import or manual entry.
+    function transactionDedupeKey(dateStr, amount, text) {
+      return `${dateStr}__${Number(amount).toFixed(2)}__${normalizeDescription(text)}`;
+    }
+    // Single source of truth for "what will actually be imported" — used by
+    // both the Review step's preview and the real commit, so the numbers
+    // shown before confirming are guaranteed to match what happens after.
+    function filterTransactionsForImport() {
+      const ignoredAccountKeys = new Set(
+        statementImportState.accountCandidates
+          .filter((_, i) => statementImportState.accountChoices[i] === 'ignore')
+          .map(a => a.accountKey)
+      );
+      const existingKeys = new Set(state.transactions.map(t => transactionDedupeKey(t.date, t.amount, t.title)));
+      const seenInBatch = new Set();
+      const toImport = [];
+      let duplicateSkipped = 0, ignoredSkipped = 0;
+
+      statementImportState.transactions.forEach(t => {
+        if (ignoredAccountKeys.has(computeAccountKey(t))) { ignoredSkipped++; return; }
+        const key = transactionDedupeKey(t.date, t.amount, t.description);
+        if (existingKeys.has(key) || seenInBatch.has(key)) { duplicateSkipped++; return; }
+        seenInBatch.add(key);
+        toImport.push(t);
+      });
+
+      return { toImport, duplicateSkipped, ignoredSkipped };
+    }
+
+    function runStatementAnalysis() {
+      if (typeof Papa === 'undefined') {
+        showToast("Statement parser failed to load — check your connection and try again.", "error");
+        return;
+      }
+
+      let allTransactions = [];
+      let anyParsed = false;
+      statementImportState.files.forEach(f => {
+        const fallbackName = guessAccountNameFromFilename(f.fileName);
+        const parsed = parseCSVStatement(f.rawText, fallbackName);
+        if (parsed.transactions.length) anyParsed = true;
+        allTransactions = allTransactions.concat(parsed.transactions);
+      });
+      statementImportState.transactions = allTransactions;
+
+      if (!anyParsed) {
+        statementImportState.step = 1;
+        renderStmtStep();
+        showToast("Couldn't find readable transactions in those files. Try different CSV exports.", "error");
+        return;
+      }
+
+      statementImportState.paycheckCandidate = detectPaycheckCandidates(allTransactions);
+      statementImportState.accountCandidates = detectAccountCandidates(allTransactions);
+      statementImportState.accountCandidates.forEach((a, i) => {
+        const match = findLikelyExistingMatch(a);
+        if (match && match.autoSelect) {
+          statementImportState.accountChoices[i] = 'merge';
+          statementImportState.accountMergeTargets[i] = match.account.id;
+        } else {
+          statementImportState.accountChoices[i] = 'create';
+        }
+      });
+
+      statementImportState.billCandidates = detectRecurringBillCandidates(allTransactions);
+      statementImportState.billCandidates.forEach((_, i) => { statementImportState.billSelected[i] = true; });
+
+      const billNorms = new Set(statementImportState.billCandidates.map(b => normalizeDescription(b.occurrences[0].description)));
+      statementImportState.spendingInsights = computeSpendingInsights(allTransactions, billNorms);
+
+      statementImportState.step = 3;
+      renderStmtStep();
+    }
+
+    // ---------- Step renderers ----------
+    function renderStmtStep1() {
+      const content = document.getElementById('stmt-import-content');
+      if (!content) return;
+      content.innerHTML = `
+        <div class="p-4 bg-indigo-500/10 border border-indigo-500/30 rounded-2xl text-center space-y-2">
+          <i data-lucide="plane-landing" class="w-6 h-6 text-indigo-400 mx-auto"></i>
+          <p class="text-sm font-bold text-white">Upload your bank statement(s)</p>
+          <p class="text-slate-400">One CSV per account works best — checking, savings, joint, credit card, whatever you have. Select as many as you'd like at once. We'll scan them for paychecks, recurring bills, and spending patterns — nothing leaves your device to do it.</p>
+        </div>
+        <label class="w-full py-6 border-2 border-dashed border-slate-700 hover:border-indigo-500 rounded-2xl flex flex-col items-center justify-center gap-2 cursor-pointer transition-all text-center">
+          <i data-lucide="upload" class="w-5 h-5 text-indigo-400"></i>
+          <span class="text-slate-300 font-semibold">Choose CSV file(s)</span>
+          <span id="stmt-file-name" class="text-[10px] text-slate-500 px-4"></span>
+          <input type="file" id="stmt-file-input" accept=".csv" multiple onchange="handleStatementFileSelected(event)" class="hidden" />
+        </label>
+        <p class="text-[10px] text-slate-500 text-center">Supported today: CSV. OFX, QFX, and QBO support is planned.</p>
+      `;
+      updateStmtNavButtons();
+    }
+
+    function renderStmtStep2() {
+      const content = document.getElementById('stmt-import-content');
+      if (!content) return;
+      content.innerHTML = `
+        <div class="p-4 bg-indigo-500/10 border border-indigo-500/30 rounded-2xl space-y-1.5">
+          <p class="text-slate-200 font-semibold">Your statement is analyzed locally.</p>
+          <p class="text-slate-300">Your bank username and password are never requested.</p>
+          <p class="text-slate-300">Paycheck Pilot does not connect to your bank.</p>
+          <p class="text-slate-300">Imported files remain under your control.</p>
+          <p class="text-slate-300">You choose what gets imported.</p>
+          <p class="text-slate-300">Nothing is uploaded automatically.</p>
+        </div>
+        <div class="space-y-3">
+          <div><p class="text-white font-bold text-[11px] uppercase tracking-wider mb-1">Why we ask</p><p class="text-slate-400">So you don't have to type in every bill and paycheck by hand — the app can learn your schedule from a statement you already have.</p></div>
+          <div><p class="text-white font-bold text-[11px] uppercase tracking-wider mb-1">How detection works</p><p class="text-slate-400">We look for patterns like repeated amounts and payees — the same way you'd spot them scanning a statement yourself.</p></div>
+          <div><p class="text-white font-bold text-[11px] uppercase tracking-wider mb-1">What happens to imported data</p><p class="text-slate-400">The file is read in your browser. You'll see everything it found before anything is added, and choose what to keep.</p></div>
+          <div><p class="text-white font-bold text-[11px] uppercase tracking-wider mb-1">What does NOT happen</p><p class="text-slate-400">No bank login, no connection to any bank, no file leaves your device during analysis, nothing imports automatically.</p></div>
+        </div>
+        <button type="button" onclick="runStatementAnalysis()" class="w-full py-3 bg-indigo-500 hover:bg-indigo-600 text-slate-950 font-bold rounded-xl text-xs transition-all">I Understand — Analyze My Statement</button>
+      `;
+      updateStmtNavButtons();
+    }
+
+    function setStmtIncomeChoice(useDetected) {
+      statementImportState.useDetectedSchedule = useDetected;
+      const useBtn = document.getElementById('stmt-income-choice-use');
+      const keepBtn = document.getElementById('stmt-income-choice-keep');
+      const activeCls = 'w-full py-2.5 rounded-xl text-xs font-bold transition-all bg-indigo-500 text-slate-950';
+      const inactiveCls = 'w-full py-2.5 rounded-xl text-xs font-bold transition-all bg-slate-800 text-slate-300 hover:bg-slate-700';
+      if (useBtn) { useBtn.className = useDetected ? activeCls : inactiveCls; useBtn.innerText = 'A) Use Detected Schedule'; }
+      if (keepBtn) { keepBtn.className = !useDetected ? activeCls : inactiveCls; keepBtn.innerText = 'B) Keep Existing Schedule'; }
+    }
+
+    function renderStmtStep3() {
+      const content = document.getElementById('stmt-import-content');
+      if (!content) return;
+      const p = statementImportState.paycheckCandidate;
+
+      if (!p) {
+        content.innerHTML = `
+          <div class="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl text-center space-y-1">
+            <i data-lucide="radar" class="w-6 h-6 text-slate-500 mx-auto"></i>
+            <p class="text-sm font-bold text-white">No clear paycheck pattern found</p>
+            <p class="text-slate-500">Your current income schedule will stay exactly as it is.</p>
+          </div>
+        `;
+        statementImportState.useDetectedSchedule = false;
+        updateStmtNavButtons();
+        return;
+      }
+
+      const confColor = p.confidenceLevel === 'high' ? 'text-brand-400 bg-brand-500/10 border-brand-500/30'
+        : p.confidenceLevel === 'medium' ? 'text-amber-400 bg-amber-500/10 border-amber-500/30'
+        : 'text-slate-400 bg-slate-800/60 border-slate-700';
+      const confText = p.confidenceLevel === 'high' ? 'High Confidence' : p.confidenceLevel === 'medium' ? 'Medium Confidence' : 'Low Confidence';
+
+      content.innerHTML = `
+        <div class="p-4 bg-indigo-500/10 border border-indigo-500/30 rounded-2xl space-y-2">
+          <p class="flex items-center gap-1.5 text-indigo-300 font-bold text-sm"><i data-lucide="radar" class="w-4 h-4"></i> Income Radar</p>
+          <div class="grid grid-cols-2 gap-2 pt-1">
+            <div><p class="text-[10px] text-slate-500 uppercase">Detected Employer</p><p class="text-white font-semibold">${p.employer}</p></div>
+            <div><p class="text-[10px] text-slate-500 uppercase">Frequency</p><p class="text-white font-semibold capitalize">${p.frequency}</p></div>
+            <div><p class="text-[10px] text-slate-500 uppercase">Average Deposit</p><p class="text-white font-semibold">$${formatCurrency(p.averageAmount)}</p></div>
+            <div><p class="text-[10px] text-slate-500 uppercase">Next Predicted Payday</p><p class="text-white font-semibold">${p.nextPredictedDate}</p></div>
+          </div>
+          <span class="inline-block px-2 py-1 rounded-full text-[10px] font-bold border ${confColor}">${confText} — ${p.confidenceDetail}</span>
+        </div>
+        <div class="space-y-1.5">
+          <p class="text-[10px] text-slate-500 uppercase tracking-wider">Last Paychecks Found</p>
+          ${p.matches.slice(-5).map(m => `<div class="flex justify-between text-slate-400 py-1 border-b border-slate-800/60"><span>${m.date}</span><span class="text-white">$${formatCurrency(m.amount)}</span></div>`).join('')}
+        </div>
+        <div class="space-y-2 pt-1">
+          <button type="button" onclick="setStmtIncomeChoice(true)" id="stmt-income-choice-use">A) Use Detected Schedule</button>
+          <button type="button" onclick="setStmtIncomeChoice(false)" id="stmt-income-choice-keep">B) Keep Existing Schedule</button>
+        </div>
+      `;
+      setStmtIncomeChoice(false);
+      updateStmtNavButtons();
+    }
+
+    function setStmtAccountChoice(i, choice) {
+      const compatibleCount = document.getElementById(`stmt-acct-${i}-merge`) ? Number(document.getElementById(`stmt-acct-${i}-merge`).dataset.compatibleCount || 0) : 0;
+      if (choice === 'merge' && compatibleCount === 0) return; // nothing compatible to merge into
+      statementImportState.accountChoices[i] = choice;
+      ['create', 'merge', 'ignore'].forEach(c => {
+        const btn = document.getElementById(`stmt-acct-${i}-${c}`);
+        if (!btn) return;
+        const isDisabledMerge = c === 'merge' && compatibleCount === 0;
+        btn.className = `px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-all ${isDisabledMerge ? 'bg-slate-900 text-slate-600 cursor-not-allowed' : c === choice ? 'bg-indigo-500 text-slate-950' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`;
+      });
+      const mergeSelect = document.getElementById(`stmt-acct-${i}-merge-target`);
+      if (mergeSelect) mergeSelect.classList.toggle('hidden', choice !== 'merge');
+      const actionLabel = document.getElementById(`stmt-acct-${i}-selected-action`);
+      if (actionLabel) actionLabel.innerText = choice === 'create' ? 'Create New' : choice === 'merge' ? 'Merge Into Existing' : 'Ignore';
+    }
+
+    function renderStmtStep4() {
+      const content = document.getElementById('stmt-import-content');
+      if (!content) return;
+
+      content.innerHTML = `
+        <p class="text-slate-400">Every account found — nothing is assumed to belong to just one, and each gets its own choice below.</p>
+        <div class="space-y-3">
+          ${statementImportState.accountCandidates.map((a, i) => {
+            const compatibleAccounts = state.accounts.filter(acc => acc.type === a.type);
+            const existingAccountOptions = compatibleAccounts.map(acc => `<option value="${acc.id}">${acc.name}</option>`).join('');
+            const likelyMatch = findLikelyExistingMatch(a);
+            const balanceDisplay = a.balance < 0 ? `-$${formatCurrency(Math.abs(a.balance))}` : `$${formatCurrency(a.balance)}`;
+            const warningText = likelyMatch
+              ? (likelyMatch.autoSelect
+                  ? `Looks like you already have "${likelyMatch.account.name}" — defaulting to merge instead of creating a duplicate.`
+                  : `You have another account named "${likelyMatch.account.name}", but the account numbers don't match — kept separate. Merge manually below only if you're sure these are the same account.`)
+              : null;
+
+            return `
+            <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800 space-y-2">
+              <div>
+                <p class="text-white font-semibold">${a.name}</p>
+                <p class="text-[10px] text-slate-500 capitalize">${a.type} · Balance: <span class="${a.balance < 0 ? 'text-rose-400' : 'text-slate-300'}">${balanceDisplay}</span></p>
+                ${a.institution || a.maskedAccountNumber ? `<p class="text-[10px] text-slate-500">${[a.institution, a.maskedAccountNumber].filter(Boolean).join(' · ')}</p>` : ''}
+              </div>
+              ${warningText ? `
+                <div class="p-2 bg-amber-500/10 border border-amber-500/30 rounded-lg text-[10px] text-amber-200 flex items-start gap-1.5">
+                  <i data-lucide="info" class="w-3 h-3 shrink-0 mt-0.5"></i>
+                  <span>${warningText}</span>
+                </div>
+              ` : ''}
+              <div class="flex flex-wrap gap-1.5">
+                <button type="button" onclick="setStmtAccountChoice(${i}, 'create')" id="stmt-acct-${i}-create">Create New</button>
+                <button type="button" onclick="setStmtAccountChoice(${i}, 'merge')" id="stmt-acct-${i}-merge" data-compatible-count="${compatibleAccounts.length}">Merge Into Existing</button>
+                <button type="button" onclick="setStmtAccountChoice(${i}, 'ignore')" id="stmt-acct-${i}-ignore">Ignore</button>
+              </div>
+              <select id="stmt-acct-${i}-merge-target" onchange="statementImportState.accountMergeTargets[${i}] = this.value" class="hidden w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-1.5 text-[11px] text-slate-200">
+                ${existingAccountOptions || '<option value="">No compatible existing accounts</option>'}
+              </select>
+              <p class="text-[10px] text-slate-500">Selected Action: <span id="stmt-acct-${i}-selected-action" class="text-slate-300 font-semibold"></span></p>
+            </div>
+          `;
+          }).join('')}
+        </div>
+      `;
+      statementImportState.accountCandidates.forEach((_, i) => {
+        setStmtAccountChoice(i, statementImportState.accountChoices[i] || 'create');
+        const targetSelect = document.getElementById(`stmt-acct-${i}-merge-target`);
+        if (targetSelect && statementImportState.accountMergeTargets[i]) targetSelect.value = statementImportState.accountMergeTargets[i];
+      });
+      updateStmtNavButtons();
+    }
+
+    function renderStmtStep5() {
+      const content = document.getElementById('stmt-import-content');
+      if (!content) return;
+      if (!statementImportState.billCandidates.length) {
+        content.innerHTML = `<div class="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl text-center text-slate-500">No recurring bills detected in this statement.</div>`;
+        updateStmtNavButtons();
+        return;
+      }
+      content.innerHTML = `
+        <p class="text-slate-400">Recurring payments found — choose what to bring in.</p>
+        <div class="space-y-2">
+          ${statementImportState.billCandidates.map((b, i) => `
+            <label class="flex items-start gap-2.5 p-3 bg-slate-900/80 rounded-xl border border-slate-800 cursor-pointer">
+              <input type="checkbox" ${statementImportState.billSelected[i] ? 'checked' : ''} onchange="statementImportState.billSelected[${i}] = this.checked" class="w-4 h-4 rounded accent-indigo-500 mt-0.5" />
+              <span class="flex-1">
+                <span class="flex items-center justify-between">
+                  <span class="text-white font-semibold">${b.title}</span>
+                  <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-indigo-500/20 text-indigo-300">${b.category}</span>
+                </span>
+                <span class="block text-[10px] text-slate-500 mt-0.5">${b.occurrenceCount} occurrences · ${b.frequency}</span>
+                <span class="block text-slate-300 mt-0.5">${b.amountType === 'fixed' ? `$${formatCurrency(b.averageAmount)}` : `Expected Range: $${formatCurrency(b.rangeLow)} – $${formatCurrency(b.rangeHigh)}`}</span>
+              </span>
+            </label>
+          `).join('')}
+        </div>
+      `;
+      updateStmtNavButtons();
+    }
+
+    function renderStmtStep6() {
+      const content = document.getElementById('stmt-import-content');
+      if (!content) return;
+      const s = statementImportState.spendingInsights;
+      if (!s) {
+        content.innerHTML = `<div class="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl text-center text-slate-500">Not enough spending data in this statement to build a pattern.</div>`;
+        updateStmtNavButtons();
+        return;
+      }
+      content.innerHTML = `
+        <div class="p-4 bg-indigo-500/10 border border-indigo-500/30 rounded-2xl space-y-1">
+          <p class="flex items-center gap-1.5 text-indigo-300 font-bold text-sm"><i data-lucide="scan-line" class="w-4 h-4"></i> Financial Pattern Scan</p>
+          <p class="text-slate-400">Informational only — this doesn't change Safe Spend, Forecast, or Money Mayday today.</p>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800"><p class="text-[10px] text-slate-500 uppercase">Avg. Grocery</p><p class="text-white font-bold">$${formatCurrency(s.groceries)}/mo</p></div>
+          <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800"><p class="text-[10px] text-slate-500 uppercase">Avg. Fuel</p><p class="text-white font-bold">$${formatCurrency(s.gas)}/mo</p></div>
+          <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800"><p class="text-[10px] text-slate-500 uppercase">Avg. Discretionary</p><p class="text-white font-bold">$${formatCurrency(s.discretionary)}/mo</p></div>
+          <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800"><p class="text-[10px] text-slate-500 uppercase">Monthly Outflow</p><p class="text-white font-bold">$${formatCurrency(s.monthlyOutflow)}/mo</p></div>
+        </div>
+        <p class="text-[10px] text-slate-500">Based on ${s.transactionCount} transactions across ${s.monthsCovered} month${s.monthsCovered === 1 ? '' : 's'}.</p>
+      `;
+      updateStmtNavButtons();
+    }
+
+    function setStmtDestination(dest) {
+      const hasHousehold = !!(state.household && state.household.id);
+      if (dest === 'household' && !hasHousehold) dest = 'personal';
+      statementImportState.destination = dest;
+      const personalBtn = document.getElementById('stmt-dest-personal-btn');
+      const householdBtn = document.getElementById('stmt-dest-household-btn');
+      const activeCls = 'w-full p-2.5 rounded-xl border-2 text-left text-xs mb-1.5 transition-all border-indigo-500 bg-indigo-500/10 text-white';
+      const inactiveCls = 'w-full p-2.5 rounded-xl border-2 text-left text-xs mb-1.5 transition-all border-slate-800 bg-slate-900/60 text-slate-300 hover:border-slate-700';
+      const disabledCls = 'w-full p-2.5 rounded-xl border-2 text-left text-xs transition-all border-slate-800/50 bg-slate-900/30 text-slate-600 cursor-not-allowed';
+      if (personalBtn) personalBtn.className = dest === 'personal' ? activeCls : inactiveCls;
+      if (householdBtn) householdBtn.className = !hasHousehold ? disabledCls : (dest === 'household' ? activeCls : inactiveCls);
+    }
+
+    function renderStmtStep7() {
+      const content = document.getElementById('stmt-import-content');
+      if (!content) return;
+      const hasHousehold = !!(state.household && state.household.id);
+      const createdIn = statementImportState.accountCandidates.filter((_, i) => statementImportState.accountChoices[i] === 'create');
+      const mergedIn = statementImportState.accountCandidates.filter((_, i) => statementImportState.accountChoices[i] === 'merge');
+      const ignoredIn = statementImportState.accountCandidates.filter((_, i) => statementImportState.accountChoices[i] === 'ignore');
+      const billsIn = statementImportState.billCandidates.filter((_, i) => statementImportState.billSelected[i]);
+      const txPreview = filterTransactionsForImport();
+
+      content.innerHTML = `
+        <p class="text-slate-400">Nothing has been added yet — review everything below before confirming.</p>
+        <div class="space-y-2">
+          <div class="flex items-center justify-between p-2.5 bg-slate-900/80 rounded-xl border border-slate-800"><span class="flex items-center gap-2 text-slate-200"><i data-lucide="plus-circle" class="w-3.5 h-3.5 text-indigo-400"></i> Accounts Created</span><span class="text-white font-bold">${createdIn.length}</span></div>
+          <div class="flex items-center justify-between p-2.5 bg-slate-900/80 rounded-xl border border-slate-800"><span class="flex items-center gap-2 text-slate-200"><i data-lucide="merge" class="w-3.5 h-3.5 text-indigo-400"></i> Accounts Merged</span><span class="text-white font-bold">${mergedIn.length}</span></div>
+          <div class="flex items-center justify-between p-2.5 bg-slate-900/80 rounded-xl border border-slate-800"><span class="flex items-center gap-2 text-slate-200"><i data-lucide="eye-off" class="w-3.5 h-3.5 text-indigo-400"></i> Accounts Ignored</span><span class="text-white font-bold">${ignoredIn.length}</span></div>
+          <div class="flex items-center justify-between p-2.5 bg-slate-900/80 rounded-xl border border-slate-800"><span class="flex items-center gap-2 text-slate-200"><i data-lucide="calendar-clock" class="w-3.5 h-3.5 text-indigo-400"></i> Income Schedule Change</span><span class="text-white font-bold">${statementImportState.useDetectedSchedule ? 'Yes' : 'No change'}</span></div>
+          <div class="flex items-center justify-between p-2.5 bg-slate-900/80 rounded-xl border border-slate-800"><span class="flex items-center gap-2 text-slate-200"><i data-lucide="receipt" class="w-3.5 h-3.5 text-indigo-400"></i> Bills to Import</span><span class="text-white font-bold">${billsIn.length}</span></div>
+          <div class="flex items-center justify-between p-2.5 bg-slate-900/80 rounded-xl border border-slate-800"><span class="flex items-center gap-2 text-slate-200"><i data-lucide="list" class="w-3.5 h-3.5 text-indigo-400"></i> Transactions to Import</span><span class="text-white font-bold">${txPreview.toImport.length}</span></div>
+          ${txPreview.duplicateSkipped > 0 ? `
+            <div class="flex items-center justify-between p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl"><span class="flex items-center gap-2 text-amber-200"><i data-lucide="copy-x" class="w-3.5 h-3.5"></i> Duplicate Transactions Skipped</span><span class="text-amber-300 font-bold">${txPreview.duplicateSkipped}</span></div>
+          ` : ''}
+          <div class="flex items-center justify-between p-2.5 bg-slate-900/80 rounded-xl border border-slate-800"><span class="flex items-center gap-2 text-slate-200"><i data-lucide="scan-line" class="w-3.5 h-3.5 text-indigo-400"></i> Spending Insights Found</span><span class="text-white font-bold">${statementImportState.spendingInsights ? 'Yes' : 'No'}</span></div>
+        </div>
+        <div class="pt-2">
+          <p class="text-xs font-semibold text-slate-400 mb-1">Import as:</p>
+          <button type="button" id="stmt-dest-personal-btn" onclick="setStmtDestination('personal')">Personal — only visible to you</button>
+          <button type="button" id="stmt-dest-household-btn" onclick="setStmtDestination('household')">Household — visible to everyone in your household</button>
+          ${!hasHousehold ? `<p class="text-[10px] text-slate-500 mt-1">You're not in a shared household, so this will import as Personal.</p>` : ''}
+        </div>
+      `;
+      setStmtDestination(statementImportState.destination);
+      updateStmtNavButtons();
+    }
+
+    function renderStmtStep8() {
+      const content = document.getElementById('stmt-import-content');
+      if (!content) return;
+      content.innerHTML = `
+        <div id="stmt-confirm-view" class="space-y-3">
+          <div class="p-4 bg-slate-900/80 rounded-2xl border border-slate-800 text-center space-y-1">
+            <i data-lucide="shield-check" class="w-6 h-6 text-indigo-400 mx-auto"></i>
+            <p class="text-sm font-bold text-white">Ready to import</p>
+            <p class="text-[11px] text-slate-400">Only what you selected will be added.</p>
+          </div>
+          <button type="button" onclick="commitStatementImport()" class="w-full py-3 bg-indigo-500 hover:bg-indigo-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Import Now</button>
+        </div>
+        <div id="stmt-success-view" class="hidden space-y-3">
+          <div class="p-4 bg-brand-500/10 border border-brand-500/30 rounded-2xl text-center space-y-1">
+            <i data-lucide="check-circle-2" class="w-7 h-7 text-brand-400 mx-auto"></i>
+            <p class="text-sm font-bold text-white">Import complete</p>
+            <p id="stmt-success-summary" class="text-[11px] text-slate-400"></p>
+          </div>
+          <button type="button" onclick="closeStatementImportWizard(); navigateTo('dashboard');" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Go to Dashboard</button>
+        </div>
+      `;
+      updateStmtNavButtons();
+    }
+
+    // The only function in this module that touches `state` — and only
+    // after explicit confirmation. Reuses stageImportCategory() unmodified
+    // for validation, and mirrors confirmImportWizard()'s exact tagging
+    // pattern (id/scope/ownerId/ownerLabel), plus an optional `source` tag.
+    function commitStatementImport() {
+      const scope = statementImportState.destination === 'household' ? 'household' : 'personal';
+      const ownerId = state.user ? state.user.id : null;
+      const ownerLabel = currentOwnerLabel();
+      const stamp = Date.now();
+      const importSessionId = `stmtimport_${stamp}`;
+      const warnings = [];
+
+      const rawAccounts = [];
+      const rawAccountsSource = []; // parallel array — same order as rawAccounts, holds institution/maskedAccountNumber for re-attachment after staging
+      statementImportState.accountCandidates.forEach((a, i) => {
+        if (statementImportState.accountChoices[i] === 'create') {
+          rawAccounts.push({ name: a.name, balance: a.balance, type: a.type });
+          rawAccountsSource.push(a);
+        }
+      });
+      const stagedAccounts = stageImportCategory(rawAccounts, 'accounts');
+      if (stagedAccounts.skipped > 0) warnings.push(`${stagedAccounts.skipped} detected account(s) couldn't be created — missing a usable name or balance.`);
+
+      const rawBills = [];
+      statementImportState.billCandidates.forEach((b, i) => {
+        if (!statementImportState.billSelected[i]) return;
+        rawBills.push({
+          title: b.title,
+          amount: b.amountType === 'fixed' ? b.averageAmount : b.rangeHigh,
+          dueDate: b.likelyDueDate,
+          category: b.category,
+          priority: 'important',
+          recurrence: b.recurrence
+        });
+      });
+      const stagedBills = stageImportCategory(rawBills, 'bills');
+      if (stagedBills.skipped > 0) warnings.push(`${stagedBills.skipped} detected bill(s) were skipped — missing a usable amount or due date.`);
+
+      // Reuses the exact same filter the Review step previewed — the
+      // numbers shown before confirming are guaranteed to match this.
+      const txFilter = filterTransactionsForImport();
+      const rawTransactions = txFilter.toImport.map(t => ({
+        title: t.description.slice(0, 80),
+        amount: t.amount,
+        type: t.type,
+        category: t.type === 'income' ? 'Income' : 'Other',
+        date: t.date
+      }));
+      const stagedTransactions = stageImportCategory(rawTransactions, 'transactions');
+      if (stagedTransactions.skipped > 0) warnings.push(`${stagedTransactions.skipped} transaction(s) were skipped — missing a usable amount or title.`);
+      if (txFilter.duplicateSkipped > 0) warnings.push(`${txFilter.duplicateSkipped} duplicate transaction(s) skipped — already present in your ledger.`);
+
+      let importedCount = 0;
+      stagedAccounts.valid.forEach((item, i) => {
+        const src = rawAccountsSource[i] || {};
+        state.accounts.push({
+          id: `stmtimport_accounts_${stamp}_${i}`, ...item,
+          institution: src.institution || null,
+          maskedAccountNumber: src.maskedAccountNumber || null,
+          scope, ownerId, ownerLabel, source: 'statement-import', importSessionId
+        });
+        importedCount++;
+      });
+      stagedBills.valid.forEach((item, i) => {
+        state.bills.push({ id: `stmtimport_bills_${stamp}_${i}`, ...item, paused: false, scope, ownerId, ownerLabel, source: 'statement-import', importSessionId });
+        importedCount++;
+      });
+      stagedTransactions.valid.forEach((item, i) => {
+        state.transactions.push({ id: `stmtimport_transactions_${stamp}_${i}`, ...item, scope, ownerId, ownerLabel, source: 'statement-import', importSessionId });
+        importedCount++;
+      });
+
+      // Merged accounts: capture the pre-merge balance so Undo Import can
+      // restore it — a merge modifies an EXISTING account in place, so
+      // (unlike created accounts/bills/transactions) it never gets an
+      // importSessionId of its own and would otherwise be invisible to undo.
+      let mergedCount = 0;
+      const mergedAccountSnapshots = [];
+      statementImportState.accountCandidates.forEach((a, i) => {
+        if (statementImportState.accountChoices[i] !== 'merge') return;
+        const target = state.accounts.find(acc => acc.id === statementImportState.accountMergeTargets[i]);
+        if (target) {
+          mergedAccountSnapshots.push({ accountId: target.id, previousBalance: target.balance });
+          target.balance = a.balance;
+          mergedCount++;
+        }
+      });
+
+      // Income schedule — only ever written here if the user explicitly
+      // chose "Use Detected Schedule" on the Income Radar step.
+      if (statementImportState.useDetectedSchedule && statementImportState.paycheckCandidate) {
+        const p = statementImportState.paycheckCandidate;
+        state.income.amount = Math.round(p.averageAmount * 100) / 100;
+        state.income.nextDate = p.nextPredictedDate;
+        if (['weekly', 'biweekly', 'semimonthly', 'monthly'].includes(p.frequency)) state.income.frequency = p.frequency;
+      }
+
+      if (statementImportState.spendingInsights) state.spendingInsights = statementImportState.spendingInsights;
+
+      const ignoredCount = statementImportState.accountCandidates.filter((_, i) => statementImportState.accountChoices[i] === 'ignore').length;
+
+      // Import History — one entry per session, enabling Undo Import from
+      // Settings → Data Management → Import History. Undo removes items
+      // carrying this exact importSessionId AND restores merged accounts'
+      // pre-merge balances via mergedAccountSnapshots. Manually entered data
+      // never has an importSessionId, so it can never be touched by an undo.
+      if (!Array.isArray(state.importHistory)) state.importHistory = [];
+      state.importHistory.push({
+        id: importSessionId,
+        date: new Date().toISOString(),
+        fileNames: statementImportState.files.map(f => f.fileName),
+        counts: {
+          accountsCreated: stagedAccounts.valid.length,
+          accountsMerged: mergedCount,
+          accountsIgnored: ignoredCount,
+          transactionsImported: stagedTransactions.valid.length,
+          transactionsSkipped: txFilter.duplicateSkipped + stagedTransactions.skipped,
+          bills: stagedBills.valid.length
+        },
+        mergedAccountSnapshots,
+        warnings,
+        undone: false
+      });
+
+      const fileList = statementImportState.files.map(f => f.fileName).join(', ');
+      logActivity("Statement Imported", `Flight Recorder Import added ${importedCount} item(s)${mergedCount ? ` and updated ${mergedCount} account balance(s)` : ''} from ${fileList}.`);
+      saveStateToStorage();
+
+      const successEl = document.getElementById('stmt-success-summary');
+      if (successEl) {
+        successEl.innerHTML = [
+          `${stagedAccounts.valid.length} account(s) created, ${mergedCount} merged, ${ignoredCount} ignored`,
+          `${stagedTransactions.valid.length} transaction(s) imported, ${txFilter.duplicateSkipped + stagedTransactions.skipped} skipped`,
+          `${stagedBills.valid.length} bill(s) added`,
+          ...(warnings.length ? [`<span class="text-amber-300">${warnings.join(' ')}</span>`] : [])
+        ].join('<br>');
+      }
+
+      const confirmView2 = document.getElementById('stmt-confirm-view');
+      const successView2 = document.getElementById('stmt-success-view');
+      if (confirmView2) confirmView2.classList.add('hidden');
+      if (successView2) successView2.classList.remove('hidden');
+      showToast("Statement import complete", "success");
+    }
+
+    // Removes only items carrying this exact importSessionId — never touches
+    // manually entered data (which never has this field) or items from any
+    // other import session.
+    function undoStatementImport(importSessionId) {
+      const entry = (state.importHistory || []).find(h => h.id === importSessionId);
+      if (!entry || entry.undone) return;
+      if (!confirm("Undo this import? Only items from this import session will be removed, and any merged account balances will be restored.")) return;
+
+      const before = state.accounts.length + state.bills.length + state.transactions.length;
+      state.accounts = state.accounts.filter(a => a.importSessionId !== importSessionId);
+      state.bills = state.bills.filter(b => b.importSessionId !== importSessionId);
+      state.transactions = state.transactions.filter(t => t.importSessionId !== importSessionId);
+      const removedCount = before - (state.accounts.length + state.bills.length + state.transactions.length);
+
+      // Restore merged accounts to their pre-merge balance. A merge modifies
+      // an existing account in place rather than creating a new one, so it's
+      // never caught by the importSessionId filtering above — this is what
+      // actually reverses that change. Older import history entries created
+      // before this existed simply won't have snapshots to restore.
+      let restoredCount = 0;
+      (entry.mergedAccountSnapshots || []).forEach(snap => {
+        const acc = state.accounts.find(a => a.id === snap.accountId);
+        if (acc) { acc.balance = snap.previousBalance; restoredCount++; }
+      });
+
+      entry.undone = true;
+      logActivity("Import Undone", `Removed ${removedCount} item(s)${restoredCount ? ` and restored ${restoredCount} account balance(s)` : ''} from a Flight Recorder Import session (${entry.fileNames.join(', ')}).`);
+      saveStateToStorage();
+      renderImportHistoryModal();
+      navigateTo(getCurrentPageId());
+      showToast("Import undone", "success");
+    }
+
+    function openImportHistoryModal() {
+      const backdrop = document.getElementById('modal-backdrop');
+      const modal = document.getElementById('modal-import-history');
+      if (backdrop && modal) { backdrop.classList.remove('hidden'); modal.classList.remove('hidden'); }
+      renderImportHistoryModal();
+    }
+
+    function renderImportHistoryModal() {
+      const content = document.getElementById('import-history-content');
+      if (!content) return;
+      const history = state.importHistory || [];
+      if (!history.length) {
+        content.innerHTML = `<p class="text-xs text-slate-500 text-center py-6">No statement imports yet — imports from Flight Recorder will show up here.</p>`;
+        return;
+      }
+      content.innerHTML = [...history].reverse().map(h => {
+        // Backward-compatible with entries recorded before this breakdown
+        // existed — falls back to the older, flatter counts shape.
+        const c = h.counts || {};
+        const created = c.accountsCreated ?? c.accounts ?? 0;
+        const merged = c.accountsMerged ?? 0;
+        const ignored = c.accountsIgnored ?? 0;
+        const txImported = c.transactionsImported ?? c.transactions ?? 0;
+        const txSkipped = c.transactionsSkipped ?? 0;
+        const bills = c.bills ?? 0;
+
+        return `
+        <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800 space-y-1.5">
+          <div class="flex items-center justify-between gap-2">
+            <p class="text-white font-semibold text-xs truncate">${h.fileNames.join(', ')}</p>
+            <span class="text-[10px] text-slate-500 shrink-0">${new Date(h.date).toLocaleDateString()}</span>
+          </div>
+          <p class="text-[11px] text-slate-400">${created} created, ${merged} merged, ${ignored} ignored · ${bills} bill${bills===1?'':'s'} · ${txImported} transaction${txImported===1?'':'s'}${txSkipped ? `, ${txSkipped} skipped` : ''}</p>
+          ${h.warnings && h.warnings.length ? `<p class="text-[10px] text-amber-300">${h.warnings.join(' ')}</p>` : ''}
+          ${h.undone
+            ? `<span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-700 text-slate-400">Undone</span>`
+            : `<button onclick="undoStatementImport('${h.id}')" class="px-3 py-1.5 bg-rose-500/15 hover:bg-rose-500 hover:text-slate-950 text-rose-400 rounded-lg text-[10px] font-semibold transition-all">Undo Import</button>`
+          }
+        </div>
+      `;
+      }).join('');
+      lucide.createIcons();
     }
 
     // DEVTOOLS UTILITIES
