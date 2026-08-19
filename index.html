@@ -773,6 +773,39 @@
               <button onclick="openPaydayBriefing()" class="shrink-0 px-3 py-1.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-[11px] transition-all">Payday Briefing</button>
             </div>
 
+            <!-- INCOME REPAIR WARNING — shown only when a payday date exists
+                 but the paycheck amount is missing/zero/invalid (see
+                 isIncomeScheduleIncomplete()) -->
+            <div id="dash-income-repair-banner" class="hidden p-4 rounded-2xl border border-amber-500/40 bg-amber-500/10 text-xs font-medium flex items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <i data-lucide="alert-triangle" class="w-5 h-5 shrink-0 text-amber-400"></i>
+                <span class="text-amber-100">Your payday schedule appears incomplete. Please verify your paycheck amount.</span>
+              </div>
+              <button onclick="navigateTo('settings')" class="shrink-0 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-[11px] transition-all">Fix in Settings</button>
+            </div>
+
+            <!-- PAYDAY COUNTDOWN — highlighted separately from the small stats
+                 row further down, since this is one of the app's most
+                 important numbers and was previously buried in a text-xs line -->
+            <div class="glass-card rounded-3xl p-4 sm:p-5 border border-indigo-500/30 flex items-center justify-between gap-4 relative overflow-hidden">
+              <div class="absolute -left-8 -top-8 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+              <div class="relative flex items-center gap-4 min-w-0">
+                <div class="text-center shrink-0">
+                  <p id="dash-payday-highlight-days" class="text-3xl sm:text-4xl font-black text-white leading-none">--</p>
+                  <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-indigo-400 mt-1 whitespace-nowrap">Days To Payday</p>
+                </div>
+                <div class="w-px h-10 bg-slate-800 shrink-0"></div>
+                <div class="min-w-0">
+                  <p class="text-[11px] text-slate-400">Next Payday</p>
+                  <p id="dash-payday-highlight-date" class="text-sm font-bold text-white truncate">--</p>
+                </div>
+              </div>
+              <div class="relative text-right shrink-0">
+                <p class="text-[11px] text-slate-400">Expected</p>
+                <p id="dash-payday-highlight-amount" class="text-lg sm:text-xl font-black text-brand-400">$0.00</p>
+              </div>
+            </div>
+
             <!-- PRIMARY METRIC: SAFE SPEND HERO CARD & FINANCIAL WEATHER -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <!-- Safe Spend Hero -->
@@ -1240,6 +1273,67 @@
               <div class="shrink-0 flex flex-col sm:flex-row gap-2">
                 <button onclick="openImportHistoryModal()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all">Import History</button>
                 <button onclick="openStatementImportWizard()" class="px-4 py-2.5 bg-indigo-500 hover:bg-indigo-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Upload Statement</button>
+              </div>
+            </div>
+
+            <!-- PAYDAY SETTINGS — view/edit the same state.income fields the -->
+            <!-- countdown, Forecast, Safe Spend, and Payday Briefing already read. -->
+            <div class="glass-card p-4 sm:p-6 rounded-3xl border border-brand-500/30 space-y-4">
+              <div class="flex items-center gap-3">
+                <span class="w-10 h-10 rounded-xl bg-brand-500/15 flex items-center justify-center shrink-0">
+                  <i data-lucide="calendar-clock" class="w-5 h-5 text-brand-400"></i>
+                </span>
+                <div>
+                  <h3 class="font-bold text-white text-base">Payday Settings</h3>
+                  <p class="text-xs text-slate-400">Your payday date, amount, and frequency — this drives the countdown, Forecast, Safe Spend, and Payday Briefing.</p>
+                </div>
+              </div>
+
+              <div id="payday-settings-warning" class="hidden p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-200 flex items-start gap-2">
+                <i data-lucide="alert-triangle" class="w-3.5 h-3.5 shrink-0 mt-0.5"></i>
+                <span>Your payday schedule appears incomplete. Please verify your paycheck amount.</span>
+              </div>
+
+              <div id="payday-settings-view" class="grid grid-cols-3 gap-3">
+                <div>
+                  <p class="text-[10px] text-slate-500 uppercase tracking-wider">Next Payday</p>
+                  <p id="payday-settings-view-date" class="text-sm font-bold text-white mt-0.5">--</p>
+                </div>
+                <div>
+                  <p class="text-[10px] text-slate-500 uppercase tracking-wider">Amount</p>
+                  <p id="payday-settings-view-amount" class="text-sm font-bold text-white mt-0.5">--</p>
+                </div>
+                <div>
+                  <p class="text-[10px] text-slate-500 uppercase tracking-wider">Frequency</p>
+                  <p id="payday-settings-view-frequency" class="text-sm font-bold text-white mt-0.5 capitalize">--</p>
+                </div>
+              </div>
+              <button type="button" onclick="openPaydaySettingsEdit()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition-all">Edit Payday Settings</button>
+
+              <div id="payday-settings-edit" class="hidden space-y-3">
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Paycheck Amount</label>
+                    <input type="number" id="payday-settings-amount" step="0.01" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-brand-500" placeholder="2500.00" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Next Payday Date</label>
+                    <input type="date" id="payday-settings-nextdate" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-brand-500" />
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-400 mb-1">Frequency</label>
+                  <select id="payday-settings-frequency" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none">
+                    <option value="biweekly">Every 2 Weeks (Bi-Weekly)</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="semimonthly">Twice a Month (1st & 15th)</option>
+                    <option value="monthly">Monthly</option>
+                  </select>
+                </div>
+                <div class="flex gap-2 pt-1">
+                  <button type="button" onclick="closePaydaySettingsEdit()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all">Cancel</button>
+                  <button type="button" onclick="savePaydaySettings()" class="flex-1 py-2.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Save Changes</button>
+                </div>
               </div>
             </div>
           </div>
@@ -2409,6 +2503,40 @@
       return diffDays > 0 ? diffDays : 0;
     }
 
+    // Self-heals a payday schedule that's fallen behind — e.g. the user
+    // never opened Payday Briefing to confirm one or more cycles. Without
+    // this, income.nextDate stays stuck in the past forever and
+    // getDaysUntilPayday() floors at 0 permanently instead of reflecting a
+    // real future payday. Uses the exact same stepDays convention already
+    // established in confirmPaydayReceived()/buildForecastSeries() — not a
+    // new schedule model. Only ever touches a date that's strictly BEFORE
+    // today; a date equal to today is left untouched, so Payday Briefing's
+    // "today is payday, please confirm" detection (getDaysUntilPayday() ===
+    // 0 && nextDate not yet advanced) is completely unaffected. Returns true
+    // if it changed anything, so the caller knows whether to persist it.
+    function advanceStaleIncomeSchedule() {
+      if (!state.income.nextDate) return false;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      let nextDate = new Date(state.income.nextDate + 'T00:00:00');
+      if (nextDate >= today) return false;
+
+      const stepDays = state.income.frequency === 'weekly' ? 7
+        : state.income.frequency === 'biweekly' ? 14
+        : state.income.frequency === 'semimonthly' ? 15
+        : 30;
+
+      let guard = 0;
+      while (nextDate < today && guard < 24) {
+        nextDate.setDate(nextDate.getDate() + stepDays);
+        guard++;
+      }
+      const newDateStr = nextDate.toISOString().split('T')[0];
+      if (newDateStr === state.income.nextDate) return false;
+      state.income.nextDate = newDateStr;
+      return true;
+    }
+
     // PREMIUM MICRO-ANIMATIONS
     // Smoothly counts a number element from its last rendered value to a
     // new target. Used for the Safe Spend hero and similar headline figures.
@@ -2740,6 +2868,23 @@
       await triggerCloudSync();
       navigateTo(getCurrentPageId());
     }
+
+    // Lightweight periodic pull for household mode — NOT a realtime
+    // subscription (no new engine, no WebSocket/channel management, per the
+    // "do not create new engines" constraint). Root cause of "must manually
+    // sync": pullCloudState() previously only ran at specific triggers
+    // (login, app relaunch, manual Sync Now, joining a household) — never
+    // proactively while the app stayed open. This is the smallest change
+    // that closes that gap: reuse the existing, unmodified pullCloudState()
+    // on a timer, only while in shared household mode, so a solo user's
+    // behavior and API usage are completely unaffected.
+    setInterval(() => {
+      if (state.user && !state.isDemo && state.household && state.household.id && state.household.accountMode === 'shared') {
+        pullCloudState().then(pulled => {
+          if (pulled) navigateTo(getCurrentPageId());
+        });
+      }
+    }, 20000);
 
     async function checkAdminOwnerStatus() {
       if (!state.user || !supabaseClient) return;
@@ -3155,6 +3300,8 @@
     // RENDER DASHBOARD
     // ==========================================
     function renderDashboard() {
+      if (advanceStaleIncomeSchedule()) saveStateToStorage();
+      renderPaydaySettingsCard();
       const liquidCash = getTotalLiquidCash();
       const upcomingBills = getUpcomingBillsTotal();
       const safeSpend = liquidCash - upcomingBills;
@@ -3195,6 +3342,13 @@
 
       const countdownEl = document.getElementById('dash-next-payday-countdown');
       if (countdownEl) countdownEl.innerText = `${daysUntilPayday} ${daysUntilPayday === 1 ? 'day' : 'days'}`;
+
+      const highlightDays = document.getElementById('dash-payday-highlight-days');
+      if (highlightDays) highlightDays.innerText = state.income.nextDate ? daysUntilPayday : '--';
+      const highlightDate = document.getElementById('dash-payday-highlight-date');
+      if (highlightDate) highlightDate.innerText = state.income.nextDate || 'Not set';
+      const highlightAmount = document.getElementById('dash-payday-highlight-amount');
+      if (highlightAmount) highlightAmount.innerText = `$${formatCurrency(state.income.amount || 0)}`;
 
       const dailyEl = document.getElementById('dash-daily-available');
       if (dailyEl) dailyEl.innerText = `$${formatCurrency(Math.max(0, dailyAvailable))} / day`;
@@ -3415,25 +3569,11 @@
     // ==========================================
     // RENDER COMING UP
     // ==========================================
-    function renderComingUp() {
-      const container = document.getElementById('coming-up-timeline-list');
-      if (!container) return;
-
-      const bills = visibleBills();
-      if (bills.length === 0) {
-        container.innerHTML = emptyStateHtml({
-          icon: 'calendar-clock',
-          title: 'No bills scheduled',
-          subtitle: "Add your recurring bills so Paycheck Pilot can plan around them.",
-          ctaLabel: 'Add a Bill',
-          ctaOnclick: 'openAddBillModal()'
-        });
-        lucide.createIcons();
-        return;
-      }
-
-      const sorted = [...bills].sort((a,b) => new Date(a.dueDate) - new Date(b.dueDate));
-      container.innerHTML = sorted.map(b => `
+    // Single source of truth for a bill row's markup — used for both the
+    // main (unpaid) list and the collapsed Completed section below, so
+    // splitting them doesn't duplicate or drift the row template.
+    function billRowHtml(b) {
+      return `
         <div data-bill-row="${b.id}" class="glass-card p-4 rounded-2xl border ${b.completed ? 'border-slate-800/40 opacity-60' : b.paused ? 'border-slate-700/50 opacity-70' : 'border-slate-800'} space-y-3">
           <div class="flex items-center justify-between gap-3">
             <div class="flex items-center gap-3 min-w-0">
@@ -3465,7 +3605,57 @@
             <button onclick="deleteBill('${b.id}')" class="ml-auto text-slate-500 hover:text-rose-400 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
           </div>
         </div>
-      `).join('');
+      `;
+    }
+
+    function toggleCompletedBillsSection() {
+      const section = document.getElementById('coming-up-completed-list');
+      const chevron = document.getElementById('coming-up-completed-chevron');
+      if (!section) return;
+      const isHidden = section.classList.toggle('hidden');
+      if (chevron) chevron.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(180deg)';
+    }
+
+    function renderComingUp() {
+      const container = document.getElementById('coming-up-timeline-list');
+      if (!container) return;
+
+      const bills = visibleBills();
+      if (bills.length === 0) {
+        container.innerHTML = emptyStateHtml({
+          icon: 'calendar-clock',
+          title: 'No bills scheduled',
+          subtitle: "Add your recurring bills so Paycheck Pilot can plan around them.",
+          ctaLabel: 'Add a Bill',
+          ctaOnclick: 'openAddBillModal()'
+        });
+        lucide.createIcons();
+        return;
+      }
+
+      // Unpaid bills are the main view — completed ones move to a
+      // collapsed section below instead of cluttering this list. Still
+      // reachable, just not mixed in with what's actually owed.
+      const unpaid = bills.filter(b => !b.completed).sort((a,b) => new Date(a.dueDate) - new Date(b.dueDate));
+      const completed = bills.filter(b => b.completed).sort((a,b) => new Date(b.dueDate) - new Date(a.dueDate));
+
+      const unpaidHtml = unpaid.length
+        ? unpaid.map(billRowHtml).join('')
+        : `<p class="text-xs text-slate-500 text-center py-6">No unpaid bills right now.</p>`;
+
+      const completedHtml = completed.length ? `
+        <div class="pt-2">
+          <button onclick="toggleCompletedBillsSection()" class="w-full flex items-center justify-between px-1 py-2 text-xs font-semibold text-slate-400 hover:text-slate-200 transition-all">
+            <span class="flex items-center gap-1.5"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Completed (${completed.length})</span>
+            <i id="coming-up-completed-chevron" data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform"></i>
+          </button>
+          <div id="coming-up-completed-list" class="hidden space-y-3 mt-2">
+            ${completed.map(billRowHtml).join('')}
+          </div>
+        </div>
+      ` : '';
+
+      container.innerHTML = `<div class="space-y-3">${unpaidHtml}</div>${completedHtml}`;
 
       lucide.createIcons();
     }
@@ -4111,7 +4301,93 @@
     // ==========================================
     // RENDER SETTINGS PAGE
     // ==========================================
+    // Detects the exact condition investigated: a payday date exists but
+    // the paycheck amount is missing, zero, or not a usable number. Pure
+    // read of existing state.income fields — no new state, no new engine.
+    function isIncomeScheduleIncomplete() {
+      if (!state.income || !state.income.nextDate) return false;
+      const amt = Number(state.income.amount);
+      return state.income.amount === null || state.income.amount === undefined || state.income.amount === '' || isNaN(amt) || amt <= 0;
+    }
+
+    // Updates both the Settings card's view and the Dashboard banner from
+    // the same check — called from both renderDashboard() and
+    // renderSettingsPage() so either page reflects current state correctly,
+    // regardless of which one the user is on when something changes.
+    function renderPaydaySettingsCard() {
+      const dateEl = document.getElementById('payday-settings-view-date');
+      const amountEl = document.getElementById('payday-settings-view-amount');
+      const freqEl = document.getElementById('payday-settings-view-frequency');
+      const warningEl = document.getElementById('payday-settings-warning');
+      const dashBanner = document.getElementById('dash-income-repair-banner');
+
+      if (dateEl) dateEl.innerText = state.income.nextDate || 'Not set';
+      if (amountEl) amountEl.innerText = `$${formatCurrency(state.income.amount || 0)}`;
+      if (freqEl) freqEl.innerText = state.income.frequency || 'Not set';
+
+      const incomplete = isIncomeScheduleIncomplete();
+      if (warningEl) warningEl.classList.toggle('hidden', !incomplete);
+      if (dashBanner) dashBanner.classList.toggle('hidden', !incomplete);
+    }
+
+    function openPaydaySettingsEdit() {
+      const amountInput = document.getElementById('payday-settings-amount');
+      const dateInput = document.getElementById('payday-settings-nextdate');
+      const freqInput = document.getElementById('payday-settings-frequency');
+      if (amountInput) amountInput.value = state.income.amount || '';
+      if (dateInput) dateInput.value = state.income.nextDate || '';
+      if (freqInput) freqInput.value = state.income.frequency || 'biweekly';
+
+      const viewEl = document.getElementById('payday-settings-view');
+      const editEl = document.getElementById('payday-settings-edit');
+      if (viewEl) viewEl.classList.add('hidden');
+      if (editEl) editEl.classList.remove('hidden');
+    }
+
+    function closePaydaySettingsEdit() {
+      const viewEl = document.getElementById('payday-settings-view');
+      const editEl = document.getElementById('payday-settings-edit');
+      if (viewEl) viewEl.classList.remove('hidden');
+      if (editEl) editEl.classList.add('hidden');
+    }
+
+    // The only function that writes to state.income here — updates the
+    // exact same three existing fields (amount/nextDate/frequency) that
+    // onboarding already writes, in the same shape. Does not touch
+    // getDaysUntilPayday(), advanceStaleIncomeSchedule(), buildForecastSeries(),
+    // or any Safe Spend calculation — those are pure functions that already
+    // read state.income live, so saving here and re-rendering the current
+    // page is what makes Dashboard/Forecast/Safe Spend/Money Mayday reflect
+    // the change immediately, without touching any of that logic directly.
+    function savePaydaySettings() {
+      const amount = parseFloat(document.getElementById('payday-settings-amount').value);
+      const nextDate = document.getElementById('payday-settings-nextdate').value;
+      const frequency = document.getElementById('payday-settings-frequency').value;
+
+      if (!nextDate) {
+        showToast("Please choose a next payday date", "error");
+        return;
+      }
+      if (isNaN(amount) || amount <= 0) {
+        showToast("Please enter a valid paycheck amount", "error");
+        return;
+      }
+
+      state.income.amount = amount;
+      state.income.nextDate = nextDate;
+      state.income.frequency = frequency;
+
+      logActivity("Payday Settings Updated", `Paycheck amount set to $${formatCurrency(amount)}, next payday ${nextDate}, frequency ${frequency}.`);
+      saveStateToStorage();
+      showToast("Payday settings saved", "success");
+
+      closePaydaySettingsEdit();
+      renderPaydaySettingsCard();
+      navigateTo(getCurrentPageId());
+    }
+
     function renderSettingsPage() {
+      renderPaydaySettingsCard();
       if (document.getElementById('settings-email-display') && state.user) {
         document.getElementById('settings-email-display').value = state.user.email || "pilot@user.com";
       }
@@ -6651,6 +6927,45 @@
       return { toImport, duplicateSkipped, ignoredSkipped };
     }
 
+    // Duplicate-bill detection — mirrors transactionDedupeKey/
+    // filterTransactionsForImport exactly. Matches on title + amount + due
+    // date + category, the fields that persist on a stored bill. Skip only:
+    // never updates or merges an existing bill, per the requirement — a
+    // detected candidate that matches an existing bill is simply left out
+    // of what gets created.
+    function billDedupeKey(title, amount, dueDate, category) {
+      return `${normalizeDescription(title)}__${Number(amount).toFixed(2)}__${dueDate}__${String(category || '').toLowerCase().trim()}`;
+    }
+    // Single source of truth for "which detected bills will actually be
+    // created" — used by both the Review step's preview and the real
+    // commit, so the numbers shown before confirming match what happens.
+    function filterBillsForImport() {
+      const existingKeys = new Set(
+        state.bills.map(b => billDedupeKey(b.title, b.amount, b.dueDate, b.category))
+      );
+      const seenInBatch = new Set();
+      const toImport = [];
+      let duplicateSkipped = 0;
+
+      statementImportState.billCandidates.forEach((b, i) => {
+        if (!statementImportState.billSelected[i]) return;
+        const amount = b.amountType === 'fixed' ? b.averageAmount : b.rangeHigh;
+        const key = billDedupeKey(b.title, amount, b.likelyDueDate, b.category);
+        if (existingKeys.has(key) || seenInBatch.has(key)) { duplicateSkipped++; return; }
+        seenInBatch.add(key);
+        toImport.push({
+          title: b.title,
+          amount,
+          dueDate: b.likelyDueDate,
+          category: b.category,
+          priority: 'important',
+          recurrence: b.recurrence
+        });
+      });
+
+      return { toImport, duplicateSkipped };
+    }
+
     function runStatementAnalysis() {
       if (typeof Papa === 'undefined') {
         showToast("Statement parser failed to load — check your connection and try again.", "error");
@@ -6940,7 +7255,7 @@
       const createdIn = statementImportState.accountCandidates.filter((_, i) => statementImportState.accountChoices[i] === 'create');
       const mergedIn = statementImportState.accountCandidates.filter((_, i) => statementImportState.accountChoices[i] === 'merge');
       const ignoredIn = statementImportState.accountCandidates.filter((_, i) => statementImportState.accountChoices[i] === 'ignore');
-      const billsIn = statementImportState.billCandidates.filter((_, i) => statementImportState.billSelected[i]);
+      const billPreview = filterBillsForImport();
       const txPreview = filterTransactionsForImport();
 
       content.innerHTML = `
@@ -6950,7 +7265,10 @@
           <div class="flex items-center justify-between p-2.5 bg-slate-900/80 rounded-xl border border-slate-800"><span class="flex items-center gap-2 text-slate-200"><i data-lucide="merge" class="w-3.5 h-3.5 text-indigo-400"></i> Accounts Merged</span><span class="text-white font-bold">${mergedIn.length}</span></div>
           <div class="flex items-center justify-between p-2.5 bg-slate-900/80 rounded-xl border border-slate-800"><span class="flex items-center gap-2 text-slate-200"><i data-lucide="eye-off" class="w-3.5 h-3.5 text-indigo-400"></i> Accounts Ignored</span><span class="text-white font-bold">${ignoredIn.length}</span></div>
           <div class="flex items-center justify-between p-2.5 bg-slate-900/80 rounded-xl border border-slate-800"><span class="flex items-center gap-2 text-slate-200"><i data-lucide="calendar-clock" class="w-3.5 h-3.5 text-indigo-400"></i> Income Schedule Change</span><span class="text-white font-bold">${statementImportState.useDetectedSchedule ? 'Yes' : 'No change'}</span></div>
-          <div class="flex items-center justify-between p-2.5 bg-slate-900/80 rounded-xl border border-slate-800"><span class="flex items-center gap-2 text-slate-200"><i data-lucide="receipt" class="w-3.5 h-3.5 text-indigo-400"></i> Bills to Import</span><span class="text-white font-bold">${billsIn.length}</span></div>
+          <div class="flex items-center justify-between p-2.5 bg-slate-900/80 rounded-xl border border-slate-800"><span class="flex items-center gap-2 text-slate-200"><i data-lucide="receipt" class="w-3.5 h-3.5 text-indigo-400"></i> Bills to Import</span><span class="text-white font-bold">${billPreview.toImport.length}</span></div>
+          ${billPreview.duplicateSkipped > 0 ? `
+            <div class="flex items-center justify-between p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl"><span class="flex items-center gap-2 text-amber-200"><i data-lucide="copy-x" class="w-3.5 h-3.5"></i> Duplicate Bills Skipped</span><span class="text-amber-300 font-bold">${billPreview.duplicateSkipped}</span></div>
+          ` : ''}
           <div class="flex items-center justify-between p-2.5 bg-slate-900/80 rounded-xl border border-slate-800"><span class="flex items-center gap-2 text-slate-200"><i data-lucide="list" class="w-3.5 h-3.5 text-indigo-400"></i> Transactions to Import</span><span class="text-white font-bold">${txPreview.toImport.length}</span></div>
           ${txPreview.duplicateSkipped > 0 ? `
             <div class="flex items-center justify-between p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl"><span class="flex items-center gap-2 text-amber-200"><i data-lucide="copy-x" class="w-3.5 h-3.5"></i> Duplicate Transactions Skipped</span><span class="text-amber-300 font-bold">${txPreview.duplicateSkipped}</span></div>
@@ -7015,20 +7333,14 @@
       const stagedAccounts = stageImportCategory(rawAccounts, 'accounts');
       if (stagedAccounts.skipped > 0) warnings.push(`${stagedAccounts.skipped} detected account(s) couldn't be created — missing a usable name or balance.`);
 
-      const rawBills = [];
-      statementImportState.billCandidates.forEach((b, i) => {
-        if (!statementImportState.billSelected[i]) return;
-        rawBills.push({
-          title: b.title,
-          amount: b.amountType === 'fixed' ? b.averageAmount : b.rangeHigh,
-          dueDate: b.likelyDueDate,
-          category: b.category,
-          priority: 'important',
-          recurrence: b.recurrence
-        });
-      });
-      const stagedBills = stageImportCategory(rawBills, 'bills');
+      // Reuses the exact same filter the Review step previewed — the
+      // numbers shown before confirming are guaranteed to match this.
+      // Duplicate bills (matching an existing bill's title + amount + due
+      // date + category) are skipped, never updated or merged.
+      const billFilter = filterBillsForImport();
+      const stagedBills = stageImportCategory(billFilter.toImport, 'bills');
       if (stagedBills.skipped > 0) warnings.push(`${stagedBills.skipped} detected bill(s) were skipped — missing a usable amount or due date.`);
+      if (billFilter.duplicateSkipped > 0) warnings.push(`${billFilter.duplicateSkipped} duplicate bill(s) skipped — already present in your bills.`);
 
       // Reuses the exact same filter the Review step previewed — the
       // numbers shown before confirming are guaranteed to match this.
@@ -7109,7 +7421,8 @@
           accountsIgnored: ignoredCount,
           transactionsImported: stagedTransactions.valid.length,
           transactionsSkipped: txFilter.duplicateSkipped + stagedTransactions.skipped,
-          bills: stagedBills.valid.length
+          bills: stagedBills.valid.length,
+          billsSkipped: billFilter.duplicateSkipped + stagedBills.skipped
         },
         mergedAccountSnapshots,
         warnings,
@@ -7124,8 +7437,8 @@
       if (successEl) {
         successEl.innerHTML = [
           `${stagedAccounts.valid.length} account(s) created, ${mergedCount} merged, ${ignoredCount} ignored`,
+          `${stagedBills.valid.length} bill(s) added, ${billFilter.duplicateSkipped + stagedBills.skipped} skipped`,
           `${stagedTransactions.valid.length} transaction(s) imported, ${txFilter.duplicateSkipped + stagedTransactions.skipped} skipped`,
-          `${stagedBills.valid.length} bill(s) added`,
           ...(warnings.length ? [`<span class="text-amber-300">${warnings.join(' ')}</span>`] : [])
         ].join('<br>');
       }
@@ -7195,6 +7508,7 @@
         const txImported = c.transactionsImported ?? c.transactions ?? 0;
         const txSkipped = c.transactionsSkipped ?? 0;
         const bills = c.bills ?? 0;
+        const billsSkipped = c.billsSkipped ?? 0;
 
         return `
         <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800 space-y-1.5">
@@ -7202,7 +7516,7 @@
             <p class="text-white font-semibold text-xs truncate">${h.fileNames.join(', ')}</p>
             <span class="text-[10px] text-slate-500 shrink-0">${new Date(h.date).toLocaleDateString()}</span>
           </div>
-          <p class="text-[11px] text-slate-400">${created} created, ${merged} merged, ${ignored} ignored · ${bills} bill${bills===1?'':'s'} · ${txImported} transaction${txImported===1?'':'s'}${txSkipped ? `, ${txSkipped} skipped` : ''}</p>
+          <p class="text-[11px] text-slate-400">${created} created, ${merged} merged, ${ignored} ignored · ${bills} bill${bills===1?'':'s'}${billsSkipped ? `, ${billsSkipped} skipped` : ''} · ${txImported} transaction${txImported===1?'':'s'}${txSkipped ? `, ${txSkipped} skipped` : ''}</p>
           ${h.warnings && h.warnings.length ? `<p class="text-[10px] text-amber-300">${h.warnings.join(' ')}</p>` : ''}
           ${h.undone
             ? `<span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-700 text-slate-400">Undone</span>`
