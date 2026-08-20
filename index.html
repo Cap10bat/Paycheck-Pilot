@@ -2995,7 +2995,16 @@
     // that closes that gap: reuse the existing, unmodified pullCloudState()
     // on a timer, only while in shared household mode, so a solo user's
     // behavior and API usage are completely unaffected.
+    // Set true while a multi-step wizard that reads/writes state.income,
+    // state.bills, or state.transactions is in progress (Financial Reset,
+    // Repair My Data, either Import Wizard). Prevents the periodic
+    // household pull below from silently overwriting a wizard's in-progress
+    // work with whatever another member's device happens to have pushed in
+    // the meantime — a real race given these wizards can run for minutes.
+    let criticalWizardActive = false;
+
     setInterval(() => {
+      if (criticalWizardActive) return;
       if (state.user && !state.isDemo && state.household && state.household.id && state.household.accountMode === 'shared') {
         pullCloudState().then(pulled => {
           if (pulled) navigateTo(getCurrentPageId());
@@ -4615,6 +4624,7 @@
     }
 
     function openRepairWizard() {
+      criticalWizardActive = true;
       resetRepairWizardState();
       const backdrop = document.getElementById('modal-backdrop');
       const modal = document.getElementById('modal-repair');
@@ -4836,13 +4846,14 @@
     // rather than re-implementing any parsing or commit logic.
     // ============================================================
 
-    let resetWizardState = { step: 1, confirmed: false, preImportCounts: {} };
+    let resetWizardState = { step: 1, confirmed: false, preImportCounts: {}, removedCounts: {} };
 
     function resetFinancialResetWizardState() {
-      resetWizardState = { step: 1, confirmed: false, preImportCounts: {} };
+      resetWizardState = { step: 1, confirmed: false, preImportCounts: {}, removedCounts: {} };
     }
 
     function openResetWizard() {
+      criticalWizardActive = true;
       resetFinancialResetWizardState();
       const backdrop = document.getElementById('modal-backdrop');
       const modal = document.getElementById('modal-reset-wizard');
@@ -4872,20 +4883,25 @@
     function renderResetStep1() {
       const content = document.getElementById('reset-content');
       if (!content) return;
+      const memberCount = (state.household && state.household.members) || 1;
       content.innerHTML = `
         <div class="p-4 bg-rose-500/10 border border-rose-500/30 rounded-2xl space-y-2">
-          <p class="flex items-center gap-1.5 text-rose-300 font-bold text-sm"><i data-lucide="alert-triangle" class="w-4 h-4"></i> This clears data — read before continuing</p>
-          <p class="text-slate-300">This will clear:</p>
+          <p class="flex items-center gap-1.5 text-rose-300 font-bold text-sm"><i data-lucide="alert-triangle" class="w-4 h-4"></i> WILL BE DELETED</p>
           <ul class="space-y-0.5 text-slate-300 pl-1">
-            <li>• Transactions (${state.transactions.length})</li>
-            <li>• Bills (${state.bills.length})</li>
-            <li>• Your paycheck schedule</li>
-            <li>• Imported financial records &amp; import history</li>
+            <li>• Transactions: ${state.transactions.length}</li>
+            <li>• Bills: ${state.bills.length}</li>
+            <li>• Income schedules: ${state.income.nextDate ? 1 : 0}</li>
+            <li>• Import history records: ${(state.importHistory || []).length}</li>
           </ul>
         </div>
-        <div class="p-3 bg-slate-900/80 border border-slate-800 rounded-xl">
-          <p class="text-slate-300 font-semibold mb-1">This will NOT touch:</p>
-          <p class="text-slate-400">Account ownership · Household membership · User profiles · Login &amp; authentication · Sync configuration · Checking/savings balances</p>
+        <div class="p-3 bg-slate-900/80 border border-slate-800 rounded-xl space-y-1">
+          <p class="text-slate-300 font-semibold">WILL BE PRESERVED</p>
+          <ul class="space-y-0.5 text-slate-400 pl-1">
+            <li>• Accounts: ${state.accounts.length}, with current balances</li>
+            <li>• Household: ${state.household && state.household.name ? state.household.name : 'Personal (not in a household)'}${state.household && state.household.id ? `, ${memberCount} member${memberCount === 1 ? '' : 's'}` : ''}</li>
+            <li>• User profiles, login &amp; authentication</li>
+            <li>• Sync configuration</li>
+          </ul>
         </div>
         <label class="flex items-start gap-2.5 p-3 bg-slate-900/80 rounded-xl border border-slate-800 cursor-pointer">
           <input type="checkbox" id="reset-confirm-checkbox" onchange="resetWizardState.confirmed = this.checked; document.getElementById('reset-continue-btn').disabled = !this.checked;" class="w-4 h-4 rounded accent-rose-500 mt-0.5" />
@@ -4898,6 +4914,13 @@
     function runFinancialReset() {
       if (!resetWizardState.confirmed) return;
       const actor = currentOwnerLabel();
+
+      resetWizardState.removedCounts = {
+        transactions: state.transactions.length,
+        bills: state.bills.length,
+        incomeSchedules: state.income.nextDate ? 1 : 0,
+        importRecords: (state.importHistory || []).length
+      };
 
       state.transactions = [];
       state.bills = [];
@@ -4994,18 +5017,56 @@
     function renderResetStep3() {
       const content = document.getElementById('reset-content');
       if (!content) return;
+      const candidates = importWizardState.scheduleCandidates || [];
       const hasSchedule = !!state.income.nextDate;
+
+      if (candidates.length > 1) {
+        content.innerHTML = `
+          <div class="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl space-y-1">
+            <p class="flex items-center gap-1.5 text-amber-300 font-bold text-sm"><i data-lucide="alert-triangle" class="w-4 h-4"></i> Multiple paycheck patterns found</p>
+            <p class="text-slate-300">This file has ${candidates.length} distinct paycheck patterns — likely more than one household member. Choose the one that's yours; nothing was set automatically.</p>
+          </div>
+          <div class="space-y-2">
+            ${candidates.map((c, i) => `
+              <label class="flex items-start gap-2.5 p-3 bg-slate-900/80 rounded-xl border border-slate-800 cursor-pointer">
+                <input type="radio" name="reset-schedule-choice" onchange="applyResetScheduleCandidate(${i})" class="w-4 h-4 accent-rose-500 mt-0.5" />
+                <span class="flex-1">
+                  <span class="block text-white font-semibold">${c.label}</span>
+                  <span class="block text-[11px] text-slate-500">Next: ${c.date} · $${formatCurrency(c.amount)} · ${c.frequency} · ${c.futureCount} future occurrence${c.futureCount === 1 ? '' : 's'} found</span>
+                </span>
+              </label>
+            `).join('')}
+          </div>
+          <button type="button" onclick="resetWizardState.step = 4; renderResetStep();" class="w-full py-3 bg-rose-500 hover:bg-rose-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Continue</button>
+        `;
+        return;
+      }
+
       content.innerHTML = `
         <div class="p-4 ${hasSchedule ? 'bg-brand-500/10 border-brand-500/30' : 'bg-slate-900/80 border-slate-800'} border rounded-2xl space-y-2">
           <p class="flex items-center gap-1.5 ${hasSchedule ? 'text-brand-300' : 'text-slate-400'} font-bold text-sm"><i data-lucide="wallet" class="w-4 h-4"></i> Review Imported Paychecks</p>
           ${hasSchedule
             ? `<p class="text-slate-300">A future paycheck was found and used to set your schedule:</p>
-               <p class="text-white font-semibold">Next Payday: ${state.income.nextDate} · $${formatCurrency(state.income.amount || 0)}</p>`
+               <p class="text-white font-semibold">${candidates[0] ? candidates[0].label + ' — ' : ''}Next Payday: ${state.income.nextDate} · $${formatCurrency(state.income.amount || 0)} · ${state.income.frequency || ''}</p>`
             : `<p class="text-slate-400">No future-dated paycheck was found in this file. You can set your schedule manually on the next step.</p>`
           }
         </div>
         <button type="button" onclick="resetWizardState.step = 4; renderResetStep();" class="w-full py-3 bg-rose-500 hover:bg-rose-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Continue</button>
       `;
+    }
+
+    // Applies the user's explicit choice when multiple distinct paycheck
+    // patterns were found — the only place a multi-identity import ever
+    // actually sets a schedule, and only on direct user selection.
+    function applyResetScheduleCandidate(index) {
+      const c = (importWizardState.scheduleCandidates || [])[index];
+      if (!c) return;
+      state.income.nextDate = c.date;
+      state.income.amount = c.amount;
+      state.income.frequency = c.frequency;
+      state.income.lastEditedBy = currentOwnerLabel();
+      state.income.lastEditedAt = new Date().toISOString();
+      saveStateToStorage();
     }
 
     function renderResetStep4() {
@@ -5015,7 +5076,15 @@
       content.innerHTML = `
         <p class="text-slate-400">${importedBills.length} bill${importedBills.length === 1 ? '' : 's'} imported:</p>
         <div class="space-y-1.5">
-          ${importedBills.length ? importedBills.map(b => `<div class="flex justify-between text-slate-400 py-1 border-b border-slate-800/60"><span>${b.title}</span><span class="text-white">$${formatCurrency(b.amount)}</span></div>`).join('') : `<p class="text-slate-500 text-center py-4">No bills were found in this file.</p>`}
+          ${importedBills.length ? importedBills.map(b => `
+            <div class="flex justify-between items-start text-slate-400 py-1.5 border-b border-slate-800/60">
+              <span>
+                <span class="block text-slate-200">${b.title}</span>
+                <span class="block text-[10px] text-slate-500">Due ${b.dueDate}${b.recurrence && b.recurrence !== 'none' ? ` · ${recurrenceLabel(b.recurrence)}` : ' · One-time'}</span>
+              </span>
+              <span class="text-white shrink-0">$${formatCurrency(b.amount)}</span>
+            </div>
+          `).join('') : `<p class="text-slate-500 text-center py-4">No bills were found in this file.</p>`}
         </div>
         <button type="button" onclick="resetWizardState.step = 5; renderResetStep();" class="w-full py-3 bg-rose-500 hover:bg-rose-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Continue</button>
       `;
@@ -5078,7 +5147,15 @@
       const transactionsImported = state.transactions.length - (pre.transactions || 0);
       const paychecksImported = state.income.nextDate ? 1 : 0;
 
-      logActivity("Financial Reset Complete", `${currentOwnerLabel()} finished a Financial Reset. Accounts: ${accountsImported}, Bills: ${billsImported}, Transactions: ${transactionsImported}, Paychecks: ${paychecksImported}. Next payday: ${state.income.nextDate || 'not set'}.`);
+      const removed = {
+        transactions: (resetWizardState.removedCounts && resetWizardState.removedCounts.transactions) || 0,
+        bills: (resetWizardState.removedCounts && resetWizardState.removedCounts.bills) || 0,
+        incomeSchedules: (resetWizardState.removedCounts && resetWizardState.removedCounts.incomeSchedules) || 0,
+        importRecords: (resetWizardState.removedCounts && resetWizardState.removedCounts.importRecords) || 0
+      };
+      const totalRemoved = removed.transactions + removed.bills + removed.incomeSchedules + removed.importRecords;
+
+      logActivity("Financial Reset Complete", `${currentOwnerLabel()} finished a Financial Reset. Removed: ${totalRemoved} total (${removed.transactions} transactions, ${removed.bills} bills, ${removed.incomeSchedules} income schedules, ${removed.importRecords} import records). Imported: ${accountsImported} accounts, ${billsImported} bills, ${transactionsImported} transactions, ${paychecksImported} paychecks. Next payday: ${state.income.nextDate || 'not set'}.`);
       saveStateToStorage();
 
       content.innerHTML = `
@@ -5088,6 +5165,15 @@
           <p class="text-slate-500">Forecast, Safe Spend, and your Payday Countdown all recalculate automatically from this point forward.</p>
         </div>
         <div class="space-y-1.5">
+          <p class="text-[10px] text-slate-500 uppercase tracking-wider">Reset Summary</p>
+          <div class="flex justify-between py-1 border-b border-slate-800/60"><span class="text-slate-400">Transactions Removed</span><span class="text-white font-bold">${removed.transactions}</span></div>
+          <div class="flex justify-between py-1 border-b border-slate-800/60"><span class="text-slate-400">Bills Removed</span><span class="text-white font-bold">${removed.bills}</span></div>
+          <div class="flex justify-between py-1 border-b border-slate-800/60"><span class="text-slate-400">Income Schedules Removed</span><span class="text-white font-bold">${removed.incomeSchedules}</span></div>
+          <div class="flex justify-between py-1 border-b border-slate-800/60"><span class="text-slate-400">Import History Removed</span><span class="text-white font-bold">${removed.importRecords}</span></div>
+          <div class="flex justify-between py-1"><span class="text-slate-400">Total Removed</span><span class="text-rose-400 font-bold">${totalRemoved}</span></div>
+        </div>
+        <div class="space-y-1.5 pt-2 border-t border-slate-800/70">
+          <p class="text-[10px] text-slate-500 uppercase tracking-wider">Imported</p>
           <div class="flex justify-between py-1 border-b border-slate-800/60"><span class="text-slate-400">Accounts Imported</span><span class="text-white font-bold">${accountsImported}</span></div>
           <div class="flex justify-between py-1 border-b border-slate-800/60"><span class="text-slate-400">Bills Imported</span><span class="text-white font-bold">${billsImported}</span></div>
           <div class="flex justify-between py-1 border-b border-slate-800/60"><span class="text-slate-400">Transactions Imported</span><span class="text-white font-bold">${transactionsImported}</span></div>
@@ -5261,6 +5347,7 @@
       const backdrop = document.getElementById('modal-backdrop');
       if (backdrop) backdrop.classList.add('hidden');
       document.querySelectorAll('#modal-backdrop > div').forEach(m => m.classList.add('hidden'));
+      criticalWizardActive = false;
     }
 
     // ==========================================
@@ -6765,7 +6852,7 @@
     function resetImportWizardState() {
       importWizardState = {
         step: 1, fileName: '', valid: false,
-        categoryData: {}, categorySkipped: {}, skippedFutureIncomeCount: 0, totalFutureIncomeFound: 0,
+        categoryData: {}, categorySkipped: {}, skippedFutureIncomeCount: 0, totalFutureIncomeFound: 0, scheduleCandidates: [],
         destination: 'personal',
         selectedCategories: { accounts: true, bills: true, transactions: true, goals: true }
       };
@@ -6876,63 +6963,117 @@
           // genuinely future paycheck as already received.
           const todayLocal = new Date();
           todayLocal.setHours(0, 0, 0, 0);
-          let earliestFutureIncome = null;
-          let futureIncomeCount = 0;
-          let historicalIncomeCount = 0;
 
+          // ---- Pass 1: bucket raw entries by type ----
+          const expenseEntries = [];
+          const incomeEntries = [];
           parsed.timeline.forEach(item => {
             if (!item || !item.date) return;
             if (item.type === 'expense') {
-              // Each entry becomes its own bill — a faithful, lossless
-              // conversion since Paycheck Pilot bills have no recurrence
-              // grouping to collapse them into (see Part 1 of Bill
-              // Management for the actual recurrence model).
-              legacyBills.push({
-                title: item.desc || 'Imported Bill',
-                amount: Number(item.amount) || 0,
-                dueDate: item.date,
-                category: 'Other',
-                priority: 'important'
-              });
+              expenseEntries.push({ desc: item.desc || 'Imported Bill', amount: Number(item.amount) || 0, date: item.date });
             } else if (item.type === 'income') {
-              const itemDateLocal = new Date(item.date + 'T00:00:00');
-              if (itemDateLocal <= todayLocal) {
-                // Already received — real history, keep it as a transaction.
-                historicalIncomeCount++;
-                legacyTransactions.push({
-                  title: item.desc || 'Income',
-                  amount: Number(item.amount) || 0,
-                  type: 'income',
-                  category: 'Income',
-                  date: item.date
-                });
-              } else {
-                // Future paycheck — must NOT appear in Transaction History
-                // as if already received. The earliest one seeds the Payday
-                // schedule (only if not already set); any others beyond
-                // that are counted, not silently dropped.
-                futureIncomeCount++;
-                if (!earliestFutureIncome || item.date < earliestFutureIncome.date) {
-                  earliestFutureIncome = { date: item.date, amount: Number(item.amount) || 0 };
-                }
-              }
+              // Ownership signal: an explicit field if the source data has
+              // one, otherwise normalized description is the only signal
+              // available for telling two people's paychecks apart in a
+              // combined household export.
+              const identityKey = normalizeDescription(item.person || item.member || item.owner || item.desc || 'income');
+              incomeEntries.push({ desc: item.desc || 'Income', amount: Number(item.amount) || 0, date: item.date, identityKey });
             }
           });
 
+          // ---- Bills: one recurring bill per real bill, not one per
+          // historical occurrence. Reuses the exact classifyFrequency/
+          // mapFrequencyToRecurrence/median functions already built and
+          // tested for Statement Import — not a new engine. ----
+          const billGroups = {};
+          expenseEntries.forEach(e => {
+            const key = normalizeDescription(e.desc);
+            (billGroups[key] = billGroups[key] || []).push(e);
+          });
+          Object.values(billGroups).forEach(group => {
+            const sorted = group.slice().sort((a, b) => a.date < b.date ? -1 : 1);
+            const last = sorted[sorted.length - 1];
+            let recurrence = 'none';
+            if (sorted.length > 1) {
+              const fixedDayPattern = detectFixedCalendarDaySchedule(sorted.map(s => s.date));
+              if (fixedDayPattern) {
+                recurrence = mapFrequencyToRecurrence(fixedDayPattern);
+              } else {
+                const gaps = [];
+                for (let i = 1; i < sorted.length; i++) gaps.push((new Date(sorted[i].date) - new Date(sorted[i - 1].date)) / 86400000);
+                const frequency = classifyFrequency(median(gaps));
+                if (frequency !== 'unknown') recurrence = mapFrequencyToRecurrence(frequency);
+              }
+            }
+            legacyBills.push({ title: last.desc, amount: last.amount, dueDate: last.date, category: 'Other', priority: 'important', recurrence });
+          });
+
+          // ---- Income: split historical vs future, cluster future income
+          // by identity so a mixed household export never has one person's
+          // earliest paycheck arbitrarily chosen as another's schedule. ----
+          let historicalIncomeCount = 0;
+          const futureByIdentity = {};
+          const fullHistoryByIdentity = {};
+          incomeEntries.forEach(inc => {
+            (fullHistoryByIdentity[inc.identityKey] = fullHistoryByIdentity[inc.identityKey] || []).push(inc);
+            const itemDateLocal = new Date(inc.date + 'T00:00:00');
+            if (itemDateLocal <= todayLocal) {
+              historicalIncomeCount++;
+              legacyTransactions.push({ title: inc.desc, amount: inc.amount, type: 'income', category: 'Income', date: inc.date });
+            } else {
+              (futureByIdentity[inc.identityKey] = futureByIdentity[inc.identityKey] || []).push(inc);
+            }
+          });
+
+          const identityKeys = Object.keys(futureByIdentity);
+          const totalFutureCount = identityKeys.reduce((sum, k) => sum + futureByIdentity[k].length, 0);
+          importWizardState.totalFutureIncomeFound = totalFutureCount;
+
+          // One candidate schedule per distinct identity found among future
+          // income, with frequency genuinely detected from that identity's
+          // full (historical + future) date gaps rather than assumed.
+          const scheduleCandidates = identityKeys.map(key => {
+            const futureOnes = futureByIdentity[key].slice().sort((a, b) => a.date < b.date ? -1 : 1);
+            const earliest = futureOnes[0];
+            const fullHistory = fullHistoryByIdentity[key].slice().sort((a, b) => a.date < b.date ? -1 : 1);
+            let frequency = 'biweekly';
+            if (fullHistory.length >= 2) {
+              const fixedDayPattern = detectFixedCalendarDaySchedule(fullHistory.map(h => h.date));
+              if (fixedDayPattern) {
+                frequency = fixedDayPattern;
+              } else {
+                const gaps = [];
+                for (let i = 1; i < fullHistory.length; i++) gaps.push((new Date(fullHistory[i].date) - new Date(fullHistory[i - 1].date)) / 86400000);
+                const detected = classifyFrequency(median(gaps));
+                if (detected !== 'unknown') frequency = detected;
+              }
+            }
+            return { label: earliest.desc, date: earliest.date, amount: earliest.amount, frequency, futureCount: futureOnes.length };
+          });
+          importWizardState.scheduleCandidates = scheduleCandidates;
+
           let scheduleSeeded = false;
-          importWizardState.totalFutureIncomeFound = futureIncomeCount;
-          if (earliestFutureIncome && !state.income.nextDate) {
-            state.income.nextDate = earliestFutureIncome.date;
-            if (!state.income.amount) state.income.amount = earliestFutureIncome.amount;
-            futureIncomeCount--;
+          let seededCandidate = null;
+          // Only auto-seed when exactly one identifiable schedule exists
+          // and the user doesn't already have one set. Multiple distinct
+          // identities means this data mixes more than one person's
+          // paychecks — arbitrarily picking one would misattribute someone
+          // else's schedule as the importing user's own, so nothing is
+          // auto-seeded; Review Paychecks (reset step 3) surfaces the
+          // choice instead of guessing.
+          if (scheduleCandidates.length === 1 && !state.income.nextDate) {
+            seededCandidate = scheduleCandidates[0];
+            state.income.nextDate = seededCandidate.date;
+            if (!state.income.amount) state.income.amount = seededCandidate.amount;
+            state.income.frequency = seededCandidate.frequency;
             scheduleSeeded = true;
           }
-          importWizardState.skippedFutureIncomeCount = Math.max(0, futureIncomeCount);
+          importWizardState.skippedFutureIncomeCount = scheduleSeeded ? Math.max(0, totalFutureCount - 1) : totalFutureCount;
 
           // Validation logging, as required: exactly what the classifier
           // decided, so a bad import is diagnosable from the Activity Log
           // alone rather than by inspecting raw data.
-          logActivity("Paycheck Imported", `${historicalIncomeCount} historical income entr${historicalIncomeCount === 1 ? 'y' : 'ies'} recorded as transactions, ${Math.max(0, futureIncomeCount)} future paycheck(s) left unrecorded (schedule only)${scheduleSeeded ? `, payday schedule seeded from ${earliestFutureIncome.date}` : ''}.`);
+          logActivity("Paycheck Imported", `${historicalIncomeCount} historical income entr${historicalIncomeCount === 1 ? 'y' : 'ies'} recorded as transactions. ${scheduleCandidates.length} distinct paycheck pattern(s) found.${scheduleSeeded ? ` Schedule seeded from "${seededCandidate.label}" (${seededCandidate.frequency}), next payday ${seededCandidate.date}.` : scheduleCandidates.length > 1 ? ' Multiple patterns found — review required before a schedule is set.' : ''}`);
 
           parsed = { accounts: legacyAccounts, bills: legacyBills, transactions: legacyTransactions, goals: [] };
         }
@@ -6961,6 +7102,7 @@
     }
 
     function openImportWizard() {
+      criticalWizardActive = true;
       const backdrop = document.getElementById('modal-backdrop');
       const modal = document.getElementById('modal-import-wizard');
       importWizardState.step = 1;
@@ -7312,6 +7454,26 @@
       if (Math.abs(gapDays - 365) <= 12) return 'yearly';
       return 'unknown';
     }
+    // A fixed-calendar-day schedule (e.g. paid on the 10th and 25th every
+    // month) naturally produces day-gaps of 13-16 days depending on month
+    // length — squarely inside classifyFrequency's biweekly (12-16d) and
+    // semimonthly (12-18d) overlap, where biweekly wins because it's
+    // checked first. Gap analysis alone can't distinguish "always these two
+    // calendar days" from "every 14 days, drifting through the month" — but
+    // the actual dates can. Checked before falling back to gap-based
+    // classification wherever real dates (not just gaps) are available;
+    // returns null (defer to classifyFrequency as before) unless a clean,
+    // repeating two-day pattern is found.
+    function detectFixedCalendarDaySchedule(sortedDateStrings) {
+      if (sortedDateStrings.length < 3) return null;
+      const daysOfMonth = sortedDateStrings.map(d => new Date(d + 'T00:00:00').getDate());
+      const uniqueDays = [...new Set(daysOfMonth)];
+      if (uniqueDays.length !== 2) return null;
+      const counts = {};
+      daysOfMonth.forEach(d => counts[d] = (counts[d] || 0) + 1);
+      const bothRepeat = uniqueDays.every(d => counts[d] >= 2);
+      return bothRepeat ? 'semimonthly' : null;
+    }
     function stepDaysFor(frequency) {
       return frequency === 'weekly' ? 7 : frequency === 'biweekly' ? 14 : frequency === 'semimonthly' ? 15
         : frequency === 'quarterly' ? 90 : frequency === 'yearly' ? 365 : 30;
@@ -7644,6 +7806,7 @@
 
     // ---------- Wizard control ----------
     function openStatementImportWizard() {
+      criticalWizardActive = true;
       resetStatementImportState();
       const backdrop = document.getElementById('modal-backdrop');
       const modal = document.getElementById('modal-statement-import');
