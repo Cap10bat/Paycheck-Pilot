@@ -1349,6 +1349,10 @@
                 <p class="text-[10px] text-slate-500 uppercase tracking-wider mb-2">Upcoming</p>
                 <div id="payday-settings-timeline" class="space-y-1.5"></div>
               </div>
+
+              <button type="button" onclick="repairFinancialSchedule()" class="w-full py-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-slate-200 rounded-xl text-[11px] font-semibold transition-all flex items-center justify-center gap-1.5">
+                <i data-lucide="refresh-cw" class="w-3 h-3"></i> Recalculate & Repair
+              </button>
             </div>
           </div>
 
@@ -3614,6 +3618,9 @@
     // main (unpaid) list and the collapsed Completed section below, so
     // splitting them doesn't duplicate or drift the row template.
     function billRowHtml(b) {
+      const completionTx = b.completed
+        ? state.transactions.find(t => t.source === 'manual-bill-completion' && t.title === `Bill Payment: ${b.title}`)
+        : null;
       return `
         <div data-bill-row="${b.id}" class="glass-card p-4 rounded-2xl border ${b.completed ? 'border-slate-800/40 opacity-60' : b.paused ? 'border-slate-700/50 opacity-70' : 'border-slate-800'} space-y-3">
           <div class="flex items-center justify-between gap-3">
@@ -3629,7 +3636,8 @@
                   ${b.paused ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-700 text-slate-300">Paused</span>` : ''}
                   ${scopeBadgeHtml(b)}
                 </div>
-                <p class="text-xs text-slate-400 mt-0.5">Category: ${b.category} • Due: <strong class="text-slate-200">${b.dueDate}</strong></p>
+                <p class="text-xs text-slate-400 mt-0.5">Category: ${b.category} • Due: <strong class="text-slate-200">${b.dueDate}</strong>${b.ownerLabel ? ` • Owned by <strong class="text-slate-200">${b.ownerLabel}</strong>` : ''}</p>
+                ${completionTx ? `<p class="text-[10px] text-brand-400 mt-0.5">Completed by <strong>${completionTx.createdBy || completionTx.ownerLabel}</strong> on ${completionTx.date}</p>` : ''}
               </div>
             </div>
             <span class="shrink-0 font-bold text-sm ${b.completed ? 'text-slate-400' : 'text-rose-400'}">$${formatCurrency(b.amount)}</span>
@@ -3729,17 +3737,35 @@
         return;
       }
 
-      tbody.innerHTML = filtered.map(t => `
+      tbody.innerHTML = filtered.map(t => {
+        const statusLabel = t.source === 'manual-bill-completion' ? 'Paid'
+          : t.source === 'json-import' || t.source === 'statement-import' ? 'Imported'
+          : t.source === 'manual-entry' ? 'Recorded'
+          : null;
+        const sourceLabel = t.source === 'manual-bill-completion' ? 'Manual Completion'
+          : t.source === 'manual-entry' ? 'Manual Entry'
+          : t.source === 'json-import' ? 'Import'
+          : t.source === 'statement-import' ? 'Bank Statement'
+          : null;
+        const who = t.createdBy || t.ownerLabel || null;
+        const detailLine = statusLabel
+          ? `<p class="text-[10px] text-slate-500 mt-0.5">${[statusLabel, sourceLabel, who].filter(Boolean).join(' · ')}</p>`
+          : '';
+        return `
         <tr class="hover:bg-slate-900/50 transition-colors">
           <td class="p-4 text-slate-400">${t.date}</td>
-          <td class="p-4 font-semibold text-white"><span class="flex items-center gap-1.5 flex-wrap">${t.title} ${scopeBadgeHtml(t)}</span></td>
+          <td class="p-4 font-semibold text-white">
+            <span class="flex items-center gap-1.5 flex-wrap">${t.title} ${scopeBadgeHtml(t)}</span>
+            ${detailLine}
+          </td>
           <td class="p-4"><span class="px-2 py-1 rounded-lg text-[10px] font-semibold bg-slate-800 text-slate-300">${t.category || 'General'}</span></td>
           <td class="p-4 text-right font-bold ${t.type === 'income' ? 'text-emerald-400' : 'text-slate-100'}">${t.type === 'income' ? '+' : '-'}$${formatCurrency(t.amount)}</td>
           <td class="p-4 text-center">
             <button onclick="deleteTransaction('${t.id}')" class="text-slate-500 hover:text-rose-400 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
           </td>
         </tr>
-      `).join('');
+      `;
+      }).join('');
 
       lucide.createIcons();
     }
@@ -4436,6 +4462,35 @@
       lucide.createIcons();
     }
 
+    // Financial recovery utility — repairs forecasting/countdown drift after
+    // an import or testing, without deleting any data. The only thing it
+    // corrects is bills stuck in a genuinely inconsistent state: completed
+    // but due in the future. Normal usage never produces this — a recurring
+    // bill's completed flag resets to false the moment it rolls forward
+    // (see completeBill()), and nothing else sets completed=true except an
+    // explicit user click. Forecast, Safe Spend, and the Payday Countdown
+    // are pure functions recomputed on every render — there is nothing
+    // stored for them to "rebuild" beyond re-rendering, which this does.
+    function repairFinancialSchedule() {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const staleCompletedBills = state.bills.filter(b => b.completed && new Date(b.dueDate + 'T00:00:00') > today);
+      staleCompletedBills.forEach(b => { b.completed = false; });
+
+      const scheduleAdvanced = advanceStaleIncomeSchedule();
+
+      const parts = [];
+      if (staleCompletedBills.length > 0) parts.push(`${staleCompletedBills.length} bill(s) incorrectly marked paid ahead of their due date were reset`);
+      if (scheduleAdvanced) parts.push(`payday schedule caught up to ${state.income.nextDate}`);
+      const summary = parts.length ? parts.join('; ') + '.' : 'No inconsistencies found — everything already recalculates correctly.';
+
+      logActivity("Financial Schedule Repaired", `${currentOwnerLabel()} ran Recalculate & Repair. ${summary}`);
+      saveStateToStorage();
+      showToast(parts.length ? "Repair complete — see Activity Log for details" : "Nothing to repair", "success");
+      navigateTo(getCurrentPageId());
+    }
+
     function openPaydaySettingsEdit() {
       const amountInput = document.getElementById('payday-settings-amount');
       const dateInput = document.getElementById('payday-settings-nextdate');
@@ -5096,6 +5151,7 @@
 
       if (editId) {
         const bill = state.bills.find(b => b.id === editId);
+        const actor = currentOwnerLabel();
         if (bill) {
           bill.title = title;
           bill.amount = amount;
@@ -5105,18 +5161,19 @@
           bill.recurrence = recurrence;
           bill.scope = scope;
           if (!bill.ownerId) bill.ownerId = state.user ? state.user.id : null;
-          if (!bill.ownerLabel) bill.ownerLabel = currentOwnerLabel();
+          if (!bill.ownerLabel) bill.ownerLabel = actor;
         }
-        logActivity("Bill Updated", `Updated ${title} — $${formatCurrency(amount)} due ${dueDate}.`);
+        logActivity("Bill Edited", `${actor} updated "${title}" — $${formatCurrency(amount)} due ${dueDate}. Bill: ${editId}.`);
         showToast("Bill updated successfully", "success");
       } else {
+        const actor = currentOwnerLabel();
         const newBill = {
           id: 'bill_' + Date.now(), title, amount, dueDate, category, priority, recurrence,
           paused: false, completed: false,
-          scope, ownerId: state.user ? state.user.id : null, ownerLabel: currentOwnerLabel()
+          scope, ownerId: state.user ? state.user.id : null, ownerLabel: actor
         };
         state.bills.push(newBill);
-        logActivity("Bill Added", `Added ${title} for $${formatCurrency(amount)} due ${dueDate}.`);
+        logActivity("Bill Created", `${actor} added "${title}" for $${formatCurrency(amount)} due ${dueDate}. Bill: ${newBill.id}.`);
         showToast("Bill added successfully", "success");
       }
 
@@ -5211,20 +5268,31 @@
 
       const finalize = () => {
         bill.completed = true;
+        const actor = currentOwnerLabel();
+        const txId = 'tx_' + Date.now();
+        const nowIso = new Date().toISOString();
         // Log transaction into ledger — inherits the bill's own scope so a
         // household bill's payment record is visible to everyone too.
+        // createdBy is who performed THIS action, on THIS device, right
+        // now — distinct from ownerLabel (whose bill this is), since in a
+        // household those can be two different people.
         state.transactions.unshift({
-          id: 'tx_' + Date.now(),
+          id: txId,
           title: `Bill Payment: ${bill.title}`,
           amount: bill.amount,
           type: 'expense',
           category: bill.category,
-          date: new Date().toISOString().split('T')[0],
+          date: nowIso.split('T')[0],
           scope: bill.scope || 'personal',
           ownerId: bill.ownerId || (state.user ? state.user.id : null),
-          ownerLabel: bill.ownerLabel || currentOwnerLabel()
+          ownerLabel: bill.ownerLabel || actor,
+          source: 'manual-bill-completion',
+          createdAt: nowIso,
+          createdBy: actor,
+          lastModifiedAt: nowIso,
+          lastModifiedBy: actor
         });
-        logActivity("Bill Completed", `Marked ${bill.title} ($${formatCurrency(bill.amount)}) as paid.`);
+        logActivity("Bill Marked Paid", `${actor} marked "${bill.title}" ($${formatCurrency(bill.amount)}) as paid. Source: manual-bill-completion. Transaction: ${txId}.`);
 
         // Recurring bills roll forward to their next occurrence automatically
         // instead of sitting completed forever — the same bill record is
@@ -5253,7 +5321,7 @@
       const index = state.bills.findIndex(b => b.id === id);
       if (index !== -1) {
         const removed = state.bills.splice(index, 1)[0];
-        logActivity("Bill Deleted", `Removed bill ${removed.title}.`);
+        logActivity("Bill Deleted", `${currentOwnerLabel()} removed "${removed.title}". Bill: ${removed.id}.`);
         setUndoBuffer({ item: removed, type: 'bill' }, (data) => {
           state.bills.push(data.item);
         });
@@ -5290,9 +5358,14 @@
       const date = document.getElementById('tx-date').value;
       const scope = document.getElementById('tx-scope') ? document.getElementById('tx-scope').value : 'personal';
 
+      const actor = currentOwnerLabel();
+      const nowIso = new Date().toISOString();
       const newTx = {
         id: 'tx_' + Date.now(), title, amount, type, category, date,
-        scope, ownerId: state.user ? state.user.id : null, ownerLabel: currentOwnerLabel()
+        scope, ownerId: state.user ? state.user.id : null, ownerLabel: actor,
+        source: 'manual-entry',
+        createdAt: nowIso, createdBy: actor,
+        lastModifiedAt: nowIso, lastModifiedBy: actor
       };
       state.transactions.unshift(newTx);
 
@@ -5303,7 +5376,7 @@
         else checking.balance -= amount;
       }
 
-      logActivity("Transaction Recorded", `${type === 'income' ? '+' : '-'}$${formatCurrency(amount)} - ${title}`);
+      logActivity("Transaction Added", `${actor} recorded ${type === 'income' ? '+' : '-'}$${formatCurrency(amount)} - ${title}. Source: manual-entry. Transaction: ${newTx.id}.`);
 
       saveStateToStorage();
       closeModals();
@@ -5315,7 +5388,7 @@
       const index = state.transactions.findIndex(t => t.id === id);
       if (index !== -1) {
         const removed = state.transactions.splice(index, 1)[0];
-        logActivity("Transaction Deleted", `Removed transaction ${removed.title}.`);
+        logActivity("Transaction Deleted", `${currentOwnerLabel()} removed "${removed.title}". Transaction: ${removed.id}.`);
         setUndoBuffer({ item: removed, type: 'transaction' }, (data) => {
           state.transactions.unshift(data.item);
         });
@@ -6082,7 +6155,7 @@
     function resetImportWizardState() {
       importWizardState = {
         step: 1, fileName: '', valid: false,
-        categoryData: {}, categorySkipped: {}, skippedFutureIncomeCount: 0,
+        categoryData: {}, categorySkipped: {}, skippedFutureIncomeCount: 0, totalFutureIncomeFound: 0,
         destination: 'personal',
         selectedCategories: { accounts: true, bills: true, transactions: true, goals: true }
       };
@@ -6184,9 +6257,18 @@
 
           const legacyBills = [];
           const legacyTransactions = [];
-          const todayStr = new Date().toISOString().split('T')[0];
+          // Local midnight — the same pattern already used correctly in
+          // getDaysUntilPayday() and everywhere else in the app that
+          // classifies "today". The previous version used
+          // new Date().toISOString().split('T')[0], which is always UTC —
+          // for any user west of UTC, that rolls over to tomorrow's date
+          // hours before local midnight, silently misclassifying a
+          // genuinely future paycheck as already received.
+          const todayLocal = new Date();
+          todayLocal.setHours(0, 0, 0, 0);
           let earliestFutureIncome = null;
           let futureIncomeCount = 0;
+          let historicalIncomeCount = 0;
 
           parsed.timeline.forEach(item => {
             if (!item || !item.date) return;
@@ -6203,8 +6285,10 @@
                 priority: 'important'
               });
             } else if (item.type === 'income') {
-              if (item.date <= todayStr) {
+              const itemDateLocal = new Date(item.date + 'T00:00:00');
+              if (itemDateLocal <= todayLocal) {
                 // Already received — real history, keep it as a transaction.
+                historicalIncomeCount++;
                 legacyTransactions.push({
                   title: item.desc || 'Income',
                   amount: Number(item.amount) || 0,
@@ -6225,12 +6309,20 @@
             }
           });
 
+          let scheduleSeeded = false;
+          importWizardState.totalFutureIncomeFound = futureIncomeCount;
           if (earliestFutureIncome && !state.income.nextDate) {
             state.income.nextDate = earliestFutureIncome.date;
             if (!state.income.amount) state.income.amount = earliestFutureIncome.amount;
             futureIncomeCount--;
+            scheduleSeeded = true;
           }
           importWizardState.skippedFutureIncomeCount = Math.max(0, futureIncomeCount);
+
+          // Validation logging, as required: exactly what the classifier
+          // decided, so a bad import is diagnosable from the Activity Log
+          // alone rather than by inspecting raw data.
+          logActivity("Paycheck Imported", `${historicalIncomeCount} historical income entr${historicalIncomeCount === 1 ? 'y' : 'ies'} recorded as transactions, ${Math.max(0, futureIncomeCount)} future paycheck(s) left unrecorded (schedule only)${scheduleSeeded ? `, payday schedule seeded from ${earliestFutureIncome.date}` : ''}.`);
 
           parsed = { accounts: legacyAccounts, bills: legacyBills, transactions: legacyTransactions, goals: [] };
         }
@@ -6372,11 +6464,40 @@
           `;
         }).join('');
 
+        if (importWizardState.totalFutureIncomeFound > 0) {
+          countsEl.innerHTML += `
+            <div class="p-2.5 bg-slate-900/80 rounded-xl border border-slate-800 flex items-center gap-2">
+              <i data-lucide="wallet" class="w-3.5 h-3.5 text-brand-400 shrink-0"></i>
+              <span class="text-slate-300">${importWizardState.totalFutureIncomeFound} Paycheck${importWizardState.totalFutureIncomeFound === 1 ? '' : 's'}</span>
+            </div>
+          `;
+        }
+
         if (importWizardState.skippedFutureIncomeCount > 0) {
           countsEl.innerHTML += `
             <div class="col-span-2 p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-start gap-2 text-[11px] text-amber-200">
               <i data-lucide="info" class="w-3.5 h-3.5 shrink-0 mt-0.5"></i>
               <span>${importWizardState.skippedFutureIncomeCount} future paycheck ${importWizardState.skippedFutureIncomeCount === 1 ? 'entry' : 'entries'} in this file won't be imported — Paycheck Pilot doesn't yet support multiple income schedules. Your earliest upcoming paycheck was used to set your Payday schedule instead.</span>
+            </div>
+          `;
+        }
+
+        // Duplicate warning — reuses the exact same key functions already
+        // built and tested for Statement Import (title+amount+dueDate+category
+        // for bills, date+amount+description for transactions), applied here
+        // against what's already in state before this import commits anything.
+        const likelyDupeBills = (importWizardState.categoryData.bills || []).filter(b =>
+          state.bills.some(existing => billDedupeKey(existing.title, existing.amount, existing.dueDate, existing.category) === billDedupeKey(b.title, b.amount, b.dueDate, b.category))
+        ).length;
+        const likelyDupeTx = (importWizardState.categoryData.transactions || []).filter(t =>
+          state.transactions.some(existing => transactionDedupeKey(existing.date, existing.amount, existing.title) === transactionDedupeKey(t.date, t.amount, t.title))
+        ).length;
+        importWizardState.likelyDuplicateCount = likelyDupeBills + likelyDupeTx;
+        if (importWizardState.likelyDuplicateCount > 0) {
+          countsEl.innerHTML += `
+            <div class="col-span-2 p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-xl flex items-start gap-2 text-[11px] text-amber-200">
+              <i data-lucide="copy-x" class="w-3.5 h-3.5 shrink-0 mt-0.5"></i>
+              <span>${importWizardState.likelyDuplicateCount} item${importWizardState.likelyDuplicateCount === 1 ? '' : 's'} in this file look${importWizardState.likelyDuplicateCount === 1 ? 's' : ''} like something already in your data (same title, amount, and date). They'll still import as new entries — review before confirming if that's not what you want.</span>
             </div>
           `;
         }
@@ -6461,6 +6582,7 @@
       const ownerId = state.user ? state.user.id : null;
       const ownerLabel = currentOwnerLabel();
       const stamp = Date.now();
+      const nowIso = new Date().toISOString();
       let importedCount = 0;
       const expectedCounts = {};
 
@@ -6471,14 +6593,15 @@
 
         items.forEach((item, i) => {
           const id = `imported_${kind}_${stamp}_${catIdx}_${i}`;
+          const audit = { createdAt: nowIso, createdBy: ownerLabel, lastModifiedAt: nowIso, lastModifiedBy: ownerLabel };
           if (kind === 'accounts') {
-            state.accounts.push({ id, ...item, scope, ownerId, ownerLabel });
+            state.accounts.push({ id, ...item, scope, ownerId, ownerLabel, source: 'json-import', ...audit });
           } else if (kind === 'bills') {
-            state.bills.push({ id, ...item, scope, ownerId, ownerLabel });
+            state.bills.push({ id, ...item, scope, ownerId, ownerLabel, source: 'json-import', ...audit });
           } else if (kind === 'transactions') {
-            state.transactions.push({ id, ...item, scope, ownerId, ownerLabel });
+            state.transactions.push({ id, ...item, scope, ownerId, ownerLabel, source: 'json-import', ...audit });
           } else if (kind === 'goals') {
-            state.goals.push({ id, ...item, completedCelebrated: false, scope, ownerId, ownerLabel });
+            state.goals.push({ id, ...item, completedCelebrated: false, scope, ownerId, ownerLabel, source: 'json-import', ...audit });
           }
           importedCount++;
         });
@@ -6511,8 +6634,15 @@
         .filter(k => actualCounts[k] > 0)
         .map(k => `${actualCounts[k]} ${IMPORT_CATEGORY_META[k].label}`);
 
+      const totalSkipped = Object.values(importWizardState.categorySkipped || {}).reduce((a, b) => a + (b || 0), 0);
+
       const successSummaryEl = document.getElementById('import-success-summary');
-      if (successSummaryEl) successSummaryEl.innerText = `Added ${summaryParts.join(', ')} as ${scope === 'household' ? 'Household' : 'Personal'} data.`;
+      if (successSummaryEl) {
+        successSummaryEl.innerHTML = [
+          `Added ${summaryParts.join(', ')} as ${scope === 'household' ? 'Household' : 'Personal'} data.`,
+          `Imported: ${importedCount} · Skipped: ${totalSkipped} · Updated: 0 · Duplicates Found: ${importWizardState.likelyDuplicateCount || 0}`
+        ].join('<br><span class="text-[11px] text-slate-500">') + '</span>';
+      }
 
       if (confirmView) confirmView.classList.add('hidden');
       if (successView) successView.classList.remove('hidden');
@@ -7446,6 +7576,7 @@
       const ownerId = state.user ? state.user.id : null;
       const ownerLabel = currentOwnerLabel();
       const stamp = Date.now();
+      const nowIso = new Date().toISOString();
       const importSessionId = `stmtimport_${stamp}`;
       const warnings = [];
 
@@ -7484,22 +7615,23 @@
       if (txFilter.duplicateSkipped > 0) warnings.push(`${txFilter.duplicateSkipped} duplicate transaction(s) skipped — already present in your ledger.`);
 
       let importedCount = 0;
+      const auditFields = { createdAt: nowIso, createdBy: ownerLabel, lastModifiedAt: nowIso, lastModifiedBy: ownerLabel };
       stagedAccounts.valid.forEach((item, i) => {
         const src = rawAccountsSource[i] || {};
         state.accounts.push({
           id: `stmtimport_accounts_${stamp}_${i}`, ...item,
           institution: src.institution || null,
           maskedAccountNumber: src.maskedAccountNumber || null,
-          scope, ownerId, ownerLabel, source: 'statement-import', importSessionId
+          scope, ownerId, ownerLabel, source: 'statement-import', importSessionId, ...auditFields
         });
         importedCount++;
       });
       stagedBills.valid.forEach((item, i) => {
-        state.bills.push({ id: `stmtimport_bills_${stamp}_${i}`, ...item, paused: false, scope, ownerId, ownerLabel, source: 'statement-import', importSessionId });
+        state.bills.push({ id: `stmtimport_bills_${stamp}_${i}`, ...item, paused: false, scope, ownerId, ownerLabel, source: 'statement-import', importSessionId, ...auditFields });
         importedCount++;
       });
       stagedTransactions.valid.forEach((item, i) => {
-        state.transactions.push({ id: `stmtimport_transactions_${stamp}_${i}`, ...item, scope, ownerId, ownerLabel, source: 'statement-import', importSessionId });
+        state.transactions.push({ id: `stmtimport_transactions_${stamp}_${i}`, ...item, scope, ownerId, ownerLabel, source: 'statement-import', importSessionId, ...auditFields });
         importedCount++;
       });
 
