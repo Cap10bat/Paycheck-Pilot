@@ -1225,10 +1225,15 @@
             <div class="flex justify-between items-center border-b border-slate-800/80 pb-4">
               <div>
                 <h2 class="text-2xl font-extrabold text-white tracking-tight">Activity Log</h2>
-                <p class="text-xs text-slate-400">Chronological history of all system events, syncs, and financial actions.</p>
+                <p class="text-xs text-slate-400">Chronological history of your bills, transactions, imports, and repairs.</p>
               </div>
               <button onclick="clearActivityLog()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold">Clear Log</button>
             </div>
+
+            <label class="flex items-center gap-2 text-xs text-slate-400 cursor-pointer">
+              <input type="checkbox" id="activity-show-system-events" onchange="renderActivityPage()" class="w-4 h-4 rounded accent-slate-500" />
+              Show System Events (sync activity)
+            </label>
 
             <div id="activity-log-timeline" class="space-y-3"></div>
           </div>
@@ -1280,6 +1285,22 @@
               </div>
             </div>
 
+            <!-- REPAIR MY DATA — reprocesses already-imported data using the -->
+            <!-- corrected paycheck classification logic. Never re-imports or -->
+            <!-- wipes anything; only reviews what's already in state. -->
+            <div class="glass-card p-4 sm:p-6 rounded-3xl border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="flex items-center gap-3">
+                <span class="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center shrink-0">
+                  <i data-lucide="wrench" class="w-5 h-5 text-amber-400"></i>
+                </span>
+                <div>
+                  <h3 class="font-bold text-white text-base">Repair My Data</h3>
+                  <p class="text-xs text-slate-400">If you imported data before a fix to how future paychecks were detected, this reviews what's already in your account and corrects it — no re-upload, no wipe. Your balances, other transactions, and household stay untouched.</p>
+                </div>
+              </div>
+              <button onclick="openRepairWizard()" class="shrink-0 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Repair My Data</button>
+            </div>
+
             <!-- PAYDAY SETTINGS — view/edit the same state.income fields the -->
             <!-- countdown, Forecast, Safe Spend, and Payday Briefing already read. -->
             <div class="glass-card p-4 sm:p-6 rounded-3xl border border-brand-500/30 space-y-4">
@@ -1309,7 +1330,7 @@
                   <p id="payday-settings-view-date" class="text-sm font-bold text-white mt-0.5">--</p>
                 </div>
                 <div>
-                  <p class="text-[10px] text-slate-500 uppercase tracking-wider">Amount</p>
+                  <p class="text-[10px] text-slate-500 uppercase tracking-wider">Paycheck Amount</p>
                   <p id="payday-settings-view-amount" class="text-sm font-bold text-white mt-0.5">--</p>
                 </div>
                 <div>
@@ -1317,6 +1338,7 @@
                   <p id="payday-settings-view-frequency" class="text-sm font-bold text-white mt-0.5 capitalize">--</p>
                 </div>
               </div>
+              <p id="payday-settings-owner-line" class="hidden text-[11px] text-slate-500">Paycheck Owner: <span id="payday-settings-owner-name" class="text-slate-300 font-semibold">--</span></p>
               <button type="button" onclick="openPaydaySettingsEdit()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition-all">Edit Payday Settings</button>
 
               <div id="payday-settings-edit" class="hidden space-y-3">
@@ -1350,6 +1372,9 @@
                 <div id="payday-settings-timeline" class="space-y-1.5"></div>
               </div>
 
+              <button type="button" onclick="openRepairWizard()" class="w-full py-2.5 bg-amber-500/15 hover:bg-amber-500 hover:text-slate-950 border border-amber-500/30 text-amber-400 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5">
+                <i data-lucide="wrench" class="w-3.5 h-3.5"></i> Repair My Data
+              </button>
               <button type="button" onclick="repairFinancialSchedule()" class="w-full py-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-slate-200 rounded-xl text-[11px] font-semibold transition-all flex items-center justify-center gap-1.5">
                 <i data-lucide="refresh-cw" class="w-3 h-3"></i> Recalculate & Repair
               </button>
@@ -1898,6 +1923,28 @@
         <button onclick="closeModals()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
       </div>
       <div id="import-history-content" class="space-y-2"></div>
+    </div>
+
+    <!-- REPAIR MY DATA — reviews already-imported data against the corrected
+         paycheck classification logic and offers to fix it. Never re-imports,
+         never wipes anything. Five steps: Analyze -> Findings -> What Can Be
+         Repaired -> Run Repair -> Results. -->
+    <div id="modal-repair" class="glass-card p-4 sm:p-6 rounded-3xl border border-amber-500/40 w-full max-w-lg hidden space-y-5 max-h-[85vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-white text-base flex items-center gap-2">
+          <i data-lucide="wrench" class="w-4 h-4 text-amber-400"></i> Repair My Data
+        </h3>
+        <button onclick="closeModals()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <div id="repair-step-dot-1" class="h-1 flex-1 rounded-full bg-amber-500"></div>
+        <div id="repair-step-dot-2" class="h-1 flex-1 rounded-full bg-slate-800"></div>
+        <div id="repair-step-dot-3" class="h-1 flex-1 rounded-full bg-slate-800"></div>
+        <div id="repair-step-dot-4" class="h-1 flex-1 rounded-full bg-slate-800"></div>
+        <div id="repair-step-dot-5" class="h-1 flex-1 rounded-full bg-slate-800"></div>
+      </div>
+      <p id="repair-step-label" class="text-[10px] font-bold uppercase tracking-wider text-amber-400 -mt-3">Step 1 of 5 · Analyze</p>
+      <div id="repair-content" class="space-y-4 text-xs"></div>
     </div>
 
     <!-- DEFICIT NAVIGATOR 2.0 (BILL TETRIS) MODAL -->
@@ -3386,7 +3433,8 @@
       const highlightDate = document.getElementById('dash-payday-highlight-date');
       if (highlightDate) highlightDate.innerText = state.income.nextDate || 'Not set';
       const highlightAmount = document.getElementById('dash-payday-highlight-amount');
-      if (highlightAmount) highlightAmount.innerText = `$${formatCurrency(state.income.amount || 0)}`;
+      const highlightAmountValid = state.income.amount && !isNaN(Number(state.income.amount)) && Number(state.income.amount) > 0;
+      if (highlightAmount) highlightAmount.innerText = highlightAmountValid ? `$${formatCurrency(state.income.amount)}` : 'Not set';
       const highlightTagline = document.getElementById('dash-payday-highlight-tagline');
       if (highlightTagline) {
         highlightTagline.innerText = !state.income.nextDate ? 'Set up your payday schedule to see this'
@@ -4304,21 +4352,31 @@
     // ==========================================
     // RENDER ACTIVITY PAGE
     // ==========================================
+    // Action names considered "system events" — sync activity that's
+    // informative for debugging but meaningless noise for normal use,
+    // hidden by default per the Activity Log cleanup requirement.
+    const SYSTEM_EVENT_ACTIONS = new Set(["Cloud Sync Pulled", "Cloud Sync Completed", "Debug Sync Event"]);
+
     function renderActivityPage() {
       const container = document.getElementById('activity-log-timeline');
       if (!container) return;
 
-      if (!state.activityLog || state.activityLog.length === 0) {
+      const showSystemEvents = document.getElementById('activity-show-system-events')?.checked || false;
+      const entries = (state.activityLog || []).filter(a => showSystemEvents || !SYSTEM_EVENT_ACTIONS.has(a.action));
+
+      if (entries.length === 0) {
         container.innerHTML = emptyStateHtml({
           icon: 'history',
-          title: 'No activity yet',
-          subtitle: "Everything you do in Paycheck Pilot — bills paid, goals funded, syncs — will show up here."
+          title: state.activityLog && state.activityLog.length ? 'No matching activity' : 'No activity yet',
+          subtitle: state.activityLog && state.activityLog.length
+            ? "All recent activity is system/sync events — check \"Show System Events\" above to see it."
+            : "Everything you do in Paycheck Pilot — bills paid, goals funded, imports, repairs — will show up here."
         });
         lucide.createIcons();
         return;
       }
 
-      container.innerHTML = state.activityLog.map(a => `
+      container.innerHTML = entries.map(a => `
         <div class="glass-card p-4 rounded-2xl border border-slate-800 flex items-start justify-between gap-4 text-xs">
           <div>
             <strong class="text-white block text-sm">${a.action}</strong>
@@ -4390,8 +4448,20 @@
       const sourceTextEl = document.getElementById('payday-settings-source-text');
 
       if (dateEl) dateEl.innerText = state.income.nextDate || 'Not set';
-      if (amountEl) amountEl.innerText = `$${formatCurrency(state.income.amount || 0)}`;
+      const amountLooksValid = state.income.amount && !isNaN(Number(state.income.amount)) && Number(state.income.amount) > 0;
+      if (amountEl) amountEl.innerText = amountLooksValid ? `$${formatCurrency(state.income.amount)}` : 'Not set';
       if (freqEl) freqEl.innerText = state.income.frequency || 'Not set';
+
+      const ownerLine = document.getElementById('payday-settings-owner-line');
+      const ownerName = document.getElementById('payday-settings-owner-name');
+      if (ownerLine && ownerName) {
+        if (state.income.lastEditedBy) {
+          ownerName.innerText = state.income.lastEditedBy;
+          ownerLine.classList.remove('hidden');
+        } else {
+          ownerLine.classList.add('hidden');
+        }
+      }
 
       // Clarity layer: state.income is a single shared value with no
       // per-person owner field — there is no "whose paycheck" to report
@@ -4491,6 +4561,232 @@
       navigateTo(getCurrentPageId());
     }
 
+    // ============================================================
+    // REPAIR MY DATA — reviews data already in state against the corrected
+    // paycheck classification logic and offers to fix it. Never re-imports
+    // (the original source file isn't retained anywhere in state — only its
+    // converted output is), never wipes anything. Five steps: Analyze ->
+    // Findings -> What Can Be Repaired -> Run Repair -> Results.
+    // ============================================================
+
+    let repairWizardState = { step: 1, candidates: [], selectedCandidates: {}, staleCompletedBills: [], results: null };
+
+    function resetRepairWizardState() {
+      repairWizardState = { step: 1, candidates: [], selectedCandidates: {}, staleCompletedBills: [], results: null };
+    }
+
+    function openRepairWizard() {
+      resetRepairWizardState();
+      const backdrop = document.getElementById('modal-backdrop');
+      const modal = document.getElementById('modal-repair');
+      if (backdrop && modal) { backdrop.classList.remove('hidden'); modal.classList.remove('hidden'); }
+      renderRepairStep();
+    }
+
+    function renderRepairStep() {
+      const step = repairWizardState.step;
+      const labels = ['Analyze', 'Findings', 'What Can Be Repaired', 'Run Repair', 'Results'];
+      for (let i = 1; i <= 5; i++) {
+        const dot = document.getElementById(`repair-step-dot-${i}`);
+        if (dot) dot.className = `h-1 flex-1 rounded-full ${i <= step ? 'bg-amber-500' : 'bg-slate-800'}`;
+      }
+      const label = document.getElementById('repair-step-label');
+      if (label) label.innerText = `Step ${step} of 5 · ${labels[step - 1]}`;
+
+      if (step === 1) renderRepairStep1();
+      else if (step === 2) renderRepairStep2();
+      else if (step === 3) renderRepairStep3();
+      else if (step === 4) renderRepairStep4();
+      else if (step === 5) renderRepairStep5();
+      lucide.createIcons();
+    }
+
+    // Detection uses the bug's precise, confirmed signature (see the
+    // Priority 1 investigation): only a transaction dated EXACTLY one
+    // calendar day after the moment it was imported could have been
+    // affected, since the UTC/local skew that caused it is at most one day.
+    // Uses each transaction's own createdAt when present; falls back to the
+    // "Data Imported" activity log entry for older imports that predate the
+    // audit-trail fields. Read-only — makes no changes.
+    function findMisclassifiedPaycheckCandidates() {
+      const importLogEntry = (state.activityLog || []).find(a => a.action === 'Data Imported' || a.action === 'Paycheck Imported');
+      const fallbackMoment = importLogEntry ? new Date(importLogEntry.timestamp) : null;
+
+      return state.transactions.filter(t => {
+        if (t.source !== 'json-import' || t.type !== 'income') return false;
+        const importMoment = t.createdAt ? new Date(t.createdAt) : fallbackMoment;
+        if (!importMoment || isNaN(importMoment.getTime())) return false;
+        const importLocalDate = new Date(importMoment);
+        importLocalDate.setHours(0, 0, 0, 0);
+        const oneDayAfterImport = new Date(importLocalDate);
+        oneDayAfterImport.setDate(oneDayAfterImport.getDate() + 1);
+        const txDate = new Date(t.date + 'T00:00:00');
+        return txDate.getTime() === oneDayAfterImport.getTime();
+      });
+    }
+
+    function renderRepairStep1() {
+      const content = document.getElementById('repair-content');
+      if (!content) return;
+      content.innerHTML = `
+        <div class="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl text-center space-y-2">
+          <i data-lucide="search" class="w-6 h-6 text-amber-400 mx-auto"></i>
+          <p class="text-sm font-bold text-white">Analyze your data</p>
+          <p class="text-slate-400">This looks at data already in your account — nothing is re-uploaded, nothing changes yet. It checks whether any previously imported paycheck was affected by a timezone bug that's since been fixed, and whether any bills are stuck in an inconsistent state.</p>
+        </div>
+        <button type="button" onclick="runRepairAnalysis()" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Start Analysis</button>
+      `;
+    }
+
+    function runRepairAnalysis() {
+      repairWizardState.candidates = findMisclassifiedPaycheckCandidates();
+      repairWizardState.candidates.forEach((_, i) => { repairWizardState.selectedCandidates[i] = true; });
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      repairWizardState.staleCompletedBills = state.bills.filter(b => b.completed && new Date(b.dueDate + 'T00:00:00') > today);
+
+      repairWizardState.step = 2;
+      renderRepairStep();
+    }
+
+    function renderRepairStep2() {
+      const content = document.getElementById('repair-content');
+      if (!content) return;
+      const c = repairWizardState.candidates;
+      const b = repairWizardState.staleCompletedBills;
+
+      if (!c.length && !b.length) {
+        content.innerHTML = `
+          <div class="p-4 bg-brand-500/10 border border-brand-500/30 rounded-2xl text-center space-y-1">
+            <i data-lucide="check-circle-2" class="w-6 h-6 text-brand-400 mx-auto"></i>
+            <p class="text-sm font-bold text-white">Nothing to repair</p>
+            <p class="text-slate-500">Your data looks consistent — no misclassified paychecks or stuck bill states found.</p>
+          </div>
+          <button type="button" onclick="closeModals()" class="w-full py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition-all">Close</button>
+        `;
+        return;
+      }
+
+      content.innerHTML = `
+        <div class="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl space-y-2">
+          <p class="flex items-center gap-1.5 text-amber-300 font-bold text-sm"><i data-lucide="alert-triangle" class="w-4 h-4"></i> Findings</p>
+          ${c.length ? `<p class="text-slate-300">${c.length} imported transaction${c.length === 1 ? '' : 's'} dated the day right after an import — the exact pattern the timezone bug produced. These may be future paychecks that were wrongly recorded as already received.</p>` : ''}
+          ${b.length ? `<p class="text-slate-300">${b.length} bill${b.length === 1 ? '' : 's'} marked paid but due in the future — an inconsistent state.</p>` : ''}
+        </div>
+        ${c.length ? `
+          <div class="space-y-1.5">
+            <p class="text-[10px] text-slate-500 uppercase tracking-wider">Possibly Misclassified</p>
+            ${c.map(t => `<div class="flex justify-between text-slate-400 py-1 border-b border-slate-800/60"><span>${t.title} — ${t.date}</span><span class="text-white">$${formatCurrency(t.amount)}</span></div>`).join('')}
+          </div>
+        ` : ''}
+        <button type="button" onclick="repairWizardState.step = 3; renderRepairStep();" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Continue</button>
+      `;
+    }
+
+    function renderRepairStep3() {
+      const content = document.getElementById('repair-content');
+      if (!content) return;
+      const c = repairWizardState.candidates;
+
+      content.innerHTML = `
+        <p class="text-slate-400">Choose what to include — nothing changes until you confirm on the next step.</p>
+        ${c.length ? c.map((t, i) => `
+          <label class="flex items-start gap-2.5 p-3 bg-slate-900/80 rounded-xl border border-slate-800 cursor-pointer">
+            <input type="checkbox" ${repairWizardState.selectedCandidates[i] ? 'checked' : ''} onchange="repairWizardState.selectedCandidates[${i}] = this.checked" class="w-4 h-4 rounded accent-amber-500 mt-0.5" />
+            <span class="flex-1">
+              <span class="block text-white font-semibold">${t.title}</span>
+              <span class="block text-[11px] text-slate-500">Recorded as received ${t.date} · $${formatCurrency(t.amount)} — will be restored as a future paycheck instead</span>
+            </span>
+          </label>
+        `).join('') : `<p class="text-slate-500 text-center py-4">No paycheck misclassifications to review.</p>`}
+        ${repairWizardState.staleCompletedBills.length ? `
+          <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800">
+            <p class="text-white font-semibold">${repairWizardState.staleCompletedBills.length} bill(s) will be reset to unpaid</p>
+            <p class="text-[11px] text-slate-500">They're marked paid but due in the future — not a valid state.</p>
+          </div>
+        ` : ''}
+        <button type="button" onclick="repairWizardState.step = 4; renderRepairStep();" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Continue</button>
+      `;
+    }
+
+    function renderRepairStep4() {
+      const content = document.getElementById('repair-content');
+      if (!content) return;
+      const selectedCount = Object.values(repairWizardState.selectedCandidates).filter(Boolean).length;
+      content.innerHTML = `
+        <div class="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl space-y-2">
+          <p class="text-sm font-bold text-white">This repair will:</p>
+          <ul class="space-y-1 text-slate-300">
+            <li>• Restore ${selectedCount} paycheck${selectedCount === 1 ? '' : 's'} to your income schedule</li>
+            <li>• Remove ${selectedCount} incorrect transaction${selectedCount === 1 ? '' : 's'} from history</li>
+            <li>• Reset ${repairWizardState.staleCompletedBills.length} bill(s) stuck in an inconsistent paid state</li>
+            <li>• Recalculate Forecast, Safe Spend, and the Payday Countdown</li>
+          </ul>
+          <p class="text-[11px] text-slate-500 pt-1 border-t border-slate-800">Your account balances, other transactions, household membership, and sync state are not touched by this repair.</p>
+        </div>
+        <button type="button" onclick="runRepair()" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Run Repair</button>
+      `;
+    }
+
+    // The only function in this module that writes to state — everything
+    // before this step was read-only review. Removes only the specific,
+    // user-confirmed transactions and resets only the specific,
+    // user-confirmed stale bills. Never touches state.accounts,
+    // state.household, or any transaction/bill not explicitly selected.
+    function runRepair() {
+      const actor = currentOwnerLabel();
+      const selectedIndices = Object.keys(repairWizardState.selectedCandidates).filter(i => repairWizardState.selectedCandidates[i]).map(Number);
+      const selected = selectedIndices.map(i => repairWizardState.candidates[i]);
+      const idsToRemove = new Set(selected.map(t => t.id));
+
+      state.transactions = state.transactions.filter(t => !idsToRemove.has(t.id));
+
+      let schedulesRebuilt = 0;
+      const earliestRestored = selected.slice().sort((a, b) => a.date < b.date ? -1 : 1)[0];
+      if (earliestRestored) {
+        state.income.nextDate = earliestRestored.date;
+        state.income.amount = earliestRestored.amount;
+        schedulesRebuilt++;
+      }
+      if (advanceStaleIncomeSchedule()) schedulesRebuilt++;
+
+      repairWizardState.staleCompletedBills.forEach(b => { b.completed = false; });
+
+      repairWizardState.results = {
+        paychecksRestored: selected.length,
+        schedulesRebuilt,
+        billsRebuilt: repairWizardState.staleCompletedBills.length,
+        duplicatesRemoved: 0,
+        forecastRecalculated: true
+      };
+
+      logActivity("Data Repaired", `${actor} ran Repair My Data. Future paychecks restored: ${selected.length}. Income schedules rebuilt: ${schedulesRebuilt}. Bills rebuilt: ${repairWizardState.staleCompletedBills.length}.`);
+      saveStateToStorage();
+      repairWizardState.step = 5;
+      renderRepairStep();
+    }
+
+    function renderRepairStep5() {
+      const content = document.getElementById('repair-content');
+      if (!content) return;
+      const r = repairWizardState.results;
+      content.innerHTML = `
+        <div class="p-4 bg-brand-500/10 border border-brand-500/30 rounded-2xl text-center space-y-1">
+          <i data-lucide="check-circle-2" class="w-7 h-7 text-brand-400 mx-auto"></i>
+          <p class="text-sm font-bold text-white">Repair complete</p>
+        </div>
+        <div class="space-y-1.5">
+          <div class="flex justify-between py-1 border-b border-slate-800/60"><span class="text-slate-400">Future Paychecks Restored</span><span class="text-white font-bold">${r.paychecksRestored}</span></div>
+          <div class="flex justify-between py-1 border-b border-slate-800/60"><span class="text-slate-400">Income Schedules Rebuilt</span><span class="text-white font-bold">${r.schedulesRebuilt}</span></div>
+          <div class="flex justify-between py-1 border-b border-slate-800/60"><span class="text-slate-400">Upcoming Bills Rebuilt</span><span class="text-white font-bold">${r.billsRebuilt}</span></div>
+          <div class="flex justify-between py-1 border-b border-slate-800/60"><span class="text-slate-400">Duplicate Transactions Removed</span><span class="text-white font-bold">${r.duplicatesRemoved}</span></div>
+          <div class="flex justify-between py-1"><span class="text-slate-400">Forecast Recalculated</span><span class="text-brand-400 font-bold">${r.forecastRecalculated ? 'Yes' : 'No'}</span></div>
+        </div>
+        <button type="button" onclick="closeModals(); navigateTo('dashboard');" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Go to Dashboard</button>
+      `;
+    }
+
     function openPaydaySettingsEdit() {
       const amountInput = document.getElementById('payday-settings-amount');
       const dateInput = document.getElementById('payday-settings-nextdate');
@@ -4537,8 +4833,10 @@
       state.income.amount = amount;
       state.income.nextDate = nextDate;
       state.income.frequency = frequency;
+      state.income.lastEditedBy = currentOwnerLabel();
+      state.income.lastEditedAt = new Date().toISOString();
 
-      logActivity("Payday Settings Updated", `Paycheck amount set to $${formatCurrency(amount)}, next payday ${nextDate}, frequency ${frequency}.`);
+      logActivity("Payday Settings Updated", `${state.income.lastEditedBy} set paycheck amount to $${formatCurrency(amount)}, next payday ${nextDate}, frequency ${frequency}.`);
       saveStateToStorage();
       showToast("Payday settings saved", "success");
 
