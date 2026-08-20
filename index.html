@@ -88,6 +88,10 @@
       box-shadow: 0 0 30px -5px rgba(16, 185, 129, 0.3);
     }
 
+    .glow-indigo {
+      box-shadow: 0 0 30px -5px rgba(99, 102, 241, 0.35);
+    }
+
     .glow-warning {
       box-shadow: 0 0 35px 0 rgba(245, 158, 11, 0.4);
       border-color: rgba(245, 158, 11, 0.6);
@@ -787,17 +791,17 @@
             <!-- PAYDAY COUNTDOWN — highlighted separately from the small stats
                  row further down, since this is one of the app's most
                  important numbers and was previously buried in a text-xs line -->
-            <div class="glass-card rounded-3xl p-4 sm:p-5 border border-indigo-500/30 flex items-center justify-between gap-4 relative overflow-hidden">
-              <div class="absolute -left-8 -top-8 w-32 h-32 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="glass-card rounded-3xl p-4 sm:p-5 border border-indigo-500/40 flex items-center justify-between gap-4 relative overflow-hidden glow-indigo">
+              <div class="absolute -left-8 -top-8 w-32 h-32 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none"></div>
               <div class="relative flex items-center gap-4 min-w-0">
                 <div class="text-center shrink-0">
-                  <p id="dash-payday-highlight-days" class="text-3xl sm:text-4xl font-black text-white leading-none">--</p>
+                  <p id="dash-payday-highlight-days" class="text-4xl sm:text-5xl font-black text-white leading-none">--</p>
                   <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-indigo-400 mt-1 whitespace-nowrap">Days To Payday</p>
                 </div>
-                <div class="w-px h-10 bg-slate-800 shrink-0"></div>
+                <div class="w-px h-12 bg-slate-800 shrink-0"></div>
                 <div class="min-w-0">
-                  <p class="text-[11px] text-slate-400">Next Payday</p>
-                  <p id="dash-payday-highlight-date" class="text-sm font-bold text-white truncate">--</p>
+                  <p id="dash-payday-highlight-tagline" class="text-xs sm:text-sm font-semibold text-white leading-snug">--</p>
+                  <p class="text-[11px] text-slate-400 mt-0.5">Next Payday: <span id="dash-payday-highlight-date" class="text-slate-300 font-semibold">--</span></p>
                 </div>
               </div>
               <div class="relative text-right shrink-0">
@@ -1289,6 +1293,11 @@
                 </div>
               </div>
 
+              <div id="payday-settings-source" class="p-3 bg-slate-900/80 border border-slate-800 rounded-xl text-[11px] text-slate-400 flex items-start gap-2">
+                <i data-lucide="info" class="w-3.5 h-3.5 shrink-0 mt-0.5 text-slate-500"></i>
+                <span id="payday-settings-source-text">--</span>
+              </div>
+
               <div id="payday-settings-warning" class="hidden p-3 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-200 flex items-start gap-2">
                 <i data-lucide="alert-triangle" class="w-3.5 h-3.5 shrink-0 mt-0.5"></i>
                 <span>Your payday schedule appears incomplete. Please verify your paycheck amount.</span>
@@ -1334,6 +1343,11 @@
                   <button type="button" onclick="closePaydaySettingsEdit()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all">Cancel</button>
                   <button type="button" onclick="savePaydaySettings()" class="flex-1 py-2.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Save Changes</button>
                 </div>
+              </div>
+
+              <div class="pt-1 border-t border-slate-800/70">
+                <p class="text-[10px] text-slate-500 uppercase tracking-wider mb-2">Upcoming</p>
+                <div id="payday-settings-timeline" class="space-y-1.5"></div>
               </div>
             </div>
           </div>
@@ -2534,7 +2548,11 @@
       const newDateStr = nextDate.toISOString().split('T')[0];
       if (newDateStr === state.income.nextDate) return false;
       state.income.nextDate = newDateStr;
-      return true;
+      // Returns the number of cycles advanced (always >=1 here, so still
+      // truthy for every existing caller) rather than a plain boolean —
+      // lets renderDashboard() tell the user when more than one cycle was
+      // silently caught up, without changing any of the arithmetic above.
+      return guard;
     }
 
     // PREMIUM MICRO-ANIMATIONS
@@ -2771,13 +2789,22 @@
         }
 
         if (data && data.data) {
+          const previousSyncTime = state.lastSyncTime;
           const cloudPayload = data.data;
           const authoritativeUser = state.user;
           // Cloud is the source of truth on login; keep the freshly
           // authenticated user object rather than whatever was cached.
           state = { ...state, ...cloudPayload, user: authoritativeUser, isDemo: false };
           localStorage.setItem('paycheck_pilot_state', JSON.stringify(state));
-          logActivity("Cloud Sync Pulled", "Loaded latest data from paycheck_pilot_sync.");
+          // Only log when this pull actually found something newer than what
+          // was already local — with periodic polling, most pulls find
+          // nothing new, and logging every one of them would flood the
+          // Activity Log and grow the synced state blob unboundedly over a
+          // long session. The merge above always applies regardless of this
+          // check, so a real update can never be silently skipped — only
+          // the noise of logging an unchanged pull is reduced.
+          const isGenuinelyNewer = !previousSyncTime || (data.updated_at && new Date(data.updated_at) > new Date(previousSyncTime));
+          if (isGenuinelyNewer) logActivity("Cloud Sync Pulled", "Loaded latest data from paycheck_pilot_sync.");
         }
 
         state.lastSyncTime = new Date().toISOString();
@@ -2884,7 +2911,7 @@
           if (pulled) navigateTo(getCurrentPageId());
         });
       }
-    }, 20000);
+    }, 10000);
 
     async function checkAdminOwnerStatus() {
       if (!state.user || !supabaseClient) return;
@@ -3300,7 +3327,14 @@
     // RENDER DASHBOARD
     // ==========================================
     function renderDashboard() {
-      if (advanceStaleIncomeSchedule()) saveStateToStorage();
+      const cyclesAdvanced = advanceStaleIncomeSchedule();
+      if (cyclesAdvanced) {
+        saveStateToStorage();
+        if (cyclesAdvanced > 1) {
+          showToast("Your payday schedule was automatically updated based on your saved pay frequency.", "info");
+          logActivity("Payday Schedule Auto-Updated", `Advanced ${cyclesAdvanced} missed cycles to ${state.income.nextDate}, based on your saved pay frequency.`);
+        }
+      }
       renderPaydaySettingsCard();
       const liquidCash = getTotalLiquidCash();
       const upcomingBills = getUpcomingBillsTotal();
@@ -3349,6 +3383,13 @@
       if (highlightDate) highlightDate.innerText = state.income.nextDate || 'Not set';
       const highlightAmount = document.getElementById('dash-payday-highlight-amount');
       if (highlightAmount) highlightAmount.innerText = `$${formatCurrency(state.income.amount || 0)}`;
+      const highlightTagline = document.getElementById('dash-payday-highlight-tagline');
+      if (highlightTagline) {
+        highlightTagline.innerText = !state.income.nextDate ? 'Set up your payday schedule to see this'
+          : safeSpendHealth === 'danger' ? "Money Mayday may be needed before then"
+          : safeSpendHealth === 'warning' ? "It'll be tight, but you can make it"
+          : "You're on track to make it";
+      }
 
       const dailyEl = document.getElementById('dash-daily-available');
       if (dailyEl) dailyEl.innerText = `$${formatCurrency(Math.max(0, dailyAvailable))} / day`;
@@ -4320,14 +4361,79 @@
       const freqEl = document.getElementById('payday-settings-view-frequency');
       const warningEl = document.getElementById('payday-settings-warning');
       const dashBanner = document.getElementById('dash-income-repair-banner');
+      const sourceTextEl = document.getElementById('payday-settings-source-text');
 
       if (dateEl) dateEl.innerText = state.income.nextDate || 'Not set';
       if (amountEl) amountEl.innerText = `$${formatCurrency(state.income.amount || 0)}`;
       if (freqEl) freqEl.innerText = state.income.frequency || 'Not set';
 
+      // Clarity layer: state.income is a single shared value with no
+      // per-person owner field — there is no "whose paycheck" to report
+      // beyond this. In shared household mode, the whole schedule (date,
+      // amount, frequency) is part of the same household sync record as
+      // everything else — whoever last saved it here is what every member
+      // sees, regardless of the household's income-sharing toggle, which
+      // (checked directly) has no separate effect of its own on this value.
+      if (sourceTextEl) {
+        const inSharedHousehold = !!(state.household && state.household.id && state.household.accountMode === 'shared');
+        sourceTextEl.innerHTML = inSharedHousehold
+          ? `<strong class="text-slate-300">Shared with your household.</strong> There's one payday schedule per household, not one per person — whoever last saved it here is what every member sees. It drives the Payday Countdown, the 60-day Forecast, and Safe Spend for everyone in ${state.household.name || 'your household'}.`
+          : `<strong class="text-slate-300">Personal to your account.</strong> Not shared with anyone. It drives your Payday Countdown, your 60-day Forecast, and your Safe Spend.`;
+      }
+
       const incomplete = isIncomeScheduleIncomplete();
       if (warningEl) warningEl.classList.toggle('hidden', !incomplete);
       if (dashBanner) dashBanner.classList.toggle('hidden', !incomplete);
+
+      renderPaydaySettingsTimeline();
+    }
+
+    // Lightweight upcoming preview — paychecks and bills sorted together by
+    // date. Not a calendar grid, just a short list, per the "evaluate a
+    // lightweight timeline, no full calendar redesign" request. Reads
+    // visibleBills() directly (the same source the Coming Up page already
+    // uses) and projects payday dates locally with the same stepDays
+    // convention already established elsewhere — does not call or modify
+    // getUpcomingBills(), buildForecastSeries(), or advanceStaleIncomeSchedule().
+    function renderPaydaySettingsTimeline() {
+      const el = document.getElementById('payday-settings-timeline');
+      if (!el) return;
+
+      const events = [];
+      if (state.income.nextDate && !isIncomeScheduleIncomplete()) {
+        events.push({ date: state.income.nextDate, label: 'Payday', amount: state.income.amount, type: 'payday' });
+        const stepDays = state.income.frequency === 'weekly' ? 7
+          : state.income.frequency === 'biweekly' ? 14
+          : state.income.frequency === 'semimonthly' ? 15
+          : 30;
+        const d = new Date(state.income.nextDate + 'T00:00:00');
+        d.setDate(d.getDate() + stepDays);
+        events.push({ date: d.toISOString().split('T')[0], label: 'Payday', amount: state.income.amount, type: 'payday' });
+      }
+      visibleBills().filter(b => !b.completed && !b.paused).forEach(b => {
+        events.push({ date: b.dueDate, label: b.title, amount: b.amount, type: 'bill' });
+      });
+
+      const upcoming = events.sort((a, b) => new Date(a.date) - new Date(b.date)).slice(0, 6);
+
+      if (!upcoming.length) {
+        el.innerHTML = `<p class="text-[11px] text-slate-500">Nothing scheduled yet.</p>`;
+        return;
+      }
+
+      el.innerHTML = upcoming.map(ev => `
+        <div class="flex items-center justify-between text-[11px] py-1">
+          <span class="flex items-center gap-1.5 text-slate-300 min-w-0">
+            <i data-lucide="${ev.type === 'payday' ? 'wallet' : 'receipt'}" class="w-3 h-3 shrink-0 ${ev.type === 'payday' ? 'text-brand-400' : 'text-slate-500'}"></i>
+            <span class="truncate">${ev.label}</span>
+          </span>
+          <span class="flex items-center gap-2 shrink-0">
+            <span class="text-slate-500">${ev.date}</span>
+            <span class="font-semibold ${ev.type === 'payday' ? 'text-brand-400' : 'text-slate-400'}">${ev.type === 'payday' ? '+' : '-'}$${formatCurrency(ev.amount || 0)}</span>
+          </span>
+        </div>
+      `).join('');
+      lucide.createIcons();
     }
 
     function openPaydaySettingsEdit() {
@@ -7087,6 +7193,7 @@
         : p.confidenceLevel === 'medium' ? 'text-amber-400 bg-amber-500/10 border-amber-500/30'
         : 'text-slate-400 bg-slate-800/60 border-slate-700';
       const confText = p.confidenceLevel === 'high' ? 'High Confidence' : p.confidenceLevel === 'medium' ? 'Medium Confidence' : 'Low Confidence';
+      const hasExisting = !!state.income.nextDate;
 
       content.innerHTML = `
         <div class="p-4 bg-indigo-500/10 border border-indigo-500/30 rounded-2xl space-y-2">
@@ -7103,9 +7210,29 @@
           <p class="text-[10px] text-slate-500 uppercase tracking-wider">Last Paychecks Found</p>
           ${p.matches.slice(-5).map(m => `<div class="flex justify-between text-slate-400 py-1 border-b border-slate-800/60"><span>${m.date}</span><span class="text-white">$${formatCurrency(m.amount)}</span></div>`).join('')}
         </div>
+
+        ${hasExisting ? `
+          <div class="space-y-1.5">
+            <p class="text-[10px] text-slate-500 uppercase tracking-wider">Compare Before You Choose</p>
+            <div class="grid grid-cols-2 gap-2">
+              <div class="p-2.5 bg-slate-900/80 rounded-xl border border-slate-800">
+                <p class="text-[10px] text-slate-500 uppercase">Current Schedule</p>
+                <p class="text-white font-semibold text-xs mt-0.5">Next Payday: ${state.income.nextDate}</p>
+                <p class="text-slate-400 text-[11px]">$${formatCurrency(state.income.amount || 0)} · ${state.income.frequency || 'unknown'}</p>
+              </div>
+              <div class="p-2.5 bg-indigo-500/10 rounded-xl border border-indigo-500/30">
+                <p class="text-[10px] text-indigo-300 uppercase">Detected Schedule</p>
+                <p class="text-white font-semibold text-xs mt-0.5">Next Payday: ${p.nextPredictedDate}</p>
+                <p class="text-slate-400 text-[11px]">$${formatCurrency(p.averageAmount)} · ${p.frequency}</p>
+              </div>
+            </div>
+            <p class="text-[10px] text-slate-500">Your current schedule stays exactly as it is unless you choose to replace it below.</p>
+          </div>
+        ` : ''}
+
         <div class="space-y-2 pt-1">
           <button type="button" onclick="setStmtIncomeChoice(true)" id="stmt-income-choice-use">A) Use Detected Schedule</button>
-          <button type="button" onclick="setStmtIncomeChoice(false)" id="stmt-income-choice-keep">B) Keep Existing Schedule</button>
+          <button type="button" onclick="setStmtIncomeChoice(false)" id="stmt-income-choice-keep">B) Keep Current Schedule</button>
         </div>
       `;
       setStmtIncomeChoice(false);
@@ -7544,12 +7671,6 @@
         location.reload();
       }
     }
-</script>
-
-<div style="font-size:1px;color:transparent;">
-Impact-Site-Verification: c01f5ea2-5682-4671-9ef4-d27f7bc71fe3
-</div>
-
+  </script>
 </body>
-
 </html>
