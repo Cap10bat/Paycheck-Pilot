@@ -1301,6 +1301,21 @@
               <button onclick="openRepairWizard()" class="shrink-0 px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Repair My Data</button>
             </div>
 
+            <!-- FINANCIAL RESET WIZARD — deliberate fresh start. Clears -->
+            <!-- transactions/bills/paycheck schedule; preserves everything else. -->
+            <div class="glass-card p-4 sm:p-6 rounded-3xl border border-rose-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="flex items-center gap-3">
+                <span class="w-10 h-10 rounded-xl bg-rose-500/15 flex items-center justify-center shrink-0">
+                  <i data-lucide="rotate-ccw" class="w-5 h-5 text-rose-400"></i>
+                </span>
+                <div>
+                  <h3 class="font-bold text-white text-base">Financial Reset</h3>
+                  <p class="text-xs text-slate-400">A guided fresh start: clears your bills, transactions, and paycheck schedule, then walks you through re-importing with the corrected logic. Your accounts, household, login, and sync stay exactly as they are.</p>
+                </div>
+              </div>
+              <button onclick="openResetWizard()" class="shrink-0 px-4 py-2.5 bg-rose-500 hover:bg-rose-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Financial Reset</button>
+            </div>
+
             <!-- PAYDAY SETTINGS — view/edit the same state.income fields the -->
             <!-- countdown, Forecast, Safe Spend, and Payday Briefing already read. -->
             <div class="glass-card p-4 sm:p-6 rounded-3xl border border-brand-500/30 space-y-4">
@@ -1945,6 +1960,30 @@
       </div>
       <p id="repair-step-label" class="text-[10px] font-bold uppercase tracking-wider text-amber-400 -mt-3">Step 1 of 5 · Analyze</p>
       <div id="repair-content" class="space-y-4 text-xs"></div>
+    </div>
+
+    <!-- FINANCIAL RESET WIZARD — a deliberate fresh-start, distinct from
+         Repair My Data. Clears transactions/bills/paycheck schedule only;
+         never touches accounts, household, auth, or sync configuration.
+         Step 2 reuses handleImportFileSelected()/confirmImportWizard()
+         unmodified rather than re-parsing the file itself. -->
+    <div id="modal-reset-wizard" class="glass-card p-4 sm:p-6 rounded-3xl border border-rose-500/40 w-full max-w-lg hidden space-y-5 max-h-[85vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-white text-base flex items-center gap-2">
+          <i data-lucide="rotate-ccw" class="w-4 h-4 text-rose-400"></i> Financial Reset
+        </h3>
+        <button onclick="closeModals()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <div id="reset-step-dot-1" class="h-1 flex-1 rounded-full bg-rose-500"></div>
+        <div id="reset-step-dot-2" class="h-1 flex-1 rounded-full bg-slate-800"></div>
+        <div id="reset-step-dot-3" class="h-1 flex-1 rounded-full bg-slate-800"></div>
+        <div id="reset-step-dot-4" class="h-1 flex-1 rounded-full bg-slate-800"></div>
+        <div id="reset-step-dot-5" class="h-1 flex-1 rounded-full bg-slate-800"></div>
+        <div id="reset-step-dot-6" class="h-1 flex-1 rounded-full bg-slate-800"></div>
+      </div>
+      <p id="reset-step-label" class="text-[10px] font-bold uppercase tracking-wider text-rose-400 -mt-3">Step 1 of 6 · Reset</p>
+      <div id="reset-content" class="space-y-4 text-xs"></div>
     </div>
 
     <!-- DEFICIT NAVIGATOR 2.0 (BILL TETRIS) MODAL -->
@@ -4782,6 +4821,279 @@
           <div class="flex justify-between py-1 border-b border-slate-800/60"><span class="text-slate-400">Upcoming Bills Rebuilt</span><span class="text-white font-bold">${r.billsRebuilt}</span></div>
           <div class="flex justify-between py-1 border-b border-slate-800/60"><span class="text-slate-400">Duplicate Transactions Removed</span><span class="text-white font-bold">${r.duplicatesRemoved}</span></div>
           <div class="flex justify-between py-1"><span class="text-slate-400">Forecast Recalculated</span><span class="text-brand-400 font-bold">${r.forecastRecalculated ? 'Yes' : 'No'}</span></div>
+        </div>
+        <button type="button" onclick="closeModals(); navigateTo('dashboard');" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Go to Dashboard</button>
+      `;
+    }
+
+    // ============================================================
+    // FINANCIAL RESET WIZARD — a deliberate fresh start, distinct from
+    // Repair My Data. Clears transactions, bills, and the paycheck schedule
+    // only. Never touches state.accounts, state.household, state.user, or
+    // sync configuration — those are the things explicitly preserved.
+    // Step 2 reuses handleImportFileSelected() and confirmImportWizard()
+    // completely unmodified (via a DOM-observation handoff, see below)
+    // rather than re-implementing any parsing or commit logic.
+    // ============================================================
+
+    let resetWizardState = { step: 1, confirmed: false, preImportCounts: {} };
+
+    function resetFinancialResetWizardState() {
+      resetWizardState = { step: 1, confirmed: false, preImportCounts: {} };
+    }
+
+    function openResetWizard() {
+      resetFinancialResetWizardState();
+      const backdrop = document.getElementById('modal-backdrop');
+      const modal = document.getElementById('modal-reset-wizard');
+      if (backdrop && modal) { backdrop.classList.remove('hidden'); modal.classList.remove('hidden'); }
+      renderResetStep();
+    }
+
+    function renderResetStep() {
+      const step = resetWizardState.step;
+      const labels = ['Reset', 'Import Etheridge Data', 'Review Paychecks', 'Review Bills', 'Confirm Schedule', 'Rebuild Forecast'];
+      for (let i = 1; i <= 6; i++) {
+        const dot = document.getElementById(`reset-step-dot-${i}`);
+        if (dot) dot.className = `h-1 flex-1 rounded-full ${i <= step ? 'bg-rose-500' : 'bg-slate-800'}`;
+      }
+      const label = document.getElementById('reset-step-label');
+      if (label) label.innerText = `Step ${step} of 6 · ${labels[step - 1]}`;
+
+      if (step === 1) renderResetStep1();
+      else if (step === 2) renderResetStep2();
+      else if (step === 3) renderResetStep3();
+      else if (step === 4) renderResetStep4();
+      else if (step === 5) renderResetStep5();
+      else if (step === 6) renderResetStep6();
+      lucide.createIcons();
+    }
+
+    function renderResetStep1() {
+      const content = document.getElementById('reset-content');
+      if (!content) return;
+      content.innerHTML = `
+        <div class="p-4 bg-rose-500/10 border border-rose-500/30 rounded-2xl space-y-2">
+          <p class="flex items-center gap-1.5 text-rose-300 font-bold text-sm"><i data-lucide="alert-triangle" class="w-4 h-4"></i> This clears data — read before continuing</p>
+          <p class="text-slate-300">This will clear:</p>
+          <ul class="space-y-0.5 text-slate-300 pl-1">
+            <li>• Transactions (${state.transactions.length})</li>
+            <li>• Bills (${state.bills.length})</li>
+            <li>• Your paycheck schedule</li>
+            <li>• Imported financial records &amp; import history</li>
+          </ul>
+        </div>
+        <div class="p-3 bg-slate-900/80 border border-slate-800 rounded-xl">
+          <p class="text-slate-300 font-semibold mb-1">This will NOT touch:</p>
+          <p class="text-slate-400">Account ownership · Household membership · User profiles · Login &amp; authentication · Sync configuration · Checking/savings balances</p>
+        </div>
+        <label class="flex items-start gap-2.5 p-3 bg-slate-900/80 rounded-xl border border-slate-800 cursor-pointer">
+          <input type="checkbox" id="reset-confirm-checkbox" onchange="resetWizardState.confirmed = this.checked; document.getElementById('reset-continue-btn').disabled = !this.checked;" class="w-4 h-4 rounded accent-rose-500 mt-0.5" />
+          <span class="text-slate-300">I understand this clears my bills and transaction history, and want a fresh start.</span>
+        </label>
+        <button type="button" id="reset-continue-btn" onclick="runFinancialReset()" disabled class="w-full py-3 bg-rose-500 hover:bg-rose-600 text-slate-950 font-bold rounded-xl text-xs transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-rose-500">Reset & Continue</button>
+      `;
+    }
+
+    function runFinancialReset() {
+      if (!resetWizardState.confirmed) return;
+      const actor = currentOwnerLabel();
+
+      state.transactions = [];
+      state.bills = [];
+      state.income = { amount: 0, nextDate: null, frequency: 'biweekly' };
+      state.importHistory = [];
+      state.spendingInsights = null;
+
+      logActivity("Household Reset", `${actor} started a Financial Reset — cleared transactions, bills, and the paycheck schedule. Accounts, household, and login were not touched.`);
+      saveStateToStorage();
+
+      resetWizardState.step = 2;
+      renderResetStep();
+    }
+
+    function renderResetStep2() {
+      const content = document.getElementById('reset-content');
+      if (!content) return;
+      const hasHousehold = !!(state.household && state.household.id);
+      content.innerHTML = `
+        <div class="p-4 bg-slate-900/80 border border-slate-800 rounded-2xl text-center space-y-2">
+          <i data-lucide="upload" class="w-6 h-6 text-rose-400 mx-auto"></i>
+          <p class="text-sm font-bold text-white">Import your Etheridge Financial data</p>
+          <p class="text-slate-400">This uses the same guided import already in Paycheck Pilot — the same file you imported before now runs through the corrected paycheck logic.</p>
+        </div>
+        <div class="pt-1">
+          <p class="text-xs font-semibold text-slate-400 mb-1">Import as:</p>
+          <button type="button" id="reset-dest-personal-btn" onclick="setResetImportDestination('personal')">Personal — only visible to you</button>
+          <button type="button" id="reset-dest-household-btn" onclick="setResetImportDestination('household')">Household — visible to everyone in your household</button>
+          ${!hasHousehold ? `<p class="text-[10px] text-slate-500 mt-1">You're not in a shared household, so this will import as Personal.</p>` : ''}
+        </div>
+        <label class="w-full py-6 border-2 border-dashed border-slate-700 hover:border-rose-500 rounded-2xl flex flex-col items-center justify-center gap-2 cursor-pointer transition-all text-center">
+          <i data-lucide="file-json" class="w-5 h-5 text-rose-400"></i>
+          <span class="text-slate-300 font-semibold">Choose your Etheridge Financial JSON file</span>
+          <span id="reset-file-name" class="text-[10px] text-slate-500 px-4"></span>
+          <input type="file" id="reset-file-input" accept=".json" onchange="handleResetWizardFileSelected(event)" class="hidden" />
+        </label>
+      `;
+      setResetImportDestination('personal');
+    }
+
+    function setResetImportDestination(dest) {
+      const hasHousehold = !!(state.household && state.household.id);
+      if (dest === 'household' && !hasHousehold) dest = 'personal';
+      importWizardState.destination = dest;
+      const personalBtn = document.getElementById('reset-dest-personal-btn');
+      const householdBtn = document.getElementById('reset-dest-household-btn');
+      const activeCls = 'w-full p-2.5 rounded-xl border-2 text-left text-xs mb-1.5 transition-all border-rose-500 bg-rose-500/10 text-white';
+      const inactiveCls = 'w-full p-2.5 rounded-xl border-2 text-left text-xs mb-1.5 transition-all border-slate-800 bg-slate-900/60 text-slate-300 hover:border-slate-700';
+      const disabledCls = 'w-full p-2.5 rounded-xl border-2 text-left text-xs transition-all border-slate-800/50 bg-slate-900/30 text-slate-600 cursor-not-allowed';
+      if (personalBtn) personalBtn.className = dest === 'personal' ? activeCls : inactiveCls;
+      if (householdBtn) householdBtn.className = !hasHousehold ? disabledCls : (dest === 'household' ? activeCls : inactiveCls);
+    }
+
+    // Reuses handleImportFileSelected() completely unmodified for parsing.
+    // That function always ends by calling openImportWizard(), which shows
+    // the SEPARATE standard Import Wizard modal — a brief MutationObserver
+    // catches the exact moment it becomes visible and swaps it for this
+    // wizard's own modal instead, so the user sees one continuous flow
+    // rather than being bounced between two different wizards. Nothing
+    // about handleImportFileSelected/openImportWizard/confirmImportWizard
+    // is modified — this only reacts to a DOM change they already produce.
+    function handleResetWizardFileSelected(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const nameEl = document.getElementById('reset-file-name');
+        if (nameEl) nameEl.innerText = file.name;
+      }
+      const stdModal = document.getElementById('modal-import-wizard');
+      if (stdModal) {
+        const observer = new MutationObserver(() => {
+          if (!stdModal.classList.contains('hidden')) {
+            stdModal.classList.add('hidden');
+            observer.disconnect();
+            resetWizardState.preImportCounts = {
+              accounts: state.accounts.length, bills: state.bills.length,
+              transactions: state.transactions.length
+            };
+            // Commit immediately with the destination already chosen on this
+            // step — reuses confirmImportWizard() exactly as the standard
+            // wizard itself would call it, just without showing its UI.
+            confirmImportWizard();
+            const backdrop = document.getElementById('modal-backdrop');
+            const modal = document.getElementById('modal-reset-wizard');
+            if (backdrop && modal) { backdrop.classList.remove('hidden'); modal.classList.remove('hidden'); }
+            resetWizardState.step = 3;
+            renderResetStep();
+          }
+        });
+        observer.observe(stdModal, { attributes: true, attributeFilter: ['class'] });
+      }
+      handleImportFileSelected(event);
+    }
+
+    function renderResetStep3() {
+      const content = document.getElementById('reset-content');
+      if (!content) return;
+      const hasSchedule = !!state.income.nextDate;
+      content.innerHTML = `
+        <div class="p-4 ${hasSchedule ? 'bg-brand-500/10 border-brand-500/30' : 'bg-slate-900/80 border-slate-800'} border rounded-2xl space-y-2">
+          <p class="flex items-center gap-1.5 ${hasSchedule ? 'text-brand-300' : 'text-slate-400'} font-bold text-sm"><i data-lucide="wallet" class="w-4 h-4"></i> Review Imported Paychecks</p>
+          ${hasSchedule
+            ? `<p class="text-slate-300">A future paycheck was found and used to set your schedule:</p>
+               <p class="text-white font-semibold">Next Payday: ${state.income.nextDate} · $${formatCurrency(state.income.amount || 0)}</p>`
+            : `<p class="text-slate-400">No future-dated paycheck was found in this file. You can set your schedule manually on the next step.</p>`
+          }
+        </div>
+        <button type="button" onclick="resetWizardState.step = 4; renderResetStep();" class="w-full py-3 bg-rose-500 hover:bg-rose-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Continue</button>
+      `;
+    }
+
+    function renderResetStep4() {
+      const content = document.getElementById('reset-content');
+      if (!content) return;
+      const importedBills = state.bills.filter(b => b.source === 'json-import');
+      content.innerHTML = `
+        <p class="text-slate-400">${importedBills.length} bill${importedBills.length === 1 ? '' : 's'} imported:</p>
+        <div class="space-y-1.5">
+          ${importedBills.length ? importedBills.map(b => `<div class="flex justify-between text-slate-400 py-1 border-b border-slate-800/60"><span>${b.title}</span><span class="text-white">$${formatCurrency(b.amount)}</span></div>`).join('') : `<p class="text-slate-500 text-center py-4">No bills were found in this file.</p>`}
+        </div>
+        <button type="button" onclick="resetWizardState.step = 5; renderResetStep();" class="w-full py-3 bg-rose-500 hover:bg-rose-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Continue</button>
+      `;
+    }
+
+    function renderResetStep5() {
+      const content = document.getElementById('reset-content');
+      if (!content) return;
+      content.innerHTML = `
+        <p class="text-slate-400">Confirm or adjust your paycheck schedule before rebuilding your Forecast.</p>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Paycheck Amount</label>
+            <input type="number" id="reset-schedule-amount" step="0.01" value="${state.income.amount || ''}" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-rose-500" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1">Next Payday Date</label>
+            <input type="date" id="reset-schedule-date" value="${state.income.nextDate || ''}" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-rose-500" />
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1">Frequency</label>
+          <select id="reset-schedule-frequency" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none">
+            <option value="biweekly" ${state.income.frequency === 'biweekly' ? 'selected' : ''}>Every 2 Weeks (Bi-Weekly)</option>
+            <option value="weekly" ${state.income.frequency === 'weekly' ? 'selected' : ''}>Weekly</option>
+            <option value="semimonthly" ${state.income.frequency === 'semimonthly' ? 'selected' : ''}>Twice a Month (1st &amp; 15th)</option>
+            <option value="monthly" ${state.income.frequency === 'monthly' ? 'selected' : ''}>Monthly</option>
+          </select>
+        </div>
+        <button type="button" onclick="confirmResetSchedule()" class="w-full py-3 bg-rose-500 hover:bg-rose-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Confirm Schedule</button>
+      `;
+    }
+
+    function confirmResetSchedule() {
+      const amount = parseFloat(document.getElementById('reset-schedule-amount').value);
+      const nextDate = document.getElementById('reset-schedule-date').value;
+      const frequency = document.getElementById('reset-schedule-frequency').value;
+
+      if (nextDate && !isNaN(amount) && amount > 0) {
+        state.income.amount = amount;
+        state.income.nextDate = nextDate;
+        state.income.frequency = frequency;
+        state.income.lastEditedBy = currentOwnerLabel();
+        state.income.lastEditedAt = new Date().toISOString();
+        saveStateToStorage();
+      }
+      resetWizardState.step = 6;
+      renderResetStep();
+    }
+
+    function renderResetStep6() {
+      const content = document.getElementById('reset-content');
+      if (!content) return;
+      // Forecast, Safe Spend, and the Payday Countdown are pure functions
+      // recomputed on every render — there is nothing stored to "rebuild"
+      // beyond re-rendering, which navigateTo() below does.
+      const pre = resetWizardState.preImportCounts;
+      const accountsImported = state.accounts.length - (pre.accounts || 0);
+      const billsImported = state.bills.length - (pre.bills || 0);
+      const transactionsImported = state.transactions.length - (pre.transactions || 0);
+      const paychecksImported = state.income.nextDate ? 1 : 0;
+
+      logActivity("Financial Reset Complete", `${currentOwnerLabel()} finished a Financial Reset. Accounts: ${accountsImported}, Bills: ${billsImported}, Transactions: ${transactionsImported}, Paychecks: ${paychecksImported}. Next payday: ${state.income.nextDate || 'not set'}.`);
+      saveStateToStorage();
+
+      content.innerHTML = `
+        <div class="p-4 bg-brand-500/10 border border-brand-500/30 rounded-2xl text-center space-y-1">
+          <i data-lucide="check-circle-2" class="w-7 h-7 text-brand-400 mx-auto"></i>
+          <p class="text-sm font-bold text-white">Financial Reset complete</p>
+          <p class="text-slate-500">Forecast, Safe Spend, and your Payday Countdown all recalculate automatically from this point forward.</p>
+        </div>
+        <div class="space-y-1.5">
+          <div class="flex justify-between py-1 border-b border-slate-800/60"><span class="text-slate-400">Accounts Imported</span><span class="text-white font-bold">${accountsImported}</span></div>
+          <div class="flex justify-between py-1 border-b border-slate-800/60"><span class="text-slate-400">Bills Imported</span><span class="text-white font-bold">${billsImported}</span></div>
+          <div class="flex justify-between py-1 border-b border-slate-800/60"><span class="text-slate-400">Transactions Imported</span><span class="text-white font-bold">${transactionsImported}</span></div>
+          <div class="flex justify-between py-1 border-b border-slate-800/60"><span class="text-slate-400">Paychecks Imported</span><span class="text-white font-bold">${paychecksImported}</span></div>
+          <div class="flex justify-between py-1 border-b border-slate-800/60"><span class="text-slate-400">Next Payday</span><span class="text-white font-bold">${state.income.nextDate || 'Not set'}</span></div>
+          <div class="flex justify-between py-1"><span class="text-slate-400">Forecast Status</span><span class="text-brand-400 font-bold">Recalculated</span></div>
         </div>
         <button type="button" onclick="closeModals(); navigateTo('dashboard');" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Go to Dashboard</button>
       `;
