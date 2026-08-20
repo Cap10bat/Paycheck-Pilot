@@ -2425,6 +2425,12 @@
       // Populated only by Flight Recorder Import (statement analysis).
       // Informational — Forecast and Financial Weather do not read this.
       spendingInsights: null,
+      // Other confirmed household members' paycheck schedules, configured
+      // during Financial Reset when multiple distinct patterns are found.
+      // state.income remains the current user's own schedule (unchanged) —
+      // this is additive, read by buildForecastSeries() alongside it so
+      // Forecast reflects the full household income picture.
+      householdPaychecks: [],
       // One entry per statement-import session, enabling Settings → Data
       // Management → Import History → Undo Import.
       importHistory: []
@@ -3425,7 +3431,33 @@
     // ==========================================
     // RENDER DASHBOARD
     // ==========================================
+    // Data-integrity scan — read-only, runs once per session (not every
+    // render). Answers two things without any new UI: are there already
+    // duplicate accounts sitting in state, and does every account have
+    // exactly one valid scope/owner. Findings go to the existing Activity
+    // Log; nothing is auto-corrected here.
+    function scanAccountDataIntegrity() {
+      if (window._accountIntegrityScanned) return;
+      window._accountIntegrityScanned = true;
+
+      const seen = {};
+      const duplicateGroups = [];
+      state.accounts.forEach(a => {
+        const key = `${a.name}__${a.type}__${Number(a.balance)}`;
+        (seen[key] = seen[key] || []).push(a);
+      });
+      Object.values(seen).forEach(group => { if (group.length > 1) duplicateGroups.push(group); });
+
+      const ownershipIssues = state.accounts.filter(a => !a.scope || (a.scope !== 'personal' && a.scope !== 'household'));
+
+      if (duplicateGroups.length > 0 || ownershipIssues.length > 0) {
+        const dupCount = duplicateGroups.reduce((sum, g) => sum + g.length, 0);
+        logActivity("Data Integrity Check", `Found ${dupCount} account(s) across ${duplicateGroups.length} duplicate group(s), and ${ownershipIssues.length} account(s) with missing/invalid scope. IDs: ${duplicateGroups.map(g => g.map(a => a.id).join('+')).join(', ') || 'none'}.`);
+      }
+    }
+
     function renderDashboard() {
+      scanAccountDataIntegrity();
       const cyclesAdvanced = advanceStaleIncomeSchedule();
       if (cyclesAdvanced) {
         saveStateToStorage();
@@ -4043,11 +4075,29 @@
         let d = new Date(state.income.nextDate + 'T00:00:00');
         let guard = 0;
         while ((d - today) <= daysAhead * 86400000 && guard < 16) {
-          if (d >= today) paydays.push(new Date(d));
+          if (d >= today) paydays.push({ date: new Date(d), amount: Number(state.income.amount) || 0, label: 'Payday Deposit', isOwn: true });
           d = new Date(d.getTime() + stepDays * 86400000);
           guard++;
         }
       }
+      // Other confirmed household members' paychecks (configured via
+      // Financial Reset) — same projection technique as above, applied per
+      // schedule, so Forecast reflects the full household income picture
+      // rather than only the current user's own paycheck.
+      (state.householdPaychecks || []).forEach(hp => {
+        if (!hp || !hp.nextDate) return;
+        const stepDays = hp.frequency === 'weekly' ? 7
+          : hp.frequency === 'biweekly' ? 14
+          : hp.frequency === 'semimonthly' ? 15
+          : 30;
+        let d = new Date(hp.nextDate + 'T00:00:00');
+        let guard = 0;
+        while ((d - today) <= daysAhead * 86400000 && guard < 16) {
+          if (d >= today) paydays.push({ date: new Date(d), amount: Number(hp.amount) || 0, label: `Payday Deposit (${hp.ownerLabel || 'Household'})`, isOwn: false });
+          d = new Date(d.getTime() + stepDays * 86400000);
+          guard++;
+        }
+      });
 
       const activeBills = visibleBills().filter(b => !b.completed && !b.paused);
       let running = startCash;
@@ -4066,18 +4116,21 @@
         });
 
         paydays.forEach(p => {
-          if (p.toISOString().split('T')[0] === dayStr) {
-            running += Number(state.income.amount) || 0;
-            events.push({ type: 'payday', label: 'Payday Deposit', amount: state.income.amount });
+          if (p.date.toISOString().split('T')[0] === dayStr) {
+            running += p.amount;
+            events.push({ type: 'payday', label: p.label, amount: p.amount });
 
-            // Real, computed goal-funding opportunity: this payday leaves
-            // enough of a buffer above a safety threshold to put something
-            // toward an active goal.
-            const activeGoal = visibleGoals().find(g => Number(g.current) < Number(g.target));
-            const surplus = running - 300;
-            if (activeGoal && surplus > 0) {
-              const remaining = Number(activeGoal.target) - Number(activeGoal.current);
-              events.push({ type: 'goal', label: `Fund "${activeGoal.title}"`, amount: Math.min(surplus, remaining) });
+            if (p.isOwn) {
+              // Real, computed goal-funding opportunity: this payday leaves
+              // enough of a buffer above a safety threshold to put something
+              // toward an active goal. Unchanged from before — still scoped
+              // to the user's own payday only, not household members'.
+              const activeGoal = visibleGoals().find(g => Number(g.current) < Number(g.target));
+              const surplus = running - 300;
+              if (activeGoal && surplus > 0) {
+                const remaining = Number(activeGoal.target) - Number(activeGoal.current);
+                events.push({ type: 'goal', label: `Fund "${activeGoal.title}"`, amount: Math.min(surplus, remaining) });
+              }
             }
           }
         });
@@ -4846,10 +4899,10 @@
     // rather than re-implementing any parsing or commit logic.
     // ============================================================
 
-    let resetWizardState = { step: 1, confirmed: false, preImportCounts: {}, removedCounts: {} };
+    let resetWizardState = { step: 1, confirmed: false, preImportCounts: {}, removedCounts: {}, paycheckChoices: {} };
 
     function resetFinancialResetWizardState() {
-      resetWizardState = { step: 1, confirmed: false, preImportCounts: {}, removedCounts: {} };
+      resetWizardState = { step: 1, confirmed: false, preImportCounts: {}, removedCounts: {}, paycheckChoices: {} };
     }
 
     function openResetWizard() {
@@ -4890,7 +4943,7 @@
           <ul class="space-y-0.5 text-slate-300 pl-1">
             <li>• Transactions: ${state.transactions.length}</li>
             <li>• Bills: ${state.bills.length}</li>
-            <li>• Income schedules: ${state.income.nextDate ? 1 : 0}</li>
+            <li>• Income schedules: ${(state.income.nextDate ? 1 : 0) + (state.householdPaychecks || []).length}</li>
             <li>• Import history records: ${(state.importHistory || []).length}</li>
           </ul>
         </div>
@@ -4918,17 +4971,18 @@
       resetWizardState.removedCounts = {
         transactions: state.transactions.length,
         bills: state.bills.length,
-        incomeSchedules: state.income.nextDate ? 1 : 0,
+        incomeSchedules: (state.income.nextDate ? 1 : 0) + (state.householdPaychecks || []).length,
         importRecords: (state.importHistory || []).length
       };
 
       state.transactions = [];
       state.bills = [];
       state.income = { amount: 0, nextDate: null, frequency: 'biweekly' };
+      state.householdPaychecks = [];
       state.importHistory = [];
       state.spendingInsights = null;
 
-      logActivity("Household Reset", `${actor} started a Financial Reset — cleared transactions, bills, and the paycheck schedule. Accounts, household, and login were not touched.`);
+      logActivity("Household Reset", `${actor} started a Financial Reset — cleared transactions, bills, and all paycheck schedules (personal and household). Accounts, household, and login were not touched.`);
       saveStateToStorage();
 
       resetWizardState.step = 2;
@@ -4988,12 +5042,21 @@
         const nameEl = document.getElementById('reset-file-name');
         if (nameEl) nameEl.innerText = file.name;
       }
+      // If a file was already selected and its observer is still pending
+      // (parse not yet finished), disconnect it first — otherwise selecting
+      // a file twice in quick succession could leave two observers alive,
+      // each able to trigger its own confirmImportWizard() call.
+      if (window._resetWizardFileObserver) {
+        window._resetWizardFileObserver.disconnect();
+        window._resetWizardFileObserver = null;
+      }
       const stdModal = document.getElementById('modal-import-wizard');
       if (stdModal) {
         const observer = new MutationObserver(() => {
           if (!stdModal.classList.contains('hidden')) {
             stdModal.classList.add('hidden');
             observer.disconnect();
+            window._resetWizardFileObserver = null;
             resetWizardState.preImportCounts = {
               accounts: state.accounts.length, bills: state.bills.length,
               transactions: state.transactions.length
@@ -5010,6 +5073,7 @@
           }
         });
         observer.observe(stdModal, { attributes: true, attributeFilter: ['class'] });
+        window._resetWizardFileObserver = observer;
       }
       handleImportFileSelected(event);
     }
@@ -5021,23 +5085,33 @@
       const hasSchedule = !!state.income.nextDate;
 
       if (candidates.length > 1) {
+        resetWizardState.paycheckChoices = resetWizardState.paycheckChoices || {};
         content.innerHTML = `
           <div class="p-4 bg-amber-500/10 border border-amber-500/30 rounded-2xl space-y-1">
             <p class="flex items-center gap-1.5 text-amber-300 font-bold text-sm"><i data-lucide="alert-triangle" class="w-4 h-4"></i> Multiple paycheck patterns found</p>
-            <p class="text-slate-300">This file has ${candidates.length} distinct paycheck patterns — likely more than one household member. Choose the one that's yours; nothing was set automatically.</p>
+            <p class="text-slate-300">This file has ${candidates.length} distinct paycheck patterns — likely more than one household member. Configure each one below; nothing is set until you choose.</p>
           </div>
           <div class="space-y-2">
             ${candidates.map((c, i) => `
-              <label class="flex items-start gap-2.5 p-3 bg-slate-900/80 rounded-xl border border-slate-800 cursor-pointer">
-                <input type="radio" name="reset-schedule-choice" onchange="applyResetScheduleCandidate(${i})" class="w-4 h-4 accent-rose-500 mt-0.5" />
-                <span class="flex-1">
-                  <span class="block text-white font-semibold">${c.label}</span>
-                  <span class="block text-[11px] text-slate-500">Next: ${c.date} · $${formatCurrency(c.amount)} · ${c.frequency} · ${c.futureCount} future occurrence${c.futureCount === 1 ? '' : 's'} found</span>
-                </span>
-              </label>
+              <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800 space-y-2">
+                <div>
+                  <p class="text-white font-semibold">${c.label}</p>
+                  <p class="text-[11px] text-slate-500">Next: ${c.date} · $${formatCurrency(c.amount)} · ${c.frequency} · ${c.futureCount} future occurrence${c.futureCount === 1 ? '' : 's'} found</p>
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                  <button type="button" onclick="setResetPaycheckOwnership(${i}, 'personal')" id="reset-paycheck-${i}-personal">Personal (Mine)</button>
+                  <button type="button" onclick="setResetPaycheckOwnership(${i}, 'household')" id="reset-paycheck-${i}-household">Shared / Household Member</button>
+                  <button type="button" onclick="setResetPaycheckOwnership(${i}, 'ignore')" id="reset-paycheck-${i}-ignore">Ignore</button>
+                </div>
+                <div id="reset-paycheck-${i}-owner-wrap" class="hidden">
+                  <label class="block text-[10px] text-slate-500 mb-1">Whose paycheck is this?</label>
+                  <input type="text" id="reset-paycheck-${i}-owner-name" placeholder="e.g. Boo" oninput="resetWizardState.paycheckChoices[${i}].ownerLabel = this.value" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-200 outline-none focus:border-rose-500" />
+                </div>
+              </div>
             `).join('')}
           </div>
-          <button type="button" onclick="resetWizardState.step = 4; renderResetStep();" class="w-full py-3 bg-rose-500 hover:bg-rose-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Continue</button>
+          <p id="reset-paycheck-gate-msg" class="text-[11px] text-amber-300"></p>
+          <button type="button" id="reset-paycheck-continue-btn" onclick="confirmResetPaycheckChoices()" class="w-full py-3 bg-rose-500 hover:bg-rose-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Continue</button>
         `;
         return;
       }
@@ -5055,18 +5129,73 @@
       `;
     }
 
-    // Applies the user's explicit choice when multiple distinct paycheck
-    // patterns were found — the only place a multi-identity import ever
-    // actually sets a schedule, and only on direct user selection.
-    function applyResetScheduleCandidate(index) {
-      const c = (importWizardState.scheduleCandidates || [])[index];
-      if (!c) return;
-      state.income.nextDate = c.date;
-      state.income.amount = c.amount;
-      state.income.frequency = c.frequency;
-      state.income.lastEditedBy = currentOwnerLabel();
-      state.income.lastEditedAt = new Date().toISOString();
+    // Sets (or changes) one candidate's ownership choice — does not write to
+    // state yet, only records the pending choice so Continue can verify
+    // every candidate has one before anything is actually applied.
+    function setResetPaycheckOwnership(index, choice) {
+      resetWizardState.paycheckChoices = resetWizardState.paycheckChoices || {};
+      resetWizardState.paycheckChoices[index] = { choice, ownerLabel: (resetWizardState.paycheckChoices[index] && resetWizardState.paycheckChoices[index].ownerLabel) || '' };
+
+      ['personal', 'household', 'ignore'].forEach(c => {
+        const btn = document.getElementById(`reset-paycheck-${index}-${c}`);
+        if (btn) btn.className = `px-2.5 py-1 rounded-lg text-[10px] font-semibold transition-all ${c === choice ? 'bg-rose-500 text-slate-950' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}`;
+      });
+      const ownerWrap = document.getElementById(`reset-paycheck-${index}-owner-wrap`);
+      if (ownerWrap) ownerWrap.classList.toggle('hidden', choice !== 'household');
+    }
+
+    // The gate: every discovered candidate must have an explicit choice
+    // before anything is written. Personal sets state.income (unchanged
+    // consumer: Countdown, Payday Briefing, Payday Settings). Household
+    // pushes into state.householdPaychecks, stored consistently with the
+    // existing scope/ownerLabel model used everywhere else (bills,
+    // transactions, accounts) rather than a new ownership shape.
+    function confirmResetPaycheckChoices() {
+      const candidates = importWizardState.scheduleCandidates || [];
+      const choices = resetWizardState.paycheckChoices || {};
+      const missing = candidates.some((_, i) => !choices[i]);
+      if (missing) {
+        const msg = document.getElementById('reset-paycheck-gate-msg');
+        if (msg) msg.innerText = 'Choose Personal, Household Member, or Ignore for every paycheck found before continuing.';
+        return;
+      }
+      const missingOwnerName = candidates.some((_, i) => choices[i].choice === 'household' && !choices[i].ownerLabel.trim());
+      if (missingOwnerName) {
+        const msg = document.getElementById('reset-paycheck-gate-msg');
+        if (msg) msg.innerText = 'Enter a name for each paycheck marked as a household member.';
+        return;
+      }
+
+      const actor = currentOwnerLabel();
+      let personalApplied = false;
+      candidates.forEach((c, i) => {
+        const choice = choices[i];
+        if (choice.choice === 'personal' && !personalApplied) {
+          state.income.nextDate = c.date;
+          state.income.amount = c.amount;
+          state.income.frequency = c.frequency;
+          state.income.lastEditedBy = actor;
+          state.income.lastEditedAt = new Date().toISOString();
+          personalApplied = true;
+        } else if (choice.choice === 'household') {
+          state.householdPaychecks.push({
+            id: 'hp_' + Date.now() + '_' + i,
+            label: c.label,
+            amount: c.amount,
+            nextDate: c.date,
+            frequency: c.frequency,
+            scope: 'household',
+            ownerId: null,
+            ownerLabel: choice.ownerLabel.trim(),
+            createdBy: actor,
+            createdAt: new Date().toISOString()
+          });
+        }
+      });
+
       saveStateToStorage();
+      resetWizardState.step = 4;
+      renderResetStep();
     }
 
     function renderResetStep4() {
@@ -5145,7 +5274,7 @@
       const accountsImported = state.accounts.length - (pre.accounts || 0);
       const billsImported = state.bills.length - (pre.bills || 0);
       const transactionsImported = state.transactions.length - (pre.transactions || 0);
-      const paychecksImported = state.income.nextDate ? 1 : 0;
+      const paychecksImported = (state.income.nextDate ? 1 : 0) + (state.householdPaychecks || []).length;
 
       const removed = {
         transactions: (resetWizardState.removedCounts && resetWizardState.removedCounts.transactions) || 0,
@@ -5178,7 +5307,8 @@
           <div class="flex justify-between py-1 border-b border-slate-800/60"><span class="text-slate-400">Bills Imported</span><span class="text-white font-bold">${billsImported}</span></div>
           <div class="flex justify-between py-1 border-b border-slate-800/60"><span class="text-slate-400">Transactions Imported</span><span class="text-white font-bold">${transactionsImported}</span></div>
           <div class="flex justify-between py-1 border-b border-slate-800/60"><span class="text-slate-400">Paychecks Imported</span><span class="text-white font-bold">${paychecksImported}</span></div>
-          <div class="flex justify-between py-1 border-b border-slate-800/60"><span class="text-slate-400">Next Payday</span><span class="text-white font-bold">${state.income.nextDate || 'Not set'}</span></div>
+          <div class="flex justify-between py-1 border-b border-slate-800/60"><span class="text-slate-400">Household Paychecks Configured</span><span class="text-white font-bold">${(state.householdPaychecks || []).length}</span></div>
+          <div class="flex justify-between py-1 border-b border-slate-800/60"><span class="text-slate-400">Your Next Payday</span><span class="text-white font-bold">${state.income.nextDate || 'Not set'}</span></div>
           <div class="flex justify-between py-1"><span class="text-slate-400">Forecast Status</span><span class="text-brand-400 font-bold">Recalculated</span></div>
         </div>
         <button type="button" onclick="closeModals(); navigateTo('dashboard');" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Go to Dashboard</button>
@@ -7330,6 +7460,15 @@
     // of the household system already expects, so scopeBadgeHtml() and
     // isVisibleToCurrentUser() need zero changes to pick these up correctly.
     function confirmImportWizard() {
+      if (confirmImportWizard._inProgress) return;
+      confirmImportWizard._inProgress = true;
+      try {
+        return confirmImportWizardInner();
+      } finally {
+        confirmImportWizard._inProgress = false;
+      }
+    }
+    function confirmImportWizardInner() {
       const scope = importWizardState.destination === 'household' ? 'household' : 'personal';
       const ownerId = state.user ? state.user.id : null;
       const ownerLabel = currentOwnerLabel();
@@ -7347,6 +7486,11 @@
           const id = `imported_${kind}_${stamp}_${catIdx}_${i}`;
           const audit = { createdAt: nowIso, createdBy: ownerLabel, lastModifiedAt: nowIso, lastModifiedBy: ownerLabel };
           if (kind === 'accounts') {
+            // Duplicate protection — the function had none before. Same
+            // account (name + type + balance) already present is skipped,
+            // not pushed again, regardless of what caused a re-invocation.
+            const isDuplicate = state.accounts.some(a => a.name === item.name && a.type === item.type && Number(a.balance) === Number(item.balance));
+            if (isDuplicate) { importWizardState._duplicatesSkipped = (importWizardState._duplicatesSkipped || 0) + 1; return; }
             state.accounts.push({ id, ...item, scope, ownerId, ownerLabel, source: 'json-import', ...audit });
           } else if (kind === 'bills') {
             state.bills.push({ id, ...item, scope, ownerId, ownerLabel, source: 'json-import', ...audit });
