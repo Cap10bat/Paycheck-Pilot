@@ -356,6 +356,55 @@
       background: repeating-linear-gradient(135deg, rgba(244,63,94,0.09) 0px, rgba(244,63,94,0.09) 10px, transparent 10px, transparent 20px);
     }
 
+    /* Clear Skies — soft blue atmosphere behind the existing sun glow */
+    @keyframes weatherBlueAtmosphere {
+      0%, 100% { opacity: 0.15; }
+      50% { opacity: 0.3; }
+    }
+    .weather-blue-atmosphere { animation: weatherBlueAtmosphere 6s ease-in-out infinite; }
+
+    /* Fair Weather — slower, lighter clouds + a warm ambient glow */
+    @keyframes weatherCloudDriftSlowA { from { transform: translateX(-8px); } to { transform: translateX(10px); } }
+    @keyframes weatherCloudDriftSlowB { from { transform: translateX(8px); } to { transform: translateX(-10px); } }
+    .weather-cloud-fair-a { animation: weatherCloudDriftSlowA 11s ease-in-out infinite alternate; }
+    .weather-cloud-fair-b { animation: weatherCloudDriftSlowB 13s ease-in-out infinite alternate; }
+    @keyframes weatherWarmGlow {
+      0%, 100% { opacity: 0.2; }
+      50% { opacity: 0.4; }
+    }
+    .weather-warm-glow { animation: weatherWarmGlow 5s ease-in-out infinite; }
+
+    /* Cloudy — slight rhythmic dimming, cautionary not alarming */
+    @keyframes weatherDim {
+      0%, 100% { opacity: 0; }
+      50% { opacity: 0.12; }
+    }
+    .weather-dim-overlay { animation: weatherDim 4.5s ease-in-out infinite; background: #000; }
+
+    /* Storm Warning — a slow radar sweep, distinct from the lightning flash */
+    @keyframes weatherRadarSweep { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .weather-radar-sweep {
+      animation: weatherRadarSweep 4s linear infinite;
+      background: conic-gradient(from 0deg, transparent 0deg, rgba(96,165,250,0.18) 25deg, transparent 60deg);
+      border-radius: 50%;
+    }
+
+    /* Financial Mayday — a rotating warning beacon and a subtle turbulence
+       shake, layered on top of the existing hazard stripes + pulse */
+    @keyframes weatherBeaconSweep { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .weather-beacon {
+      animation: weatherBeaconSweep 1.8s linear infinite;
+      background: conic-gradient(from 0deg, transparent 0deg, rgba(244,63,94,0.35) 20deg, transparent 45deg);
+      border-radius: 50%;
+    }
+    @keyframes weatherTurbulence {
+      0%, 100% { transform: translate(0, 0); }
+      25% { transform: translate(0.5px, -0.5px); }
+      50% { transform: translate(-0.5px, 0.5px); }
+      75% { transform: translate(0.5px, 0.5px); }
+    }
+    .weather-turbulence { animation: weatherTurbulence 0.4s ease-in-out infinite; }
+
     /* Brief pop when the weather state actually changes (not on every render) */
     @keyframes weatherStatePop {
       0% { transform: scale(0.94); opacity: 0.5; }
@@ -861,12 +910,19 @@
                 <!-- Ambient effect layers — exactly one visible at a time, driven by computeFinancialWeather() -->
                 <div class="absolute inset-0 pointer-events-none overflow-hidden rounded-3xl">
                   <div id="weather-fx-clear" class="hidden absolute inset-0">
+                    <div class="weather-blue-atmosphere absolute inset-0 bg-blue-400/10"></div>
                     <div class="weather-sun-glow absolute top-2 right-4 w-20 h-20 rounded-full bg-amber-300/25 blur-2xl"></div>
                     <span class="weather-particle absolute left-[20%] bottom-4 w-1 h-1 rounded-full bg-amber-200/70" style="animation-delay:0s"></span>
                     <span class="weather-particle absolute left-[45%] bottom-6 w-1 h-1 rounded-full bg-amber-200/70" style="animation-delay:1.3s"></span>
                     <span class="weather-particle absolute left-[70%] bottom-3 w-1 h-1 rounded-full bg-amber-200/70" style="animation-delay:2.6s"></span>
                   </div>
+                  <div id="weather-fx-fair" class="hidden absolute inset-0">
+                    <div class="weather-warm-glow absolute top-2 right-6 w-16 h-16 rounded-full bg-amber-300/20 blur-2xl"></div>
+                    <div class="weather-cloud-fair-a absolute top-4 left-8 w-14 h-5 rounded-full bg-slate-300/12 blur-md"></div>
+                    <div class="weather-cloud-fair-b absolute top-10 right-10 w-16 h-5 rounded-full bg-slate-300/10 blur-md"></div>
+                  </div>
                   <div id="weather-fx-cloudy" class="hidden absolute inset-0">
+                    <div class="weather-dim-overlay absolute inset-0"></div>
                     <div class="weather-cloud-a absolute top-3 left-6 w-16 h-6 rounded-full bg-slate-400/15 blur-md"></div>
                     <div class="weather-cloud-b absolute top-9 right-8 w-20 h-7 rounded-full bg-slate-400/10 blur-md"></div>
                   </div>
@@ -880,6 +936,7 @@
                   </div>
                   <div id="weather-fx-storm" class="hidden absolute inset-0">
                     <div class="absolute inset-0 bg-slate-950/30"></div>
+                    <div class="weather-radar-sweep absolute top-1/2 left-1/2 w-32 h-32 -ml-16 -mt-16 origin-center"></div>
                     <div class="weather-cloud-a absolute top-1 left-4 w-28 h-8 rounded-full bg-slate-600/30 blur-md"></div>
                     <div class="weather-cloud-b absolute top-7 right-2 w-24 h-8 rounded-full bg-slate-600/25 blur-md"></div>
                     <span class="weather-raindrop absolute left-[10%] top-6 w-px h-4 bg-blue-200/60" style="animation-delay:0s; animation-duration:0.7s"></span>
@@ -891,8 +948,9 @@
                     <span class="weather-raindrop absolute left-[72%] top-3 w-px h-4 bg-blue-200/50" style="animation-delay:0.6s; animation-duration:0.7s"></span>
                     <div class="weather-lightning absolute inset-0 bg-white"></div>
                   </div>
-                  <div id="weather-fx-emergency" class="hidden absolute inset-0">
+                  <div id="weather-fx-emergency" class="hidden absolute inset-0 weather-turbulence">
                     <div class="weather-hazard-stripes absolute inset-0"></div>
+                    <div class="weather-beacon absolute top-1/2 left-1/2 w-40 h-40 -ml-20 -mt-20 origin-center"></div>
                     <div class="weather-emergency-pulse absolute inset-0 rounded-3xl"></div>
                   </div>
                 </div>
@@ -1495,6 +1553,14 @@
                 <div>
                   <label class="block text-xs font-semibold text-slate-400 mb-1">Email Address</label>
                   <input type="text" id="settings-email-display" readonly class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-300 outline-none" />
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-400 mb-1">Display Name</label>
+                  <p class="text-[10px] text-slate-500 mb-1.5">Shown to household members for "who did this" — Activity Log, bill completions, and similar. Never derived from your email.</p>
+                  <div class="flex gap-2">
+                    <input type="text" id="settings-display-name" placeholder="Enter your name" class="flex-1 w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-brand-500" />
+                    <button onclick="saveDisplayName()" class="px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Save</button>
+                  </div>
                 </div>
                 <button onclick="handleLogout()" class="w-full py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2">
                   <i data-lucide="log-out" class="w-4 h-4"></i> Logout
@@ -5638,10 +5704,21 @@
       navigateTo(getCurrentPageId());
     }
 
+    function saveDisplayName() {
+      const input = document.getElementById('settings-display-name');
+      if (!input || !state.user) return;
+      state.user.displayName = input.value.trim();
+      saveStateToStorage();
+      showToast("Display name saved", "success");
+    }
+
     function renderSettingsPage() {
       renderPaydaySettingsCard();
       if (document.getElementById('settings-email-display') && state.user) {
         document.getElementById('settings-email-display').value = state.user.email || "pilot@user.com";
+      }
+      if (document.getElementById('settings-display-name') && state.user) {
+        document.getElementById('settings-display-name').value = state.user.displayName || '';
       }
 
       const inHousehold = !!(state.household && state.household.id);
@@ -5716,7 +5793,7 @@
 
         const ownerRow = memberRows.find(m => m.role === 'owner');
         state.household.members = memberRows.length || state.household.members;
-        state.household.owner = ownerRow ? (ownerRow.user_id === state.user.id ? "You" : ownerRow.email) : state.household.owner;
+        state.household.owner = ownerRow ? (ownerRow.user_id === state.user.id ? "You" : "Household Member") : state.household.owner;
         state.household.memberList = buildMemberListFromRows(memberRows);
 
         if (document.getElementById('hh-members')) document.getElementById('hh-members').innerText = `${state.household.members} Member(s)`;
@@ -6842,24 +6919,15 @@
     // matches "each user keeps their own X by default" from the household
     // redesign spec.
     // ==========================================
-    // Shared by currentOwnerLabel() (the signed-in user's own email) and
-    // scopeBadgeHtml() (legacy stored ownerLabel values that might still be
-    // a raw email) so both derive a friendly name the same way.
-    function friendlyNameFromEmail(email) {
-      const localPart = String(email || '').split('@')[0] || 'You';
-      const cleaned = localPart.replace(/[._-]+/g, ' ').trim();
-      return cleaned.replace(/\b\w/g, c => c.toUpperCase()) || 'You';
-    }
-
     function currentOwnerLabel() {
-      if (!state.user) return 'You';
-      if (!state.user.email) return 'You';
-      // Every "who did this" display in the app (Activity Log, Transaction
-      // History, bill completion, ownership badges) reads through this one
-      // function — no separate display-name field exists anywhere, so a
-      // friendly label is derived from the email's local-part rather than
-      // showing the raw address to other household members.
-      return friendlyNameFromEmail(state.user.email);
+      if (!state.user) return 'User';
+      // Prefers a name the user explicitly set themselves (Settings). No
+      // fallback derivation from email — that was still effectively a
+      // username/email fragment (e.g. "Cap10bat" from "cap10bat@...")
+      // even after prior cleanup passes, just capitalized. Every "who did
+      // this" display in the app (Activity Log, Transaction History, bill
+      // completion, ownership tracking) reads through this one function.
+      return (state.user.displayName && state.user.displayName.trim()) || 'User';
     }
 
     function scopePickerAllowed(category) {
@@ -6911,7 +6979,7 @@
     // household_members rows returned by Supabase.
     function buildMemberListFromRows(rows) {
       return (rows || []).map(m => ({
-        name: state.user && m.user_id === state.user.id ? `You${m.role === 'owner' ? ' (Owner)' : ''}` : (m.email || 'Member'),
+        name: state.user && m.user_id === state.user.id ? `You${m.role === 'owner' ? ' (Owner)' : ''}` : `Household Member${m.role === 'owner' ? ' (Owner)' : ''}`,
         role: m.role,
         email: m.email
       }));
@@ -7061,7 +7129,7 @@
         state.household = {
           id: hh.id,
           name: hh.name,
-          owner: ownerRow ? (ownerRow.user_id === state.user.id ? "You" : ownerRow.email) : "Owner",
+          owner: ownerRow ? (ownerRow.user_id === state.user.id ? "You" : "Household Member") : "Owner",
           members: (memberRows || []).length || 1,
           inviteCode: hh.invite_code,
           accountMode: 'shared',
