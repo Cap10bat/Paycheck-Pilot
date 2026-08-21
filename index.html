@@ -2593,6 +2593,21 @@
       }, 0);
     }
 
+    // Date-awareness the app previously had no concept of at all — bills
+    // only ever carried a completed boolean, with no notion of Upcoming,
+    // Due Today, or Overdue. Uses the same local-midnight comparison
+    // pattern already established in getDaysUntilPayday() and elsewhere.
+    function getBillStatus(bill) {
+      if (bill.completed) return 'paid';
+      if (!bill.dueDate) return 'upcoming';
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const due = new Date(bill.dueDate + 'T00:00:00');
+      if (due.getTime() === today.getTime()) return 'due-today';
+      if (due < today) return 'overdue';
+      return 'upcoming';
+    }
+
     function getUpcomingBills() {
       const bills = visibleBills().filter(b => !b.paused);
       if (!state.income.nextDate) return bills.filter(b => !b.completed);
@@ -3759,8 +3774,9 @@
       const completionTx = b.completed
         ? state.transactions.find(t => t.source === 'manual-bill-completion' && t.title === `Bill Payment: ${b.title}`)
         : null;
+      const billStatus = getBillStatus(b);
       return `
-        <div data-bill-row="${b.id}" class="glass-card p-4 rounded-2xl border ${b.completed ? 'border-slate-800/40 opacity-60' : b.paused ? 'border-slate-700/50 opacity-70' : 'border-slate-800'} space-y-3">
+        <div data-bill-row="${b.id}" class="glass-card p-4 rounded-2xl border ${b.completed ? 'border-slate-800/40 opacity-60' : b.paused ? 'border-slate-700/50 opacity-70' : billStatus === 'overdue' ? 'border-rose-500/40' : 'border-slate-800'} space-y-3">
           <div class="flex items-center justify-between gap-3">
             <div class="flex items-center gap-3 min-w-0">
               <button onclick="completeBill('${b.id}')" class="shrink-0 w-6 h-6 rounded-lg border border-slate-700 flex items-center justify-center ${b.completed ? 'bg-brand-500 text-slate-950 border-brand-500' : 'hover:border-brand-500'}">
@@ -3770,6 +3786,8 @@
                 <div class="flex items-center gap-1.5 flex-wrap">
                   <h4 class="font-bold text-sm text-white ${b.completed ? 'line-through text-slate-400' : ''}">${b.title}</h4>
                   <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${b.priority === 'critical' ? 'bg-rose-500/20 text-rose-300' : b.priority === 'important' ? 'bg-amber-500/20 text-amber-300' : 'bg-blue-500/20 text-blue-300'}">${b.priority}</span>
+                  ${billStatus === 'overdue' ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-300 flex items-center gap-1"><i data-lucide="alert-triangle" class="w-2.5 h-2.5"></i> Overdue</span>` : ''}
+                  ${billStatus === 'due-today' ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300">Due Today</span>` : ''}
                   ${b.recurrence && b.recurrence !== 'none' ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/20 text-indigo-300 flex items-center gap-1"><i data-lucide="repeat" class="w-2.5 h-2.5"></i> ${recurrenceLabel(b.recurrence)}</span>` : ''}
                   ${b.paused ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-700 text-slate-300">Paused</span>` : ''}
                   ${scopeBadgeHtml(b)}
@@ -5142,7 +5160,7 @@
                 </div>
                 <div id="reset-paycheck-${i}-owner-wrap" class="hidden">
                   <label class="block text-[10px] text-slate-500 mb-1">Whose paycheck is this?</label>
-                  <input type="text" id="reset-paycheck-${i}-owner-name" placeholder="e.g. Alex" oninput="resetWizardState.paycheckChoices[${i}].ownerLabel = this.value" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-200 outline-none focus:border-rose-500" />
+                  <input type="text" id="reset-paycheck-${i}-owner-name" placeholder="Enter member name" oninput="resetWizardState.paycheckChoices[${i}].ownerLabel = this.value" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-slate-200 outline-none focus:border-rose-500" />
                 </div>
               </div>
             `).join('')}
@@ -7138,6 +7156,11 @@
           // genuinely future paycheck as already received.
           const todayLocal = new Date();
           todayLocal.setHours(0, 0, 0, 0);
+          // String form for direct comparison against stored 'YYYY-MM-DD'
+          // dates below. Built from local accessors (getFullYear/getMonth/
+          // getDate), not toISOString() — that's UTC-based and would
+          // reintroduce the same west-of-UTC rollover bug fixed above.
+          const todayLocalStr = `${todayLocal.getFullYear()}-${String(todayLocal.getMonth() + 1).padStart(2, '0')}-${String(todayLocal.getDate()).padStart(2, '0')}`;
 
           // ---- Pass 1: bucket raw entries by type ----
           const expenseEntries = [];
@@ -7167,7 +7190,16 @@
           });
           Object.values(billGroups).forEach(group => {
             const sorted = group.slice().sort((a, b) => a.date < b.date ? -1 : 1);
-            const last = sorted[sorted.length - 1];
+            // The occurrence closest to today — not simply the last one in
+            // the whole source file. A source export can contain months of
+            // future-scheduled occurrences; blindly taking the latest one
+            // skips right past whichever occurrence is actually due now or
+            // overdue. If any occurrence is today or earlier, the most
+            // recent of those is used (correctly surfacing it as overdue if
+            // still unpaid); only when every occurrence is still in the
+            // future does this fall back to the nearest upcoming one.
+            const pastOrToday = sorted.filter(s => s.date <= todayLocalStr);
+            const current = pastOrToday.length ? pastOrToday[pastOrToday.length - 1] : sorted[0];
             let recurrence = 'none';
             if (sorted.length > 1) {
               const fixedDayPattern = detectFixedCalendarDaySchedule(sorted.map(s => s.date));
@@ -7189,7 +7221,7 @@
                 recurrence = frequency !== 'unknown' ? mapFrequencyToRecurrence(frequency) : 'monthly';
               }
             }
-            legacyBills.push({ title: last.desc, amount: last.amount, dueDate: last.date, category: 'Other', priority: 'important', recurrence });
+            legacyBills.push({ title: current.desc, amount: current.amount, dueDate: current.date, category: 'Other', priority: 'important', recurrence });
           });
 
           // ---- Income: split historical vs future, cluster future income
