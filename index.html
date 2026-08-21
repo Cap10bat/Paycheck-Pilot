@@ -316,50 +316,50 @@
     /* ===== FINANCIAL WEATHER 3.0 — ambient effect layers ===== */
     /* All transform/opacity only — cheap on mobile, no canvas, no JS loop. */
     @keyframes weatherShimmer {
-      0%, 100% { opacity: 0.35; transform: scale(1); }
-      50% { opacity: 0.65; transform: scale(1.1); }
+      0%, 100% { opacity: 0.4; transform: scale(1); }
+      50% { opacity: 0.75; transform: scale(1.12); }
     }
     .weather-sun-glow { animation: weatherShimmer 3.5s ease-in-out infinite; }
 
     @keyframes weatherFloatUp {
       0% { transform: translateY(0); opacity: 0; }
-      15% { opacity: 0.85; }
-      85% { opacity: 0.5; }
+      15% { opacity: 0.9; }
+      85% { opacity: 0.55; }
       100% { transform: translateY(-44px); opacity: 0; }
     }
     .weather-particle { animation: weatherFloatUp 4s ease-in-out infinite; }
 
-    @keyframes weatherCloudDriftA { from { transform: translateX(-10px); } to { transform: translateX(14px); } }
-    @keyframes weatherCloudDriftB { from { transform: translateX(10px); } to { transform: translateX(-14px); } }
+    @keyframes weatherCloudDriftA { from { transform: translateX(-14px); } to { transform: translateX(18px); } }
+    @keyframes weatherCloudDriftB { from { transform: translateX(14px); } to { transform: translateX(-18px); } }
     .weather-cloud-a { animation: weatherCloudDriftA 7s ease-in-out infinite alternate; }
     .weather-cloud-b { animation: weatherCloudDriftB 9s ease-in-out infinite alternate; }
 
     @keyframes weatherRainFall {
       0% { transform: translateY(-8px); opacity: 0; }
-      20% { opacity: 0.7; }
+      20% { opacity: 0.85; }
       100% { transform: translateY(64px); opacity: 0; }
     }
     .weather-raindrop { animation: weatherRainFall 1s linear infinite; }
 
     @keyframes weatherLightning {
-      0%, 90%, 100% { opacity: 0; }
-      92%, 95% { opacity: 0.45; }
+      0%, 88%, 100% { opacity: 0; }
+      90%, 94% { opacity: 0.6; }
     }
     .weather-lightning { animation: weatherLightning 5.5s ease-in-out infinite; }
 
     @keyframes weatherEmergencyPulse {
-      0%, 100% { box-shadow: inset 0 0 40px -8px rgba(244,63,94,0.4); }
-      50% { box-shadow: inset 0 0 60px -4px rgba(244,63,94,0.6); }
+      0%, 100% { box-shadow: inset 0 0 50px -6px rgba(244,63,94,0.55); }
+      50% { box-shadow: inset 0 0 75px 0px rgba(244,63,94,0.8); }
     }
-    .weather-emergency-pulse { animation: weatherEmergencyPulse 2.2s ease-in-out infinite; }
+    .weather-emergency-pulse { animation: weatherEmergencyPulse 1.8s ease-in-out infinite; }
     .weather-hazard-stripes {
-      background: repeating-linear-gradient(135deg, rgba(244,63,94,0.09) 0px, rgba(244,63,94,0.09) 10px, transparent 10px, transparent 20px);
+      background: repeating-linear-gradient(135deg, rgba(244,63,94,0.16) 0px, rgba(244,63,94,0.16) 10px, transparent 10px, transparent 20px);
     }
 
     /* Clear Skies — soft blue atmosphere behind the existing sun glow */
     @keyframes weatherBlueAtmosphere {
-      0%, 100% { opacity: 0.15; }
-      50% { opacity: 0.3; }
+      0%, 100% { opacity: 0.25; }
+      50% { opacity: 0.45; }
     }
     .weather-blue-atmosphere { animation: weatherBlueAtmosphere 6s ease-in-out infinite; }
 
@@ -369,41 +369,49 @@
     .weather-cloud-fair-a { animation: weatherCloudDriftSlowA 11s ease-in-out infinite alternate; }
     .weather-cloud-fair-b { animation: weatherCloudDriftSlowB 13s ease-in-out infinite alternate; }
     @keyframes weatherWarmGlow {
-      0%, 100% { opacity: 0.2; }
-      50% { opacity: 0.4; }
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.55; }
     }
     .weather-warm-glow { animation: weatherWarmGlow 5s ease-in-out infinite; }
 
-    /* Cloudy — slight rhythmic dimming, cautionary not alarming */
+    /* Cloudy — a genuinely visible amber-gray tint breathing in and out,
+       distinct in color from Storm's blue-gray so the two read differently
+       at a glance, not just "both gray clouds" */
     @keyframes weatherDim {
-      0%, 100% { opacity: 0; }
-      50% { opacity: 0.12; }
+      0%, 100% { opacity: 0.08; }
+      50% { opacity: 0.3; }
     }
-    .weather-dim-overlay { animation: weatherDim 4.5s ease-in-out infinite; background: #000; }
+    .weather-dim-overlay { animation: weatherDim 4.5s ease-in-out infinite; background: radial-gradient(ellipse at center, rgba(217,119,6,0.35), transparent 70%); }
 
-    /* Storm Warning — a slow radar sweep, distinct from the lightning flash */
+    /* Storm Warning — a visible radar sweep and a cooler, darker tint than
+       Cloudy so the escalation in severity reads immediately */
     @keyframes weatherRadarSweep { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     .weather-radar-sweep {
-      animation: weatherRadarSweep 4s linear infinite;
-      background: conic-gradient(from 0deg, transparent 0deg, rgba(96,165,250,0.18) 25deg, transparent 60deg);
+      animation: weatherRadarSweep 3.5s linear infinite;
+      background: conic-gradient(from 0deg, transparent 0deg, rgba(96,165,250,0.4) 25deg, transparent 65deg);
       border-radius: 50%;
     }
+    @keyframes weatherStormTint {
+      0%, 100% { opacity: 0.2; }
+      50% { opacity: 0.4; }
+    }
+    .weather-storm-tint { animation: weatherStormTint 3s ease-in-out infinite; background: radial-gradient(ellipse at center, rgba(51,65,85,0.5), transparent 75%); }
 
-    /* Financial Mayday — a rotating warning beacon and a subtle turbulence
-       shake, layered on top of the existing hazard stripes + pulse */
+    /* Financial Mayday — a fast, visible rotating beacon and a real (if
+       small) shake, the most intense of all six states */
     @keyframes weatherBeaconSweep { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     .weather-beacon {
-      animation: weatherBeaconSweep 1.8s linear infinite;
-      background: conic-gradient(from 0deg, transparent 0deg, rgba(244,63,94,0.35) 20deg, transparent 45deg);
+      animation: weatherBeaconSweep 1.4s linear infinite;
+      background: conic-gradient(from 0deg, transparent 0deg, rgba(244,63,94,0.6) 25deg, transparent 55deg);
       border-radius: 50%;
     }
     @keyframes weatherTurbulence {
       0%, 100% { transform: translate(0, 0); }
-      25% { transform: translate(0.5px, -0.5px); }
-      50% { transform: translate(-0.5px, 0.5px); }
-      75% { transform: translate(0.5px, 0.5px); }
+      25% { transform: translate(1.5px, -1.5px); }
+      50% { transform: translate(-1.5px, 1.5px); }
+      75% { transform: translate(1.5px, 1.5px); }
     }
-    .weather-turbulence { animation: weatherTurbulence 0.4s ease-in-out infinite; }
+    .weather-turbulence { animation: weatherTurbulence 0.35s ease-in-out infinite; }
 
     /* Brief pop when the weather state actually changes (not on every render) */
     @keyframes weatherStatePop {
@@ -923,8 +931,8 @@
                   </div>
                   <div id="weather-fx-cloudy" class="hidden absolute inset-0">
                     <div class="weather-dim-overlay absolute inset-0"></div>
-                    <div class="weather-cloud-a absolute top-3 left-6 w-16 h-6 rounded-full bg-slate-400/15 blur-md"></div>
-                    <div class="weather-cloud-b absolute top-9 right-8 w-20 h-7 rounded-full bg-slate-400/10 blur-md"></div>
+                    <div class="weather-cloud-a absolute top-3 left-6 w-20 h-7 rounded-full bg-slate-300/35 blur-md"></div>
+                    <div class="weather-cloud-b absolute top-9 right-8 w-24 h-8 rounded-full bg-slate-300/28 blur-md"></div>
                   </div>
                   <div id="weather-fx-rain" class="hidden absolute inset-0">
                     <div class="weather-cloud-a absolute top-2 left-8 w-24 h-7 rounded-full bg-slate-500/20 blur-md"></div>
@@ -936,6 +944,7 @@
                   </div>
                   <div id="weather-fx-storm" class="hidden absolute inset-0">
                     <div class="absolute inset-0 bg-slate-950/30"></div>
+                    <div class="weather-storm-tint absolute inset-0"></div>
                     <div class="weather-radar-sweep absolute top-1/2 left-1/2 w-32 h-32 -ml-16 -mt-16 origin-center"></div>
                     <div class="weather-cloud-a absolute top-1 left-4 w-28 h-8 rounded-full bg-slate-600/30 blur-md"></div>
                     <div class="weather-cloud-b absolute top-7 right-2 w-24 h-8 rounded-full bg-slate-600/25 blur-md"></div>
