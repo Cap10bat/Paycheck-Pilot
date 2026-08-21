@@ -907,6 +907,14 @@
                   <p id="fin-weather-desc" class="text-xs text-slate-400">Stable cash reserves and healthy safe spend buffer.</p>
                   <p id="fin-weather-predictive" class="text-[11px] text-slate-500 italic pt-0.5">Clear for now.</p>
                 </div>
+                <div class="text-left z-10 space-y-1">
+                  <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Top Factors</p>
+                  <ul id="fin-weather-factors" class="text-[11px] text-slate-400 space-y-0.5 list-disc list-inside"></ul>
+                </div>
+                <div class="text-left z-10">
+                  <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Next Step</p>
+                  <p id="fin-weather-next-action" class="text-[11px] text-slate-300">Nothing needed right now.</p>
+                </div>
                 <div class="pt-3 border-t border-slate-800 flex justify-between text-[11px] text-slate-400 z-10">
                   <span>Risk Status:</span>
                   <strong id="fin-weather-risk" class="text-brand-400">Healthy</strong>
@@ -2636,14 +2644,79 @@
       const notifications = [];
       visibleBills().filter(b => !b.paused).forEach(b => {
         const status = getBillStatus(b);
-        if (status !== 'overdue' && status !== 'due-today') return;
+        if (status !== 'overdue' && status !== 'due-today') {
+          // Due Soon — not yet due or overdue, but within 2 days.
+          if (status === 'upcoming' && b.dueDate) {
+            const due = new Date(b.dueDate + 'T00:00:00');
+            const daysDiff = Math.round((due - today) / 86400000);
+            if (daysDiff > 0 && daysDiff <= 2 && !(b.snoozedUntil && b.snoozedUntil > todayStr)) {
+              notifications.push({ type: 'bill-due-soon', billId: b.id, label: b.title, amount: b.amount, daysDiff });
+            }
+          }
+          return;
+        }
         if (b.snoozedUntil && b.snoozedUntil > todayStr) return;
-        notifications.push({ type: status === 'overdue' ? 'bill-overdue' : 'bill-due-today', billId: b.id, label: b.title, amount: b.amount });
+        let daysDiff = 0;
+        if (status === 'overdue') {
+          const due = new Date(b.dueDate + 'T00:00:00');
+          daysDiff = Math.round((today - due) / 86400000);
+        }
+        notifications.push({ type: status === 'overdue' ? 'bill-overdue' : 'bill-due-today', billId: b.id, label: b.title, amount: b.amount, daysDiff });
       });
       if (state.income.nextDate && getDaysUntilPayday() === 0) {
         notifications.push({ type: 'payday', label: 'Payday', amount: state.income.amount });
       }
+      // Financial Warning — reuses the same Safe Spend value already
+      // computed on every dashboard render (getTotalLiquidCash() -
+      // getUpcomingBillsTotal()), not a new calculation.
+      if (getTotalLiquidCash() - getUpcomingBillsTotal() < 0) {
+        notifications.push({ type: 'financial-warning', label: 'Financial Warning' });
+      }
       return notifications;
+    }
+
+    // ============================================================
+    // BROWSER/PWA NOTIFICATIONS — extends the data foundation above with
+    // the actual Notification API. Permission is requested at most once,
+    // ever (tracked in state, persisted like everything else). Each
+    // notification is sent at most once per day per item (tracked via
+    // lastNotifiedDate, the same pattern as snoozedUntil), so this can be
+    // called on every dashboard render without spamming. No mobile push, no
+    // email — browser API only, per the requirement.
+    // ============================================================
+    function requestNotificationPermissionOnce() {
+      if (typeof Notification === 'undefined') return;
+      if (state.notificationPermissionAsked) return;
+      state.notificationPermissionAsked = true;
+      saveStateToStorage();
+      if (Notification.permission === 'default') Notification.requestPermission();
+    }
+
+    function sendBrowserNotifications() {
+      if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+      getPendingNotifications().forEach(n => {
+        if (n.type === 'financial-warning' || n.type === 'payday') {
+          const key = n.type === 'payday' ? 'lastPaydayNotifiedDate' : 'lastWarningNotifiedDate';
+          if (state[key] === todayStr) return;
+          state[key] = todayStr;
+          const body = n.type === 'payday' ? 'Payday has arrived' : 'Upcoming bills exceed available funds';
+          new Notification('Paycheck Pilot', { body });
+          return;
+        }
+        const bill = state.bills.find(b => b.id === n.billId);
+        if (!bill || bill.lastNotifiedDate === todayStr) return;
+        bill.lastNotifiedDate = todayStr;
+        let body;
+        if (n.type === 'bill-due-soon') body = `${n.label} due in ${n.daysDiff} day${n.daysDiff === 1 ? '' : 's'}`;
+        else if (n.type === 'bill-due-today') body = `${n.label} is due today`;
+        else if (n.type === 'bill-overdue') body = `${n.label} was due ${n.daysDiff} day${n.daysDiff === 1 ? '' : 's'} ago.\nDid you pay it?`;
+        if (body) new Notification('Paycheck Pilot', { body });
+      });
+      saveStateToStorage();
     }
 
     // Item 2's concrete trigger: called from renderDashboard() (the
@@ -3559,6 +3632,8 @@
     function renderDashboard() {
       scanAccountDataIntegrity();
       checkAndShowOverdueReminder();
+      requestNotificationPermissionOnce();
+      sendBrowserNotifications();
       const cyclesAdvanced = advanceStaleIncomeSchedule();
       if (cyclesAdvanced) {
         saveStateToStorage();
@@ -3695,11 +3770,15 @@
       if (weatherDesc) weatherDesc.innerText = weather.desc;
       if (weatherPredictive) weatherPredictive.innerText = weather.predictive;
       if (weatherRisk) { weatherRisk.innerText = weather.riskLabel; weatherRisk.className = weather.riskClass; }
+      const weatherFactors = document.getElementById('fin-weather-factors');
+      if (weatherFactors) weatherFactors.innerHTML = (weather.factors || []).map(f => `<li>${f}</li>`).join('');
+      const weatherNextAction = document.getElementById('fin-weather-next-action');
+      if (weatherNextAction) weatherNextAction.innerText = weather.nextAction || '';
       if (weatherCard) {
         weatherCard.className = `glass-card rounded-3xl p-5 sm:p-6 border ${weather.borderClass} flex flex-col justify-between space-y-3 relative overflow-hidden transition-colors`;
       }
 
-      ['clear', 'cloudy', 'rain', 'storm', 'emergency'].forEach(key => {
+      ['clear', 'fair', 'cloudy', 'rain', 'storm', 'emergency'].forEach(key => {
         const layer = document.getElementById(`weather-fx-${key}`);
         if (layer) layer.classList.toggle('hidden', key !== weather.key);
       });
@@ -3878,7 +3957,7 @@
                   ${b.paused ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-700 text-slate-300">Paused</span>` : ''}
                   ${scopeBadgeHtml(b)}
                 </div>
-                <p class="text-xs text-slate-400 mt-0.5">Category: ${b.category} • Due: <strong class="text-slate-200">${b.dueDate}</strong>${b.ownerLabel ? ` • Owned by <strong class="text-slate-200">${b.ownerLabel}</strong>` : ''}</p>
+                <p class="text-xs text-slate-400 mt-0.5">Category: ${b.category} • Due: <strong class="text-slate-200">${b.dueDate}</strong></p>
                 ${completionTx ? `<p class="text-[10px] text-brand-400 mt-0.5">Completed by <strong>${completionTx.createdBy || completionTx.ownerLabel}</strong> on ${completionTx.date}</p>` : ''}
               </div>
             </div>
@@ -4098,6 +4177,9 @@
       const next14 = series.slice(0, 15);
       const lowestNext14 = Math.min(...next14.map(s => s.balance));
       const lowestNext30 = Math.min(...series.map(s => s.balance));
+      const overdueBills = visibleBills().filter(b => !b.paused && getBillStatus(b) === 'overdue');
+      const overdueTotal = overdueBills.reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
+      const upcomingTotal = getUpcomingBillsTotal();
 
       // Walks the existing forecast series to find the first day a threshold
       // is crossed, and reads whichever bill (already present in that day's
@@ -4123,11 +4205,17 @@
 
       if (safeSpend < 0) {
         return {
-          key: 'emergency', icon: '🚨', title: 'Emergency Deficit',
+          key: 'emergency', icon: '🚨', title: 'Financial Mayday',
           desc: "Bills due right now add up to more than you have on hand.",
           predictive: "Money Mayday is active — open it for a plan to make it to payday.",
           riskLabel: 'Money Mayday Active', riskClass: 'text-rose-400',
-          borderClass: 'border-rose-500/50'
+          borderClass: 'border-rose-500/50',
+          factors: [
+            `Safe Spend is $${formatCurrency(safeSpend)} — already negative`,
+            `$${formatCurrency(upcomingTotal)} in bills due before payday`,
+            overdueBills.length ? `${overdueBills.length} bill(s) already overdue, totaling $${formatCurrency(overdueTotal)}` : null
+          ].filter(Boolean),
+          nextAction: "Open Money Mayday to see what can be deferred or paid partially before payday."
         };
       }
 
@@ -4139,17 +4227,34 @@
           desc: "Your projected balance is on track to go negative before your next paycheck.",
           predictive: crossing ? `A shortfall is projected around ${crossing.date}${causeText}.` : "A shortfall is projected in the days ahead.",
           riskLabel: 'Deficit Projected', riskClass: 'text-rose-400',
-          borderClass: 'border-rose-500/40'
+          borderClass: 'border-rose-500/40',
+          factors: [
+            `Projected balance dips to $${formatCurrency(lowestNext14)} within 14 days`,
+            crossing && crossing.cause ? `Driven largely by ${crossing.cause.label}` : null,
+            overdueBills.length ? `${overdueBills.length} bill(s) already overdue` : null
+          ].filter(Boolean),
+          nextAction: "Review upcoming bills before payday and consider what can be paused or paid late."
         };
       }
 
-      if (safeSpend < 200) {
+      // Overdue bills force at least Cloudy regardless of current cash —
+      // Clear Skies specifically requires zero overdue bills, not just a
+      // healthy balance, per the requested model.
+      if (safeSpend < 200 || overdueBills.length > 0) {
         return {
-          key: 'cloudy', icon: '⛅', title: 'Partly Cloudy',
-          desc: "Your buffer is thin right now — keep discretionary spending low until payday.",
-          predictive: `You're carrying about $${formatCurrency(safeSpend)} of breathing room.`,
-          riskLabel: 'Tight Buffer', riskClass: 'text-amber-400',
-          borderClass: 'border-amber-500/40'
+          key: 'cloudy', icon: '⛅', title: 'Cloudy',
+          desc: overdueBills.length ? "You have bills that are past due." : "Your buffer is thin right now — keep discretionary spending low until payday.",
+          predictive: overdueBills.length
+            ? `${overdueBills.length} bill(s) overdue, totaling $${formatCurrency(overdueTotal)}.`
+            : `You're carrying about $${formatCurrency(safeSpend)} of breathing room.`,
+          riskLabel: overdueBills.length ? 'Bills Overdue' : 'Tight Buffer', riskClass: 'text-amber-400',
+          borderClass: 'border-amber-500/40',
+          factors: [
+            `Safe Spend: $${formatCurrency(safeSpend)}`,
+            overdueBills.length ? `${overdueBills.length} overdue bill(s): ${overdueBills.slice(0, 2).map(b => b.title).join(', ')}` : null,
+            `$${formatCurrency(upcomingTotal)} due before payday`
+          ].filter(Boolean),
+          nextAction: overdueBills.length ? "Mark any overdue bills paid, or confirm they're still owed." : "Limit non-essential spending until your next paycheck."
         };
       }
 
@@ -4157,11 +4262,28 @@
         const crossing = firstCrossing(200);
         const causeText = crossing && crossing.cause ? ` after ${crossing.cause.label}` : '';
         return {
-          key: 'rain', icon: '🌧', title: 'Rain Ahead',
+          key: 'rain', icon: '🌧', title: 'Rain Expected',
           desc: "Cash pressure is building for later this month.",
           predictive: crossing ? `Your cushion tightens around ${crossing.date}${causeText}.` : "Your cushion tightens later this month.",
           riskLabel: 'Pressure Approaching', riskClass: 'text-blue-300',
-          borderClass: 'border-blue-500/30'
+          borderClass: 'border-blue-500/30',
+          factors: [
+            `Balance dips to $${formatCurrency(lowestNext30)} within 30 days`,
+            crossing && crossing.cause ? `Largely driven by ${crossing.cause.label}` : null
+          ].filter(Boolean),
+          nextAction: "No action needed yet — worth keeping an eye on discretionary spending this month."
+        };
+      }
+
+      if (safeSpend < 500) {
+        return {
+          key: 'fair', icon: '🌤', title: 'Fair Weather',
+          desc: "Bills are covered, with a modest buffer left over.",
+          predictive: `About $${formatCurrency(safeSpend)} of flexibility before payday.`,
+          riskLabel: 'Stable', riskClass: 'text-brand-300',
+          borderClass: 'border-brand-500/30',
+          factors: [`Safe Spend: $${formatCurrency(safeSpend)}`, `$${formatCurrency(upcomingTotal)} in bills already accounted for`],
+          nextAction: "You're in good shape — no action needed."
         };
       }
 
@@ -4171,7 +4293,9 @@
         desc: "Stable cash reserves and a healthy Safe Spend buffer.",
         predictive: streak > 0 ? `Clear for at least the next ${streak} day${streak === 1 ? '' : 's'}.` : "Clear for now.",
         riskLabel: 'Healthy', riskClass: 'text-brand-400',
-        borderClass: 'border-slate-800/80'
+        borderClass: 'border-slate-800/80',
+        factors: [`Safe Spend: $${formatCurrency(safeSpend)}`, 'No overdue bills', `$${formatCurrency(upcomingTotal)} in bills already covered`],
+        nextAction: "Nothing needed right now."
       };
     }
 
@@ -4696,7 +4820,7 @@
       const ownerName = document.getElementById('payday-settings-owner-name');
       if (ownerLine && ownerName) {
         if (state.income.lastEditedBy) {
-          ownerName.innerText = state.income.lastEditedBy;
+          ownerName.innerText = 'USER';
           ownerLine.classList.remove('hidden');
         } else {
           ownerLine.classList.add('hidden');
@@ -6772,16 +6896,9 @@
     // account cards to show PERSONAL vs HOUSEHOLD at a glance.
     function scopeBadgeHtml(item) {
       if (item.scope === 'household') {
-        return `<span class="px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Household</span>`;
+        return `<span class="px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">HOUSEHOLD</span>`;
       }
-      // ownerLabel from data stored before the email-friendly-name fix could
-      // still hold a raw address — apply the same derivation here so a
-      // legacy value never surfaces as a bare username fragment.
-      let owner = 'You';
-      if (item.ownerLabel && item.ownerLabel !== currentOwnerLabel()) {
-        owner = item.ownerLabel.includes('@') ? friendlyNameFromEmail(item.ownerLabel) : item.ownerLabel;
-      }
-      return `<span class="px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-slate-700/50 text-slate-300 border border-slate-600/40">Personal · ${owner}</span>`;
+      return `<span class="px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-slate-700/50 text-slate-300 border border-slate-600/40">PERSONAL</span>`;
     }
 
     function generateInviteCode() {
