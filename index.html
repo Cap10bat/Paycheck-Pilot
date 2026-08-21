@@ -1944,6 +1944,19 @@
          paycheck classification logic and offers to fix it. Never re-imports,
          never wipes anything. Five steps: Analyze -> Findings -> What Can Be
          Repaired -> Run Repair -> Results. -->
+    <div id="modal-bill-reminder" class="glass-card p-5 rounded-3xl border border-amber-500/40 w-full max-w-sm hidden space-y-4">
+      <div class="flex items-center gap-2">
+        <i data-lucide="bell" class="w-4 h-4 text-amber-400"></i>
+        <h3 class="font-bold text-white text-sm">Overdue Bill</h3>
+      </div>
+      <p id="bill-reminder-text" class="text-xs text-slate-300">Did you pay this bill?</p>
+      <div class="space-y-2">
+        <button type="button" onclick="billReminderMarkPaid()" class="w-full py-2.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Yes, Mark Paid</button>
+        <button type="button" onclick="billReminderNotYet()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all">Not Yet</button>
+        <button type="button" onclick="billReminderSnooze()" class="w-full py-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-400 rounded-xl text-xs font-semibold transition-all">Remind Me Tomorrow</button>
+      </div>
+    </div>
+
     <div id="modal-repair" class="glass-card p-4 sm:p-6 rounded-3xl border border-amber-500/40 w-full max-w-lg hidden space-y-5 max-h-[85vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
         <h3 class="font-bold text-white text-base flex items-center gap-2">
@@ -2606,6 +2619,78 @@
       if (due.getTime() === today.getTime()) return 'due-today';
       if (due < today) return 'overdue';
       return 'upcoming';
+    }
+
+    // ============================================================
+    // NOTIFICATION FOUNDATION — data + trigger only, not a full system.
+    // Three types, all derived from existing state (no new data source):
+    // bill-overdue, bill-due-today, payday. Bills carry a `snoozedUntil`
+    // date so "Remind Me Tomorrow" can suppress a specific bill for one day
+    // without a separate tracking structure.
+    // ============================================================
+    function getPendingNotifications() {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+      const notifications = [];
+      visibleBills().filter(b => !b.paused).forEach(b => {
+        const status = getBillStatus(b);
+        if (status !== 'overdue' && status !== 'due-today') return;
+        if (b.snoozedUntil && b.snoozedUntil > todayStr) return;
+        notifications.push({ type: status === 'overdue' ? 'bill-overdue' : 'bill-due-today', billId: b.id, label: b.title, amount: b.amount });
+      });
+      if (state.income.nextDate && getDaysUntilPayday() === 0) {
+        notifications.push({ type: 'payday', label: 'Payday', amount: state.income.amount });
+      }
+      return notifications;
+    }
+
+    // Item 2's concrete trigger: called from renderDashboard() (the
+    // existing, natural point already run on every app open/navigation —
+    // no new trigger mechanism needed). Shows at most one overdue bill's
+    // reminder per render cycle so it can't stack multiple prompts.
+    function checkAndShowOverdueReminder() {
+      const pending = getPendingNotifications().find(n => n.type === 'bill-overdue');
+      if (!pending) return;
+      if (document.getElementById('modal-bill-reminder') && !document.getElementById('modal-bill-reminder').classList.contains('hidden')) return;
+      openBillReminderModal(pending.billId);
+    }
+
+    function openBillReminderModal(billId) {
+      const bill = state.bills.find(b => b.id === billId);
+      if (!bill) return;
+      const backdrop = document.getElementById('modal-backdrop');
+      const modal = document.getElementById('modal-bill-reminder');
+      if (!backdrop || !modal) return;
+      document.getElementById('bill-reminder-text').innerText = `Did you pay "${bill.title}" ($${formatCurrency(bill.amount)}), due ${bill.dueDate}?`;
+      modal.dataset.billId = billId;
+      backdrop.classList.remove('hidden');
+      modal.classList.remove('hidden');
+    }
+
+    function billReminderMarkPaid() {
+      const modal = document.getElementById('modal-bill-reminder');
+      const billId = modal ? modal.dataset.billId : null;
+      closeModals();
+      if (billId) completeBill(billId);
+    }
+
+    function billReminderNotYet() {
+      closeModals();
+    }
+
+    function billReminderSnooze() {
+      const modal = document.getElementById('modal-bill-reminder');
+      const billId = modal ? modal.dataset.billId : null;
+      const bill = billId ? state.bills.find(b => b.id === billId) : null;
+      if (bill) {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        bill.snoozedUntil = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrow.getDate()).padStart(2, '0')}`;
+        saveStateToStorage();
+      }
+      closeModals();
     }
 
     function getUpcomingBills() {
@@ -3473,6 +3558,7 @@
 
     function renderDashboard() {
       scanAccountDataIntegrity();
+      checkAndShowOverdueReminder();
       const cyclesAdvanced = advanceStaleIncomeSchedule();
       if (cyclesAdvanced) {
         saveStateToStorage();
@@ -6632,6 +6718,15 @@
     // matches "each user keeps their own X by default" from the household
     // redesign spec.
     // ==========================================
+    // Shared by currentOwnerLabel() (the signed-in user's own email) and
+    // scopeBadgeHtml() (legacy stored ownerLabel values that might still be
+    // a raw email) so both derive a friendly name the same way.
+    function friendlyNameFromEmail(email) {
+      const localPart = String(email || '').split('@')[0] || 'You';
+      const cleaned = localPart.replace(/[._-]+/g, ' ').trim();
+      return cleaned.replace(/\b\w/g, c => c.toUpperCase()) || 'You';
+    }
+
     function currentOwnerLabel() {
       if (!state.user) return 'You';
       if (!state.user.email) return 'You';
@@ -6640,9 +6735,7 @@
       // function — no separate display-name field exists anywhere, so a
       // friendly label is derived from the email's local-part rather than
       // showing the raw address to other household members.
-      const localPart = state.user.email.split('@')[0] || 'You';
-      const cleaned = localPart.replace(/[._-]+/g, ' ').trim();
-      return cleaned.replace(/\b\w/g, c => c.toUpperCase()) || 'You';
+      return friendlyNameFromEmail(state.user.email);
     }
 
     function scopePickerAllowed(category) {
@@ -6681,7 +6774,13 @@
       if (item.scope === 'household') {
         return `<span class="px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Household</span>`;
       }
-      const owner = item.ownerLabel && item.ownerLabel !== currentOwnerLabel() ? item.ownerLabel.split('@')[0] : 'You';
+      // ownerLabel from data stored before the email-friendly-name fix could
+      // still hold a raw address — apply the same derivation here so a
+      // legacy value never surfaces as a bare username fragment.
+      let owner = 'You';
+      if (item.ownerLabel && item.ownerLabel !== currentOwnerLabel()) {
+        owner = item.ownerLabel.includes('@') ? friendlyNameFromEmail(item.ownerLabel) : item.ownerLabel;
+      }
       return `<span class="px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider bg-slate-700/50 text-slate-300 border border-slate-600/40">Personal · ${owner}</span>`;
     }
 
