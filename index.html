@@ -7177,7 +7177,16 @@
                 const gaps = [];
                 for (let i = 1; i < sorted.length; i++) gaps.push((new Date(sorted[i].date) - new Date(sorted[i - 1].date)) / 86400000);
                 const frequency = classifyFrequency(median(gaps));
-                if (frequency !== 'unknown') recurrence = mapFrequencyToRecurrence(frequency);
+                // Multiple real occurrences confirm this bill genuinely
+                // recurs, even when neither detector above can pin down
+                // the exact cadence (irregular gaps, or a gap landing
+                // between classifyFrequency's bands, e.g. 19-25 days).
+                // Falling back to 'none' in that case silently mislabeled
+                // a confirmed recurring obligation as one-time. 'monthly'
+                // is the most common real-world bill cadence and mirrors
+                // the same known-recurring/cadence-uncertain default
+                // already used for income schedule candidates above.
+                recurrence = frequency !== 'unknown' ? mapFrequencyToRecurrence(frequency) : 'monthly';
               }
             }
             legacyBills.push({ title: last.desc, amount: last.amount, dueDate: last.date, category: 'Other', priority: 'important', recurrence });
