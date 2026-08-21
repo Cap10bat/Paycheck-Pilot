@@ -3612,8 +3612,16 @@
 
       // 4-Grid Metrics
       if (document.getElementById('dash-runway-remaining')) {
-        const avgDailyExp = (upcomingBills / (daysUntilPayday || 1)) || 1;
-        const runwayDays = Math.max(0, Math.floor(liquidCash / (avgDailyExp || 1)));
+        // If there are no bills due before payday, there is no real spending
+        // rate to extrapolate from — the previous `|| 1` fallback silently
+        // assumed $1/day in that case, turning any cash balance into an
+        // absurd "days of runway" figure (e.g. $1,530 cash reading as 1,530
+        // days). With nothing known to project beyond the current pay
+        // cycle, runway is honestly reported as "at least until payday"
+        // instead of a fabricated long-range estimate.
+        const runwayDays = upcomingBills > 0 && daysUntilPayday > 0
+          ? Math.max(0, Math.floor(liquidCash / (upcomingBills / daysUntilPayday)))
+          : daysUntilPayday;
         document.getElementById('dash-runway-remaining').innerText = `${runwayDays} Days`;
       }
       if (document.getElementById('dash-next-payday-amount')) {
@@ -3654,10 +3662,12 @@
         }
       }
 
-      // Recent Activity List
+      // Recent Activity List — same system-event filter already used on the
+      // full Activity Log page, so sync noise can't crowd out the 4 slots
+      // here with entries a first-time user wouldn't recognize as theirs.
       const recentList = document.getElementById('dash-recent-activity-list');
       if (recentList) {
-        const log = (state.activityLog || []).slice(0, 4);
+        const log = (state.activityLog || []).filter(a => !SYSTEM_EVENT_ACTIONS.has(a.action)).slice(0, 4);
         if (log.length === 0) {
           recentList.innerHTML = `<p class="text-xs text-slate-500 text-center py-3">Nothing here yet — your actions will show up as you use Paycheck Pilot.</p>`;
         } else {
@@ -4945,6 +4955,7 @@
             <li>• Bills: ${state.bills.length}</li>
             <li>• Income schedules: ${(state.income.nextDate ? 1 : 0) + (state.householdPaychecks || []).length}</li>
             <li>• Import history records: ${(state.importHistory || []).length}</li>
+            <li>• Activity history entries: ${(state.activityLog || []).length}</li>
           </ul>
         </div>
         <div class="p-3 bg-slate-900/80 border border-slate-800 rounded-xl space-y-1">
@@ -4981,8 +4992,9 @@
       state.householdPaychecks = [];
       state.importHistory = [];
       state.spendingInsights = null;
+      state.activityLog = [];
 
-      logActivity("Household Reset", `${actor} started a Financial Reset — cleared transactions, bills, and all paycheck schedules (personal and household). Accounts, household, and login were not touched.`);
+      logActivity("Household Reset", `${actor} started a Financial Reset — cleared transactions, bills, all paycheck schedules, and activity history. Accounts, household, and login were not touched.`);
       saveStateToStorage();
 
       resetWizardState.step = 2;
@@ -6579,7 +6591,15 @@
     // ==========================================
     function currentOwnerLabel() {
       if (!state.user) return 'You';
-      return state.user.email || 'You';
+      if (!state.user.email) return 'You';
+      // Every "who did this" display in the app (Activity Log, Transaction
+      // History, bill completion, ownership badges) reads through this one
+      // function — no separate display-name field exists anywhere, so a
+      // friendly label is derived from the email's local-part rather than
+      // showing the raw address to other household members.
+      const localPart = state.user.email.split('@')[0] || 'You';
+      const cleaned = localPart.replace(/[._-]+/g, ' ').trim();
+      return cleaned.replace(/\b\w/g, c => c.toUpperCase()) || 'You';
     }
 
     function scopePickerAllowed(category) {
