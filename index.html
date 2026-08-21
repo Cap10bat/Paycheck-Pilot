@@ -4110,6 +4110,31 @@
       });
 
       const activeBills = visibleBills().filter(b => !b.completed && !b.paused);
+
+      // Recurring obligations don't stop existing after their next due
+      // date — a monthly bill due in 10 days genuinely recurs again ~30
+      // days later, well inside a 60-day window. Paydays already project
+      // every future occurrence (see the loop above); bills previously did
+      // not, so a 60-day Forecast under-represented real recurring costs.
+      // Reuses getNextRecurrenceDate() exactly as completeBill()/
+      // skipBillOccurrence() already do — no new date logic.
+      const billOccurrences = [];
+      activeBills.forEach(b => {
+        billOccurrences.push({ bill: b, dueDate: b.dueDate });
+        if (b.recurrence && b.recurrence !== 'none') {
+          let nextDate = b.dueDate;
+          let guard = 0;
+          while (guard < 12) {
+            nextDate = getNextRecurrenceDate(nextDate, b.recurrence);
+            if (!nextDate) break;
+            const occDate = new Date(nextDate + 'T00:00:00');
+            if ((occDate - today) > daysAhead * 86400000) break;
+            billOccurrences.push({ bill: b, dueDate: nextDate });
+            guard++;
+          }
+        }
+      });
+
       let running = startCash;
       const series = [];
 
@@ -4118,10 +4143,10 @@
         const dayStr = day.toISOString().split('T')[0];
         const events = [];
 
-        activeBills.forEach(b => {
-          if (b.dueDate === dayStr) {
-            running -= Number(b.amount) || 0;
-            events.push({ type: 'bill', label: b.title, amount: b.amount, priority: b.priority, category: b.category, scope: b.scope });
+        billOccurrences.forEach(occ => {
+          if (occ.dueDate === dayStr) {
+            running -= Number(occ.bill.amount) || 0;
+            events.push({ type: 'bill', label: occ.bill.title, amount: occ.bill.amount, priority: occ.bill.priority, category: occ.bill.category, scope: occ.bill.scope });
           }
         });
 
