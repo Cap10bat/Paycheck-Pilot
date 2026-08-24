@@ -421,6 +421,27 @@
     }
     .weather-state-pop-active { animation: weatherStatePop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1); }
 
+    @keyframes missionIconTransition {
+      0% { transform: scale(0.7) rotate(-8deg); opacity: 0.4; }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+    .mission-status-icon-transition { animation: missionIconTransition 0.35s ease-out; display: inline-block; }
+
+    @keyframes advisoryFadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    #dash-flight-advisory-list p { animation: advisoryFadeIn 0.3s ease-out backwards; }
+    #dash-flight-advisory-list p:nth-child(1) { animation-delay: 0.05s; }
+    #dash-flight-advisory-list p:nth-child(2) { animation-delay: 0.15s; }
+    #dash-flight-advisory-list p:nth-child(3) { animation-delay: 0.25s; }
+
+    @keyframes runwayPulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.55; }
+    }
+    .runway-pulse { animation: runwayPulse 2s ease-in-out infinite; }
+
     /* Safe Spend hero — breathing glow + one-shot flash when health changes */
     @keyframes heroGlowPulse {
       0%, 100% { box-shadow: 0 0 28px -6px var(--pulse-glow-color, rgba(16,185,129,0.32)); }
@@ -877,6 +898,34 @@
               <strong id="dash-household-income-total" class="text-indigo-300">$0.00</strong>
             </div>
 
+            <div id="dash-mission-status" class="glass-card rounded-2xl p-4 border border-slate-800/80 flex items-center justify-between gap-3 flex-wrap">
+              <div class="flex items-center gap-2.5">
+                <span id="mission-status-icon" class="text-2xl mission-status-icon-transition">☀</span>
+                <div>
+                  <p id="mission-status-label" class="text-sm font-black text-white tracking-wide">CLEAR</p>
+                  <p class="text-[10px] text-slate-500">Mission Status</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-4 text-[11px]">
+                <div>
+                  <p class="text-slate-500">Next Income</p>
+                  <p id="mission-status-income" class="font-bold text-slate-200">--</p>
+                </div>
+                <div>
+                  <p class="text-slate-500">Days</p>
+                  <p id="mission-status-days" class="font-bold text-slate-200">--</p>
+                </div>
+                <div>
+                  <p class="text-slate-500">Projected</p>
+                  <p id="mission-status-projected" class="font-bold text-slate-200">--</p>
+                </div>
+                <div>
+                  <p class="text-slate-500">Confidence</p>
+                  <p id="mission-status-confidence" class="font-bold text-slate-200">--</p>
+                </div>
+              </div>
+            </div>
+
             <div id="dash-household-snapshot" class="hidden glass-card rounded-3xl p-5 border border-indigo-500/30 space-y-3">
               <p class="text-[10px] font-bold uppercase tracking-wider text-indigo-400">Household Snapshot</p>
               <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -1040,7 +1089,7 @@
                   <span class="font-semibold uppercase tracking-wider">Financial Runway</span>
                   <i data-lucide="hourglass" class="w-4 h-4 text-brand-400 shrink-0"></i>
                 </div>
-                <div id="dash-runway-remaining" class="text-lg sm:text-2xl font-bold text-white">21 Days</div>
+                <div id="dash-runway-remaining" class="text-lg sm:text-2xl font-bold text-white runway-pulse">21 Days</div>
                 <p class="text-[10px] sm:text-[11px] text-slate-500 mt-1">Safe Operate Duration</p>
               </div>
 
@@ -2981,6 +3030,74 @@
       return { active: false, date: null };
     }
 
+    // Personal-only equivalent of buildForecastSeries() — same technique
+    // (recurring bill expansion, day-by-day balance walk with events), but
+    // scoped strictly to personal cash/bills/income, with no household
+    // paychecks or household-scoped bills. buildForecastSeries() itself is
+    // never touched; this exists so Financial Weather's storm/rain/cloudy
+    // tiers can become genuinely Solo-View-aware instead of always reading
+    // household-combined data regardless of the active view.
+    function buildPersonalForecastSeries(daysAhead = 30) {
+      const startCash = personalLiquidCash();
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const paydays = [];
+      if (state.income && state.income.nextDate) {
+        const stepDays = state.income.frequency === 'weekly' ? 7
+          : state.income.frequency === 'biweekly' ? 14
+          : state.income.frequency === 'semimonthly' ? 15
+          : 30;
+        let d = new Date(state.income.nextDate + 'T00:00:00');
+        let guard = 0;
+        while ((d - today) <= daysAhead * 86400000 && guard < 16) {
+          if (d >= today) paydays.push({ date: new Date(d), amount: Number(state.income.amount) || 0, label: 'Payday Deposit' });
+          d = new Date(d.getTime() + stepDays * 86400000);
+          guard++;
+        }
+      }
+
+      const activeBills = personalBills().filter(b => !b.completed && !b.paused);
+      const billOccurrences = [];
+      activeBills.forEach(b => {
+        billOccurrences.push({ bill: b, dueDate: b.dueDate });
+        if (b.recurrence && b.recurrence !== 'none') {
+          let nextDate = b.dueDate;
+          let guard = 0;
+          while (guard < 12) {
+            nextDate = getNextRecurrenceDate(nextDate, b.recurrence);
+            if (!nextDate) break;
+            const occDate = new Date(nextDate + 'T00:00:00');
+            if ((occDate - today) > daysAhead * 86400000) break;
+            billOccurrences.push({ bill: b, dueDate: nextDate });
+            guard++;
+          }
+        }
+      });
+
+      let running = startCash;
+      const series = [];
+      for (let i = 0; i <= daysAhead; i++) {
+        const day = new Date(today.getTime() + i * 86400000);
+        const dayStr = day.toISOString().split('T')[0];
+        const events = [];
+        billOccurrences.forEach(occ => {
+          if (occ.dueDate === dayStr) {
+            running -= Number(occ.bill.amount) || 0;
+            events.push({ type: 'bill', label: occ.bill.title, amount: occ.bill.amount, priority: occ.bill.priority, category: occ.bill.category });
+          }
+        });
+        paydays.forEach(p => {
+          if (p.date.toISOString().split('T')[0] === dayStr) {
+            running += p.amount;
+            events.push({ type: 'payday', label: p.label, amount: p.amount });
+          }
+        });
+        series.push({ date: dayStr, dayIndex: i, balance: running, events });
+      }
+      return series;
+    }
+
     function getDaysUntilPayday() {
       if (!state.income.nextDate) return 0;
       const today = new Date();
@@ -4137,6 +4254,36 @@
         lastWeatherStateKey = weather.key;
       }
 
+      // Mission Status Card — compact summary, maps the weather tier
+      // already computed above to the 5 requested status labels.
+      const missionLabels = { clear: 'CLEAR', fair: 'CAUTION', cloudy: 'HEADWINDS', rain: 'HEADWINDS', storm: 'TURBULENCE', emergency: 'MAYDAY' };
+      const missionColors = { clear: 'text-brand-400', fair: 'text-brand-300', cloudy: 'text-amber-400', rain: 'text-blue-300', storm: 'text-rose-400', emergency: 'text-rose-400' };
+      const missionIconEl = document.getElementById('mission-status-icon');
+      const missionLabelEl = document.getElementById('mission-status-label');
+      if (missionIconEl && missionIconEl.innerText !== weather.icon) {
+        missionIconEl.classList.remove('mission-status-icon-transition');
+        void missionIconEl.offsetWidth;
+        missionIconEl.classList.add('mission-status-icon-transition');
+      }
+      if (missionIconEl) missionIconEl.innerText = weather.icon;
+      if (missionLabelEl) { missionLabelEl.innerText = missionLabels[weather.key] || weather.title.toUpperCase(); missionLabelEl.className = `text-sm font-black tracking-wide ${missionColors[weather.key] || 'text-white'}`; }
+      const missionIncomeEl = document.getElementById('mission-status-income');
+      if (missionIncomeEl) missionIncomeEl.innerText = viewData.nextIncome ? viewData.nextIncome.label : 'Not set';
+      const missionDaysEl = document.getElementById('mission-status-days');
+      if (missionDaysEl) missionDaysEl.innerText = viewData.nextIncome ? viewData.daysUntilIncome : '--';
+      const missionProjectedEl = document.getElementById('mission-status-projected');
+      if (missionProjectedEl) {
+        const proj = viewData.cash + (viewData.nextIncome ? viewData.nextIncome.amount : 0) - viewData.upcomingTotal;
+        missionProjectedEl.innerText = `${proj >= 0 ? '+' : '-'}$${formatCurrency(Math.abs(proj))}`;
+        missionProjectedEl.className = `font-bold ${proj >= 0 ? 'text-brand-400' : 'text-rose-400'}`;
+      }
+      const missionConfidenceEl = document.getElementById('mission-status-confidence');
+      if (missionConfidenceEl) {
+        const confidence = viewData.mayday.active ? 'Low' : safeSpend < 200 ? 'Medium' : 'High';
+        missionConfidenceEl.innerText = confidence;
+        missionConfidenceEl.className = `font-bold ${confidence === 'Low' ? 'text-rose-400' : confidence === 'Medium' ? 'text-amber-400' : 'text-brand-400'}`;
+      }
+
       // 4-Grid Metrics
       if (document.getElementById('dash-runway-remaining')) {
         // If there are no bills due before payday, there is no real spending
@@ -4520,13 +4667,16 @@
     // interprets numbers the rest of the app already computes.
     // ==========================================
     function computeFinancialWeather(safeSpend, cash) {
-      const series = buildForecastSeries(30);
+      const solo = state.dashboardView === 'solo';
+      const series = solo ? buildPersonalForecastSeries(30) : buildForecastSeries(30);
       const next14 = series.slice(0, 15);
       const lowestNext14 = Math.min(...next14.map(s => s.balance));
       const lowestNext30 = Math.min(...series.map(s => s.balance));
-      const overdueBills = visibleBills().filter(b => !b.paused && getBillStatus(b) === 'overdue');
+      const overdueBills = (solo ? personalBills() : visibleBills()).filter(b => !b.paused && getBillStatus(b) === 'overdue');
       const overdueTotal = overdueBills.reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
-      const upcomingTotal = getUpcomingBillsTotal();
+      const upcomingTotal = solo
+        ? personalBills().filter(b => !b.completed && !b.paused && (!state.income.nextDate || b.dueDate <= state.income.nextDate)).reduce((sum, b) => sum + (Number(b.amount) || 0), 0)
+        : getUpcomingBillsTotal();
 
       // Walks the existing forecast series to find the first day a threshold
       // is crossed, and reads whichever bill (already present in that day's
@@ -6985,23 +7135,46 @@
       const modal = document.getElementById('modal-deficit');
       const content = document.getElementById('deficit-modal-content');
 
-      const cash = getTotalLiquidCash();
-      const upcoming = getUpcomingBills();
-      const totalBills = getUpcomingBillsTotal();
-      const shortfall = totalBills - cash;
+      const viewData = getActiveViewData();
+      const cash = viewData.cash;
+      const upcoming = viewData.upcomingBills;
+      const totalBills = viewData.upcomingTotal;
+      const shortfall = Math.max(0, Math.abs(Math.min(0, viewData.safeSpend)));
 
       const mustPay = upcoming.filter(b => b.priority === 'critical');
       const canDelay = upcoming.filter(b => b.priority !== 'critical');
       const mustPayTotal = mustPay.reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
       const projectedOutcome = cash - mustPayTotal;
 
+      // Largest contributing bills — ranked by amount across everything
+      // due, not just the must-pay split, so the biggest single driver of
+      // the shortfall is immediately visible.
+      const largestBills = upcoming.slice().sort((a, b) => (Number(b.amount) || 0) - (Number(a.amount) || 0)).slice(0, 3);
+
       if (content) {
         content.innerHTML = `
           <div class="p-4 bg-rose-950/40 border border-rose-500/40 rounded-2xl space-y-2">
-            <h4 class="font-bold text-rose-300 text-sm">Projected Shortfall</h4>
+            <h4 class="font-bold text-rose-300 text-sm">Projected Shortfall — ${viewData.solo ? 'Solo View' : 'Household View'}</h4>
             <p>What you have: <strong class="text-white">$${formatCurrency(cash)}</strong></p>
             <p>What's coming due: <strong class="text-rose-400">$${formatCurrency(totalBills)}</strong></p>
             <p class="text-sm font-bold text-rose-400 pt-1 border-t border-rose-800/60">Gap to close: $${formatCurrency(shortfall)}</p>
+            ${viewData.mayday.date ? `<p class="text-[11px] text-rose-300">Earliest projected deficit: <strong>${viewData.mayday.date}</strong></p>` : ''}
+          </div>
+
+          <div class="space-y-2">
+            <h4 class="font-bold text-white text-xs uppercase tracking-wider">Largest Contributing Bills</h4>
+            <p class="text-slate-400">The biggest drivers of the shortfall, in order.</p>
+            <div class="space-y-2 pt-2">
+              ${largestBills.length ? largestBills.map(b => `
+                <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800 flex justify-between items-center">
+                  <div>
+                    <strong class="text-white flex items-center gap-1.5 flex-wrap">${b.title} ${scopeBadgeHtml(b)}</strong>
+                    <span class="text-slate-400">Due: ${b.dueDate}</span>
+                  </div>
+                  <span class="font-bold text-rose-400">$${formatCurrency(b.amount)}</span>
+                </div>
+              `).join('') : `<p class="text-slate-500 italic">Nothing due right now.</p>`}
+            </div>
           </div>
 
           <div class="space-y-2">
@@ -7024,7 +7197,7 @@
           </div>
 
           <div class="space-y-2">
-            <h4 class="font-bold text-white text-xs uppercase tracking-wider">Recovery Path — Bills You Can Delay</h4>
+            <h4 class="font-bold text-white text-xs uppercase tracking-wider">Recovery Opportunities</h4>
             <p class="text-slate-400">Pushing these back a week frees up cash for what can't wait.</p>
             <div class="space-y-2 pt-2">
               ${canDelay.length ? canDelay.map(b => `
@@ -7043,7 +7216,7 @@
           </div>
 
           <div class="p-4 rounded-2xl border ${projectedOutcome >= 0 ? 'bg-brand-500/10 border-brand-500/30' : 'bg-amber-500/10 border-amber-500/30'} space-y-1.5">
-            <h4 class="font-bold text-xs uppercase tracking-wider ${projectedOutcome >= 0 ? 'text-brand-300' : 'text-amber-300'}">Projected Outcome</h4>
+            <h4 class="font-bold text-xs uppercase tracking-wider ${projectedOutcome >= 0 ? 'text-brand-300' : 'text-amber-300'}">Positive Outcome After Action</h4>
             ${projectedOutcome >= 0
               ? `<p class="text-slate-200">Defer what you can above, and you're covered — you'd have <strong class="text-brand-400">$${formatCurrency(projectedOutcome)}</strong> left after your must-pay bills.</p>`
               : `<p class="text-slate-200">Even after deferring everything you can, you'd still be <strong class="text-amber-400">$${formatCurrency(Math.abs(projectedOutcome))}</strong> short on must-pay bills. Consider extra income, moving funds from savings, or reaching out to a biller for an extension.</p>`
