@@ -820,6 +820,11 @@
               </div>
             </div>
 
+            <div id="dash-view-toggle-wrap" class="hidden flex items-center gap-1.5 p-1 bg-slate-900/80 border border-slate-800 rounded-xl w-fit">
+              <button type="button" id="dash-view-toggle-solo" onclick="setDashboardView('solo')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all">Solo</button>
+              <button type="button" id="dash-view-toggle-household" onclick="setDashboardView('household')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all">Household</button>
+            </div>
+
             <div id="dash-risk-banner" class="hidden p-4 rounded-2xl border text-xs font-medium flex items-center gap-3">
               <i data-lucide="alert-triangle" class="w-5 h-5 shrink-0"></i>
               <span id="dash-risk-message"></span>
@@ -845,30 +850,55 @@
               <button onclick="navigateTo('settings')" class="shrink-0 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-[11px] transition-all">Fix in Settings</button>
             </div>
 
-            <!-- PAYDAY COUNTDOWN — highlighted separately from the small stats
+            <!-- NEXT INCOME — highlighted separately from the small stats
                  row further down, since this is one of the app's most
-                 important numbers and was previously buried in a text-xs line -->
+                 important numbers. Driven by the active Flight View. -->
             <div class="glass-card rounded-3xl p-4 sm:p-5 border border-indigo-500/40 flex items-center justify-between gap-4 relative overflow-hidden glow-indigo">
               <div class="absolute -left-8 -top-8 w-32 h-32 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none"></div>
               <div class="relative flex items-center gap-4 min-w-0">
                 <div class="text-center shrink-0">
                   <p id="dash-payday-highlight-days" class="text-4xl sm:text-5xl font-black text-white leading-none">--</p>
-                  <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-indigo-400 mt-1 whitespace-nowrap">Days To Payday</p>
+                  <p class="text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-indigo-400 mt-1 whitespace-nowrap">Days Remaining</p>
                 </div>
                 <div class="w-px h-12 bg-slate-800 shrink-0"></div>
                 <div class="min-w-0">
+                  <p class="text-[9px] font-bold uppercase tracking-wider text-indigo-400">Next Income</p>
                   <p id="dash-payday-highlight-tagline" class="text-xs sm:text-sm font-semibold text-white leading-snug">--</p>
                   <p class="text-[11px] text-slate-400 mt-0.5">Next Payday: <span id="dash-payday-highlight-date" class="text-slate-300 font-semibold">--</span></p>
                 </div>
               </div>
               <div class="relative text-right shrink-0">
-                <p class="text-[11px] text-slate-400">Your Expected</p>
+                <p class="text-[11px] text-slate-400">Amount</p>
                 <p id="dash-payday-highlight-amount" class="text-lg sm:text-xl font-black text-brand-400">$0.00</p>
               </div>
             </div>
             <div id="dash-household-income-line" class="hidden px-1 -mt-3 flex items-center justify-between text-[11px] text-slate-400">
               <span>Household Income Total (all confirmed paychecks)</span>
               <strong id="dash-household-income-total" class="text-indigo-300">$0.00</strong>
+            </div>
+
+            <div id="dash-household-snapshot" class="hidden glass-card rounded-3xl p-5 border border-indigo-500/30 space-y-3">
+              <p class="text-[10px] font-bold uppercase tracking-wider text-indigo-400">Household Snapshot</p>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div>
+                  <p class="text-[10px] text-slate-500">Cash On Hand</p>
+                  <p id="snapshot-cash" class="text-sm sm:text-base font-black text-white">$0.00</p>
+                </div>
+                <div>
+                  <p class="text-[10px] text-slate-500">Upcoming Income</p>
+                  <p id="snapshot-income" class="text-sm sm:text-base font-black text-brand-400">$0.00</p>
+                  <p id="snapshot-income-when" class="text-[10px] text-slate-500">--</p>
+                </div>
+                <div>
+                  <p class="text-[10px] text-slate-500">Bills Before Income</p>
+                  <p id="snapshot-bills" class="text-sm sm:text-base font-black text-rose-400">$0.00</p>
+                </div>
+                <div>
+                  <p class="text-[10px] text-slate-500">Projected Position</p>
+                  <p id="snapshot-projected" class="text-sm sm:text-base font-black text-white">$0.00</p>
+                </div>
+              </div>
+              <p id="dash-guidance-text" class="text-[11px] text-slate-400 pt-2 border-t border-slate-800/70">--</p>
             </div>
 
             <!-- PRIMARY METRIC: SAFE SPEND HERO CARD & FINANCIAL WEATHER -->
@@ -893,6 +923,7 @@
                         Your true disposable cash after reserved bills before your next paycheck on
                         <span id="dash-next-paydate-inline" class="text-slate-200 font-semibold">--</span>.
                       </p>
+                      <p id="dash-safe-spend-context" class="text-[11px] font-semibold text-slate-300">--</p>
                     </div>
                   </div>
 
@@ -914,6 +945,13 @@
                       <span id="dash-bills-due-total" class="font-bold text-rose-400">$0.00</span>
                     </div>
                   </div>
+                </div>
+
+                <div id="dash-flight-advisory" class="relative z-10 mt-5 bg-slate-900/70 p-4 rounded-2xl border border-slate-800/80 space-y-1.5">
+                  <p class="text-[10px] font-bold uppercase tracking-wider text-brand-400 flex items-center gap-1.5">
+                    <i data-lucide="radio" class="w-3 h-3"></i> Flight Advisory
+                  </p>
+                  <div id="dash-flight-advisory-list" class="space-y-1 text-xs"></div>
                 </div>
               </div>
 
@@ -975,6 +1013,7 @@
                 <div id="fin-weather-statebox" class="space-y-1.5 text-center py-1 z-10">
                   <div id="fin-weather-icon" class="text-4xl">☀</div>
                   <h3 id="fin-weather-title" class="text-lg font-extrabold text-white">Clear Skies</h3>
+                  <p id="fin-weather-reason" class="text-[11px] text-slate-400 font-medium">--</p>
                   <p id="fin-weather-desc" class="text-xs text-slate-400">Stable cash reserves and healthy safe spend buffer.</p>
                   <p id="fin-weather-predictive" class="text-[11px] text-slate-500 italic pt-0.5">Clear for now.</p>
                 </div>
@@ -2697,6 +2736,30 @@
     function visibleGoals() { return state.goals.filter(isVisibleToCurrentUser); }
     function visibleTransactions() { return state.transactions.filter(isVisibleToCurrentUser); }
 
+    // Strictly personal-scoped — excludes household-shared items entirely,
+    // unlike visibleAccounts()/visibleBills() above which include both.
+    // This is what Solo View actually needs; the existing functions are
+    // what Household View continues to use (unchanged).
+    function personalAccounts() { return state.accounts.filter(a => a.scope !== 'household' && isVisibleToCurrentUser(a)); }
+    function personalBills() { return state.bills.filter(b => b.scope !== 'household' && isVisibleToCurrentUser(b)); }
+    function personalLiquidCash() {
+      return personalAccounts().reduce((sum, acc) => acc.type === 'credit' ? sum : sum + (Number(acc.balance) || 0), 0);
+    }
+
+    // The soonest income event across the user's own schedule and every
+    // configured household member's paycheck — what Household View
+    // evaluates against, instead of only the primary user's own payday.
+    function getNextHouseholdIncomeEvent() {
+      const candidates = [];
+      if (state.income && state.income.nextDate) candidates.push({ date: state.income.nextDate, amount: Number(state.income.amount) || 0, label: 'Your Paycheck' });
+      (state.householdPaychecks || []).forEach(hp => {
+        if (hp && hp.nextDate) candidates.push({ date: hp.nextDate, amount: Number(hp.amount) || 0, label: hp.ownerLabel ? `${hp.ownerLabel}'s Paycheck` : 'Household Paycheck' });
+      });
+      if (!candidates.length) return null;
+      candidates.sort((a, b) => a.date < b.date ? -1 : 1);
+      return candidates[0];
+    }
+
     function getTotalLiquidCash() {
       return visibleAccounts().reduce((sum, acc) => {
         if (acc.type === 'credit') return sum;
@@ -2872,6 +2935,50 @@
 
     function getUpcomingBillsTotal() {
       return getUpcomingBills().reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
+    }
+
+    // Generalized version of getUpcomingBills() — bills due before ANY
+    // given date, from any bill set. Used by the Household Snapshot card
+    // ("Bills Before Next Income") and Solo View, neither of which is
+    // necessarily cut off at the primary user's own payday.
+    function billsBeforeDate(bills, dateStr) {
+      const relevant = bills.filter(b => !b.completed && !b.paused);
+      if (!dateStr) return relevant;
+      return relevant.filter(b => b.dueDate <= dateStr);
+    }
+
+    // True-deficit check: does cash ever actually go negative once real
+    // income timing is accounted for, rather than just "cash < total
+    // bills right now" (which is what produced the misleading Mayday
+    // trigger — $3,000 arriving tomorrow was being ignored). Reuses
+    // buildForecastSeries() unmodified — it already walks day-by-day,
+    // crediting income and debiting bills exactly as they occur, so
+    // scanning its own output for the first negative day IS this check,
+    // not a new simulation.
+    function computeHouseholdMaydayStatus(daysAhead = 14) {
+      const series = buildForecastSeries(daysAhead);
+      const firstNegative = series.find(s => s.balance < 0);
+      return { active: !!firstNegative, date: firstNegative ? firstNegative.date : null };
+    }
+
+    // Same check, scoped to personal-only cash/bills/income (Solo View) —
+    // a small, separate day-by-day walk rather than parameterizing the
+    // shared buildForecastSeries(), so that function and every existing
+    // caller of it (Forecast page, Financial Weather in Household View)
+    // remain completely untouched.
+    function computeSoloMaydayStatus(daysAhead = 14) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      let running = personalLiquidCash();
+      const bills = personalBills().filter(b => !b.completed && !b.paused);
+      for (let i = 0; i <= daysAhead; i++) {
+        const day = new Date(today.getTime() + i * 86400000);
+        const dayStr = day.toISOString().split('T')[0];
+        bills.forEach(b => { if (b.dueDate === dayStr) running -= Number(b.amount) || 0; });
+        if (state.income && state.income.nextDate === dayStr) running += Number(state.income.amount) || 0;
+        if (running < 0) return { active: true, date: dayStr };
+      }
+      return { active: false, date: null };
     }
 
     function getDaysUntilPayday() {
@@ -3727,11 +3834,88 @@
       }
     }
 
+    // Single source of truth for every view-aware dashboard widget. Solo
+    // uses strictly personal data and the user's own payday. Household uses
+    // the existing combined visibleAccounts()/visibleBills() and evaluates
+    // against the soonest income event across every configured household
+    // paycheck, not just the primary user's own — per spec.
+    function getActiveViewData() {
+      const solo = state.dashboardView === 'solo';
+      const cash = solo ? personalLiquidCash() : getTotalLiquidCash();
+      const allBills = (solo ? personalBills() : visibleBills()).filter(b => !b.completed && !b.paused);
+      const nextIncome = solo
+        ? (state.income && state.income.nextDate ? { date: state.income.nextDate, amount: Number(state.income.amount) || 0, label: 'Your Paycheck' } : null)
+        : getNextHouseholdIncomeEvent();
+      const cutoffDate = nextIncome ? nextIncome.date : null;
+      const upcomingBills = cutoffDate ? allBills.filter(b => b.dueDate <= cutoffDate) : allBills;
+      const upcomingTotal = upcomingBills.reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
+      const safeSpend = cash - upcomingTotal;
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const daysUntilIncome = cutoffDate ? Math.max(0, Math.round((new Date(cutoffDate + 'T00:00:00') - today) / 86400000)) : 0;
+      const dailyAvailable = daysUntilIncome > 0 ? safeSpend / daysUntilIncome : safeSpend;
+      const mayday = solo ? computeSoloMaydayStatus(14) : computeHouseholdMaydayStatus(14);
+      return { solo, cash, allBills, upcomingBills, upcomingTotal, safeSpend, nextIncome, daysUntilIncome, dailyAvailable, mayday };
+    }
+
+    function setDashboardView(view) {
+      state.dashboardView = view;
+      saveStateToStorage();
+      renderDashboard();
+    }
+
     function renderDashboard() {
       scanAccountDataIntegrity();
       checkAndShowOverdueReminder();
       requestNotificationPermissionOnce();
       sendBrowserNotifications();
+
+      const inHousehold = !!(state.household && state.household.id && state.household.accountMode === 'shared');
+      if (!state.dashboardView) state.dashboardView = inHousehold ? 'household' : 'solo';
+      const toggleWrap = document.getElementById('dash-view-toggle-wrap');
+      if (toggleWrap) toggleWrap.classList.toggle('hidden', !inHousehold);
+      const soloBtn = document.getElementById('dash-view-toggle-solo');
+      const householdBtn = document.getElementById('dash-view-toggle-household');
+      const activeCls = 'px-3 py-1.5 rounded-lg text-xs font-bold transition-all bg-brand-500 text-slate-950';
+      const inactiveCls = 'px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white';
+      if (soloBtn) soloBtn.className = state.dashboardView === 'solo' ? activeCls : inactiveCls;
+      if (householdBtn) householdBtn.className = state.dashboardView === 'household' ? activeCls : inactiveCls;
+
+      const snapshot = document.getElementById('dash-household-snapshot');
+      if (snapshot) {
+        if (inHousehold && state.dashboardView === 'household') {
+          const cash = getTotalLiquidCash();
+          const nextIncome = getNextHouseholdIncomeEvent();
+          const billsBefore = nextIncome ? billsBeforeDate(visibleBills(), nextIncome.date) : billsBeforeDate(visibleBills(), null);
+          const billsBeforeTotal = billsBefore.reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
+          const projected = cash + (nextIncome ? nextIncome.amount : 0) - billsBeforeTotal;
+
+          document.getElementById('snapshot-cash').innerText = `$${formatCurrency(cash)}`;
+          document.getElementById('snapshot-income').innerText = nextIncome ? `$${formatCurrency(nextIncome.amount)}` : 'None scheduled';
+          document.getElementById('snapshot-income-when').innerText = nextIncome ? `${nextIncome.label} · ${nextIncome.date}` : '';
+          document.getElementById('snapshot-bills').innerText = `$${formatCurrency(billsBeforeTotal)}`;
+          const projectedEl = document.getElementById('snapshot-projected');
+          projectedEl.innerText = `${projected >= 0 ? '+' : '-'}$${formatCurrency(Math.abs(projected))}`;
+          projectedEl.className = `text-sm sm:text-base font-black ${projected >= 0 ? 'text-brand-400' : 'text-rose-400'}`;
+
+          const guidanceEl = document.getElementById('dash-guidance-text');
+          if (guidanceEl) {
+            if (!nextIncome) {
+              guidanceEl.innerText = "No upcoming household income scheduled yet.";
+            } else {
+              const daysOut = Math.max(0, Math.round((new Date(nextIncome.date + 'T00:00:00') - new Date(new Date().setHours(0,0,0,0))) / 86400000));
+              const whenText = daysOut === 0 ? 'today' : daysOut === 1 ? 'tomorrow' : `in ${daysOut} days`;
+              guidanceEl.innerText = billsBeforeTotal === 0
+                ? `Next household income arrives ${whenText}. All upcoming bills are covered until then.`
+                : projected >= 0
+                  ? `Next household income arrives ${whenText}. Household remains positive through ${nextIncome.date}.`
+                  : `Next household income arrives ${whenText}, but bills before then exceed available cash by $${formatCurrency(Math.abs(projected))}.`;
+            }
+          }
+          snapshot.classList.remove('hidden');
+        } else {
+          snapshot.classList.add('hidden');
+        }
+      }
       const cyclesAdvanced = advanceStaleIncomeSchedule();
       if (cyclesAdvanced) {
         saveStateToStorage();
@@ -3741,12 +3925,13 @@
         }
       }
       renderPaydaySettingsCard();
-      const liquidCash = getTotalLiquidCash();
-      const upcomingBills = getUpcomingBillsTotal();
-      const safeSpend = liquidCash - upcomingBills;
-      const daysUntilPayday = getDaysUntilPayday();
-      const dailyAvailable = daysUntilPayday > 0 ? safeSpend / daysUntilPayday : safeSpend;
-      const safeSpendHealth = safeSpend < 0 ? 'danger' : safeSpend < 200 ? 'warning' : 'healthy';
+      const viewData = getActiveViewData();
+      const liquidCash = viewData.cash;
+      const upcomingBills = viewData.upcomingTotal;
+      const safeSpend = viewData.safeSpend;
+      const daysUntilPayday = viewData.daysUntilIncome;
+      const dailyAvailable = viewData.dailyAvailable;
+      const safeSpendHealth = viewData.mayday.active ? 'danger' : safeSpend < 200 ? 'warning' : 'healthy';
 
       // Safe Spend Hero — animated count-up + dynamic glow based on health
       const safeSpendEl = document.getElementById('dash-safe-spend');
@@ -3783,18 +3968,66 @@
       if (countdownEl) countdownEl.innerText = `${daysUntilPayday} ${daysUntilPayday === 1 ? 'day' : 'days'}`;
 
       const highlightDays = document.getElementById('dash-payday-highlight-days');
-      if (highlightDays) highlightDays.innerText = state.income.nextDate ? daysUntilPayday : '--';
       const highlightDate = document.getElementById('dash-payday-highlight-date');
-      if (highlightDate) highlightDate.innerText = state.income.nextDate || 'Not set';
       const highlightAmount = document.getElementById('dash-payday-highlight-amount');
-      const highlightAmountValid = state.income.amount && !isNaN(Number(state.income.amount)) && Number(state.income.amount) > 0;
-      if (highlightAmount) highlightAmount.innerText = highlightAmountValid ? `$${formatCurrency(state.income.amount)}` : 'Not set';
       const highlightTagline = document.getElementById('dash-payday-highlight-tagline');
-      if (highlightTagline) {
-        highlightTagline.innerText = !state.income.nextDate ? 'Set up your payday schedule to see this'
-          : safeSpendHealth === 'danger' ? "Money Mayday may be needed before then"
-          : safeSpendHealth === 'warning' ? "It'll be tight, but you can make it"
-          : "You're on track to make it";
+      const highlightAmountValid = state.income.amount && !isNaN(Number(state.income.amount)) && Number(state.income.amount) > 0;
+      if (viewData.nextIncome) {
+        const daysOut = viewData.daysUntilIncome;
+        if (highlightDays) highlightDays.innerText = daysOut === 0 ? 'Today' : daysOut === 1 ? '1' : daysOut;
+        if (highlightDate) highlightDate.innerText = viewData.nextIncome.date;
+        if (highlightAmount) highlightAmount.innerText = `$${formatCurrency(viewData.nextIncome.amount)}`;
+        if (highlightTagline) {
+          highlightTagline.innerText = daysOut === 0 ? `${viewData.nextIncome.label} — Today`
+            : daysOut === 1 ? `${viewData.nextIncome.label} — Tomorrow`
+            : `${viewData.nextIncome.label} — ${daysOut} Days`;
+        }
+      } else {
+        if (highlightDays) highlightDays.innerText = '--';
+        if (highlightDate) highlightDate.innerText = 'Not set';
+        if (highlightAmount) highlightAmount.innerText = 'Not set';
+        if (highlightTagline) highlightTagline.innerText = 'Set up your payday schedule to see this';
+      }
+
+      // Safe Spend context line + Flight Advisory — both built entirely
+      // from viewData, never generic filler.
+      const contextEl = document.getElementById('dash-safe-spend-context');
+      if (contextEl) {
+        if (viewData.mayday.active) {
+          contextEl.innerText = `Shortfall Before: ${viewData.mayday.date}`;
+          contextEl.className = 'text-[11px] font-semibold text-rose-400';
+        } else if (viewData.upcomingBills.length === 0) {
+          contextEl.innerText = viewData.nextIncome ? `Bills Covered Through: ${viewData.nextIncome.date}` : 'No bills currently due';
+          contextEl.className = 'text-[11px] font-semibold text-brand-400';
+        } else {
+          contextEl.innerText = `Safe Spending: $${formatCurrency(Math.max(0, viewData.dailyAvailable))}/day`;
+          contextEl.className = 'text-[11px] font-semibold text-slate-300';
+        }
+      }
+
+      const advisoryList = document.getElementById('dash-flight-advisory-list');
+      if (advisoryList) {
+        const lines = [];
+        if (viewData.mayday.active) {
+          lines.push({ icon: '⚠', cls: 'text-rose-300', text: `You will go negative around ${viewData.mayday.date}.` });
+          const billsBeforeMayday = viewData.upcomingBills.filter(b => b.dueDate <= viewData.mayday.date).sort((a, b) => (Number(b.amount) || 0) - (Number(a.amount) || 0));
+          if (billsBeforeMayday.length) {
+            lines.push({ icon: '⚠', cls: 'text-rose-300', text: `Deferring ${billsBeforeMayday[0].title} may resolve the shortfall.` });
+          }
+        } else if (viewData.nextIncome) {
+          const daysOut = viewData.daysUntilIncome;
+          const whenText = daysOut === 0 ? 'today' : daysOut === 1 ? 'tomorrow' : `in ${daysOut} days`;
+          lines.push({ icon: '✓', cls: 'text-brand-400', text: `Next income arrives ${whenText}.` });
+          if (viewData.upcomingBills.length === 0) {
+            lines.push({ icon: '✓', cls: 'text-brand-400', text: 'All upcoming bills are covered.' });
+          } else {
+            lines.push({ icon: '✓', cls: 'text-brand-400', text: `Recommended spending until next income: $${formatCurrency(Math.max(0, viewData.dailyAvailable))}/day.` });
+          }
+          lines.push({ icon: '✓', cls: 'text-brand-400', text: `${viewData.solo ? 'You remain' : 'Household remains'} positive through ${viewData.nextIncome.date}.` });
+        } else {
+          lines.push({ icon: '✓', cls: 'text-slate-400', text: 'Set up a payday schedule to see flight advisory guidance.' });
+        }
+        advisoryList.innerHTML = lines.map(l => `<p class="flex items-start gap-1.5 ${l.cls}"><span>${l.icon}</span><span class="text-slate-300">${l.text}</span></p>`).join('');
       }
 
       const dailyEl = document.getElementById('dash-daily-available');
@@ -3833,7 +4066,7 @@
       // Money Mayday button
       const deficitBtn = document.getElementById('analyze-deficit-btn');
       if (deficitBtn) {
-        if (safeSpend < 0) deficitBtn.classList.remove('hidden');
+        if (viewData.mayday.active) deficitBtn.classList.remove('hidden');
         else deficitBtn.classList.add('hidden');
       }
 
@@ -3845,21 +4078,22 @@
         else paydayBanner.classList.add('hidden');
       }
 
-      // Risk Banner (Money Mayday-triggering threshold — unchanged condition)
+      // Risk Banner — same true-deficit check as the Mayday button above,
+      // not the raw cash-vs-bills figure.
       const riskBanner = document.getElementById('dash-risk-banner');
       const riskMsg = document.getElementById('dash-risk-message');
-      if (safeSpend < 0) {
+      if (viewData.mayday.active) {
         if (riskBanner) {
           riskBanner.classList.remove('hidden');
           riskBanner.className = "p-4 rounded-2xl border border-rose-500/50 bg-rose-950/40 text-rose-200 text-xs font-medium flex items-center gap-3";
         }
-        if (riskMsg) riskMsg.innerText = `Your upcoming bills are $${formatCurrency(Math.abs(safeSpend))} more than you have on hand right now. Open Money Mayday for a plan to make it to payday.`;
+        if (riskMsg) riskMsg.innerText = `Your cash position is projected to go negative around ${viewData.mayday.date} even after upcoming income. Open Money Mayday for a plan.`;
       } else if (safeSpend < 200) {
         if (riskBanner) {
           riskBanner.classList.remove('hidden');
           riskBanner.className = "p-4 rounded-2xl border border-amber-500/50 bg-amber-950/40 text-amber-200 text-xs font-medium flex items-center gap-3";
         }
-        if (riskMsg) riskMsg.innerText = `Tight Buffer: Safe Spend is low ($${formatCurrency(safeSpend)}). Spend cautiously until payday.`;
+        if (riskMsg) riskMsg.innerText = `Tight Buffer: Safe Spend is low ($${formatCurrency(safeSpend)}). Spend cautiously until ${viewData.nextIncome ? 'your next income' : 'payday'}.`;
       } else {
         if (riskBanner) riskBanner.classList.add('hidden');
       }
@@ -3878,6 +4112,8 @@
 
       if (weatherIcon) weatherIcon.innerText = weather.icon;
       if (weatherTitle) weatherTitle.innerText = weather.title;
+      const weatherReason = document.getElementById('fin-weather-reason');
+      if (weatherReason) weatherReason.innerText = weather.reason || '';
       if (weatherDesc) weatherDesc.innerText = weather.desc;
       if (weatherPredictive) weatherPredictive.innerText = weather.predictive;
       if (weatherRisk) { weatherRisk.innerText = weather.riskLabel; weatherRisk.className = weather.riskClass; }
@@ -4314,15 +4550,24 @@
         return days;
       }
 
-      if (safeSpend < 0) {
+      // True-deficit check instead of raw safeSpend: Mayday should mean
+      // "already negative today," accounting for income that arrives
+      // before bills are actually due — not "current cash is less than
+      // every bill through payday," which ignores income timing entirely
+      // and was producing false Mayday triggers when income was arriving
+      // imminently, before most bills became critical.
+      const todaysTrueBalance = series[0] ? series[0].balance : safeSpend;
+
+      if (todaysTrueBalance < 0) {
         return {
-          key: 'emergency', icon: '🚨', title: 'Financial Mayday',
+          key: 'emergency', icon: '🚨', title: 'Mayday',
+          reason: overdueBills.length ? `${overdueBills.length} overdue bill(s) totaling $${formatCurrency(overdueTotal)}` : `Bills due now exceed available cash by $${formatCurrency(Math.abs(todaysTrueBalance))}`,
           desc: "Bills due right now add up to more than you have on hand.",
           predictive: "Money Mayday is active — open it for a plan to make it to payday.",
           riskLabel: 'Money Mayday Active', riskClass: 'text-rose-400',
           borderClass: 'border-rose-500/50',
           factors: [
-            `Safe Spend is $${formatCurrency(safeSpend)} — already negative`,
+            `Today's true balance is $${formatCurrency(todaysTrueBalance)} — already negative`,
             `$${formatCurrency(upcomingTotal)} in bills due before payday`,
             overdueBills.length ? `${overdueBills.length} bill(s) already overdue, totaling $${formatCurrency(overdueTotal)}` : null
           ].filter(Boolean),
@@ -4334,7 +4579,8 @@
         const crossing = firstCrossing(0);
         const causeText = crossing && crossing.cause ? ` after ${crossing.cause.label}` : '';
         return {
-          key: 'storm', icon: '⛈', title: 'Storm Warning',
+          key: 'storm', icon: '⛈', title: 'Turbulence',
+          reason: crossing && crossing.cause ? `${crossing.cause.label} pushes the balance negative around ${crossing.date}` : `Projected balance dips negative around ${crossing ? crossing.date : 'the coming days'}`,
           desc: "Your projected balance is on track to go negative before your next paycheck.",
           predictive: crossing ? `A shortfall is projected around ${crossing.date}${causeText}.` : "A shortfall is projected in the days ahead.",
           riskLabel: 'Deficit Projected', riskClass: 'text-rose-400',
@@ -4353,7 +4599,8 @@
       // healthy balance, per the requested model.
       if (safeSpend < 200 || overdueBills.length > 0) {
         return {
-          key: 'cloudy', icon: '⛅', title: 'Cloudy',
+          key: 'cloudy', icon: '⛅', title: 'Headwinds',
+          reason: overdueBills.length ? `${overdueBills.length} bill(s) overdue, totaling $${formatCurrency(overdueTotal)}` : `Safe Spend buffer is thin at $${formatCurrency(safeSpend)}`,
           desc: overdueBills.length ? "You have bills that are past due." : "Your buffer is thin right now — keep discretionary spending low until payday.",
           predictive: overdueBills.length
             ? `${overdueBills.length} bill(s) overdue, totaling $${formatCurrency(overdueTotal)}.`
@@ -4373,7 +4620,8 @@
         const crossing = firstCrossing(200);
         const causeText = crossing && crossing.cause ? ` after ${crossing.cause.label}` : '';
         return {
-          key: 'rain', icon: '🌧', title: 'Rain Expected',
+          key: 'rain', icon: '🌧', title: 'Headwinds',
+          reason: crossing && crossing.cause ? `A bill cluster including ${crossing.cause.label} arrives before your next income` : `Cash pressure builds by ${crossing ? crossing.date : 'later this month'}`,
           desc: "Cash pressure is building for later this month.",
           predictive: crossing ? `Your cushion tightens around ${crossing.date}${causeText}.` : "Your cushion tightens later this month.",
           riskLabel: 'Pressure Approaching', riskClass: 'text-blue-300',
@@ -4388,7 +4636,8 @@
 
       if (safeSpend < 500) {
         return {
-          key: 'fair', icon: '🌤', title: 'Fair Weather',
+          key: 'fair', icon: '🌤', title: 'Partly Cloudy',
+          reason: `Modest buffer of $${formatCurrency(safeSpend)} before your next paycheck`,
           desc: "Bills are covered, with a modest buffer left over.",
           predictive: `About $${formatCurrency(safeSpend)} of flexibility before payday.`,
           riskLabel: 'Stable', riskClass: 'text-brand-300',
@@ -4401,6 +4650,7 @@
       const streak = clearStreakDays();
       return {
         key: 'clear', icon: '☀', title: 'Clear Skies',
+        reason: 'Cash reserves are healthy with no overdue bills',
         desc: "Stable cash reserves and a healthy Safe Spend buffer.",
         predictive: streak > 0 ? `Clear for at least the next ${streak} day${streak === 1 ? '' : 's'}.` : "Clear for now.",
         riskLabel: 'Healthy', riskClass: 'text-brand-400',
