@@ -5584,6 +5584,17 @@
       const actor = currentOwnerLabel();
 
       if (editId) {
+        // Duplicate prevention on edit: block if the new name/details would
+        // collide with a DIFFERENT existing record — e.g. editing "Alex"
+        // and typing "Boo" by mistake, which previously produced two
+        // separate entries both named "Boo", double-counted by Forecast.
+        // excludeId is the record being edited itself, so it's never
+        // flagged as colliding with its own unchanged fields.
+        const collision = findExistingHouseholdPaycheck(ownerLabel, amount, nextDate, frequency, editId);
+        if (collision) {
+          showToast(`An income source for ${ownerLabel} already exists. Edit that entry directly, or use a different name.`, "error");
+          return;
+        }
         const hp = state.householdPaychecks.find(h => h.id === editId);
         if (hp) {
           hp.ownerLabel = ownerLabel;
@@ -7157,14 +7168,28 @@
       navigateTo(getCurrentPageId());
     }
 
+    // Same-device guard against rapid double-clicks/taps on a bill's
+    // completion action — not persisted, since this only needs to survive
+    // the ~260ms flash-animation window on this device, this session. A
+    // second click while a completion is already pending is ignored
+    // rather than scheduling its own finalize(), which previously let a
+    // recurring bill skip an extra cycle and created a phantom payment
+    // transaction. Cross-device concurrent completion is a separate,
+    // already-handled case — see the billId+billDueDate check inside
+    // finalize() below, which is unchanged.
+    const billCompletionPending = new Set();
+
     function completeBill(id) {
       const bill = state.bills.find(b => b.id === id);
       if (!bill) return;
+      if (billCompletionPending.has(id)) return;
+      billCompletionPending.add(id);
 
       const rows = document.querySelectorAll(`[data-bill-row="${id}"]`);
       rows.forEach(r => r.classList.add('bill-complete-flash'));
 
       const finalize = () => {
+        billCompletionPending.delete(id);
         bill.completed = true;
         const actor = currentOwnerLabel();
         const nowIso = new Date().toISOString();
