@@ -862,9 +862,13 @@
                 </div>
               </div>
               <div class="relative text-right shrink-0">
-                <p class="text-[11px] text-slate-400">Expected</p>
+                <p class="text-[11px] text-slate-400">Your Expected</p>
                 <p id="dash-payday-highlight-amount" class="text-lg sm:text-xl font-black text-brand-400">$0.00</p>
               </div>
+            </div>
+            <div id="dash-household-income-line" class="hidden px-1 -mt-3 flex items-center justify-between text-[11px] text-slate-400">
+              <span>Household Income Total (all confirmed paychecks)</span>
+              <strong id="dash-household-income-total" class="text-indigo-300">$0.00</strong>
             </div>
 
             <!-- PRIMARY METRIC: SAFE SPEND HERO CARD & FINANCIAL WEATHER -->
@@ -1552,6 +1556,17 @@
               <p class="text-xs text-slate-400">Configure your profile, household sharing, theme, currency, notifications, and data preferences.</p>
             </div>
 
+            <button onclick="navigateTo('reconcile')" class="w-full glass-card p-4 rounded-2xl border border-brand-500/30 flex items-center justify-between text-left hover:border-brand-500/50 transition-all">
+              <span class="flex items-center gap-3">
+                <i data-lucide="calendar-clock" class="w-5 h-5 text-brand-400"></i>
+                <span>
+                  <span class="block text-sm font-bold text-white">Payday Settings &amp; Data</span>
+                  <span class="block text-[11px] text-slate-400">Edit your paycheck schedule, import data, and manage reconciliation</span>
+                </span>
+              </span>
+              <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500"></i>
+            </button>
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               
               <!-- Profile Card -->
@@ -1738,7 +1753,7 @@
 
         <button onclick="navigateTo('ledger')" id="mob-nav-ledger" class="mob-nav-item shrink-0 flex-1 min-w-[52px] flex flex-col items-center gap-1 p-1 text-slate-400">
           <i data-lucide="receipt" class="w-5 h-5"></i>
-          <span class="text-[9px] font-semibold">Ledger</span>
+          <span class="text-[9px] font-semibold">Transactions</span>
         </button>
 
         <button onclick="navigateTo('settings')" id="mob-nav-settings" class="mob-nav-item shrink-0 flex-1 min-w-[52px] flex flex-col items-center gap-1 p-1 text-slate-400">
@@ -2798,8 +2813,13 @@
     // existing, natural point already run on every app open/navigation —
     // no new trigger mechanism needed). Shows at most one overdue bill's
     // reminder per render cycle so it can't stack multiple prompts.
+    // Session-level "Not Yet" dismissals — distinct from the persistent,
+    // cross-session snoozedUntil used by "Remind Me Tomorrow". Resets on
+    // reload, which is what makes it "temporary" rather than a real snooze.
+    const billReminderDismissedThisSession = new Set();
+
     function checkAndShowOverdueReminder() {
-      const pending = getPendingNotifications().find(n => n.type === 'bill-overdue');
+      const pending = getPendingNotifications().find(n => n.type === 'bill-overdue' && !billReminderDismissedThisSession.has(n.billId));
       if (!pending) return;
       if (document.getElementById('modal-bill-reminder') && !document.getElementById('modal-bill-reminder').classList.contains('hidden')) return;
       openBillReminderModal(pending.billId);
@@ -2825,6 +2845,9 @@
     }
 
     function billReminderNotYet() {
+      const modal = document.getElementById('modal-bill-reminder');
+      const billId = modal ? modal.dataset.billId : null;
+      if (billId) billReminderDismissedThisSession.add(billId);
       closeModals();
     }
 
@@ -3775,6 +3798,19 @@
       }
 
       const dailyEl = document.getElementById('dash-daily-available');
+      const householdIncomeLine = document.getElementById('dash-household-income-line');
+      const householdIncomeTotal = document.getElementById('dash-household-income-total');
+      if (householdIncomeLine && householdIncomeTotal) {
+        const otherPaychecks = state.householdPaychecks || [];
+        if (otherPaychecks.length > 0) {
+          const total = (highlightAmountValid ? Number(state.income.amount) : 0) + otherPaychecks.reduce((sum, hp) => sum + (Number(hp.amount) || 0), 0);
+          householdIncomeTotal.innerText = `$${formatCurrency(total)}`;
+          householdIncomeLine.classList.remove('hidden');
+        } else {
+          householdIncomeLine.classList.add('hidden');
+        }
+      }
+
       if (dailyEl) dailyEl.innerText = `$${formatCurrency(Math.max(0, dailyAvailable))} / day`;
 
       const billsDueTotalEl = document.getElementById('dash-bills-due-total');
