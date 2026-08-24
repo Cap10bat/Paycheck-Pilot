@@ -2908,6 +2908,15 @@
       if (state.income.nextDate && getDaysUntilPayday() === 0) {
         notifications.push({ type: 'payday', label: 'Payday', amount: state.income.amount });
       }
+      // Household paychecks generate the same payday-arrival notification
+      // as the primary schedule — previously only state.income was
+      // checked here, so a household member's paycheck landing produced
+      // no notification at all.
+      (state.householdPaychecks || []).forEach(hp => {
+        if (hp && hp.nextDate === todayStr) {
+          notifications.push({ type: 'household-payday', hpId: hp.id, label: hp.ownerLabel || 'Household Member', amount: hp.amount });
+        }
+      });
       // Financial Warning — uses the same true-deficit logic already
       // driving Money Mayday, Financial Weather, and the dashboard risk
       // banner, instead of the raw cash-minus-bills figure (which ignores
@@ -2950,6 +2959,13 @@
           state[key] = todayStr;
           const body = n.type === 'payday' ? 'Payday has arrived' : 'Upcoming bills exceed available funds';
           new Notification('Paycheck Pilot', { body });
+          return;
+        }
+        if (n.type === 'household-payday') {
+          const hp = (state.householdPaychecks || []).find(h => h.id === n.hpId);
+          if (!hp || hp.lastNotifiedDate === todayStr) return;
+          hp.lastNotifiedDate = todayStr;
+          new Notification('Paycheck Pilot', { body: `${n.label}'s Paycheck has arrived.` });
           return;
         }
         const bill = state.bills.find(b => b.id === n.billId);
@@ -4354,15 +4370,17 @@
         document.getElementById('dash-runway-remaining').innerText = `${runwayDays} Days`;
       }
       if (document.getElementById('dash-next-payday-amount')) {
-        document.getElementById('dash-next-payday-amount').innerText = `$${formatCurrency(state.income.amount || 0)}`;
+        document.getElementById('dash-next-payday-amount').innerText = `$${formatCurrency(viewData.nextIncome ? viewData.nextIncome.amount : 0)}`;
       }
       if (document.getElementById('dash-resilience-score')) {
-        const score = Math.min(100, Math.max(0, Math.round((liquidCash / (state.income.amount || 1)) * 50 + (safeSpend > 0 ? 30 : 0))));
+        const nextIncomeAmount = viewData.nextIncome ? viewData.nextIncome.amount : 1;
+        const score = Math.min(100, Math.max(0, Math.round((liquidCash / (nextIncomeAmount || 1)) * 50 + (safeSpend > 0 ? 30 : 0))));
         document.getElementById('dash-resilience-score').innerText = `${score} / 100`;
         document.getElementById('dash-buffer-days').innerText = `Buffer days: ${daysUntilPayday}`;
       }
       if (document.getElementById('dash-paycheck-ratio')) {
-        const ratio = state.income.amount ? Math.min(100, Math.round((upcomingBills / state.income.amount) * 100)) : 0;
+        const nextIncomeAmount = viewData.nextIncome ? viewData.nextIncome.amount : 0;
+        const ratio = nextIncomeAmount ? Math.min(100, Math.round((upcomingBills / nextIncomeAmount) * 100)) : 0;
         document.getElementById('dash-paycheck-ratio').innerText = `${ratio}%`;
       }
 
@@ -7125,30 +7143,46 @@
       const finalize = () => {
         bill.completed = true;
         const actor = currentOwnerLabel();
-        const txId = 'tx_' + Date.now();
         const nowIso = new Date().toISOString();
-        // Log transaction into ledger — inherits the bill's own scope so a
-        // household bill's payment record is visible to everyone too.
-        // createdBy is who performed THIS action, on THIS device, right
-        // now — distinct from ownerLabel (whose bill this is), since in a
-        // household those can be two different people.
-        state.transactions.unshift({
-          id: txId,
-          title: `Bill Payment: ${bill.title}`,
-          amount: bill.amount,
-          type: 'expense',
-          category: bill.category,
-          date: nowIso.split('T')[0],
-          scope: bill.scope || 'personal',
-          ownerId: bill.ownerId || (state.user ? state.user.id : null),
-          ownerLabel: bill.ownerLabel || actor,
-          source: 'manual-bill-completion',
-          createdAt: nowIso,
-          createdBy: actor,
-          lastModifiedAt: nowIso,
-          lastModifiedBy: actor
-        });
-        logActivity("Bill Marked Paid", `${actor} marked "${bill.title}" ($${formatCurrency(bill.amount)}) as paid. Source: manual-bill-completion. Transaction: ${txId}.`);
+
+        // Duplicate protection: if another household member already
+        // completed this exact occurrence before this device's sync
+        // caught up, a payment transaction for it already exists — don't
+        // create a second one. Matched on billId + the specific due date
+        // being paid (not billId alone), since a recurring bill reuses
+        // the same record across cycles and each cycle is a genuinely
+        // new payment.
+        const alreadyRecorded = state.transactions.some(t => t.billId === bill.id && t.billDueDate === bill.dueDate && t.source === 'manual-bill-completion');
+
+        if (!alreadyRecorded) {
+          const txId = 'tx_' + Date.now();
+          // Log transaction into ledger — inherits the bill's own scope so a
+          // household bill's payment record is visible to everyone too.
+          // createdBy is who performed THIS action, on THIS device, right
+          // now — distinct from ownerLabel (whose bill this is), since in a
+          // household those can be two different people.
+          state.transactions.unshift({
+            id: txId,
+            billId: bill.id,
+            billDueDate: bill.dueDate,
+            title: `Bill Payment: ${bill.title}`,
+            amount: bill.amount,
+            type: 'expense',
+            category: bill.category,
+            date: nowIso.split('T')[0],
+            scope: bill.scope || 'personal',
+            ownerId: bill.ownerId || (state.user ? state.user.id : null),
+            ownerLabel: bill.ownerLabel || actor,
+            source: 'manual-bill-completion',
+            createdAt: nowIso,
+            createdBy: actor,
+            lastModifiedAt: nowIso,
+            lastModifiedBy: actor
+          });
+          logActivity("Bill Marked Paid", `${actor} marked "${bill.title}" ($${formatCurrency(bill.amount)}) as paid. Source: manual-bill-completion. Transaction: ${txId}.`);
+        } else {
+          logActivity("Bill Marked Paid", `${actor} marked "${bill.title}" as paid (already recorded by another household member — no duplicate transaction created).`);
+        }
 
         // Recurring bills roll forward to their next occurrence automatically
         // instead of sitting completed forever — the same bill record is
