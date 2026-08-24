@@ -638,6 +638,7 @@
               <div>
                 <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Paycheck Amount (Take-Home)</label>
                 <input type="number" id="onboard-paycheck-amount" step="0.01" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-lg font-bold text-brand-400 focus:border-brand-500 outline-none" placeholder="2500.00" />
+                <p id="onboard-amount-error" class="hidden text-[11px] text-rose-400 mt-1">Enter a paycheck amount greater than $0 to continue.</p>
               </div>
 
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -685,6 +686,11 @@
               <div class="flex justify-between"><span class="text-slate-300">Total Liquid Cash:</span> <strong id="summary-cash" class="text-white">$0.00</strong></div>
               <div class="flex justify-between"><span class="text-slate-300">Upcoming Bills:</span> <strong id="summary-bills" class="text-rose-400">$0.00</strong></div>
               <div class="flex justify-between pt-1 border-t border-slate-800"><span class="text-brand-400 font-semibold">Initial Safe Spend:</span> <strong id="summary-safespend" class="text-brand-400">$0.00</strong></div>
+            </div>
+            <div class="p-4 bg-indigo-500/10 border border-indigo-500/30 rounded-2xl text-left max-w-sm mx-auto space-y-2">
+              <p class="text-sm font-bold text-white">Planning finances with a partner or family member?</p>
+              <p class="text-xs text-slate-400">Create a Household to share bills, forecasts, and income planning. Optional — you can always do this later from Settings.</p>
+              <button type="button" onclick="promptCreateHousehold()" class="w-full py-2 bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-300 rounded-xl text-xs font-semibold transition-all">Create a Household</button>
             </div>
           </div>
 
@@ -2291,6 +2297,7 @@
             <label class="flex items-center gap-2 text-xs text-slate-200 cursor-pointer">
               <input type="checkbox" id="hh-share-income" class="w-4 h-4 rounded accent-brand-500" /> Shared Income
             </label>
+            <p class="text-[10px] text-slate-500 -mt-1 pl-6">Your primary paycheck schedule is always part of your household's shared data — this setting does not make it private.</p>
           </div>
 
           <button id="create-household-btn" onclick="executeCreateHousehold()" class="w-full mt-3 px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all disabled:opacity-40 disabled:cursor-not-allowed">Create Household</button>
@@ -3932,6 +3939,9 @@
         if (document.getElementById('onboard-paycheck-amount')) document.getElementById('onboard-paycheck-amount').value = state.income.amount || 2500;
         if (document.getElementById('onboard-pay-frequency')) document.getElementById('onboard-pay-frequency').value = state.income.frequency || 'biweekly';
         if (document.getElementById('onboard-next-payday')) document.getElementById('onboard-next-payday').value = state.income.nextDate || new Date().toISOString().split('T')[0];
+        const errorEl = document.getElementById('onboard-amount-error');
+        if (errorEl) errorEl.classList.add('hidden');
+        if (document.getElementById('onboard-paycheck-amount')) document.getElementById('onboard-paycheck-amount').classList.remove('border-rose-500');
       }
 
       if (step === 3) {
@@ -3970,7 +3980,17 @@
 
     function nextOnboardStep() {
       if (state.currentOnboardStep === 2) {
-        state.income.amount = parseFloat(document.getElementById('onboard-paycheck-amount').value) || 0;
+        const rawAmount = document.getElementById('onboard-paycheck-amount').value;
+        const parsedAmount = parseFloat(rawAmount);
+        const errorEl = document.getElementById('onboard-amount-error');
+        if (isNaN(parsedAmount) || parsedAmount <= 0) {
+          if (errorEl) errorEl.classList.remove('hidden');
+          const inputEl = document.getElementById('onboard-paycheck-amount');
+          if (inputEl) inputEl.classList.add('border-rose-500');
+          return;
+        }
+        if (errorEl) errorEl.classList.add('hidden');
+        state.income.amount = parsedAmount;
         state.income.frequency = document.getElementById('onboard-pay-frequency').value;
         state.income.nextDate = document.getElementById('onboard-next-payday').value;
       }
@@ -5972,6 +5992,10 @@
       if (!content) return;
       const memberCount = (state.household && state.household.members) || 1;
       content.innerHTML = `
+        <div class="p-3 bg-rose-950/40 border border-rose-500/40 rounded-xl">
+          <p class="text-rose-300 font-bold text-sm">This action is permanent.</p>
+          <p class="text-slate-300 mt-1">Financial Reset cannot be undone, and deleted financial data cannot be recovered. Review the lists below carefully before continuing.</p>
+        </div>
         <div class="p-4 bg-rose-500/10 border border-rose-500/30 rounded-2xl space-y-2">
           <p class="flex items-center gap-1.5 text-rose-300 font-bold text-sm"><i data-lucide="alert-triangle" class="w-4 h-4"></i> WILL BE DELETED</p>
           <ul class="space-y-0.5 text-slate-300 pl-1">
@@ -5993,7 +6017,7 @@
         </div>
         <label class="flex items-start gap-2.5 p-3 bg-slate-900/80 rounded-xl border border-slate-800 cursor-pointer">
           <input type="checkbox" id="reset-confirm-checkbox" onchange="resetWizardState.confirmed = this.checked; document.getElementById('reset-continue-btn').disabled = !this.checked;" class="w-4 h-4 rounded accent-rose-500 mt-0.5" />
-          <span class="text-slate-300">I understand this clears my bills and transaction history, and want a fresh start.</span>
+          <span class="text-slate-300">I understand this permanently clears my bills and transaction history, cannot be undone, and want a fresh start.</span>
         </label>
         <button type="button" id="reset-continue-btn" onclick="runFinancialReset()" disabled class="w-full py-3 bg-rose-500 hover:bg-rose-600 text-slate-950 font-bold rounded-xl text-xs transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-rose-500">Reset & Continue</button>
       `;
@@ -7551,7 +7575,7 @@
       base.setDate(base.getDate() + stepDays);
       state.income.nextDate = base.toISOString().split('T')[0];
 
-      logActivity("Payday Confirmed", `Deposit of $${formatCurrency(state.income.amount || 0)} confirmed. Next payday: ${state.income.nextDate}.`);
+      logActivity("Payday Confirmed", `Payday schedule confirmed for $${formatCurrency(state.income.amount || 0)}. Next payday: ${state.income.nextDate}. Account balances are not updated automatically.`);
       saveStateToStorage();
       showToast("Payday confirmed", "success");
       renderPaydayBriefingContent();
@@ -7574,16 +7598,16 @@
       const daysUntil = getDaysUntilPayday();
 
       // PRE-CONFIRM: today is payday, but the user hasn't confirmed the
-      // deposit yet — nextDate is still today.
+      // schedule yet — nextDate is still today.
       if (daysUntil === 0 && state.income.nextDate) {
         content.innerHTML = `
           <div class="p-4 bg-brand-500/10 border border-brand-500/30 rounded-2xl text-center space-y-1">
             <span class="text-2xl leading-none">💰</span>
             <p class="text-sm font-bold text-white">Today's your payday</p>
             <p class="text-slate-300">Paycheck Amount: <strong class="text-brand-400">$${formatCurrency(state.income.amount || 0)}</strong></p>
-            <p class="text-[11px] text-slate-500">Confirm it below and we'll build your checklist for the next stretch.</p>
+            <p class="text-[11px] text-slate-500">Confirming updates your payday schedule and builds your checklist for the next stretch. Your account balances aren't changed automatically — update them yourself once the deposit lands.</p>
           </div>
-          <button onclick="confirmPaydayReceived()" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Confirm Deposit Received</button>
+          <button onclick="confirmPaydayReceived()" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Confirm Payday</button>
         `;
         lucide.createIcons();
         return;
@@ -7599,9 +7623,10 @@
 
       content.innerHTML = `
         <div class="p-4 bg-brand-500/10 border border-brand-500/30 rounded-2xl space-y-1">
-          <p class="flex items-center gap-1.5 text-brand-300 font-bold"><i data-lucide="check-circle-2" class="w-4 h-4"></i> Deposit Received</p>
+          <p class="flex items-center gap-1.5 text-brand-300 font-bold"><i data-lucide="check-circle-2" class="w-4 h-4"></i> Payday Confirmed</p>
           <p class="text-slate-300">Paycheck Amount: <strong class="text-white">$${formatCurrency(state.income.amount || 0)}</strong></p>
           <p class="text-slate-300">Next Payday Date: <strong class="text-white">${state.income.nextDate}</strong></p>
+          <p class="text-[11px] text-slate-500 pt-1">Confirming payday updates your payday schedule. Account balances must be updated separately.</p>
         </div>
 
         <div class="space-y-2">
