@@ -1506,6 +1506,7 @@
                 <span>Your payday schedule appears incomplete. Please verify your paycheck amount.</span>
               </div>
 
+              <p class="text-[10px] text-slate-500 uppercase tracking-wider -mb-1">Primary Income Schedule</p>
               <div id="payday-settings-view" class="grid grid-cols-3 gap-3">
                 <div>
                   <p class="text-[10px] text-slate-500 uppercase tracking-wider">Next Payday</p>
@@ -1546,6 +1547,45 @@
                 <div class="flex gap-2 pt-1">
                   <button type="button" onclick="closePaydaySettingsEdit()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all">Cancel</button>
                   <button type="button" onclick="savePaydaySettings()" class="flex-1 py-2.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Save Changes</button>
+                </div>
+              </div>
+
+              <div id="household-income-section" class="hidden pt-3 border-t border-slate-800/70 space-y-3">
+                <div class="flex items-center justify-between">
+                  <p class="text-[10px] text-slate-500 uppercase tracking-wider">Additional Household Income</p>
+                  <button type="button" onclick="openAddHouseholdPaycheckForm()" class="text-[11px] font-bold text-brand-400 hover:text-brand-300">+ Add Income Source</button>
+                </div>
+                <div id="household-paycheck-list" class="space-y-2"></div>
+
+                <div id="household-paycheck-form" class="hidden space-y-3 p-3 bg-slate-900/80 border border-slate-800 rounded-xl">
+                  <input type="hidden" id="hp-edit-id" value="" />
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Owner Name</label>
+                    <input type="text" id="hp-owner-name" placeholder="Enter member name" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-brand-500" />
+                  </div>
+                  <div class="grid grid-cols-2 gap-3">
+                    <div>
+                      <label class="block text-xs font-semibold text-slate-400 mb-1">Amount</label>
+                      <input type="number" id="hp-amount" step="0.01" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-brand-500" placeholder="2500.00" />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold text-slate-400 mb-1">Next Pay Date</label>
+                      <input type="date" id="hp-nextdate" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-brand-500" />
+                    </div>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Frequency</label>
+                    <select id="hp-frequency" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none">
+                      <option value="biweekly">Every 2 Weeks (Bi-Weekly)</option>
+                      <option value="weekly">Weekly</option>
+                      <option value="semimonthly">Twice a Month (1st & 15th)</option>
+                      <option value="monthly">Monthly</option>
+                    </select>
+                  </div>
+                  <div class="flex gap-2 pt-1">
+                    <button type="button" onclick="closeAddHouseholdPaycheckForm()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all">Cancel</button>
+                    <button type="button" onclick="saveHouseholdPaycheck()" class="flex-1 py-2.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Save Income Source</button>
+                  </div>
                 </div>
               </div>
 
@@ -3386,6 +3426,7 @@
           // Cloud is the source of truth on login; keep the freshly
           // authenticated user object rather than whatever was cached.
           state = { ...state, ...cloudPayload, user: authoritativeUser, isDemo: false };
+          deduplicateHouseholdPaychecks();
           localStorage.setItem('paycheck_pilot_state', JSON.stringify(state));
           // Only log when this pull actually found something newer than what
           // was already local — with periodic polling, most pulls find
@@ -4079,7 +4120,7 @@
       }
 
       const nextPaydateInline = document.getElementById('dash-next-paydate-inline');
-      if (nextPaydateInline) nextPaydateInline.innerText = state.income.nextDate || '--';
+      if (nextPaydateInline) nextPaydateInline.innerText = (viewData.nextIncome ? viewData.nextIncome.date : state.income.nextDate) || '--';
 
       const countdownEl = document.getElementById('dash-next-payday-countdown');
       if (countdownEl) countdownEl.innerText = `${daysUntilPayday} ${daysUntilPayday === 1 ? 'day' : 'days'}`;
@@ -5338,17 +5379,17 @@
         }
       }
 
-      // Clarity layer: state.income is a single shared value with no
-      // per-person owner field — there is no "whose paycheck" to report
-      // beyond this. In shared household mode, the whole schedule (date,
-      // amount, frequency) is part of the same household sync record as
-      // everything else — whoever last saved it here is what every member
-      // sees, regardless of the household's income-sharing toggle, which
-      // (checked directly) has no separate effect of its own on this value.
+      // Clarity layer: state.income is the primary paycheck schedule,
+      // editable here — whoever last saves it is what every member sees
+      // for this specific record. It is no longer the household's only
+      // income source: state.householdPaychecks (managed in the section
+      // below) is also included by Forecast, Money Mayday, and Household
+      // View Safe Spend whenever it has entries.
       if (sourceTextEl) {
         const inSharedHousehold = !!(state.household && state.household.id && state.household.accountMode === 'shared');
+        const otherCount = (state.householdPaychecks || []).length;
         sourceTextEl.innerHTML = inSharedHousehold
-          ? `<strong class="text-slate-300">Shared with your household.</strong> There's one payday schedule per household, not one per person — whoever last saved it here is what every member sees. It drives the Payday Countdown, the 60-day Forecast, and Safe Spend for everyone in ${state.household.name || 'your household'}.`
+          ? `<strong class="text-slate-300">Shared with your household.</strong> This is your household's primary paycheck schedule — whoever last saves it here is what every member sees. ${otherCount > 0 ? `Household forecasts also include ${otherCount} additional income source${otherCount === 1 ? '' : 's'} below.` : 'Add other household members\' paychecks below so household forecasts reflect everyone\'s income.'}`
           : `<strong class="text-slate-300">Personal to your account.</strong> Not shared with anyone. It drives your Payday Countdown, your 60-day Forecast, and your Safe Spend.`;
       }
 
@@ -5356,7 +5397,185 @@
       if (warningEl) warningEl.classList.toggle('hidden', !incomplete);
       if (dashBanner) dashBanner.classList.toggle('hidden', !incomplete);
 
+      const householdIncomeSection = document.getElementById('household-income-section');
+      if (householdIncomeSection) {
+        const inHousehold = !!(state.household && state.household.id && state.household.accountMode === 'shared');
+        householdIncomeSection.classList.toggle('hidden', !inHousehold);
+        if (inHousehold) renderHouseholdPaycheckList();
+      }
+
       renderPaydaySettingsTimeline();
+    }
+
+    // Renders the Additional Household Income list from state.householdPaychecks
+    // directly — the same array Forecast, Money Mayday, and Household View
+    // already read, so anything shown here is guaranteed to already be
+    // included in those calculations, with no separate sync step needed.
+    function renderHouseholdPaycheckList() {
+      const list = document.getElementById('household-paycheck-list');
+      if (!list) return;
+      const entries = state.householdPaychecks || [];
+      if (!entries.length) {
+        list.innerHTML = `<p class="text-[11px] text-slate-500 italic">No additional household income sources yet.</p>`;
+        return;
+      }
+      list.innerHTML = entries.map(hp => `
+        <div class="p-3 bg-slate-900/80 border border-slate-800 rounded-xl flex items-center justify-between gap-2">
+          <div class="min-w-0">
+            <p class="text-sm font-bold text-white truncate">${hp.ownerLabel || 'Household Member'}</p>
+            <p class="text-[11px] text-slate-400">$${formatCurrency(hp.amount)} · ${hp.nextDate} · <span class="capitalize">${hp.frequency}</span></p>
+          </div>
+          <div class="flex items-center gap-1.5 shrink-0">
+            <button type="button" onclick="editHouseholdPaycheck('${hp.id}')" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-[10px] font-bold">Edit</button>
+            <button type="button" onclick="deleteHouseholdPaycheck('${hp.id}')" class="px-2.5 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg text-[10px] font-bold">Delete</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openAddHouseholdPaycheckForm() {
+      document.getElementById('hp-edit-id').value = '';
+      document.getElementById('hp-owner-name').value = '';
+      document.getElementById('hp-amount').value = '';
+      document.getElementById('hp-nextdate').value = '';
+      document.getElementById('hp-frequency').value = 'biweekly';
+      document.getElementById('household-paycheck-form').classList.remove('hidden');
+    }
+
+    function closeAddHouseholdPaycheckForm() {
+      document.getElementById('household-paycheck-form').classList.add('hidden');
+    }
+
+    function editHouseholdPaycheck(id) {
+      const hp = (state.householdPaychecks || []).find(h => h.id === id);
+      if (!hp) return;
+      document.getElementById('hp-edit-id').value = hp.id;
+      document.getElementById('hp-owner-name').value = hp.ownerLabel || '';
+      document.getElementById('hp-amount').value = hp.amount || '';
+      document.getElementById('hp-nextdate').value = hp.nextDate || '';
+      document.getElementById('hp-frequency').value = hp.frequency || 'biweekly';
+      document.getElementById('household-paycheck-form').classList.remove('hidden');
+    }
+
+    // Add or edit — writes directly to state.householdPaychecks, the same
+    // array already consumed by buildForecastSeries(), getNextHouseholdIncomeEvent(),
+    // and computeHouseholdMaydayStatus(). No separate registration step:
+    // saveStateToStorage() pushes the whole state object (including this
+    // array) through the same local + cloud sync path as everything else.
+    // Finds an existing shared household paycheck matching by owner name
+    // (normalized — case/whitespace-insensitive, reusing the same
+    // normalizeDescription() already used for bill-title matching) or by
+    // an exact amount+frequency+date match, which catches the same real
+    // paycheck being re-added under a differently-typed or misspelled
+    // name. Used by saveHouseholdPaycheck()'s add path so two household
+    // members (or the same member editing from a stale sync) update the
+    // one shared record instead of creating a duplicate.
+    // Safety net for a genuine simultaneous-edit race that the add-path
+    // check above can't catch on its own — e.g. both household members
+    // save within the same debounced sync window, before either device
+    // has seen the other's change. Collapses any accidental duplicates by
+    // normalized owner name, keeping whichever entry was edited most
+    // recently. Called after every cloud pull, so "exists once after
+    // sync" holds even if a race slips past the UI-level check.
+    function deduplicateHouseholdPaychecks() {
+      const list = state.householdPaychecks || [];
+      if (list.length < 2) return false;
+      const byOwner = {};
+      let changed = false;
+      list.forEach(hp => {
+        const key = normalizeDescription(hp.ownerLabel || '');
+        if (!key) { byOwner['__' + hp.id] = hp; return; }
+        const current = byOwner[key];
+        if (!current) {
+          byOwner[key] = hp;
+        } else {
+          const currentTime = new Date(current.lastEditedAt || current.createdAt || 0).getTime();
+          const hpTime = new Date(hp.lastEditedAt || hp.createdAt || 0).getTime();
+          byOwner[key] = hpTime >= currentTime ? hp : current;
+          changed = true;
+        }
+      });
+      if (changed) state.householdPaychecks = Object.values(byOwner);
+      return changed;
+    }
+
+    function findExistingHouseholdPaycheck(ownerLabel, amount, nextDate, frequency, excludeId) {
+      const normalizedOwner = normalizeDescription(ownerLabel);
+      return (state.householdPaychecks || []).find(hp => {
+        if (excludeId && hp.id === excludeId) return false;
+        if (normalizedOwner && normalizeDescription(hp.ownerLabel || '') === normalizedOwner) return true;
+        return Number(hp.amount) === Number(amount) && hp.frequency === frequency && hp.nextDate === nextDate;
+      });
+    }
+
+    function saveHouseholdPaycheck() {
+      const editId = document.getElementById('hp-edit-id').value;
+      const ownerLabel = document.getElementById('hp-owner-name').value.trim();
+      const amount = parseFloat(document.getElementById('hp-amount').value);
+      const nextDate = document.getElementById('hp-nextdate').value;
+      const frequency = document.getElementById('hp-frequency').value;
+
+      if (!ownerLabel) { showToast("Enter a name for this income source.", "error"); return; }
+      if (isNaN(amount) || amount <= 0) { showToast("Enter a valid amount.", "error"); return; }
+      if (!nextDate) { showToast("Enter a next pay date.", "error"); return; }
+
+      state.householdPaychecks = state.householdPaychecks || [];
+      const actor = currentOwnerLabel();
+
+      if (editId) {
+        const hp = state.householdPaychecks.find(h => h.id === editId);
+        if (hp) {
+          hp.ownerLabel = ownerLabel;
+          hp.amount = amount;
+          hp.nextDate = nextDate;
+          hp.frequency = frequency;
+          hp.lastEditedBy = actor;
+          hp.lastEditedAt = new Date().toISOString();
+        }
+        logActivity("Household Income Updated", `${actor} updated ${ownerLabel}'s income source: $${formatCurrency(amount)} ${frequency}, next ${nextDate}.`);
+      } else {
+        // Duplicate prevention: if a shared record for this owner (or this
+        // exact amount/frequency/date) already exists — e.g. someone else
+        // added it and this device hadn't synced yet — update that record
+        // instead of creating a second, separately-counted paycheck.
+        const existing = findExistingHouseholdPaycheck(ownerLabel, amount, nextDate, frequency, null);
+        if (existing) {
+          existing.ownerLabel = ownerLabel;
+          existing.amount = amount;
+          existing.nextDate = nextDate;
+          existing.frequency = frequency;
+          existing.lastEditedBy = actor;
+          existing.lastEditedAt = new Date().toISOString();
+          logActivity("Household Income Updated", `${actor} updated ${ownerLabel}'s existing income source (matched to avoid a duplicate): $${formatCurrency(amount)} ${frequency}, next ${nextDate}.`);
+          showToast(`An income source for ${ownerLabel} already existed — updated it instead of creating a duplicate.`, "info");
+        } else {
+          state.householdPaychecks.push({
+            id: 'hp_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+            ownerLabel, amount, nextDate, frequency,
+            scope: 'household', ownerId: null,
+            createdBy: actor, createdAt: new Date().toISOString()
+          });
+          logActivity("Household Income Added", `${actor} added ${ownerLabel}'s income source: $${formatCurrency(amount)} ${frequency}, next ${nextDate}.`);
+        }
+      }
+
+      saveStateToStorage();
+      closeAddHouseholdPaycheckForm();
+      renderHouseholdPaycheckList();
+      showToast("Income source saved", "success");
+      if (getCurrentPageId() === 'dashboard') renderDashboard();
+    }
+
+    function deleteHouseholdPaycheck(id) {
+      const hp = (state.householdPaychecks || []).find(h => h.id === id);
+      if (!hp) return;
+      const actor = currentOwnerLabel();
+      state.householdPaychecks = state.householdPaychecks.filter(h => h.id !== id);
+      logActivity("Household Income Removed", `${actor} removed ${hp.ownerLabel || 'a household member'}'s income source.`);
+      saveStateToStorage();
+      renderHouseholdPaycheckList();
+      showToast("Income source removed", "info");
+      if (getCurrentPageId() === 'dashboard') renderDashboard();
     }
 
     // Lightweight upcoming preview — paychecks and bills sorted together by
