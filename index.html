@@ -2995,12 +2995,115 @@
     // called on every dashboard render without spamming. No mobile push, no
     // email — browser API only, per the requirement.
     // ============================================================
+    // ============================================================
+    // PUSH SUBSCRIPTION — creates/reuses a PushManager subscription and
+    // saves it to push_subscriptions, so the send-notifications Edge
+    // Function has somewhere to actually deliver to.
+    // ============================================================
+
+    // TODO: paste the actual VAPID public key here (the public half of
+    // the pair already generated and stored as VAPID_PUBLIC_KEY /
+    // VAPID_PRIVATE_KEY in Supabase Edge Function secrets). The public
+    // key is safe to embed client-side — only the private key must stay
+    // server-side. Subscription will silently no-op until this is set.
+    const VAPID_PUBLIC_KEY = 'BK1a6GBRWr_fKzRjZBMN0rKoAL9IHVMo9YiCBKyb0r5dLb9_rpp_nEO9LkRZOVDRF_5SjJehikvLBoTXEqvzD0A';
+
+    function urlBase64ToUint8Array(base64String) {
+      const padding = '='.repeat((4 - base64String.length % 4) % 4);
+      const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+      const raw = atob(base64);
+      return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+    }
+
+    // Guards against re-running the subscribe/upsert flow on every
+    // dashboard render within the same session — still runs exactly once
+    // per fresh page load/reload, which is what "handle repeat visits by
+    // updating last_seen_at" actually calls for, without hitting Supabase
+    // on every single render in between.
+    let pushSubscriptionSyncedThisSession = false;
+
+    async function subscribeToPushNotifications() {
+      if (pushSubscriptionSyncedThisSession) return;
+      if (!state.user || state.isDemo) {
+        console.log('[Push] No authenticated user (or Demo Mode) — skipping subscription.');
+        return;
+      }
+      if (!('serviceWorker' in navigator) || typeof PushManager === 'undefined') {
+        console.log('[Push] Push not supported in this browser — skipping subscription.');
+        return;
+      }
+      if (typeof Notification === 'undefined' || Notification.permission !== 'granted') {
+        console.log('[Push] Notification permission not granted yet — skipping subscription.');
+        return;
+      }
+      if (!supabaseClient) {
+        console.log('[Push] Supabase client unavailable — skipping subscription.');
+        return;
+      }
+      if (!VAPID_PUBLIC_KEY || VAPID_PUBLIC_KEY === 'REPLACE_WITH_YOUR_VAPID_PUBLIC_KEY') {
+        console.warn('[Push] VAPID_PUBLIC_KEY is not set — cannot subscribe. Paste the real key into VAPID_PUBLIC_KEY.');
+        return;
+      }
+
+      pushSubscriptionSyncedThisSession = true;
+
+      try {
+        // Reuses whatever registration already exists (registered
+        // elsewhere at app init) — does not register again.
+        const registration = await navigator.serviceWorker.ready;
+
+        let subscription = await registration.pushManager.getSubscription();
+        if (subscription) {
+          console.log('[Push] Reusing existing PushManager subscription.');
+        } else {
+          subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+          });
+          console.log('[Push] Created new PushManager subscription.');
+        }
+
+        const json = subscription.toJSON();
+        if (!json.endpoint || !json.keys || !json.keys.p256dh || !json.keys.auth) {
+          console.error('[Push] Subscription object missing expected fields — aborting save.', json);
+          return;
+        }
+
+        // onConflict: 'endpoint' — matches the unique constraint on
+        // push_subscriptions.endpoint, so a repeat visit with the same
+        // subscription updates last_seen_at in place instead of
+        // inserting a duplicate row.
+        const { error } = await supabaseClient
+          .from('push_subscriptions')
+          .upsert({
+            user_id: state.user.id,
+            endpoint: json.endpoint,
+            p256dh: json.keys.p256dh,
+            auth: json.keys.auth,
+            last_seen_at: new Date().toISOString()
+          }, { onConflict: 'endpoint' });
+
+        if (error) {
+          console.error('[Push] Failed to save subscription to push_subscriptions:', error.message);
+        } else {
+          console.log('[Push] Subscription saved for user', state.user.id, '— endpoint:', json.endpoint.slice(0, 60) + '…');
+        }
+      } catch (err) {
+        console.error('[Push] Subscription flow failed:', err);
+      }
+    }
+
     function requestNotificationPermissionOnce() {
       if (typeof Notification === 'undefined') return;
       if (state.notificationPermissionAsked) return;
       state.notificationPermissionAsked = true;
       saveStateToStorage();
-      if (Notification.permission === 'default') Notification.requestPermission();
+      if (Notification.permission === 'default') {
+        Notification.requestPermission().then(permission => {
+          console.log('[Push] Notification permission result:', permission);
+          if (permission === 'granted') subscribeToPushNotifications();
+        });
+      }
     }
 
     // Routes through the service worker's showNotification() when
@@ -4182,6 +4285,7 @@
       scanAccountDataIntegrity();
       checkAndShowOverdueReminder();
       requestNotificationPermissionOnce();
+      subscribeToPushNotifications();
       sendBrowserNotifications();
 
       const inHousehold = !!(state.household && state.household.id && state.household.accountMode === 'shared');
