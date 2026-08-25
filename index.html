@@ -2628,59 +2628,68 @@
     }
 
     // GLOBAL APPLICATION STATE
-    let state = {
-      user: null,
-      isDemo: false,
-      onboardingCompleted: false,
-      currentOnboardStep: 1,
-      lastSyncTime: null,
-      household: {
-        id: null,
-        name: "Solo Pilot",
-        owner: "You",
-        members: 1,
-        inviteCode: "PP-8829-X",
-        accountMode: 'individual',
-        sharing: { bills: true, goals: true, forecast: true, accounts: false, transactions: false, income: false },
-        memberList: [{ name: "You (Owner)", role: "owner", email: "pilot@user.com" }]
-      },
-      accounts: [
-        { id: 'acc_1', name: 'Primary Checking', balance: 2450.00, type: 'checking' },
-        { id: 'acc_2', name: 'Emergency Savings', balance: 5200.00, type: 'savings' }
-      ],
-      income: {
-        amount: 2500,
-        frequency: 'biweekly',
-        nextDate: new Date(Date.now() + 5 * 86400000).toISOString().split('T')[0]
-      },
-      bills: [
-        { id: 'bill_1', title: 'Apartment Rent', amount: 1200.00, dueDate: new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0], category: 'Housing', priority: 'critical', completed: false },
-        { id: 'bill_2', title: 'Electric Utility', amount: 95.00, dueDate: new Date(Date.now() + 8 * 86400000).toISOString().split('T')[0], category: 'Utilities', priority: 'important', completed: false },
-        { id: 'bill_3', title: 'Netflix Subscription', amount: 15.99, dueDate: new Date(Date.now() + 12 * 86400000).toISOString().split('T')[0], category: 'Subscriptions', priority: 'flexible', completed: false }
-      ],
-      transactions: [],
-      goals: [
-        { id: 'goal_1', title: 'Emergency Fund', target: 5000.00, current: 4200.00, completedCelebrated: false }
-      ],
-      activityLog: [],
-      sponsors: [
-        { id: 'awin', name: 'AWIN Partner', title: 'High-Yield Savings Boost', description: 'Earn 5.15% APY on liquid cash reserves.', url: 'https://example.com/awin', priority: 1, enabled: true, impressions: 0, clicks: 0, dismissals: 0 },
-        { id: 'sharesale', name: 'ShareASale', title: 'Credit Builder Pro', description: 'Automate debt paydown safely before payday.', url: 'https://example.com/sharesale', priority: 2, enabled: true, impressions: 0, clicks: 0, dismissals: 0 },
-        { id: 'cj', name: 'CJ Affiliate', title: 'Tax & Expense Shield', description: 'Quarterly tax estimation made foolproof.', url: 'https://example.com/cj', priority: 3, enabled: true, impressions: 0, clicks: 0, dismissals: 0 }
-      ],
-      // Populated only by Flight Recorder Import (statement analysis).
-      // Informational — Forecast and Financial Weather do not read this.
-      spendingInsights: null,
-      // Other confirmed household members' paycheck schedules, configured
-      // during Financial Reset when multiple distinct patterns are found.
-      // state.income remains the current user's own schedule (unchanged) —
-      // this is additive, read by buildForecastSeries() alongside it so
-      // Forecast reflects the full household income picture.
-      householdPaychecks: [],
-      // One entry per statement-import session, enabling Settings → Data
-      // Management → Import History → Undo Import.
-      importHistory: []
-    };
+    // Factory, not a static object — reused for a genuine fresh reset
+    // (logout, entering Demo Mode), not just this module's first load.
+    // Also means the sample due dates below are relative to whenever this
+    // is actually called, not frozen at whatever moment the script first
+    // parsed.
+    function createDefaultState() {
+      return {
+        user: null,
+        isDemo: false,
+        onboardingCompleted: false,
+        currentOnboardStep: 1,
+        lastSyncTime: null,
+        household: {
+          id: null,
+          name: "Solo Pilot",
+          owner: "You",
+          members: 1,
+          inviteCode: "PP-8829-X",
+          accountMode: 'individual',
+          sharing: { bills: true, goals: true, forecast: true, accounts: false, transactions: false, income: false },
+          memberList: [{ name: "You (Owner)", role: "owner", email: "pilot@user.com" }]
+        },
+        accounts: [
+          { id: 'acc_1', name: 'Primary Checking', balance: 2450.00, type: 'checking' },
+          { id: 'acc_2', name: 'Emergency Savings', balance: 5200.00, type: 'savings' }
+        ],
+        income: {
+          amount: 2500,
+          frequency: 'biweekly',
+          nextDate: new Date(Date.now() + 5 * 86400000).toISOString().split('T')[0]
+        },
+        bills: [
+          { id: 'bill_1', title: 'Apartment Rent', amount: 1200.00, dueDate: new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0], category: 'Housing', priority: 'critical', completed: false },
+          { id: 'bill_2', title: 'Electric Utility', amount: 95.00, dueDate: new Date(Date.now() + 8 * 86400000).toISOString().split('T')[0], category: 'Utilities', priority: 'important', completed: false },
+          { id: 'bill_3', title: 'Netflix Subscription', amount: 15.99, dueDate: new Date(Date.now() + 12 * 86400000).toISOString().split('T')[0], category: 'Subscriptions', priority: 'flexible', completed: false }
+        ],
+        transactions: [],
+        goals: [
+          { id: 'goal_1', title: 'Emergency Fund', target: 5000.00, current: 4200.00, completedCelebrated: false }
+        ],
+        activityLog: [],
+        sponsors: [
+          { id: 'awin', name: 'AWIN Partner', title: 'High-Yield Savings Boost', description: 'Earn 5.15% APY on liquid cash reserves.', url: 'https://example.com/awin', priority: 1, enabled: true, impressions: 0, clicks: 0, dismissals: 0 },
+          { id: 'sharesale', name: 'ShareASale', title: 'Credit Builder Pro', description: 'Automate debt paydown safely before payday.', url: 'https://example.com/sharesale', priority: 2, enabled: true, impressions: 0, clicks: 0, dismissals: 0 },
+          { id: 'cj', name: 'CJ Affiliate', title: 'Tax & Expense Shield', description: 'Quarterly tax estimation made foolproof.', url: 'https://example.com/cj', priority: 3, enabled: true, impressions: 0, clicks: 0, dismissals: 0 }
+        ],
+        // Populated only by Flight Recorder Import (statement analysis).
+        // Informational — Forecast and Financial Weather do not read this.
+        spendingInsights: null,
+        // Other confirmed household members' paycheck schedules, configured
+        // during Financial Reset when multiple distinct patterns are found.
+        // state.income remains the current user's own schedule (unchanged) —
+        // this is additive, read by buildForecastSeries() alongside it so
+        // Forecast reflects the full household income picture.
+        householdPaychecks: [],
+        // One entry per statement-import session, enabling Settings → Data
+        // Management → Import History → Undo Import.
+        importHistory: []
+      };
+    }
+
+    let state = createDefaultState();
 
     let forecastChartInstance = null;
     let authMode = 'login';
@@ -3955,6 +3964,7 @@
     }
 
     function loginAsDemo() {
+      state = createDefaultState();
       state.user = { id: 'demo-user-id', email: 'demo@paycheckpilot.app' };
       state.isDemo = true;
       state.onboardingCompleted = true;
@@ -3962,11 +3972,15 @@
       showToast("Signed in as Clean Demo Mode", "info");
     }
 
-    function handleLogout() {
-      state.user = null;
-      state.isDemo = false;
+    async function handleLogout() {
+      try {
+        if (supabaseClient) await supabaseClient.auth.signOut();
+      } catch (err) {
+        console.warn('Sign out warning:', err);
+      }
+      localStorage.removeItem('paycheck_pilot_state');
+      state = createDefaultState();
       setSyncStatus('offline');
-      saveStateToStorage();
       showScreen('screen-auth');
       showToast("Logged out safely", "info");
     }
