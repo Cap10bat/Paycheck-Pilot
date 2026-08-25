@@ -1701,6 +1701,16 @@
               <i data-lucide="chevron-right" class="w-4 h-4 text-slate-500"></i>
             </button>
 
+            <div class="glass-card p-4 sm:p-6 rounded-3xl border border-slate-800/80 space-y-3">
+              <h3 class="font-bold text-white text-base flex items-center gap-2">
+                <i data-lucide="bell" class="w-4 h-4 text-brand-400"></i> Payday &amp; Bill Notifications
+              </h3>
+              <p class="text-[11px] text-slate-400">Payday arrivals, overdue and upcoming bills, and Money Mayday warnings — delivered as mobile-style notifications, even when the app is closed.</p>
+              <p id="notif-status-line" class="text-xs text-slate-300">Status: <span id="notif-status-text" class="font-semibold text-slate-400">Checking…</span></p>
+              <button type="button" onclick="sendTestNotification()" id="notif-test-btn" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition-all">Send Test Notification</button>
+              <p id="notif-test-result" class="hidden text-[11px]"></p>
+            </div>
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               
               <!-- Profile Card -->
@@ -3006,7 +3016,7 @@
     // VAPID_PRIVATE_KEY in Supabase Edge Function secrets). The public
     // key is safe to embed client-side — only the private key must stay
     // server-side. Subscription will silently no-op until this is set.
-    const VAPID_PUBLIC_KEY = 'BK1a6GBRWr_fKzRjZBMN0rKoAL9IHVMo9YiCBKyb0r5dLb9_rpp_nEO9LkRZOVDRF_5SjJehikvLBoTXEqvzD0A';
+    const VAPID_PUBLIC_KEY = 'REPLACE_WITH_YOUR_VAPID_PUBLIC_KEY';
 
     function urlBase64ToUint8Array(base64String) {
       const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -3090,6 +3100,67 @@
         }
       } catch (err) {
         console.error('[Push] Subscription flow failed:', err);
+      }
+    }
+
+    // Plain-language status line for the Settings section — call on
+    // Settings render so the user can see exactly where things stand
+    // without needing to check permission dialogs or dev tools.
+    async function renderNotificationStatusLine() {
+      const el = document.getElementById('notif-status-text');
+      if (!el) return;
+      if (typeof Notification === 'undefined') {
+        el.innerText = 'Not supported in this browser'; el.className = 'font-semibold text-slate-500'; return;
+      }
+      if (Notification.permission === 'denied') {
+        el.innerText = 'Blocked — re-enable notifications in your browser/app settings'; el.className = 'font-semibold text-rose-400'; return;
+      }
+      if (Notification.permission !== 'granted') {
+        el.innerText = 'Not enabled yet'; el.className = 'font-semibold text-amber-400'; return;
+      }
+      if (!('serviceWorker' in navigator)) {
+        el.innerText = 'Enabled, but no service worker support'; el.className = 'font-semibold text-amber-400'; return;
+      }
+      try {
+        const registration = await navigator.serviceWorker.ready;
+        const sub = await registration.pushManager.getSubscription();
+        if (sub) { el.innerText = 'Enabled and subscribed on this device'; el.className = 'font-semibold text-brand-400'; }
+        else { el.innerText = 'Enabled, subscribing…'; el.className = 'font-semibold text-amber-400'; }
+      } catch {
+        el.innerText = 'Enabled'; el.className = 'font-semibold text-brand-400';
+      }
+    }
+
+    // Requirement #8: manual delivery verification. Calls the Edge
+    // Function's test path via functions.invoke(), which automatically
+    // attaches the current session's auth token — the function verifies
+    // it server-side, so this can only ever test-notify the caller's own
+    // devices.
+    async function sendTestNotification() {
+      const btn = document.getElementById('notif-test-btn');
+      const resultEl = document.getElementById('notif-test-result');
+      if (!supabaseClient || !state.user) return;
+      if (Notification.permission !== 'granted') {
+        showToast("Enable notifications first — tap anywhere and allow when prompted.", "error");
+        return;
+      }
+      if (btn) { btn.disabled = true; btn.innerText = 'Sending…'; }
+      try {
+        const { data, error } = await supabaseClient.functions.invoke('send-notifications', { body: { test: true } });
+        if (error) {
+          console.error('[Push] Test notification failed:', error.message || error);
+          if (resultEl) { resultEl.innerText = 'Failed to send — check console for details.'; resultEl.className = 'text-[11px] text-rose-400'; resultEl.classList.remove('hidden'); }
+        } else if (data?.ok) {
+          console.log('[Push] Test notification result:', data);
+          if (resultEl) { resultEl.innerText = `Sent to ${data.sent} of ${data.subscriptions} device(s). Check your notification tray.`; resultEl.className = 'text-[11px] text-brand-400'; resultEl.classList.remove('hidden'); }
+        } else {
+          if (resultEl) { resultEl.innerText = data?.error || 'No subscription found for this device.'; resultEl.className = 'text-[11px] text-amber-400'; resultEl.classList.remove('hidden'); }
+        }
+      } catch (err) {
+        console.error('[Push] Test notification error:', err);
+        if (resultEl) { resultEl.innerText = 'Something went wrong — check console for details.'; resultEl.className = 'text-[11px] text-rose-400'; resultEl.classList.remove('hidden'); }
+      } finally {
+        if (btn) { btn.disabled = false; btn.innerText = 'Send Test Notification'; }
       }
     }
 
@@ -4083,6 +4154,7 @@
       }
       localStorage.removeItem('paycheck_pilot_state');
       state = createDefaultState();
+      pushSubscriptionSyncedThisSession = false;
       setSyncStatus('offline');
       showScreen('screen-auth');
       showToast("Logged out safely", "info");
@@ -6666,6 +6738,7 @@
 
     function renderSettingsPage() {
       renderPaydaySettingsCard();
+      renderNotificationStatusLine();
       if (document.getElementById('settings-email-display') && state.user) {
         document.getElementById('settings-email-display').value = state.user.email || "pilot@user.com";
       }
