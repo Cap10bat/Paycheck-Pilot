@@ -2733,8 +2733,49 @@
         checkPwaInstallStatus();
       });
 
+      // Maps a notification's requested screen to what navigateTo() (or,
+      // for money-mayday, a modal) actually understands, with a safe
+      // fallback to dashboard for anything unrecognized. Single source of
+      // truth used by both the postMessage listener and the ?screen= URL
+      // handler below, so they can't drift out of sync with each other.
+      // Does not touch navigateTo() itself, or add any new pages/nav items.
+      function resolveNotificationScreen(requested) {
+        const KNOWN_PAGES = ['dashboard', 'accounts', 'coming-up', 'ledger', 'goals', 'forecast', 'activity', 'reconcile', 'settings'];
+        const ALIASES = { bills: 'coming-up', income: 'reconcile' };
+
+        const normalized = String(requested || '').trim().toLowerCase();
+        if (normalized === 'money-mayday') return { page: 'dashboard', openMayday: true };
+        const resolved = ALIASES[normalized] || normalized;
+        if (KNOWN_PAGES.includes(resolved)) return { page: resolved, openMayday: false };
+        return { page: 'dashboard', openMayday: false };
+      }
+
+      function navigateToNotificationScreen(requested) {
+        const target = resolveNotificationScreen(requested);
+        navigateTo(target.page);
+        if (target.openMayday) openDeficitNavigatorModal();
+      }
+
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('service-worker.js').catch(err => console.log('SW registration failed', err));
+        // Tapping a notification while the app is already open focuses
+        // this tab and the service worker posts the target screen here,
+        // rather than just leaving whatever page was last shown.
+        navigator.serviceWorker.addEventListener('message', (event) => {
+          if (event.data && event.data.type === 'notification-navigate' && event.data.screen) {
+            navigateToNotificationScreen(event.data.screen);
+          }
+        });
+      }
+
+      // Tapping a notification while the app was closed opens a fresh
+      // window at ?screen=X (see notificationclick in service-worker.js) —
+      // land directly on that screen instead of always the dashboard.
+      const urlScreen = new URLSearchParams(window.location.search).get('screen');
+      if (urlScreen) {
+        window.addEventListener('DOMContentLoaded', () => {
+          setTimeout(() => { if (state.user) navigateToNotificationScreen(urlScreen); }, 300);
+        });
       }
 
       checkRecoverySession();
@@ -2953,6 +2994,22 @@
       if (Notification.permission === 'default') Notification.requestPermission();
     }
 
+    // Routes through the service worker's showNotification() when
+    // available — the same API its own push handler uses, and the only
+    // way to get data.screen (for notificationclick deep-linking) and
+    // consistent mobile-notification-tray behavior. Falls back to the
+    // plain constructor if no service worker is registered.
+    function showNativeNotification(title, body, screen, type) {
+      const options = { body, icon: 'icons/icon-192.png', badge: 'icons/icon-192.png', data: { screen, type }, tag: type };
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then(reg => reg.showNotification(title, options)).catch(() => {
+          new Notification(title, { body });
+        });
+      } else {
+        new Notification(title, { body });
+      }
+    }
+
     function sendBrowserNotifications() {
       if (typeof Notification === 'undefined' || Notification.permission !== 'granted') return;
       const today = new Date();
@@ -2965,14 +3022,14 @@
           if (state[key] === todayStr) return;
           state[key] = todayStr;
           const body = n.type === 'payday' ? 'Payday has arrived' : 'Upcoming bills exceed available funds';
-          new Notification('Paycheck Pilot', { body });
+          showNativeNotification('Paycheck Pilot', body, n.type === 'financial-warning' ? 'money-mayday' : 'dashboard', n.type);
           return;
         }
         if (n.type === 'household-payday') {
           const hp = (state.householdPaychecks || []).find(h => h.id === n.hpId);
           if (!hp || hp.lastNotifiedDate === todayStr) return;
           hp.lastNotifiedDate = todayStr;
-          new Notification('Paycheck Pilot', { body: `${n.label}'s Paycheck has arrived.` });
+          showNativeNotification('Paycheck Pilot', `${n.label}'s Paycheck has arrived.`, 'dashboard', 'household-payday');
           return;
         }
         const bill = state.bills.find(b => b.id === n.billId);
@@ -2982,7 +3039,7 @@
         if (n.type === 'bill-due-soon') body = `${n.label} due in ${n.daysDiff} day${n.daysDiff === 1 ? '' : 's'}`;
         else if (n.type === 'bill-due-today') body = `${n.label} is due today`;
         else if (n.type === 'bill-overdue') body = `${n.label} was due ${n.daysDiff} day${n.daysDiff === 1 ? '' : 's'} ago.\nDid you pay it?`;
-        if (body) new Notification('Paycheck Pilot', { body });
+        if (body) showNativeNotification('Paycheck Pilot', body, 'coming-up', n.type);
       });
       saveStateToStorage();
     }
@@ -3196,6 +3253,42 @@
     // "today is payday, please confirm" detection (getDaysUntilPayday() ===
     // 0 && nextDate not yet advanced) is completely unaffected. Returns true
     // if it changed anything, so the caller knows whether to persist it.
+    // Same self-healing state.income already had, extended to household
+    // paychecks — without this, once a household member is paid and their
+    // nextDate passes, nothing ever advances it. getNextHouseholdIncomeEvent()
+    // sorts by raw date string with no past-date filtering, so a frozen
+    // stale date keeps sorting as "next" indefinitely, distorting the
+    // Next Income Card, Mission Status, and Payday Countdown in Household
+    // View long after that person was actually paid.
+    function advanceStaleHouseholdPaychecks() {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      let anyAdvanced = false;
+
+      (state.householdPaychecks || []).forEach(hp => {
+        if (!hp || !hp.nextDate) return;
+        let nextDate = new Date(hp.nextDate + 'T00:00:00');
+        if (nextDate >= today) return;
+
+        const stepDays = hp.frequency === 'weekly' ? 7
+          : hp.frequency === 'biweekly' ? 14
+          : hp.frequency === 'semimonthly' ? 15
+          : 30;
+
+        let guard = 0;
+        while (nextDate < today && guard < 24) {
+          nextDate.setDate(nextDate.getDate() + stepDays);
+          guard++;
+        }
+        const newDateStr = nextDate.toISOString().split('T')[0];
+        if (newDateStr === hp.nextDate) return;
+        hp.nextDate = newDateStr;
+        anyAdvanced = true;
+      });
+
+      return anyAdvanced;
+    }
+
     function advanceStaleIncomeSchedule() {
       if (!state.income.nextDate) return false;
       const today = new Date();
@@ -4124,6 +4217,7 @@
           snapshot.classList.add('hidden');
         }
       }
+      if (advanceStaleHouseholdPaychecks()) saveStateToStorage();
       const cyclesAdvanced = advanceStaleIncomeSchedule();
       if (cyclesAdvanced) {
         saveStateToStorage();
