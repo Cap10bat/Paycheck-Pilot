@@ -3146,7 +3146,7 @@
       }
       if (btn) { btn.disabled = true; btn.innerText = 'Sending…'; }
       try {
-        const { data, error } = await supabaseClient.functions.invoke('send-notifications', { body: { test: true } });
+        const { data, error } = await supabaseClient.functions.invoke('Send-Notifications', { body: { test: true } });
         if (error) {
           console.error('[Push] Test notification failed:', error.message || error);
           if (resultEl) { resultEl.innerText = 'Failed to send — check console for details.'; resultEl.className = 'text-[11px] text-rose-400'; resultEl.classList.remove('hidden'); }
