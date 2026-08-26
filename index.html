@@ -3638,6 +3638,28 @@
       return msg.includes('jwt') || msg.includes('token') || error.status === 401 || error.code === 'PGRST301';
     }
 
+    // Distinct from an expired-but-refreshable session: some mobile
+    // browsers (notably iOS Safari's Intelligent Tracking Prevention) can
+    // wipe localStorage for web content — including an installed PWA in
+    // some iOS versions — after roughly a week without direct
+    // interaction. That silently deletes the Supabase SDK's own
+    // persisted session, while this app's separately-persisted
+    // state.user survives (different storage key, read at a different
+    // time), leaving a device that looks logged in locally but has
+    // nothing left to refresh. Checked before attempting a sync query so
+    // that case gets a clear, actionable message instead of a confusing
+    // generic failure followed by a refresh attempt that can only fail
+    // again.
+    async function hasGenuineSupabaseSession() {
+      if (!supabaseClient) return false;
+      try {
+        const { data } = await supabaseClient.auth.getSession();
+        return !!data?.session;
+      } catch {
+        return false;
+      }
+    }
+
     function getSyncKey() {
       if (state.household && state.household.id && state.household.accountMode === 'shared') {
         return state.household.id;
@@ -3725,6 +3747,13 @@
       const syncKey = getSyncKey();
       if (!syncKey) {
         setSyncStatus('offline');
+        return false;
+      }
+
+      if (!(await hasGenuineSupabaseSession())) {
+        console.warn("Cloud pull skipped: no active Supabase session (local state may be stale — try logging in again).");
+        setSyncStatus('error');
+        if (showStatusToast) showToast("Your session has expired — please log out and back in.", "error");
         return false;
       }
 
@@ -3818,6 +3847,14 @@
       const syncKey = getSyncKey();
       if (!syncKey) {
         setSyncStatus('offline');
+        return;
+      }
+
+      if (!(await hasGenuineSupabaseSession())) {
+        console.warn("Cloud push skipped: no active Supabase session (local state may be stale — try logging in again).");
+        setSyncStatus('error');
+        pendingSyncRetry = true;
+        if (!isBackground) showToast("Your session has expired — please log out and back in.", "error");
         return;
       }
 
@@ -6745,6 +6782,21 @@
       if (isNaN(amount) || amount <= 0) {
         showToast("Please enter a valid paycheck amount", "error");
         return;
+      }
+
+      // state.income is the household's single shared primary schedule —
+      // saving here overwrites what every member sees, permanently, with
+      // no recovery. If someone else's edit is on record and these new
+      // values genuinely differ from what's currently saved, confirm
+      // before replacing it — this is exactly the gap that let one
+      // household member's paycheck silently overwrite another's.
+      const inHousehold = !!(state.household && state.household.id && state.household.accountMode === 'shared');
+      const overwritingSomeoneElse = inHousehold && state.income.lastEditedBy && state.income.lastEditedBy !== currentOwnerLabel() &&
+        (Number(state.income.amount) !== amount || state.income.nextDate !== nextDate || state.income.frequency !== frequency);
+
+      if (overwritingSomeoneElse) {
+        const proceed = confirm(`This is your household's shared primary paycheck schedule, currently set by ${state.income.lastEditedBy}. Saving will overwrite it for everyone and cannot be undone.\n\nIf this is actually your own paycheck (a different person than ${state.income.lastEditedBy}), use "Additional Household Income" in Settings instead — don't overwrite this one.\n\nContinue and overwrite anyway?`);
+        if (!proceed) return;
       }
 
       state.income.amount = amount;
