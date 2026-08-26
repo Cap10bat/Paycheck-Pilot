@@ -3016,7 +3016,7 @@
     // VAPID_PRIVATE_KEY in Supabase Edge Function secrets). The public
     // key is safe to embed client-side — only the private key must stay
     // server-side. Subscription will silently no-op until this is set.
-    const VAPID_PUBLIC_KEY = 'BK1a6GBRWr_fKzRjZBMN0rKoAL9IHVMo9YiCBKyb0r5dLb9_rpp_nEO9LkRZOVDRF_5SjJehikvLBoTXEqvzD0A';
+    const VAPID_PUBLIC_KEY = 'REPLACE_WITH_YOUR_VAPID_PUBLIC_KEY';
 
     function urlBase64ToUint8Array(base64String) {
       const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -3627,6 +3627,17 @@
     // under the household id instead, so every member's device converges on
     // the same row. See supabase_schema.sql for the household tables + RLS
     // that make this safe for more than one authenticated user to touch.
+    // Detects whether a Supabase error is specifically auth/token-shaped
+    // (expired or invalid JWT) rather than a general network/RLS/data
+    // error — only this specific class of error is worth an automatic
+    // refresh-and-retry; anything else should still surface as a real
+    // error rather than silently retrying forever.
+    function isAuthTokenError(error) {
+      if (!error) return false;
+      const msg = (error.message || '').toLowerCase();
+      return msg.includes('jwt') || msg.includes('token') || error.status === 401 || error.code === 'PGRST301';
+    }
+
     function getSyncKey() {
       if (state.household && state.household.id && state.household.accountMode === 'shared') {
         return state.household.id;
@@ -3720,11 +3731,26 @@
       setSyncStatus('syncing');
 
       try {
-        const { data, error } = await supabaseClient
+        let { data, error } = await supabaseClient
           .from('paycheck_pilot_sync')
           .select('data, updated_at')
           .eq('id', syncKey)
           .maybeSingle();
+
+        // A stale JWT is common after a backgrounded mobile tab delays the
+        // SDK's own background refresh — retry once after an explicit
+        // refresh before treating this as a real failure. Any other kind
+        // of error (network, RLS, malformed row) falls through unchanged.
+        if (error && isAuthTokenError(error)) {
+          const { error: refreshError } = await supabaseClient.auth.refreshSession();
+          if (!refreshError) {
+            ({ data, error } = await supabaseClient
+              .from('paycheck_pilot_sync')
+              .select('data, updated_at')
+              .eq('id', syncKey)
+              .maybeSingle());
+          }
+        }
 
         if (error) {
           console.warn("Cloud pull warning:", error.message);
@@ -3740,6 +3766,7 @@
           // authenticated user object rather than whatever was cached.
           state = { ...state, ...cloudPayload, user: authoritativeUser, isDemo: false };
           deduplicateHouseholdPaychecks();
+          advanceStaleHouseholdPaychecks();
           localStorage.setItem('paycheck_pilot_state', JSON.stringify(state));
           // Only log when this pull actually found something newer than what
           // was already local — with periodic polling, most pulls find
@@ -3803,9 +3830,16 @@
           data: state
         };
 
-        const { error } = await supabaseClient
+        let { error } = await supabaseClient
           .from('paycheck_pilot_sync')
           .upsert(syncRecord);
+
+        if (error && isAuthTokenError(error)) {
+          const { error: refreshError } = await supabaseClient.auth.refreshSession();
+          if (!refreshError) {
+            ({ error } = await supabaseClient.from('paycheck_pilot_sync').upsert(syncRecord));
+          }
+        }
 
         if (error) {
           console.warn("Supabase sync warning:", error.message);
