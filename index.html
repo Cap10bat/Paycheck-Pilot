@@ -1196,17 +1196,66 @@
                 <h2 class="text-2xl font-extrabold text-white tracking-tight">Coming Up</h2>
                 <p class="text-xs text-slate-400">Manage upcoming bills and income events explicitly with priority ratings.</p>
               </div>
-              <button onclick="openAddBillModal()" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5">
+              <button id="coming-up-add-bill-btn" onclick="openAddBillModal()" class="px-4 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-md flex items-center gap-1.5">
                 <i data-lucide="plus" class="w-4 h-4"></i> Add Bill
+              </button>
+              <button id="coming-up-add-payday-btn" onclick="openAddHouseholdPaycheckForm();" class="hidden px-4 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all shadow-md items-center gap-1.5">
+                <i data-lucide="plus" class="w-4 h-4"></i> Add Household Income
               </button>
             </div>
 
-            <div class="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl flex items-center gap-3 text-xs text-slate-300">
-              <i data-lucide="info" class="w-5 h-5 text-brand-400 shrink-0"></i>
-              <span>Marking a bill as <strong>Complete</strong> logs it into your ledger, advances the due date, and records activity. <strong>Delete</strong> is recoverable for 5 seconds.</span>
+            <div class="flex items-center gap-1.5 p-1 bg-slate-900/80 border border-slate-800 rounded-xl w-fit">
+              <button type="button" id="coming-up-tab-bills" onclick="setComingUpTab('bills')" class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-brand-500 text-slate-950">Bills</button>
+              <button type="button" id="coming-up-tab-paydays" onclick="setComingUpTab('paydays')" class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white">Paydays</button>
             </div>
 
-            <div class="space-y-3" id="coming-up-timeline-list"></div>
+            <div id="coming-up-bills-panel">
+              <div class="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl flex items-center gap-3 text-xs text-slate-300 mb-3">
+                <i data-lucide="info" class="w-5 h-5 text-brand-400 shrink-0"></i>
+                <span>Marking a bill as <strong>Complete</strong> logs it into your ledger, advances the due date, and records activity. <strong>Delete</strong> is recoverable for 5 seconds.</span>
+              </div>
+              <div class="space-y-3" id="coming-up-timeline-list"></div>
+            </div>
+
+            <div id="coming-up-paydays-panel" class="hidden space-y-4">
+              <div class="bg-slate-900/80 border border-slate-800 p-4 rounded-2xl flex items-center gap-3 text-xs text-slate-300">
+                <i data-lucide="info" class="w-5 h-5 text-brand-400 shrink-0"></i>
+                <span>All upcoming income — yours and every household paycheck configured in Settings — sorted by date. Edit or add entries below; changes apply everywhere the app uses income (Forecast, Safe Spend, Money Mayday, and the dashboard).</span>
+              </div>
+
+              <div id="household-paycheck-form-inline" class="hidden space-y-3 p-3 bg-slate-900/80 border border-slate-800 rounded-xl">
+                <input type="hidden" id="hp-edit-id-inline" value="" />
+                <div>
+                  <label class="block text-xs font-semibold text-slate-400 mb-1">Owner Name</label>
+                  <input type="text" id="hp-owner-name-inline" placeholder="Enter member name" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-brand-500" />
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Amount</label>
+                    <input type="number" id="hp-amount-inline" step="0.01" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-brand-500" placeholder="2500.00" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Next Pay Date</label>
+                    <input type="date" id="hp-nextdate-inline" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none focus:border-brand-500" />
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold text-slate-400 mb-1">Frequency</label>
+                  <select id="hp-frequency-inline" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none">
+                    <option value="biweekly">Every 2 Weeks (Bi-Weekly)</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="semimonthly">Twice a Month (1st &amp; 15th)</option>
+                    <option value="monthly">Monthly</option>
+                  </select>
+                </div>
+                <div class="flex gap-2 pt-1">
+                  <button type="button" onclick="closeAddHouseholdPaycheckForm();" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all">Cancel</button>
+                  <button type="button" onclick="saveHouseholdPaycheck();" class="flex-1 py-2.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Save Income Source</button>
+                </div>
+              </div>
+
+              <div id="paydays-timeline-list" class="space-y-2"></div>
+            </div>
           </div>
 
           <!-- ================= PAGE: TRANSACTIONS / LEDGER ================= -->
@@ -3016,7 +3065,7 @@
     // VAPID_PRIVATE_KEY in Supabase Edge Function secrets). The public
     // key is safe to embed client-side — only the private key must stay
     // server-side. Subscription will silently no-op until this is set.
-    const VAPID_PUBLIC_KEY = 'BK1a6GBRWr_fKzRjZBMN0rKoAL9IHVMo9YiCBKyb0r5dLb9_rpp_nEO9LkRZOVDRF_5SjJehikvLBoTXEqvzD0A';
+    const VAPID_PUBLIC_KEY = 'REPLACE_WITH_YOUR_VAPID_PUBLIC_KEY';
 
     function urlBase64ToUint8Array(base64String) {
       const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -3355,17 +3404,9 @@
 
       const paydays = [];
       if (state.income && state.income.nextDate) {
-        const stepDays = state.income.frequency === 'weekly' ? 7
-          : state.income.frequency === 'biweekly' ? 14
-          : state.income.frequency === 'semimonthly' ? 15
-          : 30;
-        let d = new Date(state.income.nextDate + 'T00:00:00');
-        let guard = 0;
-        while ((d - today) <= daysAhead * 86400000 && guard < 16) {
-          if (d >= today) paydays.push({ date: new Date(d), amount: Number(state.income.amount) || 0, label: 'Payday Deposit' });
-          d = new Date(d.getTime() + stepDays * 86400000);
-          guard++;
-        }
+        getPaycheckOccurrences(state.income.nextDate, state.income.frequency, daysAhead, today).forEach(dateStr => {
+          paydays.push({ date: new Date(dateStr + 'T00:00:00'), amount: Number(state.income.amount) || 0, label: 'Payday Deposit' });
+        });
       }
 
       const activeBills = personalBills().filter(b => !b.completed && !b.paused);
@@ -3450,22 +3491,16 @@
 
       (state.householdPaychecks || []).forEach(hp => {
         if (!hp || !hp.nextDate) return;
-        let nextDate = new Date(hp.nextDate + 'T00:00:00');
-        if (nextDate >= today) return;
+        if (new Date(hp.nextDate + 'T00:00:00') >= today) return;
 
-        const stepDays = hp.frequency === 'weekly' ? 7
-          : hp.frequency === 'biweekly' ? 14
-          : hp.frequency === 'semimonthly' ? 15
-          : 30;
-
+        let nextDateStr = hp.nextDate;
         let guard = 0;
-        while (nextDate < today && guard < 24) {
-          nextDate.setDate(nextDate.getDate() + stepDays);
+        while (new Date(nextDateStr + 'T00:00:00') < today && guard < 24) {
+          nextDateStr = getNextPaycheckDate(nextDateStr, hp.frequency);
           guard++;
         }
-        const newDateStr = nextDate.toISOString().split('T')[0];
-        if (newDateStr === hp.nextDate) return;
-        hp.nextDate = newDateStr;
+        if (nextDateStr === hp.nextDate) return;
+        hp.nextDate = nextDateStr;
         anyAdvanced = true;
       });
 
@@ -3476,22 +3511,16 @@
       if (!state.income.nextDate) return false;
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      let nextDate = new Date(state.income.nextDate + 'T00:00:00');
-      if (nextDate >= today) return false;
+      if (new Date(state.income.nextDate + 'T00:00:00') >= today) return false;
 
-      const stepDays = state.income.frequency === 'weekly' ? 7
-        : state.income.frequency === 'biweekly' ? 14
-        : state.income.frequency === 'semimonthly' ? 15
-        : 30;
-
+      let nextDateStr = state.income.nextDate;
       let guard = 0;
-      while (nextDate < today && guard < 24) {
-        nextDate.setDate(nextDate.getDate() + stepDays);
+      while (new Date(nextDateStr + 'T00:00:00') < today && guard < 24) {
+        nextDateStr = getNextPaycheckDate(nextDateStr, state.income.frequency);
         guard++;
       }
-      const newDateStr = nextDate.toISOString().split('T')[0];
-      if (newDateStr === state.income.nextDate) return false;
-      state.income.nextDate = newDateStr;
+      if (nextDateStr === state.income.nextDate) return false;
+      state.income.nextDate = nextDateStr;
       // Returns the number of cycles advanced (always >=1 here, so still
       // truthy for every existing caller) rather than a plain boolean —
       // lets renderDashboard() tell the user when more than one cycle was
@@ -4928,6 +4957,112 @@
       if (chevron) chevron.style.transform = isHidden ? 'rotate(0deg)' : 'rotate(180deg)';
     }
 
+    function setComingUpTab(tab) {
+      const billsPanel = document.getElementById('coming-up-bills-panel');
+      const paydaysPanel = document.getElementById('coming-up-paydays-panel');
+      const billsTabBtn = document.getElementById('coming-up-tab-bills');
+      const paydaysTabBtn = document.getElementById('coming-up-tab-paydays');
+      const addBillBtn = document.getElementById('coming-up-add-bill-btn');
+      const addPaydayBtn = document.getElementById('coming-up-add-payday-btn');
+      const activeCls = 'px-4 py-1.5 rounded-lg text-xs font-bold transition-all bg-brand-500 text-slate-950';
+      const inactiveCls = 'px-4 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white';
+
+      if (tab === 'paydays') {
+        if (billsPanel) billsPanel.classList.add('hidden');
+        if (paydaysPanel) paydaysPanel.classList.remove('hidden');
+        if (billsTabBtn) billsTabBtn.className = inactiveCls;
+        if (paydaysTabBtn) paydaysTabBtn.className = activeCls;
+        if (addBillBtn) addBillBtn.classList.add('hidden');
+        if (addPaydayBtn) { addPaydayBtn.classList.remove('hidden'); addPaydayBtn.classList.add('flex'); }
+        renderPaydaysTab();
+      } else {
+        if (billsPanel) billsPanel.classList.remove('hidden');
+        if (paydaysPanel) paydaysPanel.classList.add('hidden');
+        if (billsTabBtn) billsTabBtn.className = activeCls;
+        if (paydaysTabBtn) paydaysTabBtn.className = inactiveCls;
+        if (addBillBtn) addBillBtn.classList.remove('hidden');
+        if (addPaydayBtn) { addPaydayBtn.classList.add('hidden'); addPaydayBtn.classList.remove('flex'); }
+      }
+    }
+
+    // Every upcoming income event — the user's own schedule and every
+    // household paycheck — over the next 30+ days, sorted together. Uses
+    // getPaycheckOccurrences(), the exact same canonical engine
+    // buildForecastSeries() and buildPersonalForecastSeries() use, so
+    // this list can never disagree with Forecast, Safe Spend, or Money
+    // Mayday about when a paycheck actually lands.
+    function renderPaydaysTab() {
+      const container = document.getElementById('paydays-timeline-list');
+      if (!container) return;
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const daysAhead = 35;
+      const events = [];
+
+      if (state.income && state.income.nextDate) {
+        getPaycheckOccurrences(state.income.nextDate, state.income.frequency, daysAhead, today).forEach((dateStr, i) => {
+          events.push({ date: dateStr, ownerLabel: currentOwnerLabel(), amount: state.income.amount, frequency: state.income.frequency, isPrimary: true, isNext: i === 0 });
+        });
+      }
+      (state.householdPaychecks || []).forEach(hp => {
+        if (!hp || !hp.nextDate) return;
+        getPaycheckOccurrences(hp.nextDate, hp.frequency, daysAhead, today).forEach((dateStr, i) => {
+          events.push({ date: dateStr, ownerLabel: hp.ownerLabel || 'Household Member', amount: hp.amount, frequency: hp.frequency, isPrimary: false, hpId: hp.id, isNext: i === 0 });
+        });
+      });
+
+      events.sort((a, b) => a.date < b.date ? -1 : 1);
+
+      if (!events.length) {
+        container.innerHTML = emptyStateHtml({
+          icon: 'calendar-clock',
+          title: 'No paychecks scheduled',
+          message: 'Set up your payday schedule to see it here.',
+          ctaLabel: 'Open Payday Settings',
+          ctaOnclick: "navigateTo('reconcile')"
+        });
+        return;
+      }
+
+      container.innerHTML = events.map(ev => `
+        <div class="glass-card p-3.5 rounded-2xl border border-slate-800/80 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-11 h-11 rounded-xl bg-brand-500/10 border border-brand-500/30 flex flex-col items-center justify-center shrink-0">
+              <span class="text-[9px] font-bold text-brand-400 uppercase leading-none">${new Date(ev.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short' })}</span>
+              <span class="text-sm font-black text-white leading-none mt-0.5">${new Date(ev.date + 'T00:00:00').getDate()}</span>
+            </div>
+            <div class="min-w-0">
+              <p class="text-sm font-bold text-white truncate">${ev.ownerLabel}${ev.isPrimary ? ' <span class="text-[9px] font-bold text-slate-500 uppercase">(You)</span>' : ''}</p>
+              <p class="text-[11px] text-slate-400 capitalize">${ev.frequency || 'monthly'}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+            <span class="font-bold text-brand-400">$${formatCurrency(ev.amount)}</span>
+            ${ev.isNext
+              ? `<button type="button" onclick="${ev.isPrimary ? 'confirmPaydayReceived()' : `receiveHouseholdPaycheck('${ev.hpId}')`}" class="px-2.5 py-1.5 bg-brand-500/20 hover:bg-brand-500/30 text-brand-400 rounded-lg text-[10px] font-bold">Receive</button>`
+              : ''
+            }
+            ${ev.isPrimary
+              ? `<button type="button" onclick="navigateTo('reconcile'); openPaydaySettingsEdit();" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-[10px] font-bold">Edit</button>`
+              : `<button type="button" onclick="setComingUpEditingPayday('${ev.hpId}')" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-[10px] font-bold">Edit</button>
+                 <button type="button" onclick="deleteHouseholdPaycheck('${ev.hpId}')" class="px-2.5 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg text-[10px] font-bold">Delete</button>`
+            }
+          </div>
+        </div>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    // Opens the same inline add/edit form already used for adding a new
+    // household paycheck, pre-filled for editing an existing one — reuses
+    // editHouseholdPaycheck()'s existing field-population logic exactly.
+    function setComingUpEditingPayday(id) {
+      editHouseholdPaycheck(id);
+      const form = document.getElementById('household-paycheck-form-inline');
+      if (form) form.classList.remove('hidden');
+    }
+
     function renderComingUp() {
       const container = document.getElementById('coming-up-timeline-list');
       if (!container) return;
@@ -5265,35 +5400,19 @@
 
       const paydays = [];
       if (state.income && state.income.nextDate) {
-        const stepDays = state.income.frequency === 'weekly' ? 7
-          : state.income.frequency === 'biweekly' ? 14
-          : state.income.frequency === 'semimonthly' ? 15
-          : 30;
-        let d = new Date(state.income.nextDate + 'T00:00:00');
-        let guard = 0;
-        while ((d - today) <= daysAhead * 86400000 && guard < 16) {
-          if (d >= today) paydays.push({ date: new Date(d), amount: Number(state.income.amount) || 0, label: 'Payday Deposit', isOwn: true });
-          d = new Date(d.getTime() + stepDays * 86400000);
-          guard++;
-        }
+        getPaycheckOccurrences(state.income.nextDate, state.income.frequency, daysAhead, today).forEach(dateStr => {
+          paydays.push({ date: new Date(dateStr + 'T00:00:00'), amount: Number(state.income.amount) || 0, label: 'Payday Deposit', isOwn: true });
+        });
       }
       // Other confirmed household members' paychecks (configured via
-      // Financial Reset) — same projection technique as above, applied per
-      // schedule, so Forecast reflects the full household income picture
-      // rather than only the current user's own paycheck.
+      // Financial Reset) — same engine as above, applied per schedule, so
+      // Forecast reflects the full household income picture rather than
+      // only the current user's own paycheck.
       (state.householdPaychecks || []).forEach(hp => {
         if (!hp || !hp.nextDate) return;
-        const stepDays = hp.frequency === 'weekly' ? 7
-          : hp.frequency === 'biweekly' ? 14
-          : hp.frequency === 'semimonthly' ? 15
-          : 30;
-        let d = new Date(hp.nextDate + 'T00:00:00');
-        let guard = 0;
-        while ((d - today) <= daysAhead * 86400000 && guard < 16) {
-          if (d >= today) paydays.push({ date: new Date(d), amount: Number(hp.amount) || 0, label: `Payday Deposit (${hp.ownerLabel || 'Household'})`, isOwn: false });
-          d = new Date(d.getTime() + stepDays * 86400000);
-          guard++;
-        }
+        getPaycheckOccurrences(hp.nextDate, hp.frequency, daysAhead, today).forEach(dateStr => {
+          paydays.push({ date: new Date(dateStr + 'T00:00:00'), amount: Number(hp.amount) || 0, label: `Payday Deposit (${hp.ownerLabel || 'Household'})`, isOwn: false });
+        });
       });
 
       const activeBills = visibleBills().filter(b => !b.completed && !b.paused);
@@ -5380,7 +5499,9 @@
       const lowestNear = Math.min(...next7);
       const lowestOverall = Math.min(...allValues);
       const daysUntilPayday = getDaysUntilPayday();
-      const cycleDays = state.income.frequency === 'weekly' ? 7 : state.income.frequency === 'biweekly' ? 14 : state.income.frequency === 'semimonthly' ? 15 : 30;
+      const cycleDays = state.income.nextDate
+        ? Math.round((new Date(getNextPaycheckDate(state.income.nextDate, state.income.frequency) + 'T00:00:00') - new Date(state.income.nextDate + 'T00:00:00')) / 86400000)
+        : 30;
       const next5 = series.slice(0, 6).map(s => s.balance);
       const isClimbing = next5[next5.length - 1] > next5[0];
 
@@ -5849,28 +5970,42 @@
       `).join('');
     }
 
+    // Settings and Coming Up → Paydays share the same add/edit/save logic
+    // but have their own form markup (different IDs, different layout
+    // context) — this determines which one is relevant right now instead
+    // of duplicating openAddHouseholdPaycheckForm()/editHouseholdPaycheck()/
+    // saveHouseholdPaycheck() into two near-identical copies.
+    function getHpFormSuffix() {
+      return getCurrentPageId() === 'coming-up' ? '-inline' : '';
+    }
+    function getHpFormContainerId() {
+      return getCurrentPageId() === 'coming-up' ? 'household-paycheck-form-inline' : 'household-paycheck-form';
+    }
+
     function openAddHouseholdPaycheckForm() {
-      document.getElementById('hp-edit-id').value = '';
-      document.getElementById('hp-owner-name').value = '';
-      document.getElementById('hp-amount').value = '';
-      document.getElementById('hp-nextdate').value = '';
-      document.getElementById('hp-frequency').value = 'biweekly';
-      document.getElementById('household-paycheck-form').classList.remove('hidden');
+      const s = getHpFormSuffix();
+      document.getElementById('hp-edit-id' + s).value = '';
+      document.getElementById('hp-owner-name' + s).value = '';
+      document.getElementById('hp-amount' + s).value = '';
+      document.getElementById('hp-nextdate' + s).value = '';
+      document.getElementById('hp-frequency' + s).value = 'biweekly';
+      document.getElementById(getHpFormContainerId()).classList.remove('hidden');
     }
 
     function closeAddHouseholdPaycheckForm() {
-      document.getElementById('household-paycheck-form').classList.add('hidden');
+      document.getElementById(getHpFormContainerId()).classList.add('hidden');
     }
 
     function editHouseholdPaycheck(id) {
       const hp = (state.householdPaychecks || []).find(h => h.id === id);
       if (!hp) return;
-      document.getElementById('hp-edit-id').value = hp.id;
-      document.getElementById('hp-owner-name').value = hp.ownerLabel || '';
-      document.getElementById('hp-amount').value = hp.amount || '';
-      document.getElementById('hp-nextdate').value = hp.nextDate || '';
-      document.getElementById('hp-frequency').value = hp.frequency || 'biweekly';
-      document.getElementById('household-paycheck-form').classList.remove('hidden');
+      const s = getHpFormSuffix();
+      document.getElementById('hp-edit-id' + s).value = hp.id;
+      document.getElementById('hp-owner-name' + s).value = hp.ownerLabel || '';
+      document.getElementById('hp-amount' + s).value = hp.amount || '';
+      document.getElementById('hp-nextdate' + s).value = hp.nextDate || '';
+      document.getElementById('hp-frequency' + s).value = hp.frequency || 'biweekly';
+      document.getElementById(getHpFormContainerId()).classList.remove('hidden');
     }
 
     // Add or edit — writes directly to state.householdPaychecks, the same
@@ -5924,12 +6059,24 @@
       });
     }
 
+    // Both Settings' household list and the Paydays tab list exist in the
+    // DOM at the same time (only their parent page is hidden) — refreshing
+    // both here, unconditionally, is what "no stale UI" actually requires:
+    // whichever one you look at next is already current, and there's only
+    // one place this refresh logic lives.
+    function refreshHouseholdPaycheckViews() {
+      if (document.getElementById('household-paycheck-list')) renderHouseholdPaycheckList();
+      if (document.getElementById('paydays-timeline-list')) renderPaydaysTab();
+      if (getCurrentPageId() === 'dashboard') renderDashboard();
+    }
+
     function saveHouseholdPaycheck() {
-      const editId = document.getElementById('hp-edit-id').value;
-      const ownerLabel = document.getElementById('hp-owner-name').value.trim();
-      const amount = parseFloat(document.getElementById('hp-amount').value);
-      const nextDate = document.getElementById('hp-nextdate').value;
-      const frequency = document.getElementById('hp-frequency').value;
+      const s = getHpFormSuffix();
+      const editId = document.getElementById('hp-edit-id' + s).value;
+      const ownerLabel = document.getElementById('hp-owner-name' + s).value.trim();
+      const amount = parseFloat(document.getElementById('hp-amount' + s).value);
+      const nextDate = document.getElementById('hp-nextdate' + s).value;
+      const frequency = document.getElementById('hp-frequency' + s).value;
 
       if (!ownerLabel) { showToast("Enter a name for this income source.", "error"); return; }
       if (isNaN(amount) || amount <= 0) { showToast("Enter a valid amount.", "error"); return; }
@@ -5988,9 +6135,8 @@
 
       saveStateToStorage();
       closeAddHouseholdPaycheckForm();
-      renderHouseholdPaycheckList();
+      refreshHouseholdPaycheckViews();
       showToast("Income source saved", "success");
-      if (getCurrentPageId() === 'dashboard') renderDashboard();
     }
 
     function deleteHouseholdPaycheck(id) {
@@ -6000,9 +6146,25 @@
       state.householdPaychecks = state.householdPaychecks.filter(h => h.id !== id);
       logActivity("Household Income Removed", `${actor} removed ${hp.ownerLabel || 'a household member'}'s income source.`);
       saveStateToStorage();
-      renderHouseholdPaycheckList();
+      refreshHouseholdPaycheckViews();
       showToast("Income source removed", "info");
-      if (getCurrentPageId() === 'dashboard') renderDashboard();
+    }
+
+    // Receive Paycheck for a household member — the same idea as
+    // confirmPaydayReceived() (the primary schedule's equivalent), but for
+    // state.householdPaychecks. Advances via the canonical engine only;
+    // Forecast, Safe Spend, and Money Mayday all read this array directly
+    // on their next render, so no separate propagation step is needed.
+    function receiveHouseholdPaycheck(id) {
+      const hp = (state.householdPaychecks || []).find(h => h.id === id);
+      if (!hp || !hp.nextDate) return;
+      const actor = currentOwnerLabel();
+      const previousDate = hp.nextDate;
+      hp.nextDate = getNextPaycheckDate(hp.nextDate, hp.frequency);
+      logActivity("Household Paycheck Received", `${actor} confirmed ${hp.ownerLabel || 'household member'}'s paycheck (was due ${previousDate}). Next payday: ${hp.nextDate}.`);
+      saveStateToStorage();
+      refreshHouseholdPaycheckViews();
+      showToast(`${hp.ownerLabel || 'Paycheck'} marked as received`, "success");
     }
 
     // Lightweight upcoming preview — paychecks and bills sorted together by
@@ -6019,13 +6181,8 @@
       const events = [];
       if (state.income.nextDate && !isIncomeScheduleIncomplete()) {
         events.push({ date: state.income.nextDate, label: 'Payday', amount: state.income.amount, type: 'payday' });
-        const stepDays = state.income.frequency === 'weekly' ? 7
-          : state.income.frequency === 'biweekly' ? 14
-          : state.income.frequency === 'semimonthly' ? 15
-          : 30;
-        const d = new Date(state.income.nextDate + 'T00:00:00');
-        d.setDate(d.getDate() + stepDays);
-        events.push({ date: d.toISOString().split('T')[0], label: 'Payday', amount: state.income.amount, type: 'payday' });
+        const nextDateStr = getNextPaycheckDate(state.income.nextDate, state.income.frequency);
+        events.push({ date: nextDateStr, label: 'Payday', amount: state.income.amount, type: 'payday' });
       }
       visibleBills().filter(b => !b.completed && !b.paused).forEach(b => {
         events.push({ date: b.dueDate, label: b.title, amount: b.amount, type: 'bill' });
@@ -7498,6 +7655,57 @@
       return d.toISOString().split('T')[0];
     }
 
+    // ============================================================
+    // CANONICAL PAYCHECK OCCURRENCE ENGINE — single source of truth for
+    // every place that needs to know a paycheck's next date or its full
+    // list of occurrences within a window. Used by Forecast (household +
+    // solo), the stale-date self-heal functions, getNextHouseholdIncomeEvent(),
+    // and the Paydays tab — none of them duplicate this logic themselves.
+    // ============================================================
+
+    // Advances a paycheck date by exactly one real cycle. Semimonthly is
+    // NOT a flat 15-day interval — see the comment above this block for
+    // why that was wrong.
+    function getNextPaycheckDate(dateStr, frequency) {
+      const d = new Date(dateStr + 'T00:00:00');
+      if (frequency === 'weekly') {
+        d.setDate(d.getDate() + 7);
+      } else if (frequency === 'biweekly') {
+        d.setDate(d.getDate() + 14);
+      } else if (frequency === 'semimonthly') {
+        if (d.getDate() < 15) {
+          d.setDate(15);
+        } else {
+          d.setMonth(d.getMonth() + 1);
+          d.setDate(1);
+        }
+      } else {
+        // monthly (and the default fallback for any unrecognized value,
+        // matching every call site's prior behavior)
+        const originalDay = d.getDate();
+        d.setMonth(d.getMonth() + 1);
+        if (d.getDate() !== originalDay) d.setDate(0);
+      }
+      return d.toISOString().split('T')[0];
+    }
+
+    // Every real occurrence of a paycheck schedule within daysAhead days
+    // of today, exact date strings — replaces the payday-stepping loops
+    // previously duplicated inside buildForecastSeries() and
+    // buildPersonalForecastSeries().
+    function getPaycheckOccurrences(nextDate, frequency, daysAhead, today) {
+      const occurrences = [];
+      if (!nextDate) return occurrences;
+      let d = new Date(nextDate + 'T00:00:00');
+      let guard = 0;
+      while ((d - today) <= daysAhead * 86400000 && guard < 16) {
+        if (d >= today) occurrences.push(d.toISOString().split('T')[0]);
+        d = new Date(getNextPaycheckDate(d.toISOString().split('T')[0], frequency) + 'T00:00:00');
+        guard++;
+      }
+      return occurrences;
+    }
+
     // Skips just this occurrence of a recurring bill without marking it paid
     // or deleting it — the due date rolls forward one cycle, same as if it
     // had been paid, but with no transaction and no "completed" record.
@@ -7960,16 +8168,10 @@
       lucide.createIcons();
     }
 
-    // Advances income.nextDate to the following pay cycle — the same
-    // frequency step used elsewhere for projecting paydays forward.
+    // Advances income.nextDate to the following pay cycle, via the same
+    // canonical engine used everywhere else paycheck dates are stepped.
     function confirmPaydayReceived() {
-      const stepDays = state.income.frequency === 'weekly' ? 7
-        : state.income.frequency === 'biweekly' ? 14
-        : state.income.frequency === 'semimonthly' ? 15
-        : 30;
-      const base = state.income.nextDate ? new Date(state.income.nextDate + 'T00:00:00') : new Date();
-      base.setDate(base.getDate() + stepDays);
-      state.income.nextDate = base.toISOString().split('T')[0];
+      state.income.nextDate = getNextPaycheckDate(state.income.nextDate || new Date().toISOString().split('T')[0], state.income.frequency);
 
       logActivity("Payday Confirmed", `Payday schedule confirmed for $${formatCurrency(state.income.amount || 0)}. Next payday: ${state.income.nextDate}. Account balances are not updated automatically.`);
       saveStateToStorage();
