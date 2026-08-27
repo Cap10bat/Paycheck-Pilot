@@ -1241,12 +1241,22 @@
                 </div>
                 <div>
                   <label class="block text-xs font-semibold text-slate-400 mb-1">Frequency</label>
-                  <select id="hp-frequency-inline" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none">
+                  <select id="hp-frequency-inline" onchange="toggleSemimonthlyDayFields('-inline')" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none">
                     <option value="biweekly">Every 2 Weeks (Bi-Weekly)</option>
                     <option value="weekly">Weekly</option>
-                    <option value="semimonthly">Twice a Month (1st &amp; 15th)</option>
+                    <option value="semimonthly">Twice a Month (specific days)</option>
                     <option value="monthly">Monthly</option>
                   </select>
+                </div>
+                <div id="hp-semimonthly-days-inline" class="hidden grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">First Payday</label>
+                    <select id="hp-semimonthly-day1-inline" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none"></select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Second Payday</label>
+                    <select id="hp-semimonthly-day2-inline" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none"></select>
+                  </div>
                 </div>
                 <div class="flex gap-2 pt-1">
                   <button type="button" onclick="closeAddHouseholdPaycheckForm();" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all">Cancel</button>
@@ -1592,12 +1602,22 @@
                 </div>
                 <div>
                   <label class="block text-xs font-semibold text-slate-400 mb-1">Frequency</label>
-                  <select id="payday-settings-frequency" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none">
+                  <select id="payday-settings-frequency" onchange="toggleSemimonthlyDayFields('-primary')" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none">
                     <option value="biweekly">Every 2 Weeks (Bi-Weekly)</option>
                     <option value="weekly">Weekly</option>
-                    <option value="semimonthly">Twice a Month (1st & 15th)</option>
+                    <option value="semimonthly">Twice a Month (specific days)</option>
                     <option value="monthly">Monthly</option>
                   </select>
+                </div>
+                <div id="hp-semimonthly-days-primary" class="hidden grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">First Payday</label>
+                    <select id="hp-semimonthly-day1-primary" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none"></select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-semibold text-slate-400 mb-1">Second Payday</label>
+                    <select id="hp-semimonthly-day2-primary" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none"></select>
+                  </div>
                 </div>
                 <div class="flex gap-2 pt-1">
                   <button type="button" onclick="closePaydaySettingsEdit()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all">Cancel</button>
@@ -1630,12 +1650,22 @@
                   </div>
                   <div>
                     <label class="block text-xs font-semibold text-slate-400 mb-1">Frequency</label>
-                    <select id="hp-frequency" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none">
+                    <select id="hp-frequency" onchange="toggleSemimonthlyDayFields('')" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none">
                       <option value="biweekly">Every 2 Weeks (Bi-Weekly)</option>
                       <option value="weekly">Weekly</option>
-                      <option value="semimonthly">Twice a Month (1st & 15th)</option>
+                      <option value="semimonthly">Twice a Month (specific days)</option>
                       <option value="monthly">Monthly</option>
                     </select>
+                  </div>
+                  <div id="hp-semimonthly-days" class="hidden grid grid-cols-2 gap-3">
+                    <div>
+                      <label class="block text-xs font-semibold text-slate-400 mb-1">First Payday</label>
+                      <select id="hp-semimonthly-day1" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none"></select>
+                    </div>
+                    <div>
+                      <label class="block text-xs font-semibold text-slate-400 mb-1">Second Payday</label>
+                      <select id="hp-semimonthly-day2" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none"></select>
+                    </div>
                   </div>
                   <div class="flex gap-2 pt-1">
                     <button type="button" onclick="closeAddHouseholdPaycheckForm()" class="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all">Cancel</button>
@@ -3065,7 +3095,7 @@
     // VAPID_PRIVATE_KEY in Supabase Edge Function secrets). The public
     // key is safe to embed client-side — only the private key must stay
     // server-side. Subscription will silently no-op until this is set.
-    const VAPID_PUBLIC_KEY = 'BK1a6GBRWr_fKzRjZBMN0rKoAL9IHVMo9YiCBKyb0r5dLb9_rpp_nEO9LkRZOVDRF_5SjJehikvLBoTXEqvzD0A';
+    const VAPID_PUBLIC_KEY = 'REPLACE_WITH_YOUR_VAPID_PUBLIC_KEY';
 
     function urlBase64ToUint8Array(base64String) {
       const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -3384,7 +3414,7 @@
       // paycheck landing inside this 14-day check is correctly credited,
       // the same way buildForecastSeries() already does for Household View.
       const incomeDates = state.income && state.income.nextDate
-        ? new Set(getPaycheckOccurrences(state.income.nextDate, state.income.frequency, daysAhead, today))
+        ? new Set(getPaycheckOccurrences(state.income.nextDate, state.income.frequency, daysAhead, today, state.income))
         : new Set();
       let running = personalLiquidCash() - overdueTotal;
       for (let i = 0; i <= daysAhead; i++) {
@@ -3411,7 +3441,7 @@
 
       const paydays = [];
       if (state.income && state.income.nextDate) {
-        getPaycheckOccurrences(state.income.nextDate, state.income.frequency, daysAhead, today).forEach(dateStr => {
+        getPaycheckOccurrences(state.income.nextDate, state.income.frequency, daysAhead, today, state.income).forEach(dateStr => {
           paydays.push({ date: new Date(dateStr + 'T00:00:00'), amount: Number(state.income.amount) || 0, label: 'Payday Deposit' });
         });
       }
@@ -3503,7 +3533,7 @@
         let nextDateStr = hp.nextDate;
         let guard = 0;
         while (new Date(nextDateStr + 'T00:00:00') < today && guard < 24) {
-          nextDateStr = getNextPaycheckDate(nextDateStr, hp.frequency);
+          nextDateStr = getNextPaycheckDate(nextDateStr, hp.frequency, hp);
           guard++;
         }
         if (nextDateStr === hp.nextDate) return;
@@ -3523,7 +3553,7 @@
       let nextDateStr = state.income.nextDate;
       let guard = 0;
       while (new Date(nextDateStr + 'T00:00:00') < today && guard < 24) {
-        nextDateStr = getNextPaycheckDate(nextDateStr, state.income.frequency);
+        nextDateStr = getNextPaycheckDate(nextDateStr, state.income.frequency, state.income);
         guard++;
       }
       if (nextDateStr === state.income.nextDate) return false;
@@ -5008,13 +5038,13 @@
       const events = [];
 
       if (state.income && state.income.nextDate) {
-        getPaycheckOccurrences(state.income.nextDate, state.income.frequency, daysAhead, today).forEach((dateStr, i) => {
+        getPaycheckOccurrences(state.income.nextDate, state.income.frequency, daysAhead, today, state.income).forEach((dateStr, i) => {
           events.push({ date: dateStr, ownerLabel: currentOwnerLabel(), amount: state.income.amount, frequency: state.income.frequency, isPrimary: true, isNext: i === 0 });
         });
       }
       (state.householdPaychecks || []).forEach(hp => {
         if (!hp || !hp.nextDate) return;
-        getPaycheckOccurrences(hp.nextDate, hp.frequency, daysAhead, today).forEach((dateStr, i) => {
+        getPaycheckOccurrences(hp.nextDate, hp.frequency, daysAhead, today, hp).forEach((dateStr, i) => {
           events.push({ date: dateStr, ownerLabel: hp.ownerLabel || 'Household Member', amount: hp.amount, frequency: hp.frequency, isPrimary: false, hpId: hp.id, isNext: i === 0 });
         });
       });
@@ -5420,7 +5450,7 @@
 
       const paydays = [];
       if (state.income && state.income.nextDate) {
-        getPaycheckOccurrences(state.income.nextDate, state.income.frequency, daysAhead, today).forEach(dateStr => {
+        getPaycheckOccurrences(state.income.nextDate, state.income.frequency, daysAhead, today, state.income).forEach(dateStr => {
           paydays.push({ date: new Date(dateStr + 'T00:00:00'), amount: Number(state.income.amount) || 0, label: 'Payday Deposit', isOwn: true });
         });
       }
@@ -5430,7 +5460,7 @@
       // only the current user's own paycheck.
       (state.householdPaychecks || []).forEach(hp => {
         if (!hp || !hp.nextDate) return;
-        getPaycheckOccurrences(hp.nextDate, hp.frequency, daysAhead, today).forEach(dateStr => {
+        getPaycheckOccurrences(hp.nextDate, hp.frequency, daysAhead, today, hp).forEach(dateStr => {
           paydays.push({ date: new Date(dateStr + 'T00:00:00'), amount: Number(hp.amount) || 0, label: `Payday Deposit (${hp.ownerLabel || 'Household'})`, isOwn: false });
         });
       });
@@ -5520,7 +5550,7 @@
       const lowestOverall = Math.min(...allValues);
       const daysUntilPayday = getDaysUntilPayday();
       const cycleDays = state.income.nextDate
-        ? Math.round((new Date(getNextPaycheckDate(state.income.nextDate, state.income.frequency) + 'T00:00:00') - new Date(state.income.nextDate + 'T00:00:00')) / 86400000)
+        ? Math.round((new Date(getNextPaycheckDate(state.income.nextDate, state.income.frequency, state.income) + 'T00:00:00') - new Date(state.income.nextDate + 'T00:00:00')) / 86400000)
         : 30;
       const next5 = series.slice(0, 6).map(s => s.balance);
       const isClimbing = next5[next5.length - 1] > next5[0];
@@ -5990,6 +6020,48 @@
       `).join('');
     }
 
+    // Builds the shared "day 1-28, or Last Day of Month" option list used
+    // by all three semimonthly day selectors (Settings household form,
+    // Coming Up inline form, primary Payday Settings form) — one place,
+    // not three copies of the same 29 <option> tags.
+    function buildSemimonthlyDayOptionsHtml(selected) {
+      let html = '';
+      for (let d = 1; d <= 28; d++) {
+        html += `<option value="${d}" ${String(selected) === String(d) ? 'selected' : ''}>${d}${d === 1 ? 'st' : d === 2 ? 'nd' : d === 3 ? 'rd' : d === 21 ? 'st' : d === 22 ? 'nd' : d === 23 ? 'rd' : d === 31 ? 'st' : 'th'}</option>`;
+      }
+      html += `<option value="last" ${selected === 'last' ? 'selected' : ''}>Last Day of Month</option>`;
+      return html;
+    }
+
+    // Shows/hides a form's day-selector fields based on its frequency
+    // select's current value, and populates them the first time they
+    // become relevant. `defaults` (optional) pre-selects specific days —
+    // used when opening the edit form for an existing semimonthly
+    // schedule; omitted for a brand-new entry, which falls back to day
+    // 1 / day 15 as a neutral starting point the user can change.
+    function toggleSemimonthlyDayFields(suffix, defaults) {
+      const freqEl = document.getElementById(
+        suffix === '-primary' ? 'payday-settings-frequency' : ('hp-frequency' + suffix)
+      );
+      const wrapperId = suffix === '-primary' ? 'hp-semimonthly-days-primary' : ('hp-semimonthly-days' + suffix);
+      const day1Id = suffix === '-primary' ? 'hp-semimonthly-day1-primary' : ('hp-semimonthly-day1' + suffix);
+      const day2Id = suffix === '-primary' ? 'hp-semimonthly-day2-primary' : ('hp-semimonthly-day2' + suffix);
+      const wrapper = document.getElementById(wrapperId);
+      const day1El = document.getElementById(day1Id);
+      const day2El = document.getElementById(day2Id);
+      if (!freqEl || !wrapper || !day1El || !day2El) return;
+
+      if (freqEl.value !== 'semimonthly') {
+        wrapper.classList.add('hidden');
+        return;
+      }
+      wrapper.classList.remove('hidden');
+      const day1 = defaults ? defaults.day1 : 1;
+      const day2 = defaults ? defaults.day2 : 15;
+      day1El.innerHTML = buildSemimonthlyDayOptionsHtml(day1);
+      day2El.innerHTML = buildSemimonthlyDayOptionsHtml(day2);
+    }
+
     // Settings and Coming Up → Paydays share the same add/edit/save logic
     // but have their own form markup (different IDs, different layout
     // context) — this determines which one is relevant right now instead
@@ -6009,6 +6081,7 @@
       document.getElementById('hp-amount' + s).value = '';
       document.getElementById('hp-nextdate' + s).value = '';
       document.getElementById('hp-frequency' + s).value = 'biweekly';
+      toggleSemimonthlyDayFields(s);
       document.getElementById(getHpFormContainerId()).classList.remove('hidden');
     }
 
@@ -6025,6 +6098,7 @@
       document.getElementById('hp-amount' + s).value = hp.amount || '';
       document.getElementById('hp-nextdate' + s).value = hp.nextDate || '';
       document.getElementById('hp-frequency' + s).value = hp.frequency || 'biweekly';
+      toggleSemimonthlyDayFields(s, hp.frequency === 'semimonthly' ? getSemimonthlyDays(hp) : null);
       document.getElementById(getHpFormContainerId()).classList.remove('hidden');
     }
 
@@ -6097,6 +6171,8 @@
       const amount = parseFloat(document.getElementById('hp-amount' + s).value);
       const nextDate = document.getElementById('hp-nextdate' + s).value;
       const frequency = document.getElementById('hp-frequency' + s).value;
+      const semimonthlyDay1 = frequency === 'semimonthly' ? document.getElementById('hp-semimonthly-day1' + s).value : undefined;
+      const semimonthlyDay2 = frequency === 'semimonthly' ? document.getElementById('hp-semimonthly-day2' + s).value : undefined;
 
       if (!ownerLabel) { showToast("Enter a name for this income source.", "error"); return; }
       if (isNaN(amount) || amount <= 0) { showToast("Enter a valid amount.", "error"); return; }
@@ -6123,6 +6199,8 @@
           hp.amount = amount;
           hp.nextDate = nextDate;
           hp.frequency = frequency;
+          hp.semimonthlyDay1 = semimonthlyDay1;
+          hp.semimonthlyDay2 = semimonthlyDay2;
           hp.lastEditedBy = actor;
           hp.lastEditedAt = new Date().toISOString();
         }
@@ -6138,6 +6216,8 @@
           existing.amount = amount;
           existing.nextDate = nextDate;
           existing.frequency = frequency;
+          existing.semimonthlyDay1 = semimonthlyDay1;
+          existing.semimonthlyDay2 = semimonthlyDay2;
           existing.lastEditedBy = actor;
           existing.lastEditedAt = new Date().toISOString();
           logActivity("Household Income Updated", `${actor} updated ${ownerLabel}'s existing income source (matched to avoid a duplicate): $${formatCurrency(amount)} ${frequency}, next ${nextDate}.`);
@@ -6145,7 +6225,7 @@
         } else {
           state.householdPaychecks.push({
             id: 'hp_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
-            ownerLabel, amount, nextDate, frequency,
+            ownerLabel, amount, nextDate, frequency, semimonthlyDay1, semimonthlyDay2,
             scope: 'household', ownerId: null,
             createdBy: actor, createdAt: new Date().toISOString()
           });
@@ -6180,7 +6260,7 @@
       if (!hp || !hp.nextDate) return;
       const actor = currentOwnerLabel();
       const previousDate = hp.nextDate;
-      hp.nextDate = getNextPaycheckDate(hp.nextDate, hp.frequency);
+      hp.nextDate = getNextPaycheckDate(hp.nextDate, hp.frequency, hp);
       logActivity("Household Paycheck Received", `${actor} confirmed ${hp.ownerLabel || 'household member'}'s paycheck (was due ${previousDate}). Next payday: ${hp.nextDate}.`);
       saveStateToStorage();
       refreshHouseholdPaycheckViews();
@@ -6201,7 +6281,7 @@
       const events = [];
       if (state.income.nextDate && !isIncomeScheduleIncomplete()) {
         events.push({ date: state.income.nextDate, label: 'Payday', amount: state.income.amount, type: 'payday' });
-        const nextDateStr = getNextPaycheckDate(state.income.nextDate, state.income.frequency);
+        const nextDateStr = getNextPaycheckDate(state.income.nextDate, state.income.frequency, state.income);
         events.push({ date: nextDateStr, label: 'Payday', amount: state.income.amount, type: 'payday' });
       }
       visibleBills().filter(b => !b.completed && !b.paused).forEach(b => {
@@ -6925,6 +7005,7 @@
       if (amountInput) amountInput.value = state.income.amount || '';
       if (dateInput) dateInput.value = state.income.nextDate || '';
       if (freqInput) freqInput.value = state.income.frequency || 'biweekly';
+      toggleSemimonthlyDayFields('-primary', state.income.frequency === 'semimonthly' ? getSemimonthlyDays(state.income) : null);
 
       const viewEl = document.getElementById('payday-settings-view');
       const editEl = document.getElementById('payday-settings-edit');
@@ -6951,6 +7032,8 @@
       const amount = parseFloat(document.getElementById('payday-settings-amount').value);
       const nextDate = document.getElementById('payday-settings-nextdate').value;
       const frequency = document.getElementById('payday-settings-frequency').value;
+      const semimonthlyDay1 = frequency === 'semimonthly' ? document.getElementById('hp-semimonthly-day1-primary').value : undefined;
+      const semimonthlyDay2 = frequency === 'semimonthly' ? document.getElementById('hp-semimonthly-day2-primary').value : undefined;
 
       if (!nextDate) {
         showToast("Please choose a next payday date", "error");
@@ -6979,6 +7062,8 @@
       state.income.amount = amount;
       state.income.nextDate = nextDate;
       state.income.frequency = frequency;
+      state.income.semimonthlyDay1 = semimonthlyDay1;
+      state.income.semimonthlyDay2 = semimonthlyDay2;
       state.income.lastEditedBy = currentOwnerLabel();
       state.income.lastEditedAt = new Date().toISOString();
 
@@ -7683,21 +7768,68 @@
     // and the Paydays tab — none of them duplicate this logic themselves.
     // ============================================================
 
-    // Advances a paycheck date by exactly one real cycle. Semimonthly is
-    // NOT a flat 15-day interval — see the comment above this block for
-    // why that was wrong.
-    function getNextPaycheckDate(dateStr, frequency) {
+    // Resolves a configured semimonthly day (a number 1-28, or the string
+    // 'last' meaning "last day of the month") to an actual calendar day
+    // number for a specific year/month — "last" varies (28-31) depending
+    // on the month, so this can't be resolved once and reused everywhere.
+    function resolveSemimonthlyDay(day, year, month) {
+      const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
+      if (day === 'last') return lastDayOfMonth;
+      return Math.min(Number(day) || 1, lastDayOfMonth);
+    }
+
+    // Semimonthly schedules must use the actual configured payroll days
+    // (10th/25th, 5th/20th, 15th/Last Day, etc.) — there is no single
+    // universal semimonthly pattern to assume. For a schedule saved
+    // before this field existed, derives day1 from its current date (that
+    // day is, by definition, one of the two real configured days) and
+    // day2 as day1+15 normalized into the month — a reasonable default
+    // matching how most real semimonthly payrolls are actually split
+    // (and exactly correct for a 10th/25th schedule), while staying fully
+    // editable via the form once set explicitly.
+    function getSemimonthlyDays(schedule) {
+      if (schedule && schedule.semimonthlyDay1 != null && schedule.semimonthlyDay2 != null) {
+        return { day1: schedule.semimonthlyDay1, day2: schedule.semimonthlyDay2 };
+      }
+      const refDateStr = schedule && schedule.nextDate;
+      if (!refDateStr) return { day1: 1, day2: 15 };
+      const refDay = new Date(refDateStr + 'T00:00:00').getDate();
+      const day2 = ((refDay - 1 + 15) % 28) + 1;
+      return { day1: refDay, day2 };
+    }
+
+    // Advances a paycheck date by exactly one real cycle. `schedule` (the
+    // full state.income or householdPaychecks entry) is only consulted
+    // for semimonthly's configured days — every other frequency ignores
+    // it entirely, so passing it is harmless for weekly/biweekly/monthly.
+    function getNextPaycheckDate(dateStr, frequency, schedule) {
       const d = new Date(dateStr + 'T00:00:00');
       if (frequency === 'weekly') {
         d.setDate(d.getDate() + 7);
       } else if (frequency === 'biweekly') {
         d.setDate(d.getDate() + 14);
       } else if (frequency === 'semimonthly') {
-        if (d.getDate() < 15) {
-          d.setDate(15);
+        const { day1, day2 } = getSemimonthlyDays(schedule || { nextDate: dateStr });
+        const year = d.getFullYear();
+        const month = d.getMonth();
+        const currentDay = d.getDate();
+
+        const pairs = [
+          { raw: day1, resolved: resolveSemimonthlyDay(day1, year, month) },
+          { raw: day2, resolved: resolveSemimonthlyDay(day2, year, month) }
+        ].sort((a, b) => a.resolved - b.resolved);
+        const [smaller, larger] = pairs;
+
+        if (currentDay < smaller.resolved) {
+          return `${year}-${String(month + 1).padStart(2, '0')}-${String(smaller.resolved).padStart(2, '0')}`;
+        } else if (currentDay < larger.resolved) {
+          return `${year}-${String(month + 1).padStart(2, '0')}-${String(larger.resolved).padStart(2, '0')}`;
         } else {
-          d.setMonth(d.getMonth() + 1);
-          d.setDate(1);
+          const nextMonthRaw = month + 1;
+          const nextYear = nextMonthRaw > 11 ? year + 1 : year;
+          const nextMonth = nextMonthRaw % 12;
+          const nextResolved = resolveSemimonthlyDay(smaller.raw, nextYear, nextMonth);
+          return `${nextYear}-${String(nextMonth + 1).padStart(2, '0')}-${String(nextResolved).padStart(2, '0')}`;
         }
       } else {
         // monthly (and the default fallback for any unrecognized value,
@@ -7712,15 +7844,16 @@
     // Every real occurrence of a paycheck schedule within daysAhead days
     // of today, exact date strings — replaces the payday-stepping loops
     // previously duplicated inside buildForecastSeries() and
-    // buildPersonalForecastSeries().
-    function getPaycheckOccurrences(nextDate, frequency, daysAhead, today) {
+    // buildPersonalForecastSeries(). `schedule` is passed through to
+    // getNextPaycheckDate() for the same semimonthly reason as above.
+    function getPaycheckOccurrences(nextDate, frequency, daysAhead, today, schedule) {
       const occurrences = [];
       if (!nextDate) return occurrences;
       let d = new Date(nextDate + 'T00:00:00');
       let guard = 0;
       while ((d - today) <= daysAhead * 86400000 && guard < 16) {
         if (d >= today) occurrences.push(d.toISOString().split('T')[0]);
-        d = new Date(getNextPaycheckDate(d.toISOString().split('T')[0], frequency) + 'T00:00:00');
+        d = new Date(getNextPaycheckDate(d.toISOString().split('T')[0], frequency, schedule) + 'T00:00:00');
         guard++;
       }
       return occurrences;
@@ -8191,7 +8324,7 @@
     // Advances income.nextDate to the following pay cycle, via the same
     // canonical engine used everywhere else paycheck dates are stepped.
     function confirmPaydayReceived() {
-      state.income.nextDate = getNextPaycheckDate(state.income.nextDate || new Date().toISOString().split('T')[0], state.income.frequency);
+      state.income.nextDate = getNextPaycheckDate(state.income.nextDate || new Date().toISOString().split('T')[0], state.income.frequency, state.income);
 
       logActivity("Payday Confirmed", `Payday schedule confirmed for $${formatCurrency(state.income.amount || 0)}. Next payday: ${state.income.nextDate}. Account balances are not updated automatically.`);
       saveStateToStorage();
