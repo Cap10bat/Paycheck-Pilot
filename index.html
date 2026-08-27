@@ -644,16 +644,26 @@
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Pay Frequency</label>
-                  <select id="onboard-pay-frequency" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-3 text-sm text-slate-200 outline-none">
+                  <select id="onboard-pay-frequency" onchange="toggleSemimonthlyDayFields('-onboard')" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-3 text-sm text-slate-200 outline-none">
                     <option value="biweekly">Every 2 Weeks (Bi-Weekly)</option>
                     <option value="weekly">Weekly</option>
-                    <option value="semimonthly">Twice a Month (1st & 15th)</option>
+                    <option value="semimonthly">Twice a Month (specific days)</option>
                     <option value="monthly">Monthly</option>
                   </select>
                 </div>
                 <div>
                   <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Next Payday Date</label>
                   <input type="date" id="onboard-next-payday" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-3 text-sm text-slate-200 outline-none" />
+                </div>
+              </div>
+              <div id="hp-semimonthly-days-onboard" class="hidden grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">First Payday</label>
+                  <select id="hp-semimonthly-day1-onboard" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-3 text-sm text-slate-200 outline-none"></select>
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold uppercase text-slate-400 mb-1">Second Payday</label>
+                  <select id="hp-semimonthly-day2-onboard" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-3 text-sm text-slate-200 outline-none"></select>
                 </div>
               </div>
             </div>
@@ -4358,6 +4368,7 @@
         if (document.getElementById('onboard-paycheck-amount')) document.getElementById('onboard-paycheck-amount').value = state.income.amount || 2500;
         if (document.getElementById('onboard-pay-frequency')) document.getElementById('onboard-pay-frequency').value = state.income.frequency || 'biweekly';
         if (document.getElementById('onboard-next-payday')) document.getElementById('onboard-next-payday').value = state.income.nextDate || new Date().toISOString().split('T')[0];
+        toggleSemimonthlyDayFields('-onboard', state.income.frequency === 'semimonthly' ? getSemimonthlyDays(state.income) : null);
         const errorEl = document.getElementById('onboard-amount-error');
         if (errorEl) errorEl.classList.add('hidden');
         if (document.getElementById('onboard-paycheck-amount')) document.getElementById('onboard-paycheck-amount').classList.remove('border-rose-500');
@@ -4412,6 +4423,8 @@
         state.income.amount = parsedAmount;
         state.income.frequency = document.getElementById('onboard-pay-frequency').value;
         state.income.nextDate = document.getElementById('onboard-next-payday').value;
+        state.income.semimonthlyDay1 = state.income.frequency === 'semimonthly' ? document.getElementById('hp-semimonthly-day1-onboard').value : undefined;
+        state.income.semimonthlyDay2 = state.income.frequency === 'semimonthly' ? document.getElementById('hp-semimonthly-day2-onboard').value : undefined;
       }
 
       if (state.currentOnboardStep < 4) {
@@ -5039,13 +5052,13 @@
 
       if (state.income && state.income.nextDate) {
         getPaycheckOccurrences(state.income.nextDate, state.income.frequency, daysAhead, today, state.income).forEach((dateStr, i) => {
-          events.push({ date: dateStr, ownerLabel: currentOwnerLabel(), amount: state.income.amount, frequency: state.income.frequency, isPrimary: true, isNext: i === 0 });
+          events.push({ date: dateStr, ownerLabel: currentOwnerLabel(), amount: state.income.amount, frequency: state.income.frequency, frequencyLabel: describeFrequency(state.income), isPrimary: true, isNext: i === 0 });
         });
       }
       (state.householdPaychecks || []).forEach(hp => {
         if (!hp || !hp.nextDate) return;
         getPaycheckOccurrences(hp.nextDate, hp.frequency, daysAhead, today, hp).forEach((dateStr, i) => {
-          events.push({ date: dateStr, ownerLabel: hp.ownerLabel || 'Household Member', amount: hp.amount, frequency: hp.frequency, isPrimary: false, hpId: hp.id, isNext: i === 0 });
+          events.push({ date: dateStr, ownerLabel: hp.ownerLabel || 'Household Member', amount: hp.amount, frequency: hp.frequency, frequencyLabel: describeFrequency(hp), isPrimary: false, hpId: hp.id, isNext: i === 0 });
         });
       });
 
@@ -5071,7 +5084,7 @@
             </div>
             <div class="min-w-0">
               <p class="text-sm font-bold text-white truncate">${ev.ownerLabel}${ev.isPrimary ? ' <span class="text-[9px] font-bold text-slate-500 uppercase">(You)</span>' : ''}</p>
-              <p class="text-[11px] text-slate-400 capitalize">${ev.frequency || 'monthly'}</p>
+              <p class="text-[11px] text-slate-400">${ev.frequencyLabel || ev.frequency || 'monthly'}</p>
             </div>
           </div>
           <div class="flex items-center gap-2 shrink-0 flex-wrap justify-end">
@@ -6040,15 +6053,15 @@
     // schedule; omitted for a brand-new entry, which falls back to day
     // 1 / day 15 as a neutral starting point the user can change.
     function toggleSemimonthlyDayFields(suffix, defaults) {
-      const freqEl = document.getElementById(
-        suffix === '-primary' ? 'payday-settings-frequency' : ('hp-frequency' + suffix)
-      );
-      const wrapperId = suffix === '-primary' ? 'hp-semimonthly-days-primary' : ('hp-semimonthly-days' + suffix);
-      const day1Id = suffix === '-primary' ? 'hp-semimonthly-day1-primary' : ('hp-semimonthly-day1' + suffix);
-      const day2Id = suffix === '-primary' ? 'hp-semimonthly-day2-primary' : ('hp-semimonthly-day2' + suffix);
-      const wrapper = document.getElementById(wrapperId);
-      const day1El = document.getElementById(day1Id);
-      const day2El = document.getElementById(day2Id);
+      // The frequency select's own ID doesn't follow one consistent
+      // pattern across all four forms (onboarding and the primary
+      // Payday Settings form predate this convention) — mapped
+      // explicitly here rather than guessed.
+      const freqElId = { '-primary': 'payday-settings-frequency', '-onboard': 'onboard-pay-frequency' }[suffix] || ('hp-frequency' + suffix);
+      const freqEl = document.getElementById(freqElId);
+      const wrapper = document.getElementById('hp-semimonthly-days' + suffix);
+      const day1El = document.getElementById('hp-semimonthly-day1' + suffix);
+      const day2El = document.getElementById('hp-semimonthly-day2' + suffix);
       if (!freqEl || !wrapper || !day1El || !day2El) return;
 
       if (freqEl.value !== 'semimonthly') {
@@ -7802,6 +7815,20 @@
     // full state.income or householdPaychecks entry) is only consulted
     // for semimonthly's configured days — every other frequency ignores
     // it entirely, so passing it is harmless for weekly/biweekly/monthly.
+    // Human-readable frequency description — for semimonthly, names the
+    // actual configured days rather than the bare word "semimonthly",
+    // which on its own gives no indication of which two days apply.
+    function describeFrequency(schedule) {
+      if (!schedule || !schedule.frequency) return 'Monthly';
+      if (schedule.frequency !== 'semimonthly') {
+        return schedule.frequency.charAt(0).toUpperCase() + schedule.frequency.slice(1);
+      }
+      const { day1, day2 } = getSemimonthlyDays(schedule);
+      const label = (d) => d === 'last' ? 'Last Day' : `${d}${d == 1 || d == 21 ? 'st' : d == 2 || d == 22 ? 'nd' : d == 3 || d == 23 ? 'rd' : 'th'}`;
+      const [a, b] = [day1, day2].sort((x, y) => (x === 'last' ? 32 : Number(x)) - (y === 'last' ? 32 : Number(y)));
+      return `Semimonthly (${label(a)} &amp; ${label(b)})`;
+    }
+
     function getNextPaycheckDate(dateStr, frequency, schedule) {
       const d = new Date(dateStr + 'T00:00:00');
       if (frequency === 'weekly') {
