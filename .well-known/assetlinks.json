@@ -1,1 +1,8 @@
-
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.cap10bat.paycheckpilot",
+        "sha256_cert_fingerprints": ["B6:C9:78:53:E7:C4:61:8E:E4:E6:9D:3C:E1:CA:3B:74:FA:82:28:97:01:5C:F6:17:1E:B7:52:D0:29:C0:D1:C6"]
+      }
+    }]
