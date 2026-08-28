@@ -1640,6 +1640,7 @@
                   <p class="text-[10px] text-slate-500 uppercase tracking-wider">Additional Household Income</p>
                   <button type="button" onclick="openAddHouseholdPaycheckForm()" class="text-[11px] font-bold text-brand-400 hover:text-brand-300">+ Add Income Source</button>
                 </div>
+                <p class="text-[11px] text-slate-400 -mt-1">For other household members' paychecks. Your own schedule is set above — don't re-enter it here.</p>
                 <div id="household-paycheck-list" class="space-y-2"></div>
 
                 <div id="household-paycheck-form" class="hidden space-y-3 p-3 bg-slate-900/80 border border-slate-800 rounded-xl">
@@ -6262,14 +6263,17 @@
     }
 
     function deleteHouseholdPaycheck(id) {
-      const hp = (state.householdPaychecks || []).find(h => h.id === id);
-      if (!hp) return;
+      const index = (state.householdPaychecks || []).findIndex(h => h.id === id);
+      if (index === -1) return;
+      const removed = state.householdPaychecks.splice(index, 1)[0];
       const actor = currentOwnerLabel();
-      state.householdPaychecks = state.householdPaychecks.filter(h => h.id !== id);
-      logActivity("Household Income Removed", `${actor} removed ${hp.ownerLabel || 'a household member'}'s income source.`);
+      logActivity("Household Income Removed", `${actor} removed ${removed.ownerLabel || 'a household member'}'s income source.`);
+      setUndoBuffer({ item: removed, type: 'householdPaycheck' }, (data) => {
+        state.householdPaychecks.push(data.item);
+        refreshHouseholdPaycheckViews();
+      });
       saveStateToStorage();
       refreshHouseholdPaycheckViews();
-      showToast("Income source removed", "info");
     }
 
     // Receive Paycheck for a household member — the same idea as
