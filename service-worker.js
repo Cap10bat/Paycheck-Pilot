@@ -1,10 +1,21 @@
 const CACHE_NAME = "paycheck-pilot-v1";
+// App shell cached on install so the offline-fallback path below (in the
+// fetch handler) actually has something to serve. Previously nothing
+// populated this cache at all, so an offline launch attempt resolved to
+// undefined instead of the app shell — a failed load, not a graceful
+// offline experience. Google's Android Vitals treats this class of
+// failure as a negative quality signal for TWAs specifically, so this
+// isn't just a UX nicety for a Play Store submission.
+const APP_SHELL = ["./", "./manifest.json"];
 
 // ---------------------------------------------------------------------
 // EXISTING — unchanged from production
 // ---------------------------------------------------------------------
 self.addEventListener("install", event => {
     self.skipWaiting();
+    event.waitUntil(
+        caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)).catch(() => {})
+    );
 });
 
 self.addEventListener("fetch", event => {
