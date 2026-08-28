@@ -1,20 +1,38 @@
 {
-  "name": "Paycheck Pilot",
-  "short_name": "Paycheck Pilot",
-  "start_url": "/Paycheck-Pilot/",
+  "id": "/",
+  "name": "Paycheck Pilot — Navigate Every Payday",
+  "short_name": "Pilot",
+  "description": "Navigate every payday: accounts, bills, goals, and a 60-day cash flow forecast.",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
+  "orientation": "portrait-primary",
   "background_color": "#070c18",
   "theme_color": "#10b981",
   "icons": [
     {
-      "src": "paycheck-pilot-hero.png",
+      "src": "icons/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "paycheck-pilot-hero.png",
+      "src": "icons/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-1024.png",
+      "sizes": "1024x1024",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
