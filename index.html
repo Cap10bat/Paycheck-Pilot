@@ -3255,15 +3255,24 @@
 
     function requestNotificationPermissionOnce() {
       if (typeof Notification === 'undefined') return;
-      if (state.notificationPermissionAsked) return;
+      // Gated solely on the live, per-context permission state — not on
+      // state.notificationPermissionAsked, which persists across devices
+      // and launch contexts (localStorage + cloud sync) while actual
+      // notification permission does not. An installed PWA can have its
+      // own, separate, never-prompted permission state independent of
+      // its browser-tab counterpart on the same account; gating on the
+      // synced flag left it permanently stuck at 'default' there.
+      // Notification.requestPermission() is a safe no-op once permission
+      // is already granted or denied in this context — the browser never
+      // re-shows the prompt — so this check alone is sufficient and
+      // correctly scoped per context, unlike the flag.
+      if (Notification.permission !== 'default') return;
       state.notificationPermissionAsked = true;
       saveStateToStorage();
-      if (Notification.permission === 'default') {
-        Notification.requestPermission().then(permission => {
-          console.log('[Push] Notification permission result:', permission);
-          if (permission === 'granted') subscribeToPushNotifications();
-        });
-      }
+      Notification.requestPermission().then(permission => {
+        console.log('[Push] Notification permission result:', permission);
+        if (permission === 'granted') subscribeToPushNotifications();
+      });
     }
 
     // Routes through the service worker's showNotification() when
