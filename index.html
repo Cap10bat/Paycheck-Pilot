@@ -1796,6 +1796,12 @@
                 <i data-lucide="bell" class="w-4 h-4 text-brand-400"></i> Payday &amp; Bill Notifications
               </h3>
               <p class="text-[11px] text-slate-400">Payday arrivals, overdue and upcoming bills, and Money Mayday warnings — delivered as mobile-style notifications, even when the app is closed.</p>
+
+              <div id="notif-pre-prompt" class="hidden space-y-2.5 p-3 bg-brand-500/10 border border-brand-500/25 rounded-xl">
+                <p class="text-xs text-slate-200">Get reminders before bills are due and when paydays arrive.</p>
+                <button type="button" onclick="handleEnableNotificationsClick()" class="w-full py-2.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Enable Notifications</button>
+              </div>
+
               <p id="notif-status-line" class="text-xs text-slate-300">Status: <span id="notif-status-text" class="font-semibold text-slate-400">Checking…</span></p>
               <button type="button" onclick="sendTestNotification()" id="notif-test-btn" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold transition-all">Send Test Notification</button>
               <p id="notif-test-result" class="hidden text-[11px]"></p>
@@ -1822,6 +1828,17 @@
                 </div>
                 <button onclick="handleLogout()" class="w-full py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2">
                   <i data-lucide="log-out" class="w-4 h-4"></i> Logout
+                </button>
+              </div>
+
+              <!-- Account & Privacy Card -->
+              <div class="glass-card p-4 sm:p-6 rounded-3xl border border-slate-800/80 space-y-4">
+                <h3 class="font-bold text-white text-base flex items-center gap-2">
+                  <i data-lucide="shield" class="w-4 h-4 text-brand-400"></i> Account &amp; Privacy
+                </h3>
+                <p class="text-[11px] text-slate-400">Manage what Paycheck Pilot knows about you.</p>
+                <button onclick="openDeleteAccountModal()" class="w-full py-2.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-2">
+                  <i data-lucide="trash-2" class="w-4 h-4"></i> Delete My Account
                 </button>
               </div>
 
@@ -2003,7 +2020,49 @@
   <!-- CUSTOM MODALS CONTAINER -->
   <!-- ========================================== -->
   <div id="modal-backdrop" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    
+
+    <!-- DELETE ACCOUNT — explicit confirmation required -->
+    <div id="modal-delete-account" class="glass-card p-4 sm:p-6 rounded-3xl border border-rose-500/40 w-full max-w-md hidden space-y-4 max-h-[85vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-white text-base flex items-center gap-2">
+          <i data-lucide="trash-2" class="w-4 h-4 text-rose-400"></i> Delete My Account
+        </h3>
+        <button onclick="closeDeleteAccountModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+
+      <div id="delete-account-explain-step" class="space-y-4">
+        <p class="text-xs text-slate-300">This permanently deletes:</p>
+        <ul class="text-xs text-slate-300 space-y-1.5 list-disc pl-4">
+          <li>Your login and account credentials</li>
+          <li>Your financial data — accounts, bills, income, transactions, goals</li>
+          <li>Your push notification subscriptions</li>
+          <li>Your synced data on our servers</li>
+        </ul>
+        <div id="delete-account-household-note" class="hidden text-xs text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-xl p-3">
+          You're part of a shared household. Only <strong>your own</strong> membership and personal data are deleted — the household's shared data stays intact for other members.
+        </div>
+        <p class="text-xs text-rose-400 font-semibold">This cannot be undone.</p>
+        <div>
+          <label class="block text-[11px] font-semibold text-slate-400 mb-1.5">Type <span class="text-rose-400 font-mono">DELETE</span> to confirm</label>
+          <input type="text" id="delete-account-confirm-input" oninput="checkDeleteAccountConfirmInput()" autocomplete="off" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-slate-200 outline-none focus:border-rose-500" placeholder="DELETE" />
+        </div>
+        <div class="flex gap-2 pt-1">
+          <button onclick="closeDeleteAccountModal()" class="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all">Cancel</button>
+          <button id="delete-account-confirm-btn" onclick="executeDeleteAccount()" disabled class="flex-1 py-2.5 bg-rose-500/30 text-rose-300 rounded-xl text-xs font-bold transition-all cursor-not-allowed" >Delete My Account</button>
+        </div>
+      </div>
+
+      <div id="delete-account-progress-step" class="hidden py-6 text-center space-y-3">
+        <i data-lucide="loader" class="w-6 h-6 text-rose-400 mx-auto animate-spin"></i>
+        <p class="text-xs text-slate-400">Deleting your account and data…</p>
+      </div>
+
+      <div id="delete-account-error-step" class="hidden space-y-4">
+        <p id="delete-account-error-text" class="text-xs text-rose-400"></p>
+        <button onclick="closeDeleteAccountModal()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all">Close</button>
+      </div>
+    </div>
+
     <!-- FLIGHT SCHOOL — built-in help/learning system -->
     <div id="modal-flight-school" class="glass-card p-4 sm:p-6 rounded-3xl border border-brand-500/40 w-full max-w-lg hidden space-y-4 max-h-[85vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -3106,7 +3165,7 @@
     // VAPID_PRIVATE_KEY in Supabase Edge Function secrets). The public
     // key is safe to embed client-side — only the private key must stay
     // server-side. Subscription will silently no-op until this is set.
-    const VAPID_PUBLIC_KEY = 'BPv3f20qBA4JpDs_WUwOieQ0XsgMLj9yTvy6gLeLdFGDIY6c--SsdJLg81BU9YRqRnqBebqF6C6iIj7vXubOlxY';
+    const VAPID_PUBLIC_KEY = 'REPLACE_WITH_YOUR_VAPID_PUBLIC_KEY';
 
     function urlBase64ToUint8Array(base64String) {
       const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -3195,19 +3254,30 @@
 
     // Plain-language status line for the Settings section — call on
     // Settings render so the user can see exactly where things stand
-    // without needing to check permission dialogs or dev tools.
+    // without needing to check permission dialogs or dev tools. Also
+    // controls the contextual pre-prompt's visibility — shown only while
+    // permission is genuinely undecided, since that's the only state
+    // where asking "want to enable?" makes sense.
     async function renderNotificationStatusLine() {
       const el = document.getElementById('notif-status-text');
+      const prePrompt = document.getElementById('notif-pre-prompt');
       if (!el) return;
       if (typeof Notification === 'undefined') {
-        el.innerText = 'Not supported in this browser'; el.className = 'font-semibold text-slate-500'; return;
+        el.innerText = 'Not supported in this browser'; el.className = 'font-semibold text-slate-500';
+        if (prePrompt) prePrompt.classList.add('hidden');
+        return;
       }
       if (Notification.permission === 'denied') {
-        el.innerText = 'Blocked — re-enable notifications in your browser/app settings'; el.className = 'font-semibold text-rose-400'; return;
+        el.innerText = 'Blocked — re-enable notifications in your browser/app settings'; el.className = 'font-semibold text-rose-400';
+        if (prePrompt) prePrompt.classList.add('hidden');
+        return;
       }
       if (Notification.permission !== 'granted') {
-        el.innerText = 'Not enabled yet'; el.className = 'font-semibold text-amber-400'; return;
+        el.innerText = 'Not enabled yet'; el.className = 'font-semibold text-amber-400';
+        if (prePrompt) prePrompt.classList.remove('hidden');
+        return;
       }
+      if (prePrompt) prePrompt.classList.add('hidden');
       if (!('serviceWorker' in navigator)) {
         el.innerText = 'Enabled, but no service worker support'; el.className = 'font-semibold text-amber-400'; return;
       }
@@ -3219,6 +3289,23 @@
       } catch {
         el.innerText = 'Enabled'; el.className = 'font-semibold text-brand-400';
       }
+    }
+
+    // The ONLY place in the app that calls Notification.requestPermission()
+    // — the actual native browser dialog only ever appears after the user
+    // has explicitly clicked "Enable Notifications" on the contextual
+    // pre-prompt above, never automatically on app/dashboard load.
+    function handleEnableNotificationsClick() {
+      if (typeof Notification === 'undefined') return;
+      if (Notification.permission !== 'default') {
+        renderNotificationStatusLine();
+        return;
+      }
+      Notification.requestPermission().then(permission => {
+        console.log('[Push] Notification permission result:', permission);
+        if (permission === 'granted') subscribeToPushNotifications();
+        renderNotificationStatusLine();
+      });
     }
 
     // Requirement #8: manual delivery verification. Calls the Edge
@@ -3254,27 +3341,6 @@
       }
     }
 
-    function requestNotificationPermissionOnce() {
-      if (typeof Notification === 'undefined') return;
-      // Gated solely on the live, per-context permission state — not on
-      // state.notificationPermissionAsked, which persists across devices
-      // and launch contexts (localStorage + cloud sync) while actual
-      // notification permission does not. An installed PWA can have its
-      // own, separate, never-prompted permission state independent of
-      // its browser-tab counterpart on the same account; gating on the
-      // synced flag left it permanently stuck at 'default' there.
-      // Notification.requestPermission() is a safe no-op once permission
-      // is already granted or denied in this context — the browser never
-      // re-shows the prompt — so this check alone is sufficient and
-      // correctly scoped per context, unlike the flag.
-      if (Notification.permission !== 'default') return;
-      state.notificationPermissionAsked = true;
-      saveStateToStorage();
-      Notification.requestPermission().then(permission => {
-        console.log('[Push] Notification permission result:', permission);
-        if (permission === 'granted') subscribeToPushNotifications();
-      });
-    }
 
     // Routes through the service worker's showNotification() when
     // available — the same API its own push handler uses, and the only
@@ -4318,6 +4384,92 @@
     }
 
     // ==========================================
+    // ACCOUNT DELETION — Google Play account deletion
+    // requirement compliance
+    // ==========================================
+
+    function openDeleteAccountModal() {
+      if (!state.user || state.isDemo) {
+        showToast("Sign in with a real account first.", "error");
+        return;
+      }
+      const backdrop = document.getElementById('modal-backdrop');
+      const modal = document.getElementById('modal-delete-account');
+      if (!backdrop || !modal) return;
+
+      // Reset to the initial explain-and-confirm step every time it opens.
+      document.getElementById('delete-account-explain-step').classList.remove('hidden');
+      document.getElementById('delete-account-progress-step').classList.add('hidden');
+      document.getElementById('delete-account-error-step').classList.add('hidden');
+      const input = document.getElementById('delete-account-confirm-input');
+      if (input) input.value = '';
+      checkDeleteAccountConfirmInput();
+
+      const inHousehold = !!(state.household && state.household.id && state.household.accountMode === 'shared');
+      const householdNote = document.getElementById('delete-account-household-note');
+      if (householdNote) householdNote.classList.toggle('hidden', !inHousehold);
+
+      backdrop.classList.remove('hidden');
+      modal.classList.remove('hidden');
+    }
+
+    function closeDeleteAccountModal() {
+      const backdrop = document.getElementById('modal-backdrop');
+      const modal = document.getElementById('modal-delete-account');
+      if (backdrop) backdrop.classList.add('hidden');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    function checkDeleteAccountConfirmInput() {
+      const input = document.getElementById('delete-account-confirm-input');
+      const btn = document.getElementById('delete-account-confirm-btn');
+      if (!input || !btn) return;
+      const confirmed = input.value.trim() === 'DELETE';
+      btn.disabled = !confirmed;
+      btn.className = confirmed
+        ? 'flex-1 py-2.5 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-xs font-bold transition-all'
+        : 'flex-1 py-2.5 bg-rose-500/30 text-rose-300 rounded-xl text-xs font-bold transition-all cursor-not-allowed';
+    }
+
+    async function executeDeleteAccount() {
+      const input = document.getElementById('delete-account-confirm-input');
+      if (!input || input.value.trim() !== 'DELETE') return;
+      if (!supabaseClient || !state.user) return;
+
+      document.getElementById('delete-account-explain-step').classList.add('hidden');
+      document.getElementById('delete-account-progress-step').classList.remove('hidden');
+
+      try {
+        const { data, error } = await supabaseClient.functions.invoke('delete-account', { body: {} });
+
+        if (error || !data?.ok) {
+          const message = data?.error || error?.message || 'Something went wrong. Please try again or contact support.';
+          document.getElementById('delete-account-progress-step').classList.add('hidden');
+          document.getElementById('delete-account-error-step').classList.remove('hidden');
+          document.getElementById('delete-account-error-text').innerText = message;
+          return;
+        }
+
+        // Server-side deletion succeeded — clean up locally exactly as
+        // logout does, then land on the auth screen with a clear
+        // confirmation rather than a generic "logged out" message.
+        try { await supabaseClient.auth.signOut(); } catch (err) { console.warn('Sign out warning:', err); }
+        localStorage.removeItem('paycheck_pilot_state');
+        state = createDefaultState();
+        pushSubscriptionSyncedThisSession = false;
+        setSyncStatus('offline');
+        closeDeleteAccountModal();
+        showScreen('screen-auth');
+        showToast("Your account and data have been deleted.", "info");
+      } catch (err) {
+        console.error('[Delete Account] Failed:', err);
+        document.getElementById('delete-account-progress-step').classList.add('hidden');
+        document.getElementById('delete-account-error-step').classList.remove('hidden');
+        document.getElementById('delete-account-error-text').innerText = err?.message || 'Something went wrong. Please try again or contact support.';
+      }
+    }
+
+    // ==========================================
     // ONBOARDING WIZARD ENGINE
     // ==========================================
     function renderOnboardingStep() {
@@ -4516,7 +4668,6 @@
     function renderDashboard() {
       scanAccountDataIntegrity();
       checkAndShowOverdueReminder();
-      requestNotificationPermissionOnce();
       subscribeToPushNotifications();
       sendBrowserNotifications();
 
