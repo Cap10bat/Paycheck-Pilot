@@ -88,6 +88,10 @@
       box-shadow: 0 0 30px -5px rgba(16, 185, 129, 0.3);
     }
 
+    .glow-rose {
+      box-shadow: 0 0 30px -5px rgba(244, 63, 94, 0.35);
+    }
+
     .glow-indigo {
       box-shadow: 0 0 30px -5px rgba(99, 102, 241, 0.35);
     }
@@ -214,9 +218,154 @@
       animation: statusPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
+    /* Forecast 2.0 — "Can I Make It?" hero verdict entrance */
+    @keyframes heroVerdictPop {
+      0% { opacity: 0; transform: translateY(6px) scale(0.98); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .hero-verdict-pop {
+      animation: heroVerdictPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+
+    /* Lowest-balance callout flag on the flight path */
+    @keyframes lowestCalloutPop {
+      0% { opacity: 0; transform: scale(0.3) translateY(6px); }
+      60% { opacity: 1; transform: scale(1.15) translateY(0); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .lowest-callout-pop {
+      animation: lowestCalloutPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) 0.6s both;
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+
+    /* Flight Log entries — staggered entrance, same spring as waypoints */
+    @keyframes logEntryPop {
+      0% { opacity: 0; transform: translateX(-6px); }
+      100% { opacity: 1; transform: translateX(0); }
+    }
+    .log-entry-pop {
+      animation: logEntryPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+
     .no-scrollbar {
       scrollbar-width: none;
       -ms-overflow-style: none;
+    }
+
+    /* ============================================================
+       FINANCIAL RADAR — complete visual replacement for the old
+       line-chart-with-a-plane-icon Forecast presentation. Purpose-built
+       instrument/radar visual language: scanning grids, glowing HUD
+       readouts, a terrain-style ribbon instead of a thin plotted line,
+       and a sweeping radar pass for ambient motion instead of a vehicle
+       icon animating along a path.
+       ============================================================ */
+
+    @keyframes radarScanPulse {
+      0%, 100% { opacity: 0.5; transform: scale(0.85); }
+      50% { opacity: 1; transform: scale(1.15); }
+    }
+    .radar-scan-dot {
+      width: 7px; height: 7px; border-radius: 999px;
+      background: #22d3ee;
+      box-shadow: 0 0 8px 1px rgba(34, 211, 238, 0.8);
+      display: inline-block;
+      animation: radarScanPulse 1.6s ease-in-out infinite;
+    }
+
+    /* Mission Status panel background — a faint scanning grid, distinct
+       from the main radar's terrain grid, to read as an instrument panel
+       rather than a plain card. */
+    .radar-mission-bg {
+      background-image:
+        linear-gradient(rgba(34, 211, 238, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(34, 211, 238, 0.06) 1px, transparent 1px);
+      background-size: 28px 28px;
+      -webkit-mask-image: radial-gradient(ellipse at center, black 0%, transparent 75%);
+      mask-image: radial-gradient(ellipse at center, black 0%, transparent 75%);
+    }
+
+    /* Main radar scene — deep, layered dark background instead of a flat
+       card, so the ribbon/terrain reads as floating in space rather than
+       sitting on a plain panel. */
+    .radar-scene-bg {
+      background:
+        radial-gradient(ellipse at 30% 0%, rgba(34, 211, 238, 0.09), transparent 55%),
+        radial-gradient(ellipse at 80% 100%, rgba(16, 185, 129, 0.07), transparent 55%),
+        #050810;
+    }
+
+    @keyframes radarSweepMove {
+      from { transform: translateX(0); }
+      to { transform: translateX(1420px); }
+    }
+    .radar-sweep-anim {
+      animation: radarSweepMove 7s linear infinite;
+    }
+
+    /* HUD-style corner readouts */
+    .hud-readout {
+      background: rgba(5, 8, 16, 0.65);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(34, 211, 238, 0.25);
+      border-radius: 10px;
+      padding: 5px 10px;
+    }
+    .hud-label {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: #64748b;
+      line-height: 1.3;
+    }
+    .hud-value {
+      font-size: 12px;
+      font-weight: 800;
+      color: #67e8f9;
+      font-variant-numeric: tabular-nums;
+      text-shadow: 0 0 8px rgba(103, 232, 249, 0.5);
+      line-height: 1.3;
+    }
+
+    /* Today beacon — a vertical scanning line marking the current day,
+       replacing the old plane icon as the "you are here" indicator. */
+    @keyframes beaconPulseRing {
+      0% { opacity: 0.7; r: 5; }
+      100% { opacity: 0; r: 16; }
+    }
+    .beacon-pulse-ring {
+      animation: beaconPulseRing 1.8s ease-out infinite;
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+    @keyframes beaconLineGlow {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 0.9; }
+    }
+    .beacon-line {
+      animation: beaconLineGlow 1.8s ease-in-out infinite;
+    }
+
+    /* Lowest-point spotlight — a dramatic vertical light beam, replacing
+       the old small pill-flag callout with something that reads as
+       "this is the moment that matters" rather than a minor label. */
+    @keyframes spotlightBeamPulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 0.85; }
+    }
+    .spotlight-beam {
+      animation: spotlightBeamPulse 2.4s ease-in-out infinite;
+    }
+
+    /* Route strip cards — "What Happens Next" */
+    .route-card {
+      min-width: 132px;
+      scroll-snap-align: start;
+    }
+    #radar-route-strip {
+      scroll-snap-type: x proximity;
     }
     .no-scrollbar::-webkit-scrollbar {
       display: none;
@@ -1340,125 +1489,128 @@
           </div>
 
           <!-- ================= PAGE: FORECAST FLIGHT SYSTEM ================= -->
-          <div id="page-forecast" class="page-view space-y-6 hidden">
-            <div class="border-b border-slate-800/80 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div id="page-forecast" class="page-view space-y-5 hidden">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h2 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Forecast Flight System</h2>
-                <p class="text-xs text-slate-400">Interactive 60-day cash flow flight path with real moving aircraft and milestone waypoints.</p>
+                <h2 class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Financial Radar</h2>
+                <p class="text-xs text-slate-400">Live 60-day trajectory of your cash position.</p>
               </div>
-              <span class="self-start sm:self-auto px-3 py-1 bg-brand-500/15 border border-brand-500/30 text-brand-400 text-xs font-bold rounded-full flex items-center gap-1.5 shrink-0">
-                <i data-lucide="plane" class="w-3.5 h-3.5 animate-pulse"></i> Flight Path Active
+              <span class="self-start sm:self-auto px-3 py-1 bg-cyan-500/10 border border-cyan-500/30 text-cyan-300 text-[11px] font-bold rounded-full flex items-center gap-1.5 shrink-0 tracking-wide">
+                <span class="radar-scan-dot"></span> LIVE SCAN
               </span>
             </div>
 
-            <!-- Forecast Summary Cards -->
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-              <div class="glass-card p-3 sm:p-4 rounded-2xl border border-slate-800">
-                <p class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">Lowest Balance</p>
-                <h4 id="forecast-card-lowest" class="text-lg sm:text-xl font-black text-rose-400 mt-1">$0.00</h4>
+            <!-- MISSION STATUS — "Can I make it until payday?" answered first, as an instrument panel, not a text card -->
+            <div id="radar-mission-status" class="hero-verdict-pop relative overflow-hidden rounded-3xl border-2 p-5 sm:p-8">
+              <div class="radar-mission-bg absolute inset-0 pointer-events-none"></div>
+              <div class="relative flex flex-col sm:flex-row items-center gap-5 sm:gap-8">
+                <div class="relative w-28 h-28 sm:w-36 sm:h-36 shrink-0">
+                  <svg viewBox="0 0 200 200" class="w-full h-full -rotate-90">
+                    <circle cx="100" cy="100" r="86" fill="none" stroke="#1e2d4a" stroke-width="11"/>
+                    <circle id="radar-gauge-arc" cx="100" cy="100" r="86" fill="none" stroke="#10b981" stroke-width="11" stroke-linecap="round" stroke-dasharray="540.35" stroke-dashoffset="540.35" style="transition: stroke-dashoffset 1.1s cubic-bezier(0.16,1,0.3,1), stroke 0.4s ease;"/>
+                  </svg>
+                  <div class="absolute inset-0 flex items-center justify-center">
+                    <i id="radar-mission-icon" data-lucide="check-circle-2" class="w-10 h-10 sm:w-12 sm:h-12 text-brand-400"></i>
+                  </div>
+                </div>
+                <div class="flex-1 text-center sm:text-left min-w-0">
+                  <p class="text-[11px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-1">Can I Make It Until Payday?</p>
+                  <h1 id="radar-verdict-text" class="text-2xl sm:text-4xl font-black text-white leading-tight">Scanning…</h1>
+                  <p id="radar-verdict-detail" class="text-xs sm:text-sm text-slate-400 mt-2"></p>
+                </div>
               </div>
-              <div class="glass-card p-3 sm:p-4 rounded-2xl border border-slate-800">
-                <p class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">Highest Balance</p>
-                <h4 id="forecast-card-highest" class="text-lg sm:text-xl font-black text-brand-400 mt-1">$0.00</h4>
+              <button id="radar-hero-cta" onclick="openDeficitNavigatorModal()" class="hidden mt-5 w-full sm:w-auto px-5 py-2.5 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-xl text-xs transition-all items-center justify-center gap-2 relative z-10">
+                <i data-lucide="life-buoy" class="w-4 h-4"></i> See What To Do
+              </button>
+            </div>
+
+            <!-- THE RADAR — layered terrain/depth display replacing the old line chart -->
+            <div class="relative rounded-3xl border border-slate-800 overflow-hidden radar-scene-bg">
+              <div class="absolute top-3 left-3 z-30 hud-readout">
+                <p class="hud-label">Now</p>
+                <p id="radar-hud-today" class="hud-value">—</p>
               </div>
-              <div class="glass-card p-3 sm:p-4 rounded-2xl border border-slate-800">
-                <p class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">Projected Payday</p>
-                <h4 id="forecast-card-payday" class="text-lg sm:text-xl font-black text-white mt-1">$0.00</h4>
+              <div class="absolute top-3 right-3 z-30 hud-readout text-right">
+                <p class="hud-label">Next Waypoint</p>
+                <p id="radar-hud-next" class="hud-value">—</p>
               </div>
-              <div class="glass-card p-3 sm:p-4 rounded-2xl border border-slate-800">
-                <p class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-slate-400">Forecast Health</p>
-                <h4 id="forecast-card-health" class="text-lg sm:text-xl font-black text-emerald-400 mt-1">Stable</h4>
+
+              <svg id="radar-svg" viewBox="0 0 1000 400" preserveAspectRatio="none" class="w-full h-64 sm:h-80 block relative z-10">
+                <defs>
+                  <linearGradient id="radarRibbonGradient" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stop-color="#22d3ee"/>
+                    <stop offset="45%" stop-color="#34d399"/>
+                    <stop offset="100%" stop-color="#34d399"/>
+                  </linearGradient>
+                  <linearGradient id="radarFillGradient" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="400">
+                    <stop id="radarFillSafeTop" offset="0%" stop-color="#10b981" stop-opacity="0.35"/>
+                    <stop id="radarFillSafeBottom" offset="50%" stop-color="#10b981" stop-opacity="0.02"/>
+                    <stop id="radarFillDangerTop" offset="50%" stop-color="#f43f5e" stop-opacity="0.06"/>
+                    <stop id="radarFillDangerBottom" offset="100%" stop-color="#f43f5e" stop-opacity="0.4"/>
+                  </linearGradient>
+                  <linearGradient id="radarSweepGradient" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stop-color="#22d3ee" stop-opacity="0"/>
+                    <stop offset="50%" stop-color="#22d3ee" stop-opacity="0.22"/>
+                    <stop offset="100%" stop-color="#22d3ee" stop-opacity="0"/>
+                  </linearGradient>
+                  <radialGradient id="radarBeaconGlow" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stop-color="#67e8f9" stop-opacity="0.9"/>
+                    <stop offset="100%" stop-color="#67e8f9" stop-opacity="0"/>
+                  </radialGradient>
+                  <radialGradient id="radarSpotlightGlow" cx="50%" cy="0%" r="80%">
+                    <stop offset="0%" stop-color="#f43f5e" stop-opacity="0.5"/>
+                    <stop offset="100%" stop-color="#f43f5e" stop-opacity="0"/>
+                  </radialGradient>
+                  <filter id="radarGlowBlur" x="-100%" y="-100%" width="300%" height="300%">
+                    <feGaussianBlur stdDeviation="5" result="blur"/>
+                  </filter>
+                  <filter id="radarWideGlow" x="-150%" y="-150%" width="400%" height="400%">
+                    <feGaussianBlur stdDeviation="16" result="blur"/>
+                  </filter>
+                </defs>
+
+                <g id="radar-grid-lines" opacity="0.4"></g>
+                <line id="radar-sea-level" x1="0" y1="200" x2="1000" y2="200" stroke="#22d3ee" stroke-width="1" stroke-dasharray="1 7" opacity="0.55"/>
+
+                <rect id="radar-sweep-band" class="radar-sweep-anim" x="-220" y="0" width="220" height="400" fill="url(#radarSweepGradient)"></rect>
+
+                <path id="radar-fill-path" fill="url(#radarFillGradient)" stroke="none"></path>
+                <path id="radar-ribbon-glow" fill="none" stroke="url(#radarRibbonGradient)" stroke-width="9" stroke-linecap="round" opacity="0.3" filter="url(#radarGlowBlur)"></path>
+                <path id="radar-ribbon-path" fill="none" stroke="url(#radarRibbonGradient)" stroke-width="2.75" stroke-linecap="round"></path>
+
+                <g id="radar-waypoints"></g>
+                <g id="radar-lowest-spotlight"></g>
+                <g id="radar-today-beacon"></g>
+              </svg>
+            </div>
+
+            <!-- WHY — "What causes my lowest balance?" answered second, as a dedicated explainer, not a small flag on the chart -->
+            <div id="radar-why-card" class="glass-card rounded-3xl p-4 sm:p-5 border border-slate-800/80">
+              <p class="text-[11px] uppercase tracking-widest text-slate-500 font-bold mb-3">What Causes My Lowest Balance?</p>
+              <div class="flex items-center gap-3 sm:gap-4">
+                <div id="radar-why-icon-wrap" class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shrink-0 border">
+                  <i id="radar-why-icon" data-lucide="trending-down" class="w-5 h-5 sm:w-6 sm:h-6"></i>
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p id="radar-why-title" class="text-sm sm:text-base font-bold text-white truncate">—</p>
+                  <p id="radar-why-detail" class="text-[11px] sm:text-xs text-slate-400 mt-0.5"></p>
+                </div>
+                <div class="text-right shrink-0">
+                  <p id="radar-why-balance" class="text-lg sm:text-xl font-black text-rose-400">$0.00</p>
+                  <p class="text-[10px] text-slate-500">projected balance</p>
+                </div>
               </div>
             </div>
 
-            <div class="glass-card p-4 sm:p-6 rounded-3xl border border-brand-500/40 space-y-4 relative overflow-hidden glow-emerald">
-              <div class="absolute top-4 right-4 z-20 flex items-center gap-2">
-                <span id="flight-status-badge" class="status-pop px-3 py-1 bg-brand-500/20 text-brand-300 border border-brand-500/40 rounded-full text-xs font-bold flex items-center gap-1.5 shadow-lg">
-                  <span class="w-2 h-2 rounded-full bg-brand-400 animate-ping"></span>
-                  Cruise Altitude (Stable)
-                </span>
+            <!-- WHAT HAPPENS NEXT — answered third, as a scrollable route strip -->
+            <div>
+              <div class="flex items-center justify-between mb-3">
+                <h4 class="text-xs font-bold text-white flex items-center gap-1.5 uppercase tracking-wider">
+                  <i data-lucide="route" class="w-3.5 h-3.5 text-cyan-400"></i> What Happens Next
+                </h4>
+                <span id="radar-route-count" class="text-[10px] text-slate-500"></span>
               </div>
-
-              <div id="forecast-storm-overlay" class="storm-overlay absolute inset-0 pointer-events-none opacity-0 transition-opacity duration-700 z-10"></div>
-
-              <div class="relative w-full rounded-2xl overflow-hidden bg-slate-950/50 border border-slate-800/60">
-                <svg viewBox="0 0 1000 260" preserveAspectRatio="none" class="w-full h-52 sm:h-64 block">
-                  <defs>
-                    <linearGradient id="flightPathGradient" x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stop-color="#34d399"/>
-                      <stop offset="100%" stop-color="#3b82f6"/>
-                    </linearGradient>
-                    <linearGradient id="flightFillGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stop-color="#10b981" stop-opacity="0.28"/>
-                      <stop offset="100%" stop-color="#10b981" stop-opacity="0"/>
-                    </linearGradient>
-                    <radialGradient id="planeGlowGradient" cx="50%" cy="50%" r="50%">
-                      <stop offset="0%" stop-color="#6ffcd0" stop-opacity="0.9"/>
-                      <stop offset="100%" stop-color="#6ffcd0" stop-opacity="0"/>
-                    </radialGradient>
-                    <filter id="softGlowBlur" x="-100%" y="-100%" width="300%" height="300%">
-                      <feGaussianBlur stdDeviation="4.5" result="blur"/>
-                    </filter>
-                    <filter id="wideGlowBlur" x="-150%" y="-150%" width="400%" height="400%">
-                      <feGaussianBlur stdDeviation="9" result="blur"/>
-                    </filter>
-                  </defs>
-
-                  <!-- Storm clouds (visibility toggled by .storm-active on the SVG) -->
-                  <g id="flight-storm-clouds" class="flight-storm-clouds" opacity="0">
-                    <ellipse class="storm-cloud storm-cloud-a" cx="120" cy="55" rx="90" ry="26" fill="#1e293b" opacity="0.55" filter="url(#wideGlowBlur)"/>
-                    <ellipse class="storm-cloud storm-cloud-b" cx="480" cy="35" rx="130" ry="30" fill="#0f172a" opacity="0.6" filter="url(#wideGlowBlur)"/>
-                    <ellipse class="storm-cloud storm-cloud-c" cx="820" cy="60" rx="110" ry="28" fill="#1e293b" opacity="0.5" filter="url(#wideGlowBlur)"/>
-                  </g>
-
-                  <line id="flight-zero-line" x1="0" y1="130" x2="1000" y2="130" stroke="#1e2d4a" stroke-width="1" stroke-dasharray="5 5" />
-                  <path id="flight-fill-path" fill="url(#flightFillGradient)" stroke="none"></path>
-
-                  <!-- Contrail: soft blurred glow pass behind a crisp bright core -->
-                  <path id="flight-contrail-glow" fill="none" stroke="#5eead4" stroke-width="7" stroke-linecap="round" opacity="0.35" filter="url(#softGlowBlur)"></path>
-                  <path id="flight-contrail-path" fill="none" stroke="#a7f3d0" stroke-width="2.25" stroke-linecap="round" opacity="0.85"></path>
-
-                  <path id="flight-line-path" fill="none" stroke="url(#flightPathGradient)" stroke-width="2" stroke-linecap="round" opacity="0.55"></path>
-
-                  <g id="flight-waypoints"></g>
-                  <g id="flight-arrival-pings"></g>
-
-                  <g id="flight-plane-group" transform="translate(-20,130)">
-                    <g id="flight-plane-shake">
-                      <circle r="16" fill="url(#planeGlowGradient)"></circle>
-                      <path d="M -15,-8 L 19,0 L -15,8 L -6,0 Z" fill="#eafff5" stroke="#059669" stroke-width="1.25"></path>
-                    </g>
-                  </g>
-                </svg>
-                <span class="absolute top-2 left-3 text-[10px] font-semibold text-slate-500 uppercase tracking-wider pointer-events-none">60-Day Flight Path</span>
-                <div id="forecast-plane-callout" class="absolute px-2.5 py-1 bg-gradient-to-r from-brand-600 to-brand-400 text-slate-950 rounded-full text-[10px] font-extrabold shadow-[0_0_20px_rgba(16,185,129,0.7)] pointer-events-none whitespace-nowrap" style="left:0; top:50%;">
-                  ✈ <span id="forecast-plane-label">Cruising</span>
-                </div>
-              </div>
-
-              <div class="h-72 w-full relative pt-2">
-                <canvas id="forecastChart"></canvas>
-              </div>
-              
-              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3 border-t border-slate-800/80 text-[11px]">
-                <div class="p-2 bg-slate-900/80 rounded-xl border border-slate-800 flex items-center gap-2">
-                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                  <span class="text-slate-300 font-medium">Payday Stop (Deposit)</span>
-                </div>
-                <div class="p-2 bg-slate-900/80 rounded-xl border border-slate-800 flex items-center gap-2">
-                  <span class="w-2.5 h-2.5 rounded-full bg-rose-400 animate-pulse"></span>
-                  <span class="text-slate-300 font-medium">Rent / Housing Stop</span>
-                </div>
-                <div class="p-2 bg-slate-900/80 rounded-xl border border-slate-800 flex items-center gap-2">
-                  <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
-                  <span class="text-slate-300 font-medium">Utility / Bill Stop</span>
-                </div>
-                <div class="p-2 bg-slate-900/80 rounded-xl border border-slate-800 flex items-center gap-2">
-                  <span class="w-2.5 h-2.5 rounded-full bg-indigo-400 animate-pulse"></span>
-                  <span class="text-slate-300 font-medium">Goal Funding Milestone</span>
-                </div>
-              </div>
-              <div id="forecast-markers-legend" class="flex flex-wrap gap-3 pt-2 text-[11px] text-slate-400"></div>
+              <div id="radar-route-strip" class="flex gap-3 overflow-x-auto pb-2 no-scrollbar"></div>
             </div>
           </div>
 
@@ -5758,16 +5910,47 @@
       return { core: '#60a5fa', glow: '#60a5fa', beacon: false, r: 4 };
     }
 
-    // Draws the path, fill, and waypoint markers for the daily series onto
-    // the flight-path SVG. Returns the SVG-space points for the animator.
-    function renderFlightPath(series) {
-      const linePath = document.getElementById('flight-line-path');
-      const fillPath = document.getElementById('flight-fill-path');
-      const zeroLine = document.getElementById('flight-zero-line');
-      const waypointsG = document.getElementById('flight-waypoints');
-      if (!linePath || !fillPath || !waypointsG) return null;
+    // ============================================================
+    // FINANCIAL RADAR RENDERING ENGINE — replaces the old
+    // renderFlightPath()/animateForecastPlane()/pingWaypointsAtDay() trio.
+    // Same underlying series data and coordinate math as before (x/y
+    // mapping from balance values) — the visual output is a completely
+    // different concept: a glowing depth-layered terrain ribbon on a
+    // scanning radar field, not a thin line with a plane icon walking it.
+    // ============================================================
 
-      const width = 1000, height = 260, padTop = 20, padBottom = 20;
+    // Finds the single largest bill contributing to the lowest-balance
+    // day — walks backward from the low point to the most recent payday
+    // before it (or the start of the series) and picks the biggest bill
+    // in that span. Pure analysis of the existing series data — invents
+    // no new financial figures, just identifies which already-computed
+    // event mattered most.
+    function findLowestBalanceCulprit(series, lowestIdx) {
+      let culprit = null;
+      for (let i = lowestIdx; i >= 0; i--) {
+        series[i].events.forEach(ev => {
+          if (ev.type === 'bill' && (!culprit || ev.amount > culprit.amount)) {
+            culprit = { ...ev, date: series[i].date };
+          }
+        });
+        const hasIncomeHere = series[i].events.some(e => e.type === 'payday');
+        if (hasIncomeHere && i !== lowestIdx) break;
+      }
+      return culprit;
+    }
+
+    function renderFinancialRadar(series) {
+      const ribbonPath = document.getElementById('radar-ribbon-path');
+      const ribbonGlow = document.getElementById('radar-ribbon-glow');
+      const fillPath = document.getElementById('radar-fill-path');
+      const seaLevel = document.getElementById('radar-sea-level');
+      const waypointsG = document.getElementById('radar-waypoints');
+      const gridG = document.getElementById('radar-grid-lines');
+      const beaconG = document.getElementById('radar-today-beacon');
+      const spotlightG = document.getElementById('radar-lowest-spotlight');
+      if (!ribbonPath || !fillPath || !waypointsG) return null;
+
+      const width = 1000, height = 400, padTop = 30, padBottom = 30;
       const values = series.map(s => s.balance);
       let min = Math.min(...values, 0);
       let max = Math.max(...values, 1);
@@ -5781,14 +5964,57 @@
       const lineD = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
       const fillD = `${lineD} L${width.toFixed(1)},${height} L0,${height} Z`;
 
-      linePath.setAttribute('d', lineD);
+      ribbonPath.setAttribute('d', lineD);
+      ribbonGlow.setAttribute('d', lineD);
       fillPath.setAttribute('d', fillD);
-      if (zeroLine) {
-        const zeroY = yForValue(0);
-        zeroLine.setAttribute('y1', zeroY);
-        zeroLine.setAttribute('y2', zeroY);
+
+      const zeroY = yForValue(0);
+      if (seaLevel) { seaLevel.setAttribute('y1', zeroY); seaLevel.setAttribute('y2', zeroY); }
+
+      // Risk terrain — the fill's safe/danger transition sits exactly at
+      // the real zero-line position for this data range, so the
+      // green-to-red split genuinely reflects where the balance crosses
+      // zero rather than a fixed guess.
+      const zeroYClamped = Math.max(0, Math.min(height, zeroY));
+      const zeroFraction = ((zeroYClamped / height) * 100).toFixed(1);
+      const safeBottomStop = document.getElementById('radarFillSafeBottom');
+      const dangerTopStop = document.getElementById('radarFillDangerTop');
+      if (safeBottomStop) safeBottomStop.setAttribute('offset', `${zeroFraction}%`);
+      if (dangerTopStop) dangerTopStop.setAttribute('offset', `${zeroFraction}%`);
+
+      // Grid floor — evenly spaced horizontal lines, denser near the
+      // zero line, giving the "instrument/radar" depth cue instead of a
+      // plain empty background.
+      if (gridG) {
+        const ns = 'http://www.w3.org/2000/svg';
+        gridG.innerHTML = '';
+        const gridCount = 7;
+        for (let g = 0; g <= gridCount; g++) {
+          const gy = (height / gridCount) * g;
+          const line = document.createElementNS(ns, 'line');
+          line.setAttribute('x1', '0'); line.setAttribute('x2', String(width));
+          line.setAttribute('y1', gy.toFixed(1)); line.setAttribute('y2', gy.toFixed(1));
+          line.setAttribute('stroke', '#1e2d4a');
+          line.setAttribute('stroke-width', '1');
+          gridG.appendChild(line);
+        }
+        // A few faint vertical lines for depth, spaced every ~10 days.
+        for (let g = 0; g <= width; g += width / 6) {
+          const vline = document.createElementNS(ns, 'line');
+          vline.setAttribute('x1', g.toFixed(1)); vline.setAttribute('x2', g.toFixed(1));
+          vline.setAttribute('y1', '0'); vline.setAttribute('y2', String(height));
+          vline.setAttribute('stroke', '#1e2d4a');
+          vline.setAttribute('stroke-width', '1');
+          vline.setAttribute('opacity', '0.5');
+          gridG.appendChild(vline);
+        }
       }
 
+      // Waypoint nodes — simplified/refined versus the old busy beacon
+      // system: small glowing nodes only, no per-waypoint pulsing beacon
+      // halo (that visual job now belongs to the today-beacon and
+      // lowest-point spotlight specifically, so it reads as meaningful
+      // rather than decorative).
       waypointsG.innerHTML = '';
       const ns = 'http://www.w3.org/2000/svg';
       let waypointIndex = 0;
@@ -5796,234 +6022,255 @@
         s.events.forEach(ev => {
           const [x, y] = points[i];
           const style = waypointStyleFor(ev);
-          const group = document.createElementNS(ns, 'g');
-          group.setAttribute('data-day-index', String(i));
-          group.setAttribute('class', 'waypoint-pop');
-          group.style.animationDelay = `${Math.min(waypointIndex * 18, 500)}ms`;
+          const node = document.createElementNS(ns, 'circle');
+          node.setAttribute('cx', x.toFixed(1));
+          node.setAttribute('cy', y.toFixed(1));
+          node.setAttribute('r', style.r.toFixed(1));
+          node.setAttribute('fill', style.core);
+          node.setAttribute('stroke', '#050810');
+          node.setAttribute('stroke-width', '1.5');
+          node.setAttribute('class', 'waypoint-pop');
+          node.style.animationDelay = `${Math.min(waypointIndex * 14, 450)}ms`;
           waypointIndex++;
-
-          if (style.beacon) {
-            const halo = document.createElementNS(ns, 'circle');
-            halo.setAttribute('cx', x.toFixed(1));
-            halo.setAttribute('cy', y.toFixed(1));
-            halo.setAttribute('r', (style.r * 1.8).toFixed(1));
-            halo.setAttribute('fill', style.glow);
-            halo.setAttribute('opacity', '0.22');
-            halo.setAttribute('filter', 'url(#softGlowBlur)');
-            group.appendChild(halo);
-
-            const beacon = document.createElementNS(ns, 'circle');
-            beacon.setAttribute('cx', x.toFixed(1));
-            beacon.setAttribute('cy', y.toFixed(1));
-            beacon.setAttribute('r', style.r.toFixed(1));
-            beacon.setAttribute('fill', style.glow);
-            beacon.setAttribute('opacity', '0.45');
-            beacon.setAttribute('class', 'waypoint-beacon');
-            beacon.style.setProperty('--beacon-r-min', style.r.toFixed(1));
-            beacon.style.setProperty('--beacon-r-max', (style.r * 1.4).toFixed(1));
-            group.appendChild(beacon);
-          }
-
-          const core = document.createElementNS(ns, 'circle');
-          core.setAttribute('cx', x.toFixed(1));
-          core.setAttribute('cy', y.toFixed(1));
-          core.setAttribute('r', style.r.toFixed(1));
-          core.setAttribute('fill', style.core);
-          core.setAttribute('stroke', '#070c18');
-          core.setAttribute('stroke-width', '1.5');
           const title = document.createElementNS(ns, 'title');
           title.textContent = `${ev.label} — $${formatCurrency(ev.amount)} (${s.date})`;
-          core.appendChild(title);
-          group.appendChild(core);
-
-          waypointsG.appendChild(group);
+          node.appendChild(title);
+          waypointsG.appendChild(node);
         });
       });
+
+      // Today beacon — a vertical scanning line + pulsing marker at the
+      // current position, replacing the old plane icon as the "you are
+      // here" indicator. Today is always index 0 in the series.
+      if (beaconG) {
+        beaconG.innerHTML = '';
+        const [tx, ty] = points[0];
+        const beaconLine = document.createElementNS(ns, 'line');
+        beaconLine.setAttribute('x1', tx.toFixed(1)); beaconLine.setAttribute('x2', tx.toFixed(1));
+        beaconLine.setAttribute('y1', '0'); beaconLine.setAttribute('y2', String(height));
+        beaconLine.setAttribute('stroke', '#67e8f9');
+        beaconLine.setAttribute('stroke-width', '1.5');
+        beaconLine.setAttribute('opacity', '0.55');
+        beaconLine.setAttribute('class', 'beacon-line');
+        beaconG.appendChild(beaconLine);
+
+        const glow = document.createElementNS(ns, 'circle');
+        glow.setAttribute('cx', tx.toFixed(1)); glow.setAttribute('cy', ty.toFixed(1));
+        glow.setAttribute('r', '14');
+        glow.setAttribute('fill', 'url(#radarBeaconGlow)');
+        beaconG.appendChild(glow);
+
+        const ring = document.createElementNS(ns, 'circle');
+        ring.setAttribute('cx', tx.toFixed(1)); ring.setAttribute('cy', ty.toFixed(1));
+        ring.setAttribute('r', '5'); ring.setAttribute('fill', 'none');
+        ring.setAttribute('stroke', '#67e8f9'); ring.setAttribute('stroke-width', '2');
+        ring.setAttribute('class', 'beacon-pulse-ring');
+        beaconG.appendChild(ring);
+
+        const core = document.createElementNS(ns, 'circle');
+        core.setAttribute('cx', tx.toFixed(1)); core.setAttribute('cy', ty.toFixed(1));
+        core.setAttribute('r', '5');
+        core.setAttribute('fill', '#67e8f9');
+        core.setAttribute('stroke', '#050810');
+        core.setAttribute('stroke-width', '1.5');
+        beaconG.appendChild(core);
+      }
+
+      // Lowest-point spotlight — a dramatic vertical light beam and
+      // large marker at the actual lowest point, replacing the old small
+      // pill-flag callout. This is the visual answer to "what causes my
+      // lowest balance", paired with the dedicated explainer card below
+      // the radar.
+      if (spotlightG) {
+        spotlightG.innerHTML = '';
+        const lowestIdx = values.indexOf(Math.min(...values));
+        if (lowestIdx >= 0 && series[lowestIdx]) {
+          const [lx, ly] = points[lowestIdx];
+          const isDanger = values[lowestIdx] < 0;
+
+          const beam = document.createElementNS(ns, 'rect');
+          beam.setAttribute('x', (lx - 22).toFixed(1));
+          beam.setAttribute('y', '0');
+          beam.setAttribute('width', '44');
+          beam.setAttribute('height', ly.toFixed(1));
+          beam.setAttribute('fill', 'url(#radarSpotlightGlow)');
+          beam.setAttribute('class', 'spotlight-beam');
+          spotlightG.appendChild(beam);
+
+          const marker = document.createElementNS(ns, 'circle');
+          marker.setAttribute('cx', lx.toFixed(1));
+          marker.setAttribute('cy', ly.toFixed(1));
+          marker.setAttribute('r', '6');
+          marker.setAttribute('fill', isDanger ? '#f43f5e' : '#fbbf24');
+          marker.setAttribute('stroke', '#050810');
+          marker.setAttribute('stroke-width', '2');
+          spotlightG.appendChild(marker);
+        }
+      }
 
       return { points, min, max };
     }
 
-    // Fires a brief expanding "ping" ring on every waypoint at the given
-    // day index — called as the animated plane passes over that day.
-    function pingWaypointsAtDay(dayIndex) {
-      const pingsG = document.getElementById('flight-arrival-pings');
-      const waypointsG = document.getElementById('flight-waypoints');
-      if (!pingsG || !waypointsG) return;
-
-      const matches = waypointsG.querySelectorAll(`[data-day-index="${dayIndex}"] circle:last-child`);
-      const ns = 'http://www.w3.org/2000/svg';
-      matches.forEach(core => {
-        const ring = document.createElementNS(ns, 'circle');
-        ring.setAttribute('cx', core.getAttribute('cx'));
-        ring.setAttribute('cy', core.getAttribute('cy'));
-        ring.setAttribute('r', core.getAttribute('r'));
-        ring.setAttribute('fill', 'none');
-        ring.setAttribute('stroke', core.getAttribute('fill'));
-        ring.setAttribute('stroke-width', '2');
-        ring.setAttribute('class', 'arrival-ping');
-        pingsG.appendChild(ring);
-        setTimeout(() => ring.remove(), 950);
-      });
-    }
-
-    // Animates the plane along the rendered path on a continuous loop,
-    // tilting to match the local slope and drawing a glowing contrail behind it.
-    function animateForecastPlane(points, series, isEmergency) {
-      const linePath = document.getElementById('flight-line-path');
-      const contrail = document.getElementById('flight-contrail-path');
-      const contrailGlow = document.getElementById('flight-contrail-glow');
-      const planeGroup = document.getElementById('flight-plane-group');
-      const planeShake = document.getElementById('flight-plane-shake');
-      const callout = document.getElementById('forecast-plane-callout');
-      const label = document.getElementById('forecast-plane-label');
-      if (!linePath || !planeGroup || !points) return;
-
-      if (flightAnimFrame) cancelAnimationFrame(flightAnimFrame);
-
-      if (planeShake) planeShake.classList.toggle('plane-shake', !!isEmergency);
-
-      const totalLen = linePath.getTotalLength();
-      const pathD = linePath.getAttribute('d');
-      [contrail, contrailGlow].forEach(el => {
-        if (!el) return;
-        el.setAttribute('d', pathD);
-        el.style.strokeDasharray = `${totalLen}`;
-        el.style.strokeDashoffset = `${totalLen}`;
-      });
-
-      const durationMs = 13000;
-      let start = null;
-      let lastDayIdx = -1;
-
-      function frame(ts) {
-        if (getCurrentPageId() !== 'forecast') { flightAnimFrame = null; return; }
-        if (!start) start = ts;
-        const elapsed = (ts - start) % durationMs;
-        const t = elapsed / durationMs;
-        const len = t * totalLen;
-
-        const pt = linePath.getPointAtLength(len);
-        const pt2 = linePath.getPointAtLength(Math.min(totalLen, len + 3));
-        const angle = Math.atan2(pt2.y - pt.y, pt2.x - pt.x) * (180 / Math.PI);
-
-        planeGroup.setAttribute('transform', `translate(${pt.x.toFixed(1)}, ${pt.y.toFixed(1)}) rotate(${angle.toFixed(1)})`);
-        const dashoffset = `${Math.max(0, totalLen - len)}`;
-        if (contrail) contrail.style.strokeDashoffset = dashoffset;
-        if (contrailGlow) contrailGlow.style.strokeDashoffset = dashoffset;
-
-        if (callout) {
-          callout.style.left = `${(pt.x / 1000) * 100}%`;
-          callout.style.top = `${(pt.y / 260) * 100}%`;
-        }
-
-        const dayIdx = Math.min(series.length - 1, Math.round(t * (series.length - 1)));
-        if (dayIdx !== lastDayIdx) {
-          if (dayIdx > 0 && series[dayIdx] && series[dayIdx].events.length) {
-            pingWaypointsAtDay(dayIdx);
-          }
-          lastDayIdx = dayIdx;
-        }
-
-        const dayEvents = series[dayIdx] ? series[dayIdx].events : [];
-        if (label) {
-          if (dayEvents.some(e => e.type === 'payday')) label.innerText = 'Touchdown';
-          else if (dayEvents.some(e => e.type === 'bill' && e.priority === 'critical')) label.innerText = 'Turbulence';
-          else label.innerText = currentFlightStatusLabel;
-        }
-
-        flightAnimFrame = requestAnimationFrame(frame);
-      }
-      flightAnimFrame = requestAnimationFrame(frame);
-    }
-
     function renderForecast() {
-      const lowestEl = document.getElementById('forecast-card-lowest');
-      const highestEl = document.getElementById('forecast-card-highest');
-      const paydayEl = document.getElementById('forecast-card-payday');
-      const healthEl = document.getElementById('forecast-card-health');
-      const badgeEl = document.getElementById('flight-status-badge');
-      const stormEl = document.getElementById('forecast-storm-overlay');
-      const legendEl = document.getElementById('forecast-markers-legend');
-
       const series = buildForecastSeries(60);
       const values = series.map(s => s.balance);
       const lowest = Math.min(...values);
-      const highest = Math.max(...values);
-      const firstPaydayEntry = series.find(s => s.events.some(e => e.type === 'payday'));
-      const projectedPayday = firstPaydayEntry ? firstPaydayEntry.balance : values[values.length - 1];
-
-      if (lowestEl) lowestEl.innerText = `$${formatCurrency(lowest)}`;
-      if (highestEl) highestEl.innerText = `$${formatCurrency(highest)}`;
-      if (paydayEl) paydayEl.innerText = `$${formatCurrency(projectedPayday)}`;
-      if (healthEl) {
-        healthEl.innerText = lowest < 0 ? "Critical Deficit" : lowest < 200 ? "Tight Buffer" : "Stable";
-        healthEl.className = lowest < 0 ? "text-xl font-black text-rose-400 mt-1" : lowest < 200 ? "text-xl font-black text-amber-400 mt-1" : "text-xl font-black text-emerald-400 mt-1";
-      }
+      const lowestIdx = values.indexOf(lowest);
 
       const status = classifyFlightStatus(series);
       currentFlightStatusLabel = status.label;
-      if (badgeEl) {
-        badgeEl.className = `status-pop px-3 py-1 border rounded-full text-xs font-bold flex items-center gap-1.5 shadow-lg ${status.badgeClass}`;
-        badgeEl.innerHTML = `<span class="w-2 h-2 rounded-full ${status.dotClass}"></span> ${status.label}`;
-        if (status.key !== lastFlightStatusKey) {
-          // Re-trigger the pop animation only when the status actually changed.
-          void badgeEl.offsetWidth;
-          badgeEl.classList.add('status-pop-active');
-          setTimeout(() => badgeEl.classList.remove('status-pop-active'), 420);
-          lastFlightStatusKey = status.key;
+      const viewData = getActiveViewData();
+
+      renderFinancialRadar(series);
+
+      // --- HUD readouts ---
+      const todayHud = document.getElementById('radar-hud-today');
+      if (todayHud) todayHud.innerText = `$${formatCurrency(values[0])}`;
+      const nextHud = document.getElementById('radar-hud-next');
+      if (nextHud) {
+        nextHud.innerText = viewData.nextIncome
+          ? `${viewData.daysUntilIncome}d · $${formatCurrency(viewData.nextIncome.amount)}`
+          : '—';
+      }
+
+      // --- Mission Status: "Can I Make It Until Payday?" ---
+      const gaugeArc = document.getElementById('radar-gauge-arc');
+      const missionIcon = document.getElementById('radar-mission-icon');
+      const missionEl = document.getElementById('radar-mission-status');
+      const verdictEl = document.getElementById('radar-verdict-text');
+      const detailEl = document.getElementById('radar-verdict-detail');
+      const ctaEl = document.getElementById('radar-hero-cta');
+      const circumference = 540.35;
+
+      if (verdictEl && detailEl) {
+        let verdict, detail, borderClass, iconClass, arcColor, iconName, showCta, confidenceFraction;
+
+        if (viewData.mayday && viewData.mayday.active) {
+          verdict = "You may run short";
+          const maydayDateStr = viewData.mayday.date ? new Date(viewData.mayday.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'soon';
+          detail = `Balance is projected to dip below zero around ${maydayDateStr}.`;
+          borderClass = 'border-rose-500/50 glow-rose';
+          iconClass = 'text-rose-400';
+          arcColor = '#f43f5e';
+          iconName = 'alert-triangle';
+          showCta = true;
+          // Confidence arc reflects how many days of the 14-day Money
+          // Mayday window remain safe before the projected deficit.
+          const today0 = new Date(); today0.setHours(0, 0, 0, 0);
+          const daysToDeficit = viewData.mayday.date ? Math.max(0, Math.round((new Date(viewData.mayday.date + 'T00:00:00') - today0) / 86400000)) : 0;
+          confidenceFraction = Math.max(0.06, Math.min(1, daysToDeficit / 14));
+        } else if (lowest < 200) {
+          verdict = "It'll be tight";
+          detail = `Lowest projected balance is $${formatCurrency(lowest)} — no deficit expected, but little room to spare.`;
+          borderClass = 'border-amber-500/50';
+          iconClass = 'text-amber-400';
+          arcColor = '#fbbf24';
+          iconName = 'shield-alert';
+          showCta = false;
+          confidenceFraction = 0.7;
+        } else {
+          verdict = "Yes, you're on track";
+          const untilText = viewData.nextIncome ? ` until ${new Date(viewData.nextIncome.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : '';
+          detail = `Lowest projected balance is $${formatCurrency(lowest)}${untilText} — you're clear.`;
+          borderClass = 'border-brand-500/50 glow-emerald';
+          iconClass = 'text-brand-400';
+          arcColor = '#10b981';
+          iconName = 'check-circle-2';
+          showCta = false;
+          confidenceFraction = 1;
         }
+
+        verdictEl.innerText = verdict;
+        detailEl.innerText = detail;
+        if (missionEl) missionEl.className = `hero-verdict-pop relative overflow-hidden rounded-3xl border-2 p-5 sm:p-8 ${borderClass}`;
+        if (missionIcon) {
+          missionIcon.setAttribute('data-lucide', iconName);
+          missionIcon.className = `w-10 h-10 sm:w-12 sm:h-12 ${iconClass}`;
+        }
+        if (gaugeArc) {
+          gaugeArc.setAttribute('stroke', arcColor);
+          gaugeArc.setAttribute('stroke-dashoffset', String(circumference * (1 - confidenceFraction)));
+        }
+        if (ctaEl) ctaEl.classList.toggle('hidden', !showCta);
+        lucide.createIcons();
       }
-      if (stormEl) stormEl.style.opacity = status.storm ? '1' : '0';
-      const stormCloudsEl = document.getElementById('flight-storm-clouds');
-      if (stormCloudsEl) stormCloudsEl.setAttribute('opacity', status.storm ? '1' : '0');
 
-      if (legendEl) {
-        const billEvents = series.reduce((n, s) => n + s.events.filter(e => e.type === 'bill').length, 0);
-        const paydayEvents = series.reduce((n, s) => n + s.events.filter(e => e.type === 'payday').length, 0);
-        const goalEvents = series.reduce((n, s) => n + s.events.filter(e => e.type === 'goal').length, 0);
-        legendEl.innerHTML = `<span>${billEvents} bill stop${billEvents === 1 ? '' : 's'}, ${paydayEvents} payday deposit${paydayEvents === 1 ? '' : 's'}${goalEvents ? `, and ${goalEvents} goal-funding opportunit${goalEvents === 1 ? 'y' : 'ies'}` : ''} plotted over the next 60 days.</span>`;
+      // --- "What Causes My Lowest Balance?" explainer ---
+      const culprit = findLowestBalanceCulprit(series, lowestIdx);
+      const whyTitle = document.getElementById('radar-why-title');
+      const whyDetail = document.getElementById('radar-why-detail');
+      const whyBalance = document.getElementById('radar-why-balance');
+      const whyIconWrap = document.getElementById('radar-why-icon-wrap');
+      const whyIcon = document.getElementById('radar-why-icon');
+
+      if (whyTitle && whyDetail && whyBalance) {
+        const lowestDateStr = series[lowestIdx] ? new Date(series[lowestIdx].date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+        if (culprit) {
+          whyTitle.innerText = culprit.label;
+          whyDetail.innerText = `$${formatCurrency(culprit.amount)} on ${new Date(culprit.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} is the biggest single draw before your lowest point on ${lowestDateStr}.`;
+          if (whyIcon) whyIcon.setAttribute('data-lucide', 'trending-down');
+        } else {
+          whyTitle.innerText = 'No single large bill';
+          whyDetail.innerText = `Your balance on ${lowestDateStr} reflects the combined effect of smaller bills since your last paycheck, not one large expense.`;
+          if (whyIcon) whyIcon.setAttribute('data-lucide', 'layers');
+        }
+        whyBalance.innerText = `$${formatCurrency(lowest)}`;
+        whyBalance.className = lowest < 0 ? 'text-lg sm:text-xl font-black text-rose-400' : 'text-lg sm:text-xl font-black text-amber-400';
+        if (whyIconWrap) {
+          whyIconWrap.className = lowest < 0
+            ? 'w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shrink-0 border bg-rose-500/15 border-rose-500/40'
+            : 'w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center shrink-0 border bg-amber-500/15 border-amber-500/40';
+        }
+        lucide.createIcons();
       }
 
-      const pathData = renderFlightPath(series);
-      if (pathData) animateForecastPlane(pathData.points, series, status.key === 'emergency');
+      renderRouteStrip(series);
+    }
 
-      // Chart.js detail chart — thinned labels so 61 daily points stay readable
-      const ctx = document.getElementById('forecastChart')?.getContext('2d');
-      if (ctx) {
-        if (forecastChartInstance) forecastChartInstance.destroy();
+    // "What Happens Next" — a horizontal scrollable route strip,
+    // replacing the old vertical Flight Log list. Same series events,
+    // rendered as distinct waypoint cards instead of a plain list —
+    // reads as a route planner, not a report table.
+    function renderRouteStrip(series) {
+      const container = document.getElementById('radar-route-strip');
+      const countEl = document.getElementById('radar-route-count');
+      if (!container) return;
 
-        const labels = series.map(s => {
-          const d = new Date(s.date + 'T00:00:00');
-          return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const entries = [];
+      series.forEach(day => {
+        day.events.forEach(ev => {
+          entries.push({ date: day.date, balanceAfter: day.balance, ev });
         });
-        const data = series.map(s => s.balance);
+      });
 
-        forecastChartInstance = new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels,
-            datasets: [{
-              label: 'Projected Cash Flow ($)',
-              data,
-              borderColor: '#10b981',
-              backgroundColor: 'rgba(16, 185, 129, 0.1)',
-              fill: true,
-              tension: 0.3,
-              pointRadius: 0,
-              borderWidth: 2.5
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-              x: { ticks: { color: '#94a3b8', maxTicksLimit: 8, autoSkip: true }, grid: { color: 'rgba(255,255,255,0.05)' } },
-              y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.05)' } }
-            }
-          }
+      if (countEl) countEl.innerText = `${entries.length} waypoint${entries.length === 1 ? '' : 's'}`;
+
+      if (!entries.length) {
+        container.innerHTML = emptyStateHtml({
+          icon: 'route',
+          title: 'No events in the next 60 days',
+          message: 'Add bills or confirm your paycheck schedule to see your route.'
         });
+        return;
       }
+
+      container.innerHTML = entries.slice(0, 20).map((entry, i) => {
+        const dateLabel = new Date(entry.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        const isDeposit = entry.ev.type === 'payday' || entry.ev.type === 'goal';
+        const style = waypointStyleFor(entry.ev);
+        const amountText = `${isDeposit ? '+' : '−'}$${formatCurrency(entry.ev.amount)}`;
+        const dangerAfter = entry.balanceAfter < 0;
+        return `
+          <div class="route-card log-entry-pop shrink-0 p-3 bg-slate-900/70 rounded-2xl border border-slate-800/70" style="animation-delay:${Math.min(i * 20, 400)}ms">
+            <div class="flex items-center gap-1.5 mb-2">
+              <span class="w-2 h-2 rounded-full shrink-0" style="background:${style.core}"></span>
+              <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wide">${dateLabel}</span>
+            </div>
+            <p class="text-xs font-bold text-white truncate mb-1">${entry.ev.label}</p>
+            <p class="text-sm font-black ${isDeposit ? 'text-brand-400' : 'text-slate-300'}">${amountText}</p>
+            <p class="text-[10px] mt-1 ${dangerAfter ? 'text-rose-400 font-semibold' : 'text-slate-500'}">bal: $${formatCurrency(entry.balanceAfter)}</p>
+          </div>`;
+      }).join('');
     }
 
     // ==========================================
