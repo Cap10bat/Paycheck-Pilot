@@ -1195,7 +1195,7 @@
 
     /* Bill clouds */
     .fd-bill { position: absolute; z-index: 15; }
-    .fd-bill-shape { position: relative; width: 86px; height: 40px; }
+    .fd-bill-shape { position: relative; width: 62px; height: 29px; }
     .fd-bill-lobe1 { position: absolute; left: 16%; top: -20%; width: 52%; height: 55%; border-radius: 999px; background: rgba(224,232,242,0.88); }
     .fd-bill-lobe2 { position: absolute; left: 0; top: 22%; width: 100%; height: 65%; border-radius: 999px; background: rgba(224,232,242,0.92); }
     .fd-bill-overdue .fd-bill-lobe1 { background: rgba(74,58,58,0.92); }
@@ -1205,9 +1205,9 @@
     .fd-bill-overdue-tag { position: absolute; top: -14%; left: 50%; transform: translateX(-50%); font-size: 6px; font-weight: 800; color: #fda4af; background: rgba(30,10,14,0.85); border: 1px solid #f43f5e; border-radius: 3px; padding: 1px 4px; letter-spacing: 0.05em; white-space: nowrap; font-family: ui-monospace, monospace; }
     @keyframes fdOverdueDrift { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
     .fd-bill-date, .fd-bill-name, .fd-bill-amt { position: absolute; left: 50%; transform: translateX(-50%); white-space: nowrap; font-family: ui-monospace, monospace; }
-    .fd-bill-date { top: 2%; font-size: 7px; font-weight: 700; color: #3a4a5a; animation-name: fdDateReveal; }
-    .fd-bill-name { top: 38%; font-size: 8px; font-weight: 800; color: #1c2a38; animation-name: fdNameReveal; }
-    .fd-bill-amt { top: 62%; font-size: 9px; font-weight: 800; color: #b33a3a; animation-name: fdAmountReveal; }
+    .fd-bill-date { top: 2%; font-size: 5.5px; font-weight: 700; color: #3a4a5a; animation-name: fdDateReveal; }
+    .fd-bill-name { top: 38%; font-size: 6.5px; font-weight: 800; color: #1c2a38; animation-name: fdNameReveal; }
+    .fd-bill-amt { top: 62%; font-size: 7px; font-weight: 800; color: #b33a3a; animation-name: fdAmountReveal; }
     .fd-bill-date, .fd-bill-name, .fd-bill-amt { animation-duration: 24s; animation-timing-function: ease-in; animation-iteration-count: infinite; animation-fill-mode: both; }
     @keyframes fdLandmarkApproach {
       0% { opacity:0; left: var(--x0); transform: scale(0.25); }
@@ -1237,29 +1237,42 @@
     .fd-d1-health-fill { height: 100%; transition: width 0.6s ease, background 0.6s ease; }
 
     /* Display 2 */
-    .fd-display2 { position: absolute; left: 25.5%; top: 73%; width: 20%; height: 13%; background: #04070a; z-index: 60; padding: 3% 4% 0; font-family: ui-monospace, monospace; }
-    .fd-d2-svg { width: 100%; height: 55%; }
-    .fd-d2-labels { display: flex; justify-content: space-between; font-size: 6px; color: #8a9a94; font-weight: 700; margin-top: 2%; }
+    .fd-display2 { position: absolute; left: 25.5%; top: 41%; width: 21.5%; height: 51%; background: #04070a; z-index: 60; padding: 4% 5%; font-family: ui-monospace, monospace; overflow: hidden; }
+    .fd-d2-title { font-size: 8px; font-weight: 700; color: #8a9a94; letter-spacing: 0.05em; text-align: center; margin-bottom: 6%; }
+    .fd-d2-timeline { position: relative; }
+    .fd-d2-row { position: relative; display: flex; align-items: flex-start; gap: 6px; padding-bottom: 9%; }
+    .fd-d2-row:not(:last-child)::before { content: ''; position: absolute; left: 3px; top: 10px; bottom: -4px; width: 1px; background: #2d5a4a; }
+    .fd-d2-dot { width: 7px; height: 7px; border-radius: 999px; flex-shrink: 0; margin-top: 2px; }
+    .fd-d2-info { min-width: 0; flex: 1; }
+    .fd-d2-name { font-size: 8.5px; font-weight: 800; color: #cfe; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fd-d2-meta { font-size: 6.5px; color: #7a8a84; }
 
     /* Display 4 */
     .fd-display4 { position: absolute; left: 47.3%; top: 42%; width: 6.8%; height: 12.5%; z-index: 60; pointer-events: none; }
-    .fd-d4-ring { position: absolute; inset: 0; border-radius: 999px; border: 2px solid; opacity: 0.85; transition: border-color 0.6s ease, box-shadow 0.6s ease; }
-    .fd-d4-label { position: absolute; top: 155%; left: -35%; width: 170%; text-align: center; font-size: 8px; font-weight: 700; font-family: ui-monospace, monospace; background: rgba(4,7,10,0.6); transition: color 0.6s ease; }
+    .fd-d4-ring { position: absolute; inset: -6%; border-radius: 999px; border: 3.5px solid; opacity: 0.95; animation: fdD4Pulse 2.2s ease-in-out infinite; transition: border-color 0.6s ease, box-shadow 0.6s ease; }
+    @keyframes fdD4Pulse { 0%,100% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.05); filter: brightness(1.3); } }
+    .fd-d4-label { position: absolute; top: 165%; left: -50%; width: 200%; text-align: center; font-size: 10px; font-weight: 800; letter-spacing: 0.05em; font-family: ui-monospace, monospace; background: rgba(4,7,10,0.75); border-radius: 3px; padding: 2px 0; transition: color 0.6s ease; }
 
     /* Display 3 */
-    .fd-display3-balance { position: absolute; left: 55%; top: 43.5%; width: 21%; height: 11%; background: #04070a; z-index: 60; font-family: ui-monospace, monospace; font-size: 26px; font-weight: 700; color: #6ee7b7; text-shadow: 0 0 6px rgba(110,231,183,0.5); display: flex; align-items: center; }
-    .fd-display3-mini { position: absolute; left: 55%; top: 55%; width: 21%; height: 6.5%; background: #04070a; z-index: 60; display: flex; justify-content: space-between; font-family: ui-monospace, monospace; }
+    .fd-display3-verdict { position: absolute; left: 55%; top: 42%; width: 21%; height: 5%; background: #04070a; z-index: 60; font-family: ui-monospace, monospace; font-size: 12px; font-weight: 800; letter-spacing: 0.02em; display: flex; align-items: center; }
+    .fd-display3-balance { position: absolute; left: 55%; top: 47.5%; width: 21%; height: 10%; background: #04070a; z-index: 60; font-family: ui-monospace, monospace; font-size: 26px; font-weight: 700; color: #6ee7b7; text-shadow: 0 0 6px rgba(110,231,183,0.5); display: flex; align-items: center; }
+    .fd-display3-mini { position: absolute; left: 55%; top: 58%; width: 21%; height: 6.5%; background: #04070a; z-index: 60; display: flex; justify-content: space-between; font-family: ui-monospace, monospace; }
     .fd-mini-label { font-size: 6.5px; color: #8a9a94; font-weight: 700; }
     .fd-mini-value { font-size: 12px; font-weight: 800; }
-    .fd-display3-ticker { position: absolute; left: 55%; top: 62%; width: 21%; height: 9%; background: #04070a; z-index: 60; display: flex; align-items: center; overflow: hidden; }
+    .fd-display3-ticker { position: absolute; left: 55%; top: 65%; width: 21%; height: 8.5%; background: #04070a; z-index: 60; display: flex; align-items: center; overflow: hidden; }
     .fd-ticker-track { white-space: nowrap; font-family: ui-monospace, monospace; font-weight: 800; font-size: 17px; color: #ffd54a; text-shadow: 0 0 8px rgba(255,213,74,0.5); animation: fdTickerScroll 16s linear infinite; }
     @keyframes fdTickerScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-    .fd-display3-status { position: absolute; left: 55%; top: 71.5%; width: 21%; height: 3%; font-size: 11px; font-weight: 700; background: #04070a; z-index: 60; font-family: ui-monospace, monospace; }
+    .fd-display3-status { position: absolute; left: 55%; top: 74%; width: 21%; height: 3%; font-size: 11px; font-weight: 700; background: #04070a; z-index: 60; font-family: ui-monospace, monospace; }
 
     /* Display 5 */
     .fd-display5 { position: absolute; left: 77.5%; top: 42%; width: 19.5%; height: 51%; background: #04070a; z-index: 60; overflow: hidden; padding: 3%; font-family: ui-monospace, monospace; }
+    .fd-d5-title { font-size: 8px; font-weight: 700; color: #8a9a94; letter-spacing: 0.05em; margin-bottom: 4%; }
     .fd-d5-row { font-size: 7px; color: rgba(94,234,212,0.85); line-height: 1.9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .fd-d5-row b { color: rgba(255,255,255,0.9); }
+    .fd-d5-log { margin-top: 6%; height: 22%; overflow: hidden; border-top: 1px solid rgba(94,234,212,0.15); padding-top: 4%; }
+    .fd-d5-log-track { animation: fdD5LogScroll 9s linear infinite; }
+    .fd-d5-log-line { font-size: 6px; color: rgba(94,234,212,0.55); line-height: 2; white-space: nowrap; }
+    @keyframes fdD5LogScroll { from { transform: translateY(0); } to { transform: translateY(-50%); } }
 
     .fd-controls { display: flex; justify-content: flex-end; margin-top: 8px; }
     .fd-btn { font-size: 11px; padding: 5px 12px; border-radius: 999px; border: 1px solid #27272a; background: #17171a; color: #a1a1aa; cursor: pointer; font-family: inherit; }
@@ -1273,7 +1286,7 @@
       .fd-mini-value { font-size: 13px; }
       .fd-ticker-track { font-size: 14px; }
       .fd-display3-status { font-size: 10px; }
-      .fd-bill-shape { width: 128px; height: 60px; }
+      .fd-bill-shape { width: 96px; height: 45px; }
       .fd-bill-date { font-size: 10px; }
       .fd-bill-name { font-size: 11px; }
       .fd-bill-amt { font-size: 13px; }
@@ -2291,10 +2304,6 @@
 
                   <img id="fd-stencil" class="fd-stencil" alt="" />
 
-                  <div class="fd-verdict" id="fd-verdict">
-                    <div class="fd-verdict-eyebrow">CAN I MAKE IT UNTIL PAYDAY?</div>
-                    <div class="fd-verdict-headline" id="fd-verdict-headline">—</div>
-                  </div>
 
                   <!-- Display 1 — Financial Altitude -->
                   <div class="fd-display1" id="fd-display1">
@@ -2311,8 +2320,8 @@
 
                   <!-- Display 2 — Forecast Route -->
                   <div class="fd-display2" id="fd-display2">
-                    <svg id="fd-d2-svg" viewBox="0 0 100 20" class="fd-d2-svg"></svg>
-                    <div class="fd-d2-labels" id="fd-d2-labels"></div>
+                    <div class="fd-d2-title">FINANCIAL ROUTE</div>
+                    <div class="fd-d2-timeline" id="fd-d2-timeline"></div>
                   </div>
 
                   <!-- Display 4 — Financial Weather gauge -->
@@ -2322,6 +2331,7 @@
                   </div>
 
                   <!-- Display 3 — Mission Control (hero) -->
+                  <div class="fd-display3-verdict" id="fd-display3-verdict">—</div>
                   <div class="fd-display3-balance" id="fd-display3-balance"></div>
                   <div class="fd-display3-mini" id="fd-display3-mini"></div>
                   <div class="fd-display3-ticker" id="fd-display3-ticker"><div class="fd-ticker-track" id="fd-ticker-track"></div></div>
@@ -7400,7 +7410,7 @@
       if (viewData.mayday && viewData.mayday.active) headline = "YOU MAY RUN SHORT";
       else if (lowest < 200) headline = "IT'LL BE TIGHT";
       else headline = "YES, YOU'RE ON TRACK";
-      const headlineEl = document.getElementById('fd-verdict-headline');
+      const headlineEl = document.getElementById('fd-display3-verdict');
       if (headlineEl) { headlineEl.innerText = headline; headlineEl.style.color = wMeta.color; }
 
       // Display 1 — Financial Altitude: tape bracketing the current
@@ -7427,24 +7437,21 @@
         healthFill.style.boxShadow = `0 0 4px ${wMeta.color}`;
       }
 
-      // Display 2 — Forecast Route: real upcoming bills + paydays,
-      // reusing the same entries walk renderRouteStrip() already does.
+      // Display 2 — Forecast Route: real upcoming bills + paydays as
+      // an actual vertical timeline, filling the whole screen.
       const entries = [];
       series.forEach(day => { day.events.forEach(ev => entries.push({ date: day.date, ev })); });
       const routeItems = entries.slice(0, 6);
-      const svg = document.getElementById('fd-d2-svg');
-      const labelsEl = document.getElementById('fd-d2-labels');
-      if (svg && labelsEl) {
-        const n = Math.max(routeItems.length, 1);
-        const dotsX = routeItems.map((_, i) => n === 1 ? 50 : (i / (n - 1)) * 95 + 2);
-        let svgHtml = `<line x1="2" y1="10" x2="98" y2="10" stroke="#2d5a4a" stroke-width="1" stroke-dasharray="2,2" />`;
-        svgHtml += `<circle cx="2" cy="10" r="2" fill="#5eead4" />`;
-        routeItems.forEach((it, i) => {
+      const timelineEl = document.getElementById('fd-d2-timeline');
+      if (timelineEl) {
+        let html = `<div class="fd-d2-row"><div class="fd-d2-dot" style="background:#5eead4"></div><div class="fd-d2-info"><div class="fd-d2-name">TODAY</div><div class="fd-d2-meta">$${Math.round(current).toLocaleString()}</div></div></div>`;
+        html += routeItems.map((it) => {
           const color = it.ev.type === 'payday' ? '#6ee7b7' : '#ffb454';
-          svgHtml += `<circle cx="${dotsX[i]}" cy="10" r="1.7" fill="${color}" />`;
-        });
-        svg.innerHTML = svgHtml;
-        labelsEl.innerHTML = `<span>TODAY</span>` + routeItems.map(it => `<span>${(it.ev.label || '').slice(0, 8).toUpperCase()}</span>`).join('');
+          const dateTxt = new Date(it.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          const amtTxt = (it.ev.type === 'payday' || it.ev.type === 'goal' ? '+' : '-') + '$' + Math.round(it.ev.amount).toLocaleString();
+          return `<div class="fd-d2-row"><div class="fd-d2-dot" style="background:${color}"></div><div class="fd-d2-info"><div class="fd-d2-name">${(it.ev.label || '').toUpperCase()}</div><div class="fd-d2-meta">${dateTxt} · ${amtTxt}</div></div></div>`;
+        }).join('');
+        timelineEl.innerHTML = html;
       }
 
       // Display 4 — Financial Weather gauge, directly from classifyFlightStatus()
@@ -7494,14 +7501,28 @@
           ? `${new Date(viewData.nextIncome.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} +$${Math.round(viewData.nextIncome.amount).toLocaleString()}`
           : 'Unscheduled';
         const nextBillTxt = culprit ? `${culprit.label} -$${Math.round(culprit.amount).toLocaleString()}` : 'None upcoming';
+        const culpritTxt = culprit ? `${culprit.label} on ${new Date(culprit.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : 'No single large bill';
+        const logLines = [
+          `SCAN COMPLETE — ${series.length} DAYS PROJECTED`,
+          `LOWEST POINT: $${Math.round(lowest).toLocaleString()} ON ${new Date(series[lowestIdx].date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase()}`,
+          `${viewData.upcomingBills.length} BILL${viewData.upcomingBills.length === 1 ? '' : 'S'} BEFORE NEXT INCOME`,
+          `SYNC: ${inHousehold ? 'HOUSEHOLD LINKED' : 'SOLO MODE'}`,
+          `FORECAST ENGINE: ACTIVE`,
+        ];
+        const logDoubled = [...logLines, ...logLines];
         d5.innerHTML = `
+          <div class="fd-d5-title">MISSION COMPUTER</div>
           <div class="fd-d5-row">NEXT BILL: <b>${nextBillTxt}</b></div>
           <div class="fd-d5-row">NEXT INCOME: <b>${nextIncomeTxt}</b></div>
           <div class="fd-d5-row">SAFE SPEND: <b>$${Math.round(viewData.safeSpend).toLocaleString()}</b></div>
           <div class="fd-d5-row">PROJECTED FLOOR: <b>$${Math.round(lowest).toLocaleString()}</b></div>
           <div class="fd-d5-row">PENDING BILLS: <b>${viewData.upcomingBills.length} ACTIVE</b></div>
           <div class="fd-d5-row">FORECAST HEALTH: <b style="color:${wMeta.color}">${wMeta.text}</b></div>
-          <div class="fd-d5-row">HOUSEHOLD STATUS: <b>${inHousehold ? 'SYNCED' : 'SOLO'}</b></div>`;
+          <div class="fd-d5-row">HOUSEHOLD STATUS: <b>${inHousehold ? 'SYNCED' : 'SOLO'}</b></div>
+          <div class="fd-d5-row">LOW CULPRIT: <b>${culpritTxt}</b></div>
+          <div class="fd-d5-log">
+            <div class="fd-d5-log-track">${logDoubled.map(l => `<div class="fd-d5-log-line">${l}</div>`).join('')}</div>
+          </div>`;
       }
 
       // Bill clouds — dynamically generated from real bills. Upcoming
