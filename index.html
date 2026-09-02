@@ -1172,17 +1172,22 @@
     .fc-mode-btn-active { background: #3b82f6; color: white; }
 
     /* ===================== FLIGHT DECK (vanilla port) ===================== */
-    .fd-root { width: 100%; max-width: 1000px; margin: 0 auto; }
-    .fd-frame { position: relative; width: 100%; aspect-ratio: 1000/545; background: #000; overflow: hidden; border-radius: 4px; animation: fdVibration 0.22s ease-in-out infinite; }
+    .fd-root { width: 100vw; position: relative; left: 50%; right: 50%; margin-left: -50vw; margin-right: -50vw; max-width: 100vw; }
+    .fd-frame { position: relative; width: 100%; aspect-ratio: 1000/545; background: #000; overflow: hidden; animation: fdVibration 0.22s ease-in-out infinite; }
+    @media (min-width: 1400px) { .fd-frame { aspect-ratio: 1000/500; } }
     @keyframes fdVibration { 0%,100% { transform: translate(0,0);} 25% { transform: translate(0.3px,-0.2px);} 50% { transform: translate(-0.2px,0.3px);} 75% { transform: translate(0.2px,0.2px);} }
 
     .fd-world-layer { position: absolute; left: 0; right: 0; top: 0; height: 40%; overflow: hidden; z-index: 10; }
     #fd-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
     .fd-stencil { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 50; }
 
-    .fd-payday-glow { position: absolute; left: 78%; top: 80%; width: 14%; height: 16%; pointer-events: none; z-index: 11; }
-    .fd-payday-ring { position: absolute; inset: 0; border-radius: 999px; background: radial-gradient(ellipse, rgba(255,214,140,0.35), transparent 70%); animation: fdGlowPulse 3.4s ease-in-out infinite; }
+    .fd-payday-glow { position: absolute; left: 74%; top: 76%; width: 18%; height: 20%; pointer-events: none; z-index: 11; transform: scale(var(--fd-dest-scale, 1)); transform-origin: 60% 70%; transition: transform 1.2s ease; }
+    .fd-payday-ring { position: absolute; inset: 0; border-radius: 999px; background: radial-gradient(ellipse, rgba(255,214,140,0.4), transparent 70%); animation: fdGlowPulse 3.4s ease-in-out infinite; }
+    .fd-payday-core { position: absolute; left: 42%; top: 38%; width: 16%; height: 16%; border-radius: 999px; background: radial-gradient(circle, #fff8e0, #ffd77a 55%, transparent 80%); box-shadow: 0 0 18px 6px rgba(255,214,140,0.6); animation: fdCorePulse 2.6s ease-in-out infinite; }
+    @keyframes fdCorePulse { 0%,100% { opacity: 0.85; } 50% { opacity: 1; } }
+    .fd-beacon { position: absolute; width: 5px; height: 5px; border-radius: 999px; background: #9dffc4; box-shadow: 0 0 6px 2px rgba(157,255,196,0.8); animation: fdBeaconBlink 1.6s ease-in-out infinite; }
     @keyframes fdGlowPulse { 0%,100% { opacity:0.6; transform:scale(1);} 50% { opacity:1; transform:scale(1.12);} }
+    @keyframes fdBeaconBlink { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
 
     .fd-verdict { position: absolute; top: 3%; left: 50%; transform: translateX(-50%); text-align: center; z-index: 60; }
     .fd-verdict-eyebrow { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; color: rgba(226,232,240,0.7); text-shadow: 0 1px 3px rgba(0,0,0,0.8); font-family: ui-monospace, monospace; }
@@ -1193,6 +1198,12 @@
     .fd-bill-shape { position: relative; width: 86px; height: 40px; }
     .fd-bill-lobe1 { position: absolute; left: 16%; top: -20%; width: 52%; height: 55%; border-radius: 999px; background: rgba(224,232,242,0.88); }
     .fd-bill-lobe2 { position: absolute; left: 0; top: 22%; width: 100%; height: 65%; border-radius: 999px; background: rgba(224,232,242,0.92); }
+    .fd-bill-overdue .fd-bill-lobe1 { background: rgba(74,58,58,0.92); }
+    .fd-bill-overdue .fd-bill-lobe2 { background: rgba(58,44,44,0.95); }
+    .fd-bill-overdue .fd-bill-shape { animation: fdOverdueGlow 1.8s ease-in-out infinite; }
+    @keyframes fdOverdueGlow { 0%,100% { filter: drop-shadow(0 0 3px rgba(244,63,94,0.5)); } 50% { filter: drop-shadow(0 0 12px rgba(244,63,94,0.9)); } }
+    .fd-bill-overdue-tag { position: absolute; top: -14%; left: 50%; transform: translateX(-50%); font-size: 6px; font-weight: 800; color: #fda4af; background: rgba(30,10,14,0.85); border: 1px solid #f43f5e; border-radius: 3px; padding: 1px 4px; letter-spacing: 0.05em; white-space: nowrap; font-family: ui-monospace, monospace; }
+    @keyframes fdOverdueDrift { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
     .fd-bill-date, .fd-bill-name, .fd-bill-amt { position: absolute; left: 50%; transform: translateX(-50%); white-space: nowrap; font-family: ui-monospace, monospace; }
     .fd-bill-date { top: 2%; font-size: 7px; font-weight: 700; color: #3a4a5a; animation-name: fdDateReveal; }
     .fd-bill-name { top: 38%; font-size: 8px; font-weight: 800; color: #1c2a38; animation-name: fdNameReveal; }
@@ -1252,6 +1263,24 @@
 
     .fd-controls { display: flex; justify-content: flex-end; margin-top: 8px; }
     .fd-btn { font-size: 11px; padding: 5px 12px; border-radius: 999px; border: 1px solid #27272a; background: #17171a; color: #a1a1aa; cursor: pointer; font-family: inherit; }
+    @media (max-width: 640px) {
+      .fd-frame { min-height: 340px; }
+      .fd-verdict-headline { font-size: 15px; }
+      .fd-verdict-eyebrow { font-size: 7px; }
+      .fd-d1-title, .fd-d2-labels, .fd-mini-label { font-size: 9px; }
+      .fd-d5-row { font-size: 8.5px; line-height: 2.1; }
+      .fd-display3-balance { font-size: 20px; }
+      .fd-mini-value { font-size: 13px; }
+      .fd-ticker-track { font-size: 14px; }
+      .fd-display3-status { font-size: 10px; }
+      .fd-bill-shape { width: 128px; height: 60px; }
+      .fd-bill-date { font-size: 10px; }
+      .fd-bill-name { font-size: 11px; }
+      .fd-bill-amt { font-size: 13px; }
+      .fd-payday-glow { width: 24%; height: 26%; }
+      .fd-payday-core { box-shadow: 0 0 26px 10px rgba(255,214,140,0.7); }
+      .fd-btn { font-size: 13px; padding: 8px 16px; }
+    }
     /* ===================== END FLIGHT DECK ===================== */
 
   </style>
@@ -2250,6 +2279,12 @@
                     <canvas id="fd-canvas"></canvas>
                     <div id="fd-payday-glow" class="fd-payday-glow">
                       <div class="fd-payday-ring"></div>
+                      <div class="fd-payday-core"></div>
+                      <div class="fd-beacon" style="left:8%;top:62%;animation-delay:0s;"></div>
+                      <div class="fd-beacon" style="left:20%;top:52%;animation-delay:0.25s;"></div>
+                      <div class="fd-beacon" style="left:32%;top:46%;animation-delay:0.5s;"></div>
+                      <div class="fd-beacon" style="left:66%;top:44%;animation-delay:0.35s;"></div>
+                      <div class="fd-beacon" style="left:78%;top:50%;animation-delay:0.6s;"></div>
                     </div>
                     <div id="fd-bill-clouds"></div>
                   </div>
@@ -7196,6 +7231,25 @@
         ctx.restore(); ctx.globalAlpha = 1;
       }
 
+      // ---------- Background terrain: pale, distant ridge, higher up
+      // and smaller than the near ridge — pure environmental depth,
+      // not data-driven. ----------
+      function drawDistantTerrain(dark) {
+        const baseY = H * 0.86, ridgeH = H * 0.06;
+        ctx.beginPath(); ctx.moveTo(0, H); ctx.lineTo(0, baseY);
+        const pts = 10;
+        for (let i = 0; i <= pts; i++) {
+          const x = (i / pts) * W;
+          const n = fdPrNoise(900 + i * 5.3) * 0.6 + fdPrNoise(900 + i * 11.7) * 0.4;
+          ctx.lineTo(x, baseY - n * ridgeH);
+        }
+        ctx.lineTo(W, H); ctx.closePath();
+        ctx.fillStyle = dark ? 'rgba(16,18,26,0.55)' : 'rgba(30,38,50,0.45)';
+        ctx.fill();
+      }
+
+      // ---------- Near terrain (existing ridge — now the closer of
+      // the two terrain layers, unchanged in look). ----------
       function drawTerrain(dark) {
         const baseY = H * 0.92, ridgeH = H * 0.10;
         ctx.beginPath(); ctx.moveTo(0, H); ctx.lineTo(0, baseY);
@@ -7210,6 +7264,21 @@
         ctx.fill();
       }
 
+      // ---------- City glow: a soft warm band low in the sky behind
+      // the city lights, suggesting light pollution against the
+      // underside of the atmosphere rather than the lights floating
+      // in empty space. ----------
+      function drawCityGlow() {
+        const s = fdWeatherKey;
+        const visibility = { clear: 1, tight: 0.65, risk: 0.35, mayday: 0.15 }[s];
+        if (visibility <= 0) return;
+        const g = ctx.createLinearGradient(0, H * 0.68, 0, H * 0.9);
+        g.addColorStop(0, 'rgba(0,0,0,0)');
+        g.addColorStop(1, `rgba(255,196,120,${0.16 * visibility})`);
+        ctx.fillStyle = g;
+        ctx.fillRect(0, H * 0.68, W, H * 0.22);
+      }
+
       function roundRectPath(x, y, w, h, r) {
         ctx.beginPath(); ctx.moveTo(x + r, y);
         ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
@@ -7222,10 +7291,17 @@
         roundRectPath(cx - w * 0.5, cy - h * 0.3, w, h * 0.72, h * 0.36); ctx.fill();
         ctx.restore();
       }
-      const ambientClouds = [{ xFrac: 0.10, yFrac: 0.28, scale: 0.16 }, { xFrac: 0.30, yFrac: 0.20, scale: 0.13 }, { xFrac: 0.58, yFrac: 0.35, scale: 0.20 }, { xFrac: 0.80, yFrac: 0.24, scale: 0.15 }];
-      function drawAmbientClouds(offsetFrac, opacity, dark) {
+
+      // Three cloud tiers — distant (small, pale, slow, high),
+      // mid (medium), foreground (large, saturated, fast, low) —
+      // same pill-cloud shape throughout, only depth cues differ.
+      const distantClouds = [{ xFrac: 0.05, yFrac: 0.10, scale: 0.10 }, { xFrac: 0.42, yFrac: 0.07, scale: 0.09 }, { xFrac: 0.68, yFrac: 0.12, scale: 0.11 }, { xFrac: 0.90, yFrac: 0.08, scale: 0.09 }];
+      const midClouds = [{ xFrac: 0.16, yFrac: 0.22, scale: 0.14 }, { xFrac: 0.50, yFrac: 0.17, scale: 0.13 }, { xFrac: 0.78, yFrac: 0.24, scale: 0.15 }];
+      const fgClouds = [{ xFrac: 0.10, yFrac: 0.34, scale: 0.20 }, { xFrac: 0.58, yFrac: 0.38, scale: 0.22 }, { xFrac: 0.84, yFrac: 0.30, scale: 0.18 }];
+
+      function drawCloudTier(layouts, offsetFrac, opacity, dark) {
         const tint = dark ? 'rgba(90,98,115,0.65)' : 'rgba(210,220,232,0.72)';
-        ambientClouds.forEach((c) => {
+        layouts.forEach((c) => {
           const cw = W * c.scale;
           let cx = ((c.xFrac * W + offsetFrac) % (W + cw * 2)) - cw;
           drawPillCloud(cx, H * c.yFrac, cw, opacity, tint);
@@ -7246,17 +7322,26 @@
         lightning.flash *= 0.85;
       }
 
-      let cloudOffset = 0;
+      let distantOffset = 0, midOffset = 0, fgOffset = 0;
       function frame(t) {
         ctx.clearRect(0, 0, W, H);
-        drawSky(); drawSun(); drawCityLights(t);
         const s = fdWeatherKey;
         const dark = s === 'risk' || s === 'mayday';
-        drawTerrain(dark);
         const boost = { clear: 1, tight: 1.25, risk: 1.5, mayday: 1.7 }[s];
-        drawAmbientClouds(cloudOffset, Math.min(0.9, 0.55 * boost), dark);
+
+        drawSky(); drawSun();
+        drawDistantTerrain(dark);
+        drawCloudTier(distantClouds, distantOffset, Math.min(0.55, 0.35 * boost), dark);
+        drawCityGlow();
+        drawCityLights(t);
+        drawCloudTier(midClouds, midOffset, Math.min(0.7, 0.45 * boost), dark);
+        drawTerrain(dark);
+        drawCloudTier(fgClouds, fgOffset, Math.min(0.9, 0.55 * boost), dark);
         maybeLightning(t); drawLightning();
-        cloudOffset += 0.06;
+
+        distantOffset += 0.02;
+        midOffset += 0.045;
+        fgOffset += 0.08;
         fdCanvasState.raf = requestAnimationFrame(frame);
       }
 
@@ -7295,6 +7380,15 @@
 
       fdWeatherKey = fdMapWeatherKey(status.key);
       const wMeta = FD_WEATHER_META[fdWeatherKey];
+
+      // Payday destination grows as it's actually approached — the
+      // emotional payoff should visibly get closer, not sit static.
+      const paydayGlowEl = document.getElementById('fd-payday-glow');
+      if (paydayGlowEl) {
+        const daysOut = viewData.nextIncome ? viewData.daysUntilIncome : 30;
+        const destScale = Math.max(1, Math.min(1.6, 1.6 - (daysOut / 30) * 0.6));
+        paydayGlowEl.style.setProperty('--fd-dest-scale', destScale.toFixed(2));
+      }
 
       // Stencil image (set once; harmless to reset each render)
       const stencilEl = document.getElementById('fd-stencil');
@@ -7410,12 +7504,18 @@
           <div class="fd-d5-row">HOUSEHOLD STATUS: <b>${inHousehold ? 'SYNCED' : 'SOLO'}</b></div>`;
       }
 
-      // Bill clouds — dynamically generated from real upcoming bills,
-      // not a fixed hardcoded set.
+      // Bill clouds — dynamically generated from real bills. Upcoming
+      // bills get the approach-and-pass journey; overdue bills (past
+      // due, not marked paid) stay visibly parked in the world instead
+      // of disappearing, since that matches financial reality.
       const cloudContainer = document.getElementById('fd-bill-clouds');
       if (cloudContainer) {
+        const today0 = new Date(); today0.setHours(0, 0, 0, 0);
+        const todayStr = `${today0.getFullYear()}-${String(today0.getMonth() + 1).padStart(2, '0')}-${String(today0.getDate()).padStart(2, '0')}`;
+        const overdueBills = (viewData.allBills || []).filter(b => b.dueDate && b.dueDate < todayStr);
+
         const upcoming = entries.filter(e => e.ev.type === 'bill').slice(0, 3);
-        cloudContainer.innerHTML = upcoming.map((it, i) => {
+        let html = upcoming.map((it, i) => {
           const dateTxt = new Date(it.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase();
           const delay = (i * 8) + 's';
           const tops = ['18%', '10%', '22%'];
@@ -7430,6 +7530,22 @@
             </div>
           </div>`;
         }).join('');
+
+        html += overdueBills.slice(0, 3).map((b, i) => {
+          const daysLate = Math.round((today0 - new Date(b.dueDate + 'T00:00:00')) / 86400000);
+          const leftPos = [62, 70, 54][i % 3];
+          const topPos = [30, 40, 22][i % 3];
+          return `<div class="fd-bill fd-bill-overdue" style="top:${topPos}%;left:${leftPos}%;animation:fdOverdueDrift 4s ease-in-out infinite;">
+            <div class="fd-bill-shape">
+              <div class="fd-bill-lobe1"></div><div class="fd-bill-lobe2"></div>
+              <div class="fd-bill-overdue-tag">${daysLate}D OVERDUE</div>
+              <div class="fd-bill-name" style="opacity:1;color:#fecaca;">${(b.title || '').toUpperCase()}</div>
+              <div class="fd-bill-amt" style="opacity:1;">-$${Math.round(b.amount).toLocaleString()}</div>
+            </div>
+          </div>`;
+        }).join('');
+
+        cloudContainer.innerHTML = html;
       }
 
       if (!fdCanvasState) fdStartCanvas();
