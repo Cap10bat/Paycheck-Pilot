@@ -1276,20 +1276,56 @@
 
     .fd-controls { display: flex; justify-content: flex-end; margin-top: 8px; }
     .fd-btn { font-size: 11px; padding: 5px 12px; border-radius: 999px; border: 1px solid #27272a; background: #17171a; color: #a1a1aa; cursor: pointer; font-family: inherit; }
+
+    /* ---------- Mobile: dedicated layout, not a shrunk desktop ---------- */
+    .fd-crop-wrapper { position: relative; width: 100%; overflow: hidden; }
+    .fd-mobile-panel { display: none; }
+
     @media (max-width: 640px) {
-      .fd-frame { min-height: 340px; }
-      .fd-verdict-headline { font-size: 15px; }
-      .fd-verdict-eyebrow { font-size: 7px; }
-      .fd-d1-title, .fd-d2-labels, .fd-mini-label { font-size: 9px; }
-      .fd-d5-row { font-size: 8.5px; line-height: 2.1; }
-      .fd-display3-balance { font-size: 20px; }
-      .fd-mini-value { font-size: 13px; }
-      .fd-ticker-track { font-size: 14px; }
-      .fd-display3-status { font-size: 10px; }
-      .fd-bill-shape { width: 96px; height: 45px; }
-      .fd-bill-date { font-size: 10px; }
-      .fd-bill-name { font-size: 11px; }
-      .fd-bill-amt { font-size: 13px; }
+      /* Windshield stays large and is the only part of the photo shown.
+         The frame is sized by HEIGHT (not width) and scaled up well
+         beyond what 100vw-constrained width would naturally give on a
+         narrow phone, then horizontally centered — the wrapper's
+         shorter height crops off the now-unneeded instrument row from
+         the bottom rather than shrinking the whole photo down. */
+      .fd-crop-wrapper { height: 42vh; min-height: 260px; max-height: 400px; }
+      .fd-frame { position: absolute; left: 50%; top: 0; width: auto; height: 105vh; max-height: 950px; transform: translateX(-50%); animation: none; }
+
+      .fd-desktop-only { display: none !important; }
+      .fd-mobile-panel { display: block; margin-top: 10px; }
+
+      .fd-m-hero { background: linear-gradient(180deg, #0a1210, #04070a); border: 1px solid #1a2a24; border-radius: 10px; padding: 14px 16px; font-family: ui-monospace, monospace; }
+      .fd-m-verdict { font-size: 15px; font-weight: 800; letter-spacing: 0.02em; margin-bottom: 8px; }
+      .fd-m-balance { font-size: 34px; font-weight: 700; color: #6ee7b7; text-shadow: 0 0 8px rgba(110,231,183,0.5); margin-bottom: 10px; }
+      .fd-m-mini { display: flex; justify-content: space-between; margin-bottom: 10px; }
+      .fd-m-mini-label { font-size: 10px; color: #8a9a94; font-weight: 700; }
+      .fd-m-mini-value { font-size: 18px; font-weight: 800; }
+      .fd-m-ticker { overflow: hidden; border-top: 1px solid #1a2a24; padding-top: 8px; }
+      .fd-m-ticker-track { white-space: nowrap; font-weight: 800; font-size: 15px; color: #ffd54a; animation: fdTickerScroll 16s linear infinite; }
+
+      .fd-m-row2 { display: flex; gap: 8px; margin-top: 8px; }
+      .fd-m-weather { flex: 0 0 108px; background: #04070a; border: 1px solid #1a2a24; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 10px; }
+      .fd-m-weather-ring { width: 44px; height: 44px; border-radius: 999px; border: 4px solid; animation: fdD4Pulse 2.2s ease-in-out infinite; }
+      .fd-m-weather-label { font-family: ui-monospace, monospace; font-size: 13px; font-weight: 800; letter-spacing: 0.04em; }
+      .fd-m-computer { flex: 1; background: #04070a; border: 1px solid #1a2a24; border-radius: 10px; padding: 10px 12px; font-family: ui-monospace, monospace; overflow: hidden; }
+      .fd-m-computer-row { font-size: 10.5px; color: rgba(94,234,212,0.85); line-height: 1.85; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .fd-m-computer-row b { color: rgba(255,255,255,0.92); }
+
+      .fd-m-section { margin-top: 10px; background: #04070a; border: 1px solid #1a2a24; border-radius: 10px; padding: 10px 12px; font-family: ui-monospace, monospace; }
+      .fd-m-section-title { font-size: 10px; font-weight: 700; color: #8a9a94; letter-spacing: 0.06em; margin-bottom: 8px; }
+      .fd-m-route { display: flex; flex-direction: column; gap: 7px; }
+      .fd-m-route-row { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+      .fd-m-route-dot { width: 8px; height: 8px; border-radius: 999px; flex-shrink: 0; }
+      .fd-m-route-name { font-weight: 700; color: #cfe; }
+      .fd-m-route-meta { color: #7a8a84; font-size: 10.5px; margin-left: auto; white-space: nowrap; }
+      .fd-m-altitude-row { display: flex; justify-content: space-between; font-size: 12px; padding: 3px 0; }
+      .fd-m-altitude-bar { height: 6px; background: #141a17; border-radius: 3px; overflow: hidden; margin-top: 8px; }
+      .fd-m-altitude-fill { height: 100%; }
+
+      .fd-bill-shape { width: 76px; height: 36px; }
+      .fd-bill-date { font-size: 7px; }
+      .fd-bill-name { font-size: 8px; }
+      .fd-bill-amt { font-size: 9px; }
       .fd-payday-glow { width: 24%; height: 26%; }
       .fd-payday-core { box-shadow: 0 0 26px 10px rgba(255,214,140,0.7); }
       .fd-btn { font-size: 13px; padding: 8px 16px; }
@@ -2287,6 +2323,7 @@
 
             <div id="forecast-flightdeck-view" class="hidden">
               <div id="fd-root" class="fd-root">
+                <div id="fd-crop-wrapper" class="fd-crop-wrapper">
                 <div id="fd-frame" class="fd-frame">
                   <div id="fd-world-layer" class="fd-world-layer">
                     <canvas id="fd-canvas"></canvas>
@@ -2306,7 +2343,7 @@
 
 
                   <!-- Display 1 — Financial Altitude -->
-                  <div class="fd-display1" id="fd-display1">
+                  <div class="fd-display1 fd-desktop-only" id="fd-display1">
                     <div class="fd-d1-title">FINANCIAL ALTITUDE</div>
                     <div class="fd-d1-tape-wrap">
                       <div class="fd-d1-tape" id="fd-d1-tape"></div>
@@ -2319,26 +2356,61 @@
                   </div>
 
                   <!-- Display 2 — Forecast Route -->
-                  <div class="fd-display2" id="fd-display2">
+                  <div class="fd-display2 fd-desktop-only" id="fd-display2">
                     <div class="fd-d2-title">FINANCIAL ROUTE</div>
                     <div class="fd-d2-timeline" id="fd-d2-timeline"></div>
                   </div>
 
                   <!-- Display 4 — Financial Weather gauge -->
-                  <div class="fd-display4" id="fd-display4">
+                  <div class="fd-display4 fd-desktop-only" id="fd-display4">
                     <div class="fd-d4-ring" id="fd-d4-ring"></div>
                     <div class="fd-d4-label" id="fd-d4-label">—</div>
                   </div>
 
                   <!-- Display 3 — Mission Control (hero) -->
-                  <div class="fd-display3-verdict" id="fd-display3-verdict">—</div>
-                  <div class="fd-display3-balance" id="fd-display3-balance"></div>
-                  <div class="fd-display3-mini" id="fd-display3-mini"></div>
-                  <div class="fd-display3-ticker" id="fd-display3-ticker"><div class="fd-ticker-track" id="fd-ticker-track"></div></div>
-                  <div class="fd-display3-status" id="fd-display3-status">—</div>
+                  <div class="fd-display3-verdict fd-desktop-only" id="fd-display3-verdict">—</div>
+                  <div class="fd-display3-balance fd-desktop-only" id="fd-display3-balance"></div>
+                  <div class="fd-display3-mini fd-desktop-only" id="fd-display3-mini"></div>
+                  <div class="fd-display3-ticker fd-desktop-only" id="fd-display3-ticker"><div class="fd-ticker-track" id="fd-ticker-track"></div></div>
+                  <div class="fd-display3-status fd-desktop-only" id="fd-display3-status">—</div>
 
                   <!-- Display 5 — Mission Computer -->
-                  <div class="fd-display5" id="fd-display5"></div>
+                  <div class="fd-display5 fd-desktop-only" id="fd-display5"></div>
+                </div>
+                </div>
+
+                <!-- ============================================================
+                     DEDICATED MOBILE PANEL — not a scaled copy of the desktop
+                     overlay. Purpose-built stacked layout: Mission Control gets
+                     the most visual weight, Weather and Mission Computer are
+                     clearly secondary, Route and Altitude are compact summaries.
+                     Hidden on desktop; shown only under the mobile breakpoint.
+                     ============================================================ -->
+                <div id="fd-mobile-panel" class="fd-mobile-panel">
+                  <div class="fd-m-hero">
+                    <div class="fd-m-verdict" id="fd-m-verdict">—</div>
+                    <div class="fd-m-balance" id="fd-m-balance"></div>
+                    <div class="fd-m-mini" id="fd-m-mini"></div>
+                    <div class="fd-m-ticker"><div class="fd-m-ticker-track" id="fd-m-ticker-track"></div></div>
+                  </div>
+
+                  <div class="fd-m-row2">
+                    <div class="fd-m-weather">
+                      <div class="fd-m-weather-ring" id="fd-m-weather-ring"></div>
+                      <div class="fd-m-weather-label" id="fd-m-weather-label">—</div>
+                    </div>
+                    <div class="fd-m-computer" id="fd-m-computer"></div>
+                  </div>
+
+                  <div class="fd-m-section">
+                    <div class="fd-m-section-title">FINANCIAL ROUTE</div>
+                    <div class="fd-m-route" id="fd-m-route"></div>
+                  </div>
+
+                  <div class="fd-m-section">
+                    <div class="fd-m-section-title">FINANCIAL ALTITUDE</div>
+                    <div class="fd-m-altitude" id="fd-m-altitude"></div>
+                  </div>
                 </div>
 
                 <div class="fd-controls">
@@ -7567,6 +7639,76 @@
         }).join('');
 
         cloudContainer.innerHTML = html;
+      }
+
+      // ---------- Mobile panel — same computed values, dedicated
+      // stacked presentation instead of the desktop overlay-on-photo
+      // layout, which is hidden entirely below the mobile breakpoint. ----------
+      const mVerdict = document.getElementById('fd-m-verdict');
+      if (mVerdict) { mVerdict.innerText = headline; mVerdict.style.color = wMeta.color; }
+
+      const mBalance = document.getElementById('fd-m-balance');
+      if (mBalance) {
+        mBalance.innerHTML = '$';
+        const wrap = document.createElement('span');
+        mBalance.appendChild(wrap);
+        fdRenderReel(wrap, current.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','));
+      }
+      const mMini = document.getElementById('fd-m-mini');
+      if (mMini) {
+        const daysTxt = viewData.nextIncome ? `${viewData.daysUntilIncome}D` : '—';
+        mMini.innerHTML = `
+          <div><div class="fd-m-mini-label">TO PAYDAY</div><div class="fd-m-mini-value" style="color:#6ee7b7">${daysTxt}</div></div>
+          <div><div class="fd-m-mini-label">LOWEST</div><div class="fd-m-mini-value" style="color:#ff6b6b">$${Math.round(lowest).toLocaleString()}</div></div>
+          <div><div class="fd-m-mini-label">SAFE SPEND</div><div class="fd-m-mini-value" style="color:#ffd54a">$${Math.round(viewData.safeSpend).toLocaleString()}</div></div>`;
+      }
+      const mTicker = document.getElementById('fd-m-ticker-track');
+      if (mTicker) {
+        const daysTxt2 = viewData.nextIncome ? `${viewData.daysUntilIncome} DAYS` : 'UNSCHEDULED';
+        const mMsgs = [`>>> PAYDAY IN ${daysTxt2} >>>`, `>>> FORECAST ${wMeta.text} >>>`, `>>> SAFE SPEND $${Math.round(viewData.safeSpend).toLocaleString()} >>>`];
+        const mText = mMsgs.join('     ');
+        mTicker.innerText = mText + '     ' + mText;
+      }
+
+      const mWeatherRing = document.getElementById('fd-m-weather-ring');
+      const mWeatherLabel = document.getElementById('fd-m-weather-label');
+      if (mWeatherRing) { mWeatherRing.style.borderColor = wMeta.color; mWeatherRing.style.boxShadow = `0 0 10px 2px ${wMeta.color}88`; }
+      if (mWeatherLabel) { mWeatherLabel.innerText = wMeta.text; mWeatherLabel.style.color = wMeta.color; }
+
+      const mComputer = document.getElementById('fd-m-computer');
+      if (mComputer) {
+        const inHousehold2 = !!(state.household && state.household.id && state.household.accountMode === 'shared');
+        const nextIncomeTxt2 = viewData.nextIncome
+          ? `${new Date(viewData.nextIncome.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} +$${Math.round(viewData.nextIncome.amount).toLocaleString()}`
+          : 'Unscheduled';
+        const nextBillTxt2 = culprit ? `${culprit.label} -$${Math.round(culprit.amount).toLocaleString()}` : 'None upcoming';
+        mComputer.innerHTML = `
+          <div class="fd-m-computer-row">NEXT BILL: <b>${nextBillTxt2}</b></div>
+          <div class="fd-m-computer-row">NEXT INCOME: <b>${nextIncomeTxt2}</b></div>
+          <div class="fd-m-computer-row">PROJECTED FLOOR: <b>$${Math.round(lowest).toLocaleString()}</b></div>
+          <div class="fd-m-computer-row">HOUSEHOLD: <b>${inHousehold2 ? 'SYNCED' : 'SOLO'}</b></div>`;
+      }
+
+      const mRoute = document.getElementById('fd-m-route');
+      if (mRoute) {
+        const mRouteItems = entries.slice(0, 4);
+        let mHtml = `<div class="fd-m-route-row"><div class="fd-m-route-dot" style="background:#5eead4"></div><div class="fd-m-route-name">TODAY</div><div class="fd-m-route-meta">$${Math.round(current).toLocaleString()}</div></div>`;
+        mHtml += mRouteItems.map((it) => {
+          const color = it.ev.type === 'payday' ? '#6ee7b7' : '#ffb454';
+          const dateTxt = new Date(it.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          const amtTxt = (it.ev.type === 'payday' || it.ev.type === 'goal' ? '+' : '-') + '$' + Math.round(it.ev.amount).toLocaleString();
+          return `<div class="fd-m-route-row"><div class="fd-m-route-dot" style="background:${color}"></div><div class="fd-m-route-name">${(it.ev.label || '').toUpperCase()}</div><div class="fd-m-route-meta">${dateTxt} · ${amtTxt}</div></div>`;
+        }).join('');
+        mRoute.innerHTML = mHtml;
+      }
+
+      const mAltitude = document.getElementById('fd-m-altitude');
+      if (mAltitude) {
+        const healthPct2 = Math.max(6, Math.min(100, Math.round((lowest / Math.max(current, 1)) * 100)));
+        mAltitude.innerHTML = `
+          <div class="fd-m-altitude-row"><span>Current</span><b style="color:#6ee7b7">$${Math.round(current).toLocaleString()}</b></div>
+          <div class="fd-m-altitude-row"><span>Projected floor</span><b style="color:#ff6b6b">$${Math.round(lowest).toLocaleString()}</b></div>
+          <div class="fd-m-altitude-bar"><div class="fd-m-altitude-fill" style="width:${healthPct2}%;background:${wMeta.color};box-shadow:0 0 4px ${wMeta.color}"></div></div>`;
       }
 
       if (!fdCanvasState) fdStartCanvas();
