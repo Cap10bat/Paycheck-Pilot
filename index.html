@@ -7327,7 +7327,7 @@
 
       const dirLTR = Math.random() < 0.5;
       const topPct = (7 + Math.random() * 20).toFixed(1); // wider height variety, still clear of destination/bills
-      const duration = (8 + Math.random() * 7).toFixed(1); // 8-15s crossing
+      const duration = (10.5 + Math.random() * 9).toFixed(1); // 10.5-19.5s — ~30% slower, pleasant scenic pace
       // Three genuine pass distances, weighted toward Close/Medium
       // rather than a uniform random range (which would make "far"
       // just as likely as "close").
@@ -8061,14 +8061,25 @@
 
       fdIntelMessages = queue;
       fdIntelIdx = 0;
-      if (fdIntelInterval) clearInterval(fdIntelInterval);
+      if (fdIntelInterval) clearTimeout(fdIntelInterval);
       fdShowIntelMessage();
-      fdIntelInterval = setInterval(() => {
+      fdScheduleNextIntelMessage();
+    }
+    function fdScheduleNextIntelMessage() {
+      const current = fdIntelMessages[fdIntelIdx];
+      // Sponsor creatives stay up longer (6-8s) than regular forecast
+      // intel (4-6s) — deliberately different durations, not one fixed
+      // interval for everything.
+      const delay = current && current.type === 'sponsor'
+        ? 6000 + Math.random() * 2000
+        : 4000 + Math.random() * 2000;
+      fdIntelInterval = setTimeout(() => {
         const el = document.getElementById('radar-intel-content');
-        if (!el) { clearInterval(fdIntelInterval); return; } // page navigated away
+        if (!el) return; // page navigated away; stop the chain
         fdIntelIdx = (fdIntelIdx + 1) % fdIntelMessages.length;
         fdShowIntelMessage();
-      }, 4000);
+        fdScheduleNextIntelMessage();
+      }, delay);
     }
     function fdShowIntelMessage() {
       const el = document.getElementById('radar-intel-content');
