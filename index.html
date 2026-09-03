@@ -1179,7 +1179,7 @@
 
     .fd-world-layer { position: absolute; left: 0; right: 0; top: 0; height: 40%; overflow: hidden; z-index: 10; }
     #fd-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-    .fd-stencil { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 50; }
+    .fd-stencil { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 50; pointer-events: none; }
 
     .fd-payday-glow { position: absolute; left: 74%; top: 76%; width: 18%; height: 20%; pointer-events: none; z-index: 11; transform: scale(var(--fd-dest-scale, 1)); transform-origin: 60% 70%; transition: transform 1.2s ease; }
     .fd-payday-ring { position: absolute; inset: 0; border-radius: 999px; background: radial-gradient(ellipse, rgba(255,214,140,0.4), transparent 70%); animation: fdGlowPulse 3.4s ease-in-out infinite; }
@@ -1330,6 +1330,30 @@
       .fd-payday-core { box-shadow: 0 0 26px 10px rgba(255,214,140,0.7); }
       .fd-btn { font-size: 13px; padding: 8px 16px; }
     }
+    /* ---------- Sponsor aircraft — a small plane towing a banner
+       across the windshield, entering from one edge and exiting the
+       other. Lives in the world layer so it's naturally occluded by
+       the cockpit framing (pillars) exactly like bill clouds are.
+       A small, non-dominant SPONSORED tag keeps this honest. ---------- */
+    .fd-sponsor-plane { position: absolute; z-index: 13; display: flex; align-items: center; gap: 6px; animation-timing-function: linear; animation-iteration-count: infinite; }
+    .fd-sponsor-plane { position: absolute; z-index: 13; display: flex; align-items: center; animation-timing-function: linear; animation-iteration-count: infinite; }
+    .fd-plane-icon-wrap { flex-shrink: 0; animation: fdPlaneBob 2.4s ease-in-out infinite; }
+    .fd-plane-icon { width: 46px; height: 20px; display: block; filter: drop-shadow(0 1px 3px rgba(0,0,0,0.55)); }
+    .fd-dir-rtl .fd-plane-icon { transform: scaleX(-1); }
+    .fd-tow-rope { width: 34px; height: 10px; flex-shrink: 0; overflow: visible; }
+    .fd-plane-banner-link { display: block; text-decoration: none; cursor: pointer; flex-shrink: 0; animation: fdBannerBob 2.4s ease-in-out infinite; animation-delay: 0.3s; }
+    .fd-plane-banner { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 6px 16px; min-width: 130px; background: linear-gradient(180deg, rgba(232,224,196,0.95), rgba(210,198,164,0.95)); border: 1.5px solid rgba(90,70,40,0.55); border-radius: 2px; box-shadow: 0 3px 10px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.3); white-space: nowrap; animation: fdBannerFlutter 1.7s ease-in-out infinite; transform-origin: left center; }
+    .fd-dir-rtl .fd-plane-banner { transform-origin: right center; }
+    .fd-plane-banner-tag { font-size: 6px; font-weight: 800; letter-spacing: 0.1em; color: #7a3a1a; font-family: ui-monospace, monospace; }
+    .fd-banner-img-wrap { position: relative; display: block; }
+    .fd-banner-img { display: block; max-width: 168px; max-height: 60px; min-width: 90px; border: 1.5px solid rgba(90,70,40,0.4); border-radius: 2px; box-shadow: 0 3px 10px rgba(0,0,0,0.5); }
+    .fd-banner-img-tag { position: absolute; bottom: -7px; right: 2px; font-size: 5.5px; font-weight: 800; letter-spacing: 0.06em; color: #7a3a1a; background: rgba(232,224,196,0.95); padding: 1px 4px; border-radius: 2px; font-family: ui-monospace, monospace; }
+    .fd-plane-banner-text { font-size: 10px; font-weight: 800; color: #2a2015; font-family: Georgia, serif; letter-spacing: 0.01em; }
+    @keyframes fdPlaneBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+    @keyframes fdBannerBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(2px); } }
+    @keyframes fdBannerFlutter { 0%,100% { transform: skewY(0deg) rotate(0deg); } 50% { transform: skewY(0.6deg) rotate(0.4deg); } }
+    @keyframes fdPlaneLTR { 0% { left: -22%; top: -1%; } 50% { top: 1.5%; } 100% { left: 112%; top: -0.5%; } }
+    @keyframes fdPlaneRTL { 0% { left: 112%; top: -1%; } 50% { top: 1.5%; } 100% { left: -22%; top: -0.5%; } }
     /* ===================== END FLIGHT DECK ===================== */
 
   </style>
@@ -2291,6 +2315,15 @@
               </svg>
             </div>
 
+            <!-- FINANCIAL INTELLIGENCE FEED — rotating real financial
+                 info with occasional partner recommendations mixed in.
+                 Not an ad ticker: mostly real intelligence about the
+                 user's own forecast. -->
+            <div id="radar-intel-feed" class="glass-card rounded-2xl border border-slate-800/80 px-4 py-3 flex items-center gap-2.5 overflow-hidden">
+              <i data-lucide="radio" class="w-3.5 h-3.5 text-cyan-400 shrink-0"></i>
+              <div id="radar-intel-content" class="text-xs sm:text-sm text-slate-300 font-medium truncate flex-1"></div>
+            </div>
+
             <!-- WHY — "What causes my lowest balance?" answered second, as a dedicated explainer, not a small flag on the chart -->
             <div id="radar-why-card" class="glass-card rounded-3xl p-4 sm:p-5 border border-slate-800/80">
               <p class="text-[11px] uppercase tracking-widest text-slate-500 font-bold mb-3">What Causes My Lowest Balance?</p>
@@ -2337,6 +2370,7 @@
                       <div class="fd-beacon" style="left:78%;top:50%;animation-delay:0.6s;"></div>
                     </div>
                     <div id="fd-bill-clouds"></div>
+                    <div id="fd-sponsor-plane-slot"></div>
                   </div>
 
                   <img id="fd-stencil" class="fd-stencil" alt="" />
@@ -7236,6 +7270,104 @@
     // logic, just without the useEffect wrapper). ----------
     function fdPrNoise(seed) { const n = Math.sin(seed * 12.9898) * 43758.5453; return n - Math.floor(n); }
 
+    // ============================================================
+    // SPONSOR BILLBOARDS — environmental world objects, not UI chrome.
+    // Placed only at outer horizon edges, well clear of the payday
+    // destination (right pane, lower band) and bill cloud paths.
+    // Randomized once per session so each visit feels different.
+    // ============================================================
+    // ============================================================
+    // SPONSOR CONFIG — single source of truth for all sponsor data,
+    // used by both the Flight Deck aircraft system and the Standard
+    // view's Financial Intelligence Feed. Flight Deck and Feed use
+    // separate tracking URLs per sponsor (different attribution).
+    // ============================================================
+    const FD_SPONSOR_CONFIG = [
+      {
+        name: 'Morningstar',
+        flightDeckUrl: 'https://www.awin1.com/cread.php?s=3750055&v=81639&q=490472&r=3030159',
+        feedUrl: 'https://www.awin1.com/cread.php?s=3750059&v=81639&q=490472&r=3030159',
+        flightDeckImage: 'https://www.awin1.com/cshow.php?s=3750055&v=81639&q=490472&r=3030159',
+        feedImage: 'https://www.awin1.com/cshow.php?s=3750059&v=81639&q=490472&r=3030159',
+        resourceMessage: 'Explore investment research with Morningstar',
+      },
+      {
+        name: 'CountAbout',
+        flightDeckUrl: 'https://www.awin1.com/cread.php?s=4388606&v=35984&q=571528&r=3030159',
+        feedUrl: 'https://www.awin1.com/cread.php?s=4388608&v=35984&q=571529&r=3030159',
+        flightDeckImage: 'https://www.awin1.com/cshow.php?s=4388606&v=35984&q=571528&r=3030159',
+        feedImage: 'https://www.awin1.com/cshow.php?s=4388608&v=35984&q=571529&r=3030159',
+        resourceMessage: 'Advanced expense organization with CountAbout',
+      },
+      {
+        name: 'Corporate Housing by Owner',
+        flightDeckUrl: 'https://www.awin1.com/cread.php?s=4435797&v=88305&q=574775&r=3030159',
+        feedUrl: 'https://www.awin1.com/cread.php?s=4435774&v=88305&q=574776&r=3030159',
+        flightDeckImage: 'https://www.awin1.com/cshow.php?s=4435797&v=88305&q=574775&r=3030159',
+        feedImage: 'https://www.awin1.com/cshow.php?s=4435774&v=88305&q=574776&r=3030159',
+        resourceMessage: 'Furnished housing options nationwide',
+      },
+    ];
+    const FD_PLANE_SVG = '<svg viewBox="0 0 100 40" xmlns="http://www.w3.org/2000/svg"><path d="M2,20 L18,16.5 L18,23.5 Z" fill="#c9c9c0"/><path d="M8,20 L21,3 L25,3 L21,20 Z" fill="#c9c9c0"/><path d="M15,20 L21,16.5 L89,16.5 L99,20 L89,23.5 L21,23.5 Z" fill="#e9e9e2"/><path d="M43,18.5 L30,1 L39,1 L54,18.5 Z" fill="#d4d4cb"/><path d="M43,21.5 L30,39 L39,39 L54,21.5 Z" fill="#d4d4cb"/><ellipse cx="83" cy="19.5" rx="4.5" ry="2.2" fill="#3a4a58" opacity="0.75"/></svg>';
+    let fdPlaneScheduled = false;
+    function fdBannerImgError(imgEl, name) {
+      const wrap = imgEl.parentElement; // .fd-banner-img-wrap
+      if (wrap) wrap.outerHTML = `<span class="fd-plane-banner"><span class="fd-plane-banner-tag">SPONSORED</span><span class="fd-plane-banner-text">${name}</span></span>`;
+    }
+    let fdPlaneOrder = [];
+    function fdSpawnNextPlane() {
+      const slot = document.getElementById('fd-sponsor-plane-slot');
+      if (!slot) return; // page navigated away; stop the chain
+
+      if (fdPlaneOrder.length === 0) fdPlaneOrder = [...FD_SPONSOR_CONFIG].sort(() => Math.random() - 0.5);
+      const sponsor = fdPlaneOrder.shift();
+
+      const dirLTR = Math.random() < 0.5;
+      const topPct = (10 + Math.random() * 14).toFixed(1); // upper sky band, clear of destination/bills
+      const duration = (8 + Math.random() * 7).toFixed(1); // 8-15s crossing
+
+      const el = document.createElement('div');
+      el.className = 'fd-sponsor-plane' + (dirLTR ? '' : ' fd-dir-rtl');
+      el.style.top = topPct + '%';
+      el.style.animationName = dirLTR ? 'fdPlaneLTR' : 'fdPlaneRTL';
+      el.style.animationDuration = duration + 's';
+
+      const planeHtml = `<span class="fd-plane-icon-wrap"><span class="fd-plane-icon">${FD_PLANE_SVG}</span></span>`;
+      const ropeHtml = `<svg class="fd-tow-rope" viewBox="0 0 34 10" preserveAspectRatio="none"><path d="M0,2 Q17,10 34,2" stroke="rgba(210,205,190,0.55)" stroke-width="1" fill="none"/></svg>`;
+      // AWIN creative image: verified via a direct fetch test that
+      // cshow.php returns real image content (not an HTML redirect),
+      // so the actual advertiser creative is used here. The onerror
+      // handler is a genuine runtime fallback — if a specific image
+      // ever fails to load in the browser, it's replaced with the
+      // designed text banner automatically, not skipped by assumption.
+      const bannerInner = sponsor.flightDeckImage
+        ? `<span class="fd-banner-img-wrap"><img src="${sponsor.flightDeckImage}" alt="${sponsor.name}" class="fd-banner-img" onerror="fdBannerImgError(this, '${sponsor.name.replace(/'/g, "\\'")}')" /><span class="fd-banner-img-tag">SPONSORED</span></span>`
+        : `<span class="fd-plane-banner"><span class="fd-plane-banner-tag">SPONSORED</span><span class="fd-plane-banner-text">${sponsor.name}</span></span>`;
+      const bannerHtml = `<a class="fd-plane-banner-link" href="${sponsor.flightDeckUrl}" target="_blank" rel="sponsored noopener noreferrer" aria-label="Sponsored Partner: ${sponsor.name}">${bannerInner}</a>`;
+
+      // Plane leads, banner trails — DOM order (not a flex-reverse
+      // trick) determines which end is which, since flex lays out
+      // DOM order left-to-right by default.
+      el.innerHTML = dirLTR
+        ? (bannerHtml + ropeHtml + planeHtml)   // banner(left) -- rope -- plane(right), moving right: plane leads
+        : (planeHtml + ropeHtml + bannerHtml);  // plane(left) -- rope -- banner(right), moving left: plane leads
+
+      slot.appendChild(el);
+
+      const durationMs = parseFloat(duration) * 1000;
+      setTimeout(() => { el.remove(); }, durationMs + 200);
+
+      // Gap before the next aircraft — only one event at a time, with
+      // real breathing room between sponsors rather than back-to-back.
+      const gapMs = (10 + Math.random() * 12) * 1000;
+      setTimeout(fdSpawnNextPlane, durationMs + gapMs);
+    }
+    function fdInitBillboards() {
+      if (fdPlaneScheduled) return;
+      fdPlaneScheduled = true;
+      setTimeout(fdSpawnNextPlane, 4000 + Math.random() * 4000); // initial delay before the first pass
+    }
+
     function fdStartCanvas() {
       const canvas = document.getElementById('fd-canvas');
       if (!canvas) return;
@@ -7712,6 +7844,7 @@
       }
 
       if (!fdCanvasState) fdStartCanvas();
+      fdInitBillboards();
     }
 
     function renderFinancialRadar(series) {
@@ -7886,6 +8019,69 @@
       return { points, min, max };
     }
 
+    let fdIntelInterval = null;
+    let fdIntelMessages = [];
+    let fdIntelIdx = 0;
+    function renderIntelFeed(series, viewData, status) {
+      const values = series.map(s => s.balance);
+      const lowest = Math.min(...values);
+      const lowestIdx = values.indexOf(lowest);
+      const culprit = findLowestBalanceCulprit(series, lowestIdx);
+
+      const realMsgs = [];
+      if (culprit) realMsgs.push(`NEXT BILL: ${culprit.label} ${new Date(culprit.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} (-$${Math.round(culprit.amount).toLocaleString()})`);
+      realMsgs.push(`LOWEST BALANCE: $${Math.round(lowest).toLocaleString()}`);
+      if (viewData.nextIncome) realMsgs.push(`PAYDAY IN ${viewData.daysUntilIncome} DAYS`);
+      realMsgs.push(`SAFE TO SPEND: $${Math.round(viewData.safeSpend).toLocaleString()}`);
+      realMsgs.push(`FORECAST ${(status.label || 'ON TRACK').toUpperCase()}`);
+      if (viewData.nextIncome) realMsgs.push(`NEXT PAYCHECK: ${viewData.nextIncome.label} (+$${Math.round(viewData.nextIncome.amount).toLocaleString()})`);
+      if (viewData.upcomingBills.length === 0) realMsgs.push(`ALL BILLS COVERED`);
+      realMsgs.push(`PROJECTED BALANCE: $${Math.round(values[0]).toLocaleString()}`);
+
+      const sponsor = FD_SPONSOR_CONFIG[Math.floor(Math.random() * FD_SPONSOR_CONFIG.length)];
+
+      // One sponsor message mixed into the real-intel queue at a random
+      // position — roughly 1-in-8 to 1-in-9 of the total, landing
+      // within the 10-20% target without being predictable in position.
+      const queue = realMsgs.map(m => ({ type: 'intel', text: m }));
+      const insertAt = Math.floor(Math.random() * (queue.length + 1));
+      queue.splice(insertAt, 0, { type: 'sponsor', text: `PARTNER RESOURCE: ${sponsor.resourceMessage}`, partner: sponsor.name, link: sponsor.feedUrl, image: sponsor.feedImage });
+
+      fdIntelMessages = queue;
+      fdIntelIdx = 0;
+      if (fdIntelInterval) clearInterval(fdIntelInterval);
+      fdShowIntelMessage();
+      fdIntelInterval = setInterval(() => {
+        const el = document.getElementById('radar-intel-content');
+        if (!el) { clearInterval(fdIntelInterval); return; } // page navigated away
+        fdIntelIdx = (fdIntelIdx + 1) % fdIntelMessages.length;
+        fdShowIntelMessage();
+      }, 4000);
+    }
+    function fdShowIntelMessage() {
+      const el = document.getElementById('radar-intel-content');
+      if (!el || !fdIntelMessages.length) return;
+      const msg = fdIntelMessages[fdIntelIdx];
+      if (msg.type === 'sponsor') {
+        const imgHtml = msg.image
+          ? `<img src="${msg.image}" alt="${msg.partner}" style="height:28px;max-width:140px;display:block;border-radius:2px;" onerror="fdFeedImgError(this, '${msg.partner.replace(/'/g, "\\'")}')" />`
+          : `<span class="truncate">${msg.text}</span>`;
+        el.innerHTML = `<a href="${msg.link}" target="_blank" rel="sponsored noopener noreferrer" aria-label="Sponsored Partner: ${msg.partner}" class="text-amber-300 hover:text-amber-200 flex items-center gap-2">
+          <span class="text-[9px] font-bold uppercase tracking-wide bg-amber-500/15 text-amber-300 px-1.5 py-0.5 rounded shrink-0">Partner</span>
+          ${imgHtml}
+        </a>`;
+      } else {
+        el.innerText = msg.text;
+      }
+    }
+    function fdFeedImgError(imgEl, partnerName) {
+      const parent = imgEl.parentElement;
+      const fallbackText = fdIntelMessages.find(m => m.type === 'sponsor' && m.partner === partnerName);
+      if (parent && fallbackText) {
+        imgEl.outerHTML = `<span class="truncate">${fallbackText.text}</span>`;
+      }
+    }
+
     function renderForecast() {
       const series = buildForecastSeries(60);
       const values = series.map(s => s.balance);
@@ -7897,6 +8093,7 @@
       const viewData = getActiveViewData();
 
       renderFinancialRadar(series);
+      renderIntelFeed(series, viewData, status);
 
       // --- HUD readouts ---
       const todayHud = document.getElementById('radar-hud-today');
