@@ -5646,7 +5646,25 @@
       const cutoffDate = nextIncome ? nextIncome.date : null;
       const upcomingBills = cutoffDate ? allBills.filter(b => b.dueDate <= cutoffDate) : allBills;
       const upcomingTotal = upcomingBills.reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
-      const safeSpend = cash - upcomingTotal;
+
+      // Safe Spend reserve: bills strictly before the incoming paycheck
+      // are reserved from current cash in full. Bills due on the SAME
+      // calendar date as the paycheck are treated as covered by that
+      // paycheck — only the shortfall, if same-day bills exceed the
+      // paycheck amount, is still reserved. This protects against a
+      // genuine overdraft (same-day bills bigger than the paycheck)
+      // while not double-reserving cash for bills the paycheck itself
+      // will cover.
+      const strictlyBeforeTotal = cutoffDate
+        ? allBills.filter(b => b.dueDate < cutoffDate).reduce((sum, b) => sum + (Number(b.amount) || 0), 0)
+        : upcomingTotal;
+      const sameDayTotal = cutoffDate
+        ? allBills.filter(b => b.dueDate === cutoffDate).reduce((sum, b) => sum + (Number(b.amount) || 0), 0)
+        : 0;
+      const sameDayShortfall = nextIncome ? Math.max(0, sameDayTotal - nextIncome.amount) : sameDayTotal;
+      const safeSpendReserve = strictlyBeforeTotal + sameDayShortfall;
+      const safeSpend = cash - safeSpendReserve;
+
       const today = new Date(); today.setHours(0, 0, 0, 0);
       const daysUntilIncome = cutoffDate ? Math.max(0, Math.round((new Date(cutoffDate + 'T00:00:00') - today) / 86400000)) : 0;
       const dailyAvailable = daysUntilIncome > 0 ? safeSpend / daysUntilIncome : safeSpend;
