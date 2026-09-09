@@ -13401,7 +13401,18 @@
       width = canvas.width = window.innerWidth;
       height = canvas.height = window.innerHeight;
     }
-    window.addEventListener('resize', resize);
+    // Debounced: mobile browsers fire 'resize' repeatedly while the
+    // address bar shows/hides during ordinary scrolling. Each call to
+    // resize() reallocates the entire canvas bitmap buffer (expensive),
+    // and this listener is active for the whole page lifetime, not just
+    // while Weather World is open. Un-debounced, rapid-fire resize
+    // events on mobile were triggering repeated full-canvas
+    // reallocation, which is the mobile crash root cause.
+    let wwResizeDebounce = null;
+    window.addEventListener('resize', () => {
+      if (wwResizeDebounce) clearTimeout(wwResizeDebounce);
+      wwResizeDebounce = setTimeout(resize, 200);
+    });
     resize();
 
     // --- STATE CONTROLLER & INTERPOLATION TARGETS ---
