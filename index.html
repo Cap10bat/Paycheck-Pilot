@@ -13397,9 +13397,22 @@
     const ctx = canvas.getContext('2d');
 
     let width, height;
+    // Mobile-only zoom-out: increases the canvas's internal drawing
+    // space beyond the viewport on narrow screens (canvas CSS is
+    // width:100%/height:100%, so it still visually fills the screen).
+    // Every draw function positions/sizes things relative to width/
+    // height using its existing unmodified formulas — a larger
+    // logical canvas simply means the same fixed-pixel tree and
+    // terrain occupy a smaller fraction of the visible screen,
+    // showing more landscape. Desktop (>=768px) is untouched: zoom
+    // factor is exactly 1, identical to prior behavior.
+    const WW_MOBILE_BREAKPOINT = 768;
+    const WW_MOBILE_ZOOM = 1.6;
     function resize() {
-      width = canvas.width = window.innerWidth;
-      height = canvas.height = window.innerHeight;
+      const isMobileViewport = window.innerWidth < WW_MOBILE_BREAKPOINT;
+      const zoom = isMobileViewport ? WW_MOBILE_ZOOM : 1;
+      width = canvas.width = window.innerWidth * zoom;
+      height = canvas.height = window.innerHeight * zoom;
     }
     // Debounced: mobile browsers fire 'resize' repeatedly while the
     // address bar shows/hides during ordinary scrolling. Each call to
