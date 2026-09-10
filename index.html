@@ -5226,9 +5226,27 @@
           const previousSyncTime = state.lastSyncTime;
           const cloudPayload = data.data;
           const authoritativeUser = state.user;
-          // Cloud is the source of truth on login; keep the freshly
-          // authenticated user object rather than whatever was cached.
-          state = { ...state, ...cloudPayload, user: authoritativeUser, isDemo: false };
+          const myOwnerId = authoritativeUser ? authoritativeUser.id : null;
+          // Personal income is owner-keyed in the shared sync row (the
+          // same pattern householdPaychecks entries already use via
+          // ownerId), so each person's own paycheck has its own slot
+          // instead of one flat field every member's push would
+          // otherwise overwrite. Resolved to a plain state.income right
+          // here, before anything downstream (Forecast, Safe Spend,
+          // Money Mayday, Financial Weather, Household aggregation)
+          // ever reads it — none of those change; they keep reading
+          // state.income exactly as they always have.
+          const cloudIncomeByOwner = cloudPayload.income_by_owner || {};
+          // Migration: a row saved before this change (or a member with
+          // no entry of their own yet) has nothing keyed for this user —
+          // fall back to whatever's already local on this device rather
+          // than a shared/ambiguous value, then seed the map below so
+          // future pulls (and this device's next push) find it.
+          const authoritativeIncome = (myOwnerId && Object.prototype.hasOwnProperty.call(cloudIncomeByOwner, myOwnerId))
+            ? cloudIncomeByOwner[myOwnerId]
+            : state.income;
+          const mergedIncomeByOwner = myOwnerId ? { ...cloudIncomeByOwner, [myOwnerId]: authoritativeIncome } : cloudIncomeByOwner;
+          state = { ...state, ...cloudPayload, user: authoritativeUser, income: authoritativeIncome, income_by_owner: mergedIncomeByOwner, isDemo: false };
           deduplicateHouseholdPaychecks();
           advanceStaleHouseholdPaychecks();
           localStorage.setItem('paycheck_pilot_state', JSON.stringify(state));
@@ -5296,6 +5314,14 @@
       setSyncStatus('syncing');
 
       try {
+        // Owner-key this device's own income into the shared payload
+        // (mirroring householdPaychecks' existing ownerId pattern) so it
+        // has its own slot in the row instead of one flat field every
+        // member's push would otherwise overwrite. The old flat `income`
+        // field is left as-is alongside it, for backward compatibility
+        // with any device that hasn't updated yet.
+        state.income_by_owner = { ...(state.income_by_owner || {}), [state.user.id]: state.income };
+
         const syncRecord = {
           id: syncKey,
           updated_at: state.lastSyncTime,
