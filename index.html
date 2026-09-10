@@ -4890,6 +4890,50 @@
     // stale date keeps sorting as "next" indefinitely, distorting the
     // Next Income Card, Mission Status, and Payday Countdown in Household
     // View long after that person was actually paid.
+    // One-time, narrowly-targeted repair for the confirmed Stephen/Boo
+    // income contamination (see investigation: createDefaultState()'s
+    // untouched placeholder seeded into income_by_owner, and an import-
+    // wizard average mistakenly tagged as Stephen's own household entry).
+    // Matches ONLY the exact confirmed values, so it cannot alter any
+    // other account's real data — a genuine $2,500 paycheck a user
+    // actually entered has lastEditedBy set and is left alone; any
+    // household paycheck entry not matching all three fields exactly is
+    // left alone. Runs at most once per device, then disarms itself.
+    function repairKnownIncomeContaminationOnce() {
+      if (state.__incomeContaminationRepairApplied) return false;
+      let changed = false;
+
+      const myId = state.user && state.user.id;
+      const myEntry = myId && state.income_by_owner ? state.income_by_owner[myId] : null;
+      const isExactKnownPlaceholder = myEntry &&
+        Number(myEntry.amount) === 2500 &&
+        myEntry.nextDate === '2026-09-15' &&
+        !myEntry.lastEditedBy;
+      if (isExactKnownPlaceholder) {
+        // Confirmed correct value from the investigation — written
+        // directly, since waiting for a local re-edit would leave the
+        // account showing the wrong paycheck until that happened.
+        state.income_by_owner[myId].amount = 1364;
+        state.income_by_owner[myId].nextDate = '2026-09-11';
+        if (state.income && Number(state.income.amount) === 2500 && state.income.nextDate === '2026-09-15' && !state.income.lastEditedBy) {
+          state.income.amount = 1364;
+          state.income.nextDate = '2026-09-11';
+        }
+        changed = true;
+      }
+
+      const staleIndex = (state.householdPaychecks || []).findIndex(hp =>
+        hp.ownerLabel === 'Stephen' && Number(hp.amount) === 1300 && hp.nextDate === '2026-09-11'
+      );
+      if (staleIndex !== -1) {
+        state.householdPaychecks.splice(staleIndex, 1);
+        changed = true;
+      }
+
+      state.__incomeContaminationRepairApplied = true;
+      return changed;
+    }
+
     function advanceStaleHouseholdPaychecks() {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -5242,13 +5286,27 @@
           // fall back to whatever's already local on this device rather
           // than a shared/ambiguous value, then seed the map below so
           // future pulls (and this device's next push) find it.
-          const authoritativeIncome = (myOwnerId && Object.prototype.hasOwnProperty.call(cloudIncomeByOwner, myOwnerId))
+          //
+          // Guard: only seed a fallback value if it's actually been
+          // touched by a real user action (state.income.lastEditedBy is
+          // set — written only by savePaydaySettings() and the import
+          // wizard's personal-income branch, never by createDefaultState()).
+          // An untouched local default has no business becoming this
+          // user's permanent, authoritative income record just because a
+          // pull happened to run before they ever entered real values.
+          const hasOwnEntry = !!(myOwnerId && Object.prototype.hasOwnProperty.call(cloudIncomeByOwner, myOwnerId));
+          const localIncomeIsUserTouched = !!(state.income && state.income.lastEditedBy);
+          const authoritativeIncome = hasOwnEntry
             ? cloudIncomeByOwner[myOwnerId]
             : state.income;
-          const mergedIncomeByOwner = myOwnerId ? { ...cloudIncomeByOwner, [myOwnerId]: authoritativeIncome } : cloudIncomeByOwner;
+          const shouldSeedOwnerEntry = myOwnerId && (hasOwnEntry || localIncomeIsUserTouched);
+          const mergedIncomeByOwner = shouldSeedOwnerEntry
+            ? { ...cloudIncomeByOwner, [myOwnerId]: authoritativeIncome }
+            : cloudIncomeByOwner;
           state = { ...state, ...cloudPayload, user: authoritativeUser, income: authoritativeIncome, income_by_owner: mergedIncomeByOwner, isDemo: false };
           deduplicateHouseholdPaychecks();
           advanceStaleHouseholdPaychecks();
+          repairKnownIncomeContaminationOnce();
           localStorage.setItem('paycheck_pilot_state', JSON.stringify(state));
           // Only log when this pull actually found something newer than what
           // was already local — with periodic polling, most pulls find
@@ -9562,6 +9620,19 @@
       if (missingOwnerName) {
         const msg = document.getElementById('reset-paycheck-gate-msg');
         if (msg) msg.innerText = 'Enter a name for each paycheck marked as a household member.';
+        return;
+      }
+      // Guard: a paycheck cannot be "someone else's household income" if
+      // the name entered is the currently authenticated user's own name.
+      // This is exactly the pattern that created a stale duplicate income
+      // entry for the logged-in user — their own detected deposits, tagged
+      // as an "other" household member's paycheck by mistake.
+      const selfLabeledAsHousehold = candidates.some((_, i) =>
+        choices[i].choice === 'household' && choices[i].ownerLabel.trim().toLowerCase() === currentOwnerLabel().trim().toLowerCase()
+      );
+      if (selfLabeledAsHousehold) {
+        const msg = document.getElementById('reset-paycheck-gate-msg');
+        if (msg) msg.innerText = `A paycheck can't be marked as a household member using your own name (${currentOwnerLabel()}). Choose "Personal" for your own paycheck instead.`;
         return;
       }
 
