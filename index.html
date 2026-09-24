@@ -6650,7 +6650,7 @@
       if (weatherPredictive) weatherPredictive.innerText = weather.predictive;
       if (weatherRisk) { weatherRisk.innerText = weather.riskLabel; weatherRisk.className = weather.riskClass; }
       const weatherFactors = document.getElementById('fin-weather-factors');
-      if (weatherFactors) weatherFactors.innerHTML = (weather.factors || []).map(f => `<li>${f}</li>`).join('');
+      if (weatherFactors) weatherFactors.innerHTML = (weather.factors || []).map(f => `<li>${escapeHtml(f)}</li>`).join('');
       const weatherNextAction = document.getElementById('fin-weather-next-action');
       if (weatherNextAction) weatherNextAction.innerText = weather.nextAction || '';
       if (weatherCard) {
@@ -10656,7 +10656,7 @@
           const dateTxt = new Date(it.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
           const amtTxt = (it.ev.type === 'goal' ? '→' : it.ev.type === 'payday' ? '+' : '-') + '$' + Math.round(it.ev.amount).toLocaleString();
           const isLandedPayday = landed && it.ev.type === 'payday' && it.date === localDateStr(new Date());
-          return `<div class="fd-d2-row"><div class="fd-d2-dot" style="background:${color}"></div><div class="fd-d2-info"><div class="fd-d2-name">${(it.ev.label || '').toUpperCase()}</div><div class="fd-d2-meta">${isLandedPayday ? 'Today' : dateTxt} · ${amtTxt}${isLandedPayday ? ' · LANDED' : ''}</div></div></div>`;
+          return `<div class="fd-d2-row"><div class="fd-d2-dot" style="background:${color}"></div><div class="fd-d2-info"><div class="fd-d2-name">${escapeHtml((it.ev.label || '').toUpperCase())}</div><div class="fd-d2-meta">${isLandedPayday ? 'Today' : dateTxt} · ${amtTxt}${isLandedPayday ? ' · LANDED' : ''}</div></div></div>`;
         }).join('');
         timelineEl.innerHTML = html;
       }
@@ -10734,7 +10734,7 @@
           <div class="fd-d5-row">HOUSEHOLD STATUS: <b>${inHousehold ? 'SYNCED' : 'SOLO'}</b></div>
           <div class="fd-d5-row">LOW CULPRIT: <b>${escapeHtml(culpritTxt)}</b></div>
           <div class="fd-d5-log">
-            <div class="fd-d5-log-track">${logDoubled.map(l => `<div class="fd-d5-log-line">${l}</div>`).join('')}</div>
+            <div class="fd-d5-log-track">${logDoubled.map(l => `<div class="fd-d5-log-line">${escapeHtml(l)}</div>`).join('')}</div>
           </div>`;
       }
 
@@ -15969,7 +15969,7 @@
               <div>
                 <p class="text-white font-semibold">${escapeHtml(a.name)}</p>
                 <p class="text-[10px] text-slate-500"><span class="capitalize">${escapeHtml(a.type)}</span> · Balance: ${a.balanceKnown === false ? '<span class="text-slate-400">not in statement</span>' : `<span class="${a.balance < 0 ? 'text-rose-400' : 'text-slate-300'}">${balanceDisplay}</span>`}</p>
-                ${a.institution || a.maskedAccountNumber ? `<p class="text-[10px] text-slate-500">${[a.institution, a.maskedAccountNumber].filter(Boolean).join(' · ')}</p>` : ''}
+                ${a.institution || a.maskedAccountNumber ? `<p class="text-[10px] text-slate-500">${escapeHtml([a.institution, a.maskedAccountNumber].filter(Boolean).join(' · '))}</p>` : ''}
               </div>
               ${warningText ? `
                 <div class="p-2 bg-amber-500/10 border border-amber-500/30 rounded-lg text-[10px] text-amber-200 flex items-start gap-1.5">
