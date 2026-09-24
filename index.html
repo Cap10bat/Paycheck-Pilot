@@ -4113,24 +4113,18 @@
           sharing: { bills: true, goals: true, forecast: true, accounts: false, transactions: false, income: false },
           memberList: [{ name: "You (Owner)", role: "owner", email: "pilot@user.com" }]
         },
-        accounts: [
-          { id: 'acc_1', name: 'Primary Checking', balance: 2450.00, type: 'checking', scope: 'personal' },
-          { id: 'acc_2', name: 'Emergency Savings', balance: 5200.00, type: 'savings', scope: 'personal' }
-        ],
+        // A real account starts EMPTY. Sample finances live only in
+        // createDemoState() -- seeded placeholders previously reached real
+        // accounts (see repairKnownIncomeContaminationOnce()).
+        accounts: [],
         income: {
-          amount: 2500,
+          amount: 0,
           frequency: 'biweekly',
-          nextDate: localDateStr(new Date(Date.now() + 5 * 86400000))
+          nextDate: null
         },
-        bills: [
-          { id: 'bill_1', title: 'Apartment Rent', amount: 1200.00, dueDate: localDateStr(new Date(Date.now() + 3 * 86400000)), category: 'Housing', priority: 'critical', recurrence: 'monthly', scope: 'personal', completed: false },
-          { id: 'bill_2', title: 'Electric Utility', amount: 95.00, dueDate: localDateStr(new Date(Date.now() + 8 * 86400000)), category: 'Utilities', priority: 'important', recurrence: 'monthly', scope: 'personal', completed: false },
-          { id: 'bill_3', title: 'Netflix Subscription', amount: 15.99, dueDate: localDateStr(new Date(Date.now() + 12 * 86400000)), category: 'Subscriptions', priority: 'flexible', recurrence: 'monthly', scope: 'personal', completed: false }
-        ],
+        bills: [],
         transactions: [],
-        goals: [
-          { id: 'goal_1', title: 'Emergency Fund', target: 5000.00, current: 4200.00, completedCelebrated: false }
-        ],
+        goals: [],
         activityLog: [],
         sponsors: [
           { id: 'awin', name: 'AWIN Partner', title: 'High-Yield Savings Boost', description: 'Earn 5.15% APY on liquid cash reserves.', url: 'https://example.com/awin', priority: 1, enabled: true, impressions: 0, clicks: 0, dismissals: 0 },
@@ -4150,6 +4144,25 @@
         // Management → Import History → Undo Import.
         importHistory: []
       };
+    }
+
+    // Sample finances for Demo Mode only. Never used for a real account.
+    function createDemoState() {
+      const s = createDefaultState();
+      s.accounts = [
+        { id: 'acc_1', name: 'Primary Checking', balance: 2450.00, type: 'checking', scope: 'personal' },
+        { id: 'acc_2', name: 'Emergency Savings', balance: 5200.00, type: 'savings', scope: 'personal' }
+      ];
+      s.income = { amount: 2500, frequency: 'biweekly', nextDate: localDateStr(new Date(Date.now() + 5 * 86400000)) };
+      s.bills = [
+        { id: 'bill_1', title: 'Apartment Rent', amount: 1200.00, dueDate: localDateStr(new Date(Date.now() + 3 * 86400000)), category: 'Housing', priority: 'critical', recurrence: 'monthly', scope: 'personal', completed: false },
+        { id: 'bill_2', title: 'Electric Utility', amount: 95.00, dueDate: localDateStr(new Date(Date.now() + 8 * 86400000)), category: 'Utilities', priority: 'important', recurrence: 'monthly', scope: 'personal', completed: false },
+        { id: 'bill_3', title: 'Netflix Subscription', amount: 15.99, dueDate: localDateStr(new Date(Date.now() + 12 * 86400000)), category: 'Subscriptions', priority: 'flexible', recurrence: 'monthly', scope: 'personal', completed: false }
+      ];
+      s.goals = [
+        { id: 'goal_1', title: 'Emergency Fund', target: 5000.00, current: 4200.00, completedCelebrated: false }
+      ];
+      return s;
     }
 
     let state = createDefaultState();
@@ -6082,7 +6095,7 @@
     }
 
     function loginAsDemo() {
-      state = createDefaultState();
+      state = createDemoState();
       state.user = { id: 'demo-user-id', email: 'demo@paycheckpilot.app' };
       state.isDemo = true;
       state.onboardingCompleted = true;
@@ -6248,9 +6261,9 @@
       }
 
       if (step === 2) {
-        if (document.getElementById('onboard-paycheck-amount')) document.getElementById('onboard-paycheck-amount').value = state.income.amount || 2500;
+        if (document.getElementById('onboard-paycheck-amount')) document.getElementById('onboard-paycheck-amount').value = state.income.amount > 0 ? state.income.amount : '';
         if (document.getElementById('onboard-pay-frequency')) document.getElementById('onboard-pay-frequency').value = state.income.frequency || 'biweekly';
-        if (document.getElementById('onboard-next-payday')) document.getElementById('onboard-next-payday').value = state.income.nextDate || localDateStr(new Date());
+        if (document.getElementById('onboard-next-payday')) document.getElementById('onboard-next-payday').value = state.income.nextDate || '';
         toggleSemimonthlyDayFields('-onboard', state.income.frequency === 'semimonthly' ? getSemimonthlyDays(state.income) : null);
         const errorEl = document.getElementById('onboard-amount-error');
         if (errorEl) errorEl.classList.add('hidden');
@@ -6305,12 +6318,19 @@
           if (inputEl) inputEl.classList.add('border-rose-500');
           return;
         }
-        if (errorEl) errorEl.classList.add('hidden');
+        const nextPayday = document.getElementById('onboard-next-payday').value;
+        if (!nextPayday) {
+          if (errorEl) { errorEl.innerText = "Choose your next payday date to continue."; errorEl.classList.remove('hidden'); }
+          return;
+        }
+        if (errorEl) { errorEl.classList.add('hidden'); errorEl.innerText = "Enter a paycheck amount greater than $0 to continue."; }
         state.income.amount = parsedAmount;
         state.income.frequency = document.getElementById('onboard-pay-frequency').value;
         state.income.nextDate = document.getElementById('onboard-next-payday').value;
         state.income.semimonthlyDay1 = state.income.frequency === 'semimonthly' ? document.getElementById('hp-semimonthly-day1-onboard').value : undefined;
         state.income.semimonthlyDay2 = state.income.frequency === 'semimonthly' ? document.getElementById('hp-semimonthly-day2-onboard').value : undefined;
+        state.income.lastEditedBy = currentOwnerLabel();
+        state.income.lastEditedAt = new Date().toISOString();
       }
 
       if (state.currentOnboardStep < 4) {
