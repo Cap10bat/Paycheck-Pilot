@@ -10053,6 +10053,9 @@
           // Limb arc and horizon flare belong to the orbital view; they fade
           // as the descent looks down onto the coast. The beacon itself stays.
           const horizonA = Math.max(0, 1 - descentE * 2);
+          // Beacon rides the coastal city while it's on the glass; once the
+          // harbor has taken over (6 days) it fades as before.
+          const beaconA = descentCity ? 1 : horizonA;
           ctx.globalAlpha = horizonA;
           // High Altitude Stratospheric Rayleigh Ozone Crescent (curves with Earth's limb)
           // Naturally thins and recedes as altitude decreases toward regional descent
@@ -10076,7 +10079,7 @@
           }
 
           // Payday Destination Beacon on the Horizon
-          ctx.globalAlpha = 1;
+          ctx.globalAlpha = beaconA;
           const progressFrac = (14 - normDay) / 14;
           const domeRadius = 170 + progressFrac * 130;
 
@@ -10123,7 +10126,7 @@
           ctx.fillRect(emberX - flareW * 0.5, emberY - 1.5, flareW, 3);
 
           // Core Ember
-          ctx.globalAlpha = 1;
+          ctx.globalAlpha = beaconA;
           ctx.filter = 'none';
           ctx.fillStyle = `rgba(255, 255, 255, ${weatherVisibility.toFixed(2)})`;
           ctx.beginPath();
