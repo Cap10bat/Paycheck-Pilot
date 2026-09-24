@@ -4381,6 +4381,12 @@
     function inHouseholdMode() {
       return !!(state.household && state.household.id && state.household.accountMode === 'shared');
     }
+    // Solo (personal-only) view exists only inside a household. Without
+    // one, every calculation shows the user's full picture -- including
+    // manual Additional Household Income for someone not using the app.
+    function isSoloView() {
+      return inHouseholdMode() && state.dashboardView === 'solo';
+    }
     // A schedule's next payday on or after today (a member who hasn't opened
     // the app recently still has a past date saved).
     function rollPayDateForward(sched) {
@@ -4522,7 +4528,7 @@
       // banner, instead of the raw cash-minus-bills figure (which ignores
       // income timing and was producing false alerts in exactly the
       // scenario those other systems were already fixed for).
-      const notifMayday = state.dashboardView === 'solo' ? computeSoloMaydayStatus() : computeHouseholdMaydayStatus();
+      const notifMayday = isSoloView() ? computeSoloMaydayStatus() : computeHouseholdMaydayStatus();
       if (notifMayday.active) {
         notifications.push({ type: 'financial-warning', label: 'Financial Warning' });
       }
@@ -6443,7 +6449,7 @@
     // against the soonest income event across every configured household
     // paycheck, not just the primary user's own — per spec.
     function getActiveViewData() {
-      const solo = state.dashboardView === 'solo';
+      const solo = isSoloView();
       const cash = solo ? personalSpendableCash() : getSpendableCash();
       const allBills = (solo ? personalBills() : visibleBills()).filter(b => !b.completed && !b.paused);
       const nextIncome = solo
@@ -6635,7 +6641,7 @@
           } else {
             lines.push({ icon: '✓', cls: 'text-brand-400', text: `Recommended spending until next income: $${formatCurrency(Math.max(0, viewData.dailyAvailable))}/day.` });
           }
-          lines.push({ icon: '✓', cls: 'text-brand-400', text: `${viewData.solo ? 'You remain' : 'Household remains'} positive through ${friendlyDate(viewData.nextIncome.date)}.` });
+          lines.push({ icon: '✓', cls: 'text-brand-400', text: `${viewData.solo || !inHouseholdMode() ? 'You remain' : 'Household remains'} positive through ${friendlyDate(viewData.nextIncome.date)}.` });
         } else {
           lines.push({ icon: '✓', cls: 'text-slate-400', text: 'Set up a payday schedule to see flight advisory guidance.' });
         }
@@ -7276,7 +7282,7 @@
     // interprets numbers the rest of the app already computes.
     // ==========================================
     function computeFinancialWeather(safeSpend, cash) {
-      const solo = state.dashboardView === 'solo';
+      const solo = isSoloView();
       const series = solo ? buildPersonalForecastSeries(30) : buildForecastSeries(30);
       const next14 = series.slice(0, 15);
       const lowestNext14 = Math.min(...next14.map(s => s.balance));
@@ -7430,26 +7436,36 @@
     //
     // In the merged app:  window.flightDeckDataSource = buildFlightDeckInputs;
     // =====================================================================
+    // Flight Deck follows the same Solo/Household view as the Dashboard.
+    function flightDeckSeries(days) {
+      return isSoloView() ? buildPersonalForecastSeries(days) : buildForecastSeries(days);
+    }
+    // One verdict everywhere: the Flight Deck's weather IS the Dashboard's
+    // Financial Weather (computeFinancialWeather), mapped to its 4 states.
+    function flightDeckWeatherKey(viewData) {
+      const w = computeFinancialWeather(viewData.safeSpend, viewData.cash);
+      if (w.key === 'emergency') return 'mayday';
+      if (w.key === 'storm') return 'storm';
+      if (w.key === 'cloudy' || w.key === 'rain') return 'headwinds';
+      return 'optimal';   // fair, clear
+    }
+
     function buildFlightDeckInputs() {
       const viewData = getActiveViewData();
-      const series = buildForecastSeries(60);
+      const series = flightDeckSeries(60);
       const balances = series.map(s => s.balance);
       const lowestProjected = balances.length ? Math.min(...balances) : viewData.cash;
       // Within 3 days there's no time to react; further out there is.
       const lowestNext3 = balances.length ? Math.min(...balances.slice(0, 4)) : viewData.cash;
       // A real cushion, not safe-spend-per-day (which shrinks when money is
       // tight, hiding the warning exactly when it matters).
-      // Same verdict the cards view shows ("Can I make it until payday?"),
-      // so the windshield, the instruments and the dashboard always agree:
-      //   mayday    - short now, or going negative within 3 days
-      //   storm     - Money Mayday active (deficit inside the 14-day window)
-      //   headwinds - no deficit, but lowest projected balance under $200
-      //   optimal   - clear
-      let weatherKey;
-      if (viewData.cash < 0 || lowestNext3 < 0) weatherKey = 'mayday';
-      else if (viewData.mayday && viewData.mayday.active) weatherKey = 'storm';
-      else if (lowestProjected < 200) weatherKey = 'headwinds';
-      else weatherKey = 'optimal';
+      // Same verdict as the Dashboard's Financial Weather, so the windshield,
+      // the instruments and the dashboard always agree (flightDeckWeatherKey):
+      //   mayday    - Mayday (today's true balance already negative)
+      //   storm     - Turbulence (deficit projected within 14 days)
+      //   headwinds - overdue bills, thin buffer, or pressure within 30 days
+      //   optimal   - Partly Cloudy / Clear Skies
+      const weatherKey = flightDeckWeatherKey(viewData);
 
       const today = new Date();
       const bills = (viewData.upcomingBills || []).map(b => {
@@ -10662,7 +10678,7 @@
     // ---------- Main render — wired to real app data ----------
     function renderFlightDeck() {
       fdInvalidateFlightSource(); // world renderer picks up fresh finances next frame
-      const series = buildForecastSeries(60);
+      const series = flightDeckSeries(60);
       const values = series.map(s => s.balance);
       const lowest = Math.min(...values);
       const lowestIdx = values.indexOf(lowest);
@@ -10680,12 +10696,10 @@
       const stencilEl = document.getElementById('fd-stencil');
       if (stencilEl && !stencilEl.src) stencilEl.src = FD_STENCIL_SRC;
 
-      // Verdict headline — reuses the same threshold logic as before,
-      // just condensed to drive one line instead of a whole card.
-      let headline;
-      if (viewData.mayday && viewData.mayday.active) headline = "YOU MAY RUN SHORT";
-      else if (lowest < 200) headline = "IT'LL BE TIGHT";
-      else headline = "YES, YOU'RE ON TRACK";
+      // Verdict headline — the same verdict as the gauge and the Dashboard.
+      const verdictKey = flightDeckWeatherKey(viewData);
+      const headline = verdictKey === 'mayday' || verdictKey === 'storm' ? "YOU MAY RUN SHORT"
+        : verdictKey === 'headwinds' ? "IT'LL BE TIGHT" : "YES, YOU'RE ON TRACK";
       const headlineEl = document.getElementById('fd-display3-verdict');
       if (headlineEl) { headlineEl.innerText = headline; headlineEl.style.color = wMeta.color; }
 
@@ -14062,7 +14076,7 @@
       if (content) {
         content.innerHTML = `
           <div class="p-4 bg-rose-950/40 border border-rose-500/40 rounded-2xl space-y-2">
-            <h4 class="font-bold text-rose-300 text-sm">Projected Shortfall — ${viewData.solo ? 'Solo View' : 'Household View'}</h4>
+            <h4 class="font-bold text-rose-300 text-sm">Projected Shortfall${inHouseholdMode() ? ` — ${viewData.solo ? 'Solo View' : 'Household View'}` : ''}</h4>
             <p>What you have: <strong class="text-white">${formatMoney(cash)}</strong></p>
             <p>What's coming due: <strong class="text-rose-400">$${formatCurrency(totalBills)}</strong></p>
             <p class="text-sm font-bold text-rose-400 pt-1 border-t border-rose-800/60">Gap to close: $${formatCurrency(shortfall)}</p>
