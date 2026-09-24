@@ -1170,7 +1170,11 @@
     .fd-feed-sponsor-img { display: block; max-width: 94%; width: auto; height: auto; max-height: 110px; object-fit: contain; border-radius: 5px; margin: 0 auto; border: 2px solid rgba(90,70,40,0.35); box-shadow: 0 4px 16px rgba(0,0,0,0.4); background: rgba(15,15,14,0.9); }
 
     /* ===================== FLIGHT DECK (vanilla port) ===================== */
-    .fd-root { width: 100vw; position: relative; left: 50%; right: 50%; margin-left: -50vw; margin-right: -50vw; max-width: 100vw; }
+    .fd-root { width: 100%; max-width: 100%; position: relative; isolation: isolate; } /* keeps cockpit layers below app modals */
+    .fd-stage { position: relative; }
+    .fd-panel { position: absolute; inset: 0; pointer-events: none; }
+    .fd-panel > * { pointer-events: auto; }
+    .fd-display3 { display: contents; }
     .fd-frame { position: relative; width: 100%; aspect-ratio: 1000/545; background: #000; overflow: hidden; animation: fdVibration 0.22s ease-in-out infinite; }
     @media (min-width: 1400px) { .fd-frame { aspect-ratio: 1000/500; } }
     @keyframes fdVibration { 0%,100% { transform: translate(0,0);} 25% { transform: translate(0.3px,-0.2px);} 50% { transform: translate(-0.2px,0.3px);} 75% { transform: translate(0.2px,0.2px);} }
@@ -1179,47 +1183,12 @@
     #fd-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
     .fd-stencil { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 50; pointer-events: none; }
 
-    .fd-payday-glow { position: absolute; left: 74%; top: 76%; width: 18%; height: 20%; pointer-events: none; z-index: 11; transform: scale(var(--fd-dest-scale, 1)); transform-origin: 60% 70%; transition: transform 1.2s ease; }
-    .fd-payday-ring { position: absolute; inset: 0; border-radius: 999px; background: radial-gradient(ellipse, rgba(255,214,140,0.4), transparent 70%); animation: fdGlowPulse 3.4s ease-in-out infinite; }
-    .fd-payday-core { position: absolute; left: 42%; top: 38%; width: 16%; height: 16%; border-radius: 999px; background: radial-gradient(circle, #fff8e0, #ffd77a 55%, transparent 80%); box-shadow: 0 0 18px 6px rgba(255,214,140,0.6); animation: fdCorePulse 2.6s ease-in-out infinite; }
     @keyframes fdCorePulse { 0%,100% { opacity: 0.85; } 50% { opacity: 1; } }
-    .fd-beacon { position: absolute; width: 5px; height: 5px; border-radius: 999px; background: #9dffc4; box-shadow: 0 0 6px 2px rgba(157,255,196,0.8); animation: fdBeaconBlink 1.6s ease-in-out infinite; }
-    @keyframes fdGlowPulse { 0%,100% { opacity:0.6; transform:scale(1);} 50% { opacity:1; transform:scale(1.12);} }
-    @keyframes fdBeaconBlink { 0%,100% { opacity:0.3; } 50% { opacity:1; } }
 
     .fd-verdict { position: absolute; top: 3%; left: 50%; transform: translateX(-50%); text-align: center; z-index: 60; }
     .fd-verdict-eyebrow { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; color: rgba(226,232,240,0.7); text-shadow: 0 1px 3px rgba(0,0,0,0.8); font-family: ui-monospace, monospace; }
     .fd-verdict-headline { font-size: 18px; font-weight: 800; margin-top: 2px; text-shadow: 0 2px 10px rgba(0,0,0,0.85); font-family: ui-monospace, monospace; }
 
-    /* Bill clouds */
-    .fd-bill { position: absolute; z-index: 15; }
-    .fd-bill-shape { position: relative; width: 62px; height: 29px; }
-    .fd-bill-lobe1 { position: absolute; left: 16%; top: -20%; width: 52%; height: 55%; border-radius: 999px; background: rgba(224,232,242,0.88); }
-    .fd-bill-lobe2 { position: absolute; left: 0; top: 22%; width: 100%; height: 65%; border-radius: 999px; background: rgba(224,232,242,0.92); }
-    .fd-bill-overdue .fd-bill-lobe1 { background: rgba(74,58,58,0.92); }
-    .fd-bill-overdue .fd-bill-lobe2 { background: rgba(58,44,44,0.95); }
-    .fd-bill-overdue .fd-bill-shape { animation: fdOverdueGlow 1.8s ease-in-out infinite; }
-    @keyframes fdOverdueGlow { 0%,100% { filter: drop-shadow(0 0 3px rgba(244,63,94,0.5)); } 50% { filter: drop-shadow(0 0 12px rgba(244,63,94,0.9)); } }
-    .fd-bill-overdue-tag { position: absolute; top: -14%; left: 50%; transform: translateX(-50%); font-size: 6px; font-weight: 800; color: #fda4af; background: rgba(30,10,14,0.85); border: 1px solid #f43f5e; border-radius: 3px; padding: 1px 4px; letter-spacing: 0.05em; white-space: nowrap; font-family: ui-monospace, monospace; }
-    @keyframes fdOverdueDrift { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-    .fd-bill-date, .fd-bill-name, .fd-bill-amt { position: absolute; left: 50%; transform: translateX(-50%); white-space: nowrap; font-family: ui-monospace, monospace; }
-    .fd-bill-date { top: 2%; font-size: 5.5px; font-weight: 700; color: #3a4a5a; animation-name: fdDateReveal; }
-    .fd-bill-name { top: 38%; font-size: 6.5px; font-weight: 800; color: #1c2a38; animation-name: fdNameReveal; }
-    .fd-bill-amt { top: 62%; font-size: 7px; font-weight: 800; color: #b33a3a; animation-name: fdAmountReveal; }
-    .fd-bill-date, .fd-bill-name, .fd-bill-amt { animation-duration: 24s; animation-timing-function: ease-in; animation-iteration-count: infinite; animation-fill-mode: both; }
-    @keyframes fdLandmarkApproach {
-      0% { opacity:0; left: var(--x0); transform: scale(0.25); }
-      8% { opacity:1; }
-      45% { opacity:1; left: var(--x1); transform: scale(0.9); }
-      70% { opacity:1; left: var(--x2); transform: scale(1.8); }
-      88% { opacity:1; left: var(--x3); transform: scale(3.2); filter: blur(1px); }
-      96% { opacity:0; transform: scale(3.8); filter: blur(3px); }
-      100% { opacity:0; left: var(--x3); transform: scale(3.8); filter: blur(3px); }
-    }
-    @keyframes fdDateReveal { 0%,42% {opacity:0;} 50%,90% {opacity:1;} 96%,100% {opacity:0;} }
-    @keyframes fdAmountReveal { 0%,76% {opacity:0;} 82%,90% {opacity:1;} 96%,100% {opacity:0;} }
-    @keyframes fdNameReveal { 0%,60% {opacity:0;} 68%,90% {opacity:1;} 96%,100% {opacity:0;} }
-    .fd-anim-paused { animation-play-state: paused !important; }
 
     /* Display 1 */
     .fd-display1 { position: absolute; left: 1.5%; top: 41%; width: 23%; height: 51%; background: #04070a; z-index: 60; font-family: ui-monospace, monospace; overflow: hidden; }
@@ -1238,12 +1207,14 @@
     .fd-display2 { position: absolute; left: 25.5%; top: 41%; width: 21.5%; height: 51%; background: #04070a; z-index: 60; padding: 4% 5%; font-family: ui-monospace, monospace; overflow: hidden; }
     .fd-d2-title { font-size: 8px; font-weight: 700; color: #8a9a94; letter-spacing: 0.05em; text-align: center; margin-bottom: 6%; }
     .fd-d2-timeline { position: relative; }
-    .fd-d2-row { position: relative; display: flex; align-items: flex-start; gap: 6px; padding-bottom: 9%; }
+    .fd-d2-row { position: relative; display: flex; align-items: flex-start; gap: 6px; padding-bottom: 6.5%; }
     .fd-d2-row:not(:last-child)::before { content: ''; position: absolute; left: 3px; top: 10px; bottom: -4px; width: 1px; background: #2d5a4a; }
     .fd-d2-dot { width: 7px; height: 7px; border-radius: 999px; flex-shrink: 0; margin-top: 2px; }
     .fd-d2-info { min-width: 0; flex: 1; }
     .fd-d2-name { font-size: 8.5px; font-weight: 800; color: #cfe; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .fd-d2-meta { font-size: 6.5px; color: #7a8a84; }
+    .fd-d2-cleared .fd-d2-name { color: #7fa89a; }
+    .fd-d2-cleared .fd-d2-meta { color: #5f7f73; }
 
     /* Display 4 */
     .fd-display4 { position: absolute; left: 47.3%; top: 42%; width: 6.8%; height: 12.5%; z-index: 60; pointer-events: none; }
@@ -1272,62 +1243,68 @@
     .fd-d5-log-line { font-size: 6px; color: rgba(94,234,212,0.55); line-height: 2; white-space: nowrap; }
     @keyframes fdD5LogScroll { from { transform: translateY(0); } to { transform: translateY(-50%); } }
 
-    .fd-controls { display: flex; justify-content: flex-end; margin-top: 8px; }
-    .fd-btn { font-size: 11px; padding: 5px 12px; border-radius: 999px; border: 1px solid #27272a; background: #17171a; color: #a1a1aa; cursor: pointer; font-family: inherit; }
+    /* ---------- Overhead Control Panel (all devices) ---------- */
+    .fd-ohp { position: sticky; top: var(--fd-ohp-top, 0px); z-index: 70; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 6px 8px; margin-bottom: 6px; background: #0b0d10; border: 1px solid #23272e; border-radius: 10px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .fd-ohp.fd-ohp-docked { position: fixed; margin: 0; box-shadow: 0 6px 18px rgba(0,0,0,.45); }
+    .fd-ohp-slot { margin-bottom: 6px; }
+    .fd-ohp-slot > .fd-ohp { margin-bottom: 0; }
+    .fd-ohp-group { display: flex; gap: 6px; align-items: center; }
+    .fd-ohp-reserved { margin-left: auto; }
+    .fd-ohp-reserved:not(:has(> :not([hidden]))) { display: none; }
+    .fd-ohp-btn { font: 700 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .06em; text-transform: uppercase; padding: 8px 12px; min-height: 32px; border-radius: 7px; border: 1px solid #2d333b; background: #15181d; color: #cbd5e1; cursor: pointer; white-space: nowrap; }
+    .fd-ohp-btn:hover, .fd-ohp-btn:focus-visible { border-color: #475569; color: #fff; outline: none; }
+    .fd-ohp-btn[hidden] { display: none; }
+    .fd-btn-active { border-color: #0ea5e9 !important; color: #7dd3fc !important; background: rgba(14,165,233,0.12) !important; }
+    .fd-ft-hud { flex: 1 1 220px; display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 10.5px; color: #cbd5e1; letter-spacing: .04em; }
+    .fd-ft-hud.hidden { display: none; }
+    .fd-ft-hud-tag { flex-shrink: 0; padding: 2px 7px; border-radius: 999px; border: 1px solid rgba(14,165,233,.45); color: #7dd3fc; font-size: 9px; font-weight: 700; letter-spacing: .12em; }
+    .fd-ft-hud-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    /* Sim chip sits inside the windshield safe zone (25%–75%). */
+    .fd-ft-chip { position: absolute; left: 27%; bottom: 8px; z-index: 40; padding: 3px 9px; border-radius: 999px; background: rgba(2,6,23,.62); border: 1px solid rgba(14,165,233,.45); color: #7dd3fc; font: 700 9px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .12em; pointer-events: none; white-space: nowrap; border-radius: 8px; }
+    .fd-ft-chip > span { display: block; }
+    .fd-ft-chip.hidden { display: none; }
 
-    /* ---------- Mobile: dedicated layout, not a shrunk desktop ---------- */
+    /* ---------- Cockpit layout modes ----------
+       One cockpit. Wide (cockpit >= 900px): displays overlay the photo.
+       Compact (< 900px, set by fdSyncCockpitLayout on the cockpit's own
+       width): the windshield shows its centre half — the safe zone — and
+       the same five displays reflow below it. Nothing is removed. */
     .fd-crop-wrapper { position: relative; width: 100%; overflow: hidden; }
-    .fd-mobile-panel { display: none; }
-
-    @media (max-width: 640px) {
-      /* Windshield stays large and is the only part of the photo shown.
-         The frame is sized by HEIGHT (not width) and scaled up well
-         beyond what 100vw-constrained width would naturally give on a
-         narrow phone, then horizontally centered — the wrapper's
-         shorter height crops off the now-unneeded instrument row from
-         the bottom rather than shrinking the whole photo down. */
-      .fd-crop-wrapper { height: 27vh; min-height: 180px; max-height: 260px; }
-      .fd-frame { position: absolute; left: 50%; top: 0; width: auto; height: 67.5vh; max-height: 620px; transform: translateX(-50%); animation: none; }
-
-      .fd-desktop-only { display: none !important; }
-      .fd-mobile-panel { display: block; margin-top: 8px; }
-
-      .fd-m-hero { background: linear-gradient(180deg, #0a1210, #04070a); border: 1px solid #1a2a24; border-radius: 10px; padding: 11px 14px; font-family: ui-monospace, monospace; }
-      .fd-m-verdict { font-size: 15px; font-weight: 800; letter-spacing: 0.02em; margin-bottom: 6px; }
-      .fd-m-balance { font-size: 34px; font-weight: 700; color: #6ee7b7; text-shadow: 0 0 8px rgba(110,231,183,0.5); margin-bottom: 8px; }
-      .fd-m-mini { display: flex; justify-content: space-between; margin-bottom: 8px; }
-      .fd-m-mini-label { font-size: 10px; color: #8a9a94; font-weight: 700; }
-      .fd-m-mini-value { font-size: 18px; font-weight: 800; }
-      .fd-m-ticker { overflow: hidden; border-top: 1px solid #1a2a24; padding-top: 6px; }
-      .fd-m-ticker-track { white-space: nowrap; font-weight: 800; font-size: 15px; color: #ffd54a; animation: fdTickerScroll 16s linear infinite; }
-
-      .fd-m-row2 { display: flex; gap: 8px; margin-top: 7px; }
-      .fd-m-weather { flex: 0 0 108px; background: #04070a; border: 1px solid #1a2a24; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 8px; }
-      .fd-m-weather-ring { width: 44px; height: 44px; border-radius: 999px; border: 4px solid; animation: fdD4Pulse 2.2s ease-in-out infinite; }
-      .fd-m-weather-label { font-family: ui-monospace, monospace; font-size: 13px; font-weight: 800; letter-spacing: 0.04em; }
-      .fd-m-computer { flex: 1; background: #04070a; border: 1px solid #1a2a24; border-radius: 10px; padding: 8px 10px; font-family: ui-monospace, monospace; overflow: hidden; }
-      .fd-m-computer-row { font-size: 10.5px; color: rgba(94,234,212,0.85); line-height: 1.8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-      .fd-m-computer-row b { color: rgba(255,255,255,0.92); }
-
-      .fd-m-section { margin-top: 8px; background: #04070a; border: 1px solid #1a2a24; border-radius: 10px; padding: 8px 10px; font-family: ui-monospace, monospace; }
-      .fd-m-section-title { font-size: 10px; font-weight: 700; color: #8a9a94; letter-spacing: 0.06em; margin-bottom: 6px; }
-      .fd-m-route { display: flex; flex-direction: column; gap: 6px; }
-      .fd-m-route-row { display: flex; align-items: center; gap: 8px; font-size: 12px; }
-      .fd-m-route-dot { width: 8px; height: 8px; border-radius: 999px; flex-shrink: 0; }
-      .fd-m-route-name { font-weight: 700; color: #cfe; }
-      .fd-m-route-meta { color: #7a8a84; font-size: 10.5px; margin-left: auto; white-space: nowrap; }
-      .fd-m-altitude-row { display: flex; justify-content: space-between; font-size: 12px; padding: 3px 0; }
-      .fd-m-altitude-bar { height: 6px; background: #141a17; border-radius: 3px; overflow: hidden; margin-top: 8px; }
-      .fd-m-altitude-fill { height: 100%; }
-
-      .fd-bill-shape { width: 76px; height: 36px; }
-      .fd-bill-date { font-size: 7px; }
-      .fd-bill-name { font-size: 8px; }
-      .fd-bill-amt { font-size: 9px; }
-      .fd-payday-glow { width: 24%; height: 26%; }
-      .fd-payday-core { box-shadow: 0 0 26px 10px rgba(255,214,140,0.7); }
-      .fd-btn { font-size: 13px; padding: 8px 16px; }
-    }
+    .fd-compact .fd-crop-wrapper { aspect-ratio: 1 / 0.436; border-radius: 10px; }
+    .fd-compact .fd-frame { position: absolute; top: 0; left: -50%; width: 200%; aspect-ratio: 1000/545; }
+    .fd-compact .fd-panel { position: static; display: grid; grid-template-columns: minmax(96px, 30%) minmax(0, 1fr); grid-template-areas: "d3 d3" "d4 d5" "d2 d2" "d1 d1"; gap: 8px; margin-top: 8px; pointer-events: auto; }
+    .fd-compact .fd-panel > div, .fd-compact .fd-display3 { position: relative; left: auto; top: auto; width: auto; height: auto; inset: auto; border: 1px solid #1a2a24; border-radius: 10px; background: #04070a; }
+    .fd-compact .fd-display3 { grid-area: d3; display: block; padding: 11px 14px; font-family: ui-monospace, monospace; }
+    .fd-compact .fd-display3 > div { position: static; width: auto; height: auto; background: none; }
+    .fd-compact .fd-display3-verdict { font-size: 15px; margin-bottom: 6px; }
+    .fd-compact .fd-display3-balance { font-size: 34px; margin-bottom: 8px; }
+    .fd-compact .fd-display3-mini { margin-bottom: 8px; }
+    .fd-compact .fd-mini-label { font-size: 10px; }
+    .fd-compact .fd-mini-value { font-size: 18px; }
+    .fd-compact .fd-display3-ticker { border-top: 1px solid #1a2a24; padding-top: 6px; margin-bottom: 6px; }
+    .fd-compact .fd-ticker-track { font-size: 15px; }
+    .fd-compact .fd-display3-status { font-size: 12px; }
+    .fd-compact .fd-display4 { grid-area: d4; min-height: 124px; }
+    .fd-compact .fd-d4-ring { inset: auto; left: 50%; top: 18px; width: 52px; height: 52px; transform: translateX(-50%); }
+    .fd-compact .fd-d4-label { top: auto; bottom: 14px; left: 4px; width: calc(100% - 8px); font-size: 12px; }
+    .fd-compact .fd-display5 { grid-area: d5; padding: 8px 10px; }
+    .fd-compact .fd-d5-title { font-size: 10px; margin-bottom: 6px; }
+    .fd-compact .fd-d5-row { font-size: 10.5px; line-height: 1.8; }
+    .fd-compact .fd-d5-log { height: 56px; margin-top: 6px; padding-top: 6px; }
+    .fd-compact .fd-d5-log-line { font-size: 9.5px; }
+    .fd-compact .fd-display2 { grid-area: d2; padding: 10px 12px; }
+    .fd-compact .fd-d2-title { font-size: 10px; margin-bottom: 10px; }
+    .fd-compact .fd-d2-row { padding-bottom: 12px; }
+    .fd-compact .fd-d2-name { font-size: 12px; }
+    .fd-compact .fd-d2-meta { font-size: 10.5px; }
+    .fd-compact .fd-panel > .fd-display1 { grid-area: d1; height: 230px; }
+    .fd-compact .fd-d1-title { font-size: 10px; }
+    .fd-compact .fd-d1-health-label { font-size: 10px; }
+    .fd-compact .fd-ohp { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .fd-compact .fd-ohp-group { display: contents; }
+    .fd-compact .fd-ohp-btn { min-height: 44px; font-size: 12px; padding: 10px 8px; }
+    .fd-compact .fd-ft-hud { grid-column: 1 / -1; order: 3; }
+    .fd-compact .fd-ohp-reserved { display: contents; }
     /* ---------- Sponsor aircraft — a small plane towing a banner
        across the windshield, entering from one edge and exiting the
        other. Lives in the world layer so it's naturally occluded by
@@ -1357,6 +1334,7 @@
     .fd-launch-btn { background: rgba(56,189,248,0.10); color: #7dd3fc; border: 1px solid rgba(56,189,248,0.35); transition: background .2s, border-color .2s, box-shadow .2s; }
     .fd-launch-btn:hover, .fd-launch-btn:focus-visible { background: rgba(56,189,248,0.18); border-color: rgba(125,211,252,0.7); box-shadow: 0 0 14px rgba(56,189,248,0.25); outline: none; }
     .fd-launch-glyph { margin-right: 6px; font-size: 11px; line-height: 1; }
+    .fd-launch-btn-current { background: rgba(56,189,248,0.2); border-color: rgba(125,211,252,0.8); color: #e0f2fe; cursor: default; }
     #fd-launch-overlay { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center;
       background: radial-gradient(ellipse at 50% 60%, #0b1a2e 0%, #050a14 60%, #02050b 100%); opacity: 0; transition: opacity .35s ease; cursor: pointer;
       padding: env(safe-area-inset-top, 0px) 24px env(safe-area-inset-bottom, 0px); }
@@ -2528,7 +2506,7 @@
               </div>
               <div class="fc-mode-toggle" role="group" aria-label="Forecast view">
                 <button type="button" id="fc-mode-standard-btn" class="fc-mode-btn fc-mode-btn-active" onclick="setForecastMode('standard')">Standard</button>
-                <button type="button" id="fc-mode-flightdeck-btn" class="fc-mode-btn" onclick="setForecastMode('flightdeck')">Flight Deck</button>
+                <button type="button" id="fc-mode-flightdeck-btn" class="fc-mode-btn" onclick="launchFlightDeck()">Flight Deck</button>
               </div>
             </div>
 
@@ -2656,101 +2634,89 @@
             </div>
             </div>
 
-            <div id="forecast-flightdeck-view" class="hidden">
+          </div>
+
+          <!-- ================= PAGE: FLIGHT DECK ================= -->
+          <!-- First-class page under Dashboard: Flight Control | Flight Deck -->
+          <div id="page-flightdeck" class="page-view space-y-4 hidden">
+            <div class="flex items-center gap-2 flex-wrap">
+              <button type="button" onclick="navigateTo('dashboard')" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-900/80 text-slate-300 border border-slate-700 hover:text-white hover:border-slate-500 transition-all" aria-label="Back to Flight Control">
+                FLIGHT CONTROL
+              </button>
+              <span class="fd-launch-btn fd-launch-btn-current inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold" aria-current="page">
+                <span class="fd-launch-glyph" aria-hidden="true">✈</span> FLIGHT DECK
+              </span>
+            </div>
+            <div id="forecast-flightdeck-view">
               <div id="fd-root" class="fd-root">
-                <div id="fd-crop-wrapper" class="fd-crop-wrapper">
-                <div id="fd-frame" class="fd-frame">
-                  <div id="fd-world-layer" class="fd-world-layer">
-                    <canvas id="fd-canvas"></canvas>
-                    <div id="fd-payday-glow" class="fd-payday-glow">
-                      <div class="fd-payday-ring"></div>
-                      <div class="fd-payday-core"></div>
-                      <div class="fd-beacon" style="left:8%;top:62%;animation-delay:0s;"></div>
-                      <div class="fd-beacon" style="left:20%;top:52%;animation-delay:0.25s;"></div>
-                      <div class="fd-beacon" style="left:32%;top:46%;animation-delay:0.5s;"></div>
-                      <div class="fd-beacon" style="left:66%;top:44%;animation-delay:0.35s;"></div>
-                      <div class="fd-beacon" style="left:78%;top:50%;animation-delay:0.6s;"></div>
-                    </div>
-                    <div id="fd-bill-clouds"></div>
-                    <div id="fd-sponsor-plane-slot"></div>
+                <!-- OVERHEAD CONTROL PANEL — every Flight Deck control, on every device.
+                     Live controls left; reserved slots right (shown when each ships),
+                     so adding them never moves Pause or Full Throttle. -->
+                <div class="fd-ohp-slot" id="fd-ohp-slot">
+                <div class="fd-ohp" id="fd-ohp" role="toolbar" aria-label="Flight Deck controls">
+                  <div class="fd-ohp-group">
+                    <button type="button" class="fd-ohp-btn" id="fd-play-btn" onclick="fdTogglePlay()">❚❚ Pause</button>
+                    <button type="button" class="fd-ohp-btn" id="fd-ft-btn" onclick="fdToggleFullThrottle()" aria-pressed="false" title="Fly your forecast from today through Payday, then each following pay cycle">» Full Throttle</button>
                   </div>
-
-                  <img id="fd-stencil" class="fd-stencil" alt="" />
-
-
-                  <!-- Display 1 — Financial Altitude -->
-                  <div class="fd-display1 fd-desktop-only" id="fd-display1">
-                    <div class="fd-d1-title">FINANCIAL ALTITUDE</div>
-                    <div class="fd-d1-tape-wrap">
-                      <div class="fd-d1-tape" id="fd-d1-tape"></div>
-                      <div class="fd-d1-readout"><span id="fd-d1-current">$0</span></div>
-                    </div>
-                    <div class="fd-d1-health">
-                      <div class="fd-d1-health-label">FORECAST HEALTH</div>
-                      <div class="fd-d1-health-bar"><div class="fd-d1-health-fill" id="fd-d1-health-fill"></div></div>
-                    </div>
+                  <div id="fd-ft-hud" class="fd-ft-hud hidden" aria-live="polite">
+                    <span class="fd-ft-hud-tag">FORECAST SIMULATION</span>
+                    <span class="fd-ft-hud-text"></span>
                   </div>
-
-                  <!-- Display 2 — Forecast Route -->
-                  <div class="fd-display2 fd-desktop-only" id="fd-display2">
-                    <div class="fd-d2-title">FINANCIAL ROUTE</div>
-                    <div class="fd-d2-timeline" id="fd-d2-timeline"></div>
+                  <div class="fd-ohp-group fd-ohp-reserved">
+                    <!-- Reserved: Data Link (status + balance update workflow) -->
+                    <button type="button" class="fd-ohp-btn" id="fd-datalink-btn" data-reserved="data-link" hidden>Data Link</button>
+                    <!-- Reserved: Daily Briefing -->
+                    <button type="button" class="fd-ohp-btn" id="fd-briefing-btn" data-reserved="briefing" hidden>Briefing</button>
                   </div>
-
-                  <!-- Display 4 — Financial Weather gauge -->
-                  <div class="fd-display4 fd-desktop-only" id="fd-display4">
-                    <div class="fd-d4-ring" id="fd-d4-ring"></div>
-                    <div class="fd-d4-label" id="fd-d4-label">—</div>
-                  </div>
-
-                  <!-- Display 3 — Mission Control (hero) -->
-                  <div class="fd-display3-verdict fd-desktop-only" id="fd-display3-verdict">—</div>
-                  <div class="fd-display3-balance fd-desktop-only" id="fd-display3-balance"></div>
-                  <div class="fd-display3-mini fd-desktop-only" id="fd-display3-mini"></div>
-                  <div class="fd-display3-ticker fd-desktop-only" id="fd-display3-ticker"><div class="fd-ticker-track" id="fd-ticker-track"></div></div>
-                  <div class="fd-display3-status fd-desktop-only" id="fd-display3-status">—</div>
-
-                  <!-- Display 5 — Mission Computer -->
-                  <div class="fd-display5 fd-desktop-only" id="fd-display5"></div>
                 </div>
                 </div>
 
-                <!-- ============================================================
-                     DEDICATED MOBILE PANEL — not a scaled copy of the desktop
-                     overlay. Purpose-built stacked layout: Mission Control gets
-                     the most visual weight, Weather and Mission Computer are
-                     clearly secondary, Route and Altitude are compact summaries.
-                     Hidden on desktop; shown only under the mobile breakpoint.
-                     ============================================================ -->
-                <div id="fd-mobile-panel" class="fd-mobile-panel">
-                  <div class="fd-m-hero">
-                    <div class="fd-m-verdict" id="fd-m-verdict">—</div>
-                    <div class="fd-m-balance" id="fd-m-balance"></div>
-                    <div class="fd-m-mini" id="fd-m-mini"></div>
-                    <div class="fd-m-ticker"><div class="fd-m-ticker-track" id="fd-m-ticker-track"></div></div>
-                  </div>
-
-                  <div class="fd-m-row2">
-                    <div class="fd-m-weather">
-                      <div class="fd-m-weather-ring" id="fd-m-weather-ring"></div>
-                      <div class="fd-m-weather-label" id="fd-m-weather-label">—</div>
+                <div class="fd-stage">
+                  <div id="fd-crop-wrapper" class="fd-crop-wrapper">
+                    <div id="fd-frame" class="fd-frame">
+                      <!-- WINDSHIELD — the one engine's world. The centre half
+                           (25%–75%) is the safe zone every layout shows. -->
+                      <div id="fd-world-layer" class="fd-world-layer">
+                        <canvas id="fd-canvas"></canvas>
+                        <div id="fd-sponsor-plane-slot"></div>
+                        <div id="fd-ft-chip" class="fd-ft-chip hidden"></div>
+                      </div>
+                      <img id="fd-stencil" class="fd-stencil" alt="" />
                     </div>
-                    <div class="fd-m-computer" id="fd-m-computer"></div>
                   </div>
 
-                  <div class="fd-m-section">
-                    <div class="fd-m-section-title">FINANCIAL ROUTE</div>
-                    <div class="fd-m-route" id="fd-m-route"></div>
+                  <!-- INSTRUMENT PANEL — the same five displays on every device.
+                       Wide: overlaid on the cockpit photo. Compact: reflowed below
+                       the windshield. Same elements, same content. -->
+                  <div id="fd-panel" class="fd-panel">
+                    <div class="fd-display1" id="fd-display1">
+                      <div class="fd-d1-title">FINANCIAL ALTITUDE</div>
+                      <div class="fd-d1-tape-wrap">
+                        <div class="fd-d1-tape" id="fd-d1-tape"></div>
+                        <div class="fd-d1-readout"><span id="fd-d1-current">$0</span></div>
+                      </div>
+                      <div class="fd-d1-health">
+                        <div class="fd-d1-health-label">FORECAST HEALTH</div>
+                        <div class="fd-d1-health-bar"><div class="fd-d1-health-fill" id="fd-d1-health-fill"></div></div>
+                      </div>
+                    </div>
+                    <div class="fd-display2" id="fd-display2">
+                      <div class="fd-d2-title">FINANCIAL ROUTE</div>
+                      <div class="fd-d2-timeline" id="fd-d2-timeline"></div>
+                    </div>
+                    <div class="fd-display4" id="fd-display4">
+                      <div class="fd-d4-ring" id="fd-d4-ring"></div>
+                      <div class="fd-d4-label" id="fd-d4-label">—</div>
+                    </div>
+                    <div class="fd-display3" id="fd-display3">
+                      <div class="fd-display3-verdict" id="fd-display3-verdict">—</div>
+                      <div class="fd-display3-balance" id="fd-display3-balance"></div>
+                      <div class="fd-display3-mini" id="fd-display3-mini"></div>
+                      <div class="fd-display3-ticker" id="fd-display3-ticker"><div class="fd-ticker-track" id="fd-ticker-track"></div></div>
+                      <div class="fd-display3-status" id="fd-display3-status">—</div>
+                    </div>
+                    <div class="fd-display5" id="fd-display5"></div>
                   </div>
-
-                  <div class="fd-m-section">
-                    <div class="fd-m-section-title">FINANCIAL ALTITUDE</div>
-                    <div class="fd-m-altitude" id="fd-m-altitude"></div>
-                  </div>
-                </div>
-
-                <div class="fd-controls">
-                  <button class="fd-btn" id="fd-play-btn" onclick="fdTogglePlay()">❚❚ Pause</button>
                 </div>
               </div>
             </div>
@@ -5952,7 +5918,7 @@
     }
 
     function getCurrentPageId() {
-      const pages = ['dashboard', 'accounts', 'coming-up', 'ledger', 'goals', 'forecast', 'activity', 'reconcile', 'devtools', 'settings'];
+      const pages = ['dashboard', 'flightdeck', 'accounts', 'coming-up', 'ledger', 'goals', 'forecast', 'activity', 'reconcile', 'devtools', 'settings'];
       for (let p of pages) {
         const el = document.getElementById(`page-${p}`);
         if (el && !el.classList.contains('hidden')) return p;
@@ -5977,7 +5943,7 @@
     function navigateTo(pageId) {
       // Leaving Flight Deck (opened from the Dashboard) returns Forecast to
       // the user's saved mode next time.
-      if (pageId !== 'forecast' && typeof fdLaunchOverride !== 'undefined') fdLaunchOverride = false;
+      if (pageId !== 'flightdeck' && typeof fdFT !== 'undefined' && fdFT) fdStopFullThrottle();
       document.querySelectorAll('.page-view').forEach(p => p.classList.add('hidden'));
       
       const targetPage = document.getElementById(`page-${pageId}`);
@@ -5988,7 +5954,8 @@
         btn.classList.add('text-slate-400');
       });
 
-      const activeNav = document.getElementById(`nav-${pageId}`);
+      const navKey = pageId === 'flightdeck' ? 'dashboard' : pageId; // Flight Deck lives under Dashboard
+      const activeNav = document.getElementById(`nav-${navKey}`);
       if (activeNav) {
         activeNav.classList.remove('text-slate-400');
         activeNav.classList.add('text-white', 'bg-slate-800/60');
@@ -5998,7 +5965,7 @@
         btn.classList.remove('text-brand-400');
         btn.classList.add('text-slate-400');
       });
-      const mobNav = document.getElementById(`mob-nav-${pageId}`);
+      const mobNav = document.getElementById(`mob-nav-${pageId === 'flightdeck' ? 'dashboard' : pageId}`);
       if (mobNav) {
         mobNav.classList.remove('text-slate-400');
         mobNav.classList.add('text-brand-400');
@@ -6011,6 +5978,7 @@
       if (pageId === 'ledger') renderLedger();
       if (pageId === 'goals') renderGoals();
       if (pageId === 'forecast') renderForecastActive();
+      if (pageId === 'flightdeck') renderFlightDeck();
       if (pageId === 'activity') renderActivityPage();
       if (pageId === 'reconcile') renderReconcilePage();
       if (pageId === 'devtools') renderDevToolsPage();
@@ -7451,7 +7419,11 @@
           : weatherKey === 'storm' ? '⚠ ENVELOPE: SHORTFALL BEFORE PAYDAY'
           : '🚨 ENVELOPE: DEFICIT — ACTION NEEDED',
         envelopeColor: weatherKey === 'optimal' ? '#34d399' : weatherKey === 'headwinds' ? '#fbbf24' : '#f87171',
-        bills
+        bills: bills.concat(fdClearedBillsThisCycle(viewData).map(c => ({
+          name: String(c.title || 'BILL').toUpperCase(),
+          amount: roundCents(c.amount), days: 0, cleared: true,
+          severity: 'minor'
+        })))
       };
     }
 
@@ -8063,14 +8035,10 @@
     let fdLaunchTimers = [];
     let fdLaunchActive = false;
     let fdLaunchedThisSession = false;
-    var fdLaunchOverride = false; // opens Forecast in Flight Deck mode without changing the saved default
 
     function fdOpenFlightDeckView() {
-      fdLaunchOverride = true;
-      navigateTo('forecast');
-      renderForecastActive();
-      const view = document.getElementById('forecast-flightdeck-view');
-      if (view && view.scrollIntoView) view.scrollIntoView({ block: 'start' });
+      navigateTo('flightdeck');
+      window.scrollTo(0, 0);
     }
 
     function fdFinishLaunch() {
@@ -8079,7 +8047,7 @@
       fdLaunchTimers.forEach(clearTimeout); fdLaunchTimers = [];
       document.removeEventListener('keydown', fdLaunchKeyHandler);
       const overlay = document.getElementById('fd-launch-overlay');
-      if (!document.getElementById('forecast-flightdeck-view') || document.getElementById('page-forecast').classList.contains('hidden')) fdOpenFlightDeckView();
+      if (document.getElementById('page-flightdeck').classList.contains('hidden')) fdOpenFlightDeckView();
       if (!overlay) return;
       overlay.classList.add('fd-launch-leaving');
       setTimeout(() => {
@@ -8101,6 +8069,7 @@
     }
 
     function launchFlightDeck() {
+      if (fdFT) fdStopFullThrottle(); // Flight Deck always opens on real data
       const overlay = document.getElementById('fd-launch-overlay');
       if (!overlay || fdLaunchActive) { if (!overlay) fdOpenFlightDeckView(); return; }
       const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -8127,26 +8096,22 @@
       fdLaunchTimers.push(setTimeout(fdFinishLaunch, total));
     }
 
-    function getForecastMode() {
-      if (fdLaunchOverride) return 'flightdeck';
-      try { return localStorage.getItem('pp_forecast_mode') || 'standard'; } catch (e) { return 'standard'; }
-    }
+    // Flight Deck is its own page now; the Forecast page always shows the
+    // standard forecast and its Flight Deck button launches the page.
+    function getForecastMode() { return 'standard'; }
     function setForecastMode(mode) {
-      fdLaunchOverride = false; // an explicit choice on the Forecast page wins
-      try { localStorage.setItem('pp_forecast_mode', mode); } catch (e) {}
+      if (mode === 'flightdeck') { launchFlightDeck(); return; }
       renderForecastActive();
     }
     function renderForecastActive() {
       const mode = getForecastMode();
       const standardView = document.getElementById('forecast-standard-view');
-      const flightDeckView = document.getElementById('forecast-flightdeck-view');
       const stdBtn = document.getElementById('fc-mode-standard-btn');
       const fdBtn = document.getElementById('fc-mode-flightdeck-btn');
       if (standardView) standardView.classList.toggle('hidden', mode !== 'standard');
-      if (flightDeckView) flightDeckView.classList.toggle('hidden', mode !== 'flightdeck');
       if (stdBtn) stdBtn.classList.toggle('fc-mode-btn-active', mode === 'standard');
       if (fdBtn) fdBtn.classList.toggle('fc-mode-btn-active', mode === 'flightdeck');
-      if (mode === 'flightdeck') renderFlightDeck(); else renderForecast();
+      renderForecast();
     }
 
     // ============================================================
@@ -8166,7 +8131,6 @@
       fdPlaying = !fdPlaying;
       const btn = document.getElementById('fd-play-btn');
       if (btn) btn.innerText = fdPlaying ? '❚❚ Pause' : '▶ Play';
-      document.querySelectorAll('.fd-bill').forEach(el => el.classList.toggle('fd-anim-paused', !fdPlaying));
     }
 
     // Maps the app's existing 7-state classifyFlightStatus() key onto
@@ -8180,6 +8144,38 @@
       return 'clear'; // takeoff, climbing
     }
     const FD_WEATHER_FROM_FINANCES = { optimal: 'clear', headwinds: 'tight', storm: 'risk', mayday: 'mayday' };
+    // Start of the current pay cycle: the payday before the next one.
+    function fdCycleStartDate(nextDateStr, frequency) {
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      if (!nextDateStr) { const d = new Date(today); d.setDate(d.getDate() - 14); return localDateStr(d); }
+      const d = new Date(nextDateStr + 'T00:00:00');
+      if (frequency === 'weekly') d.setDate(d.getDate() - 7);
+      else if (frequency === 'semimonthly') d.setDate(d.getDate() - 15);
+      else if (frequency === 'monthly') d.setMonth(d.getMonth() - 1);
+      else d.setDate(d.getDate() - 14);
+      return localDateStr(d);
+    }
+    // Bills paid this pay cycle — they stay visible as CLEARED until the new
+    // cycle starts (i.e. until payday is confirmed and the schedule advances).
+    function fdClearedBillsThisCycle(viewData) {
+      const freq = (state.income && state.income.frequency) || 'biweekly';
+      const nextDate = viewData && viewData.nextIncome ? viewData.nextIncome.date : (state.income && state.income.nextDate);
+      const start = fdCycleStartDate(nextDate, freq);
+      const today = localDateStr(new Date());
+      const mine = typeof visibleTransactions === 'function' ? visibleTransactions() : (state.transactions || []);
+      return mine
+        .filter(t => t.source === 'manual-bill-completion' && t.date && t.date >= start && t.date <= today)
+        .map(t => {
+          const bill = (state.bills || []).find(b => b.id === t.billId);
+          const title = bill ? bill.title : String(t.title || 'Bill').replace(/^Bill Payment:\s*/i, '');
+          return { title, amount: Number(t.amount) || 0, date: t.date, priority: bill ? bill.priority : 'important' };
+        })
+        .sort((a, b) => a.date.localeCompare(b.date));
+    }
+    function fdIsLandedToday(viewData) {
+      return !!(viewData && viewData.nextIncome && viewData.daysUntilIncome === 0);
+    }
+
     function fdMoney(n) { const r = Math.round(Number(n) || 0); return (r < 0 ? '-$' : '$') + Math.abs(r).toLocaleString(); }
     function fdFloorColor(n) { return n < 0 ? '#ff6b6b' : n < 200 ? '#ffd54a' : '#6ee7b7'; }
     const FD_WEATHER_META = {
@@ -8192,7 +8188,6 @@
     // ---------- Canvas world renderer (ported from the validated
     // React WorldCanvas — same noise/sky/cloud/terrain/lightning
     // logic, just without the useEffect wrapper). ----------
-    function fdPrNoise(seed) { const n = Math.sin(seed * 12.9898) * 43758.5453; return n - Math.floor(n); }
 
     // ============================================================
     // SPONSOR BILLBOARDS — environmental world objects, not UI chrome.
@@ -8245,7 +8240,13 @@
       const slot = document.getElementById('fd-sponsor-plane-slot');
       if (!slot) return; // page navigated away; stop the chain
 
-      if (fdPlaneOrder.length === 0) fdPlaneOrder = [...FD_SPONSOR_CONFIG].sort(() => Math.random() - 0.5);
+      // Visibility follows the approved day schedule. Sponsors are added in
+      // a stable order, so the "first sponsor" at 10 days is always the same.
+      const allowance = fdSponsorAllowance(fdJourneyDays());
+      if (allowance === 0) { fdPlaneOrder = []; setTimeout(fdSpawnNextPlane, 3000); return; }
+      const allowed = FD_SPONSOR_CONFIG.slice(0, allowance);
+      fdPlaneOrder = fdPlaneOrder.filter(sp => allowed.includes(sp));
+      if (fdPlaneOrder.length === 0) fdPlaneOrder = [...allowed].sort(() => Math.random() - 0.5);
       const sponsor = fdPlaneOrder.shift();
 
       const dirLTR = Math.random() < 0.5;
@@ -8305,8 +8306,9 @@
 
     // =====================================================================
     // FLIGHT DECK — CINEMATIC WORLD RENDERER (production)
-    // The world outside the windshield. Instruments, verdict, sponsor plane,
-    // bill-cloud overlays and the mobile panel are rendered separately by
+    // The world outside the windshield, including its only cloud system
+    // (weather clouds and the sculpted bill clouds). Instruments, verdict,
+    // sponsor plane and the mobile panel are rendered separately by
     // renderFlightDeck() and are untouched by this engine.
     //
     // Driven ONLY by real finances via window.flightDeckDataSource
@@ -8321,7 +8323,9 @@
     let fdSourceCache = null;
     let fdSourceCacheAt = 0;
     function fdInvalidateFlightSource() { fdSourceCache = null; }
-    window.flightDeckDataSource = function () {
+    // Real finances, cached. Instruments ALWAYS read this; the world reads
+    // it too unless Full Throttle (forecast simulation) is running.
+    function fdRealFlightInputs() {
       const now = Date.now();
       if (!fdSourceCache || now - fdSourceCacheAt > FD_SOURCE_TTL_MS) {
         try {
@@ -8333,7 +8337,200 @@
         }
       }
       return fdSourceCache;
+    }
+    window.flightDeckDataSource = function () {
+      return fdFT ? fdThrottleInputs() : fdRealFlightInputs();
     };
+
+    // =====================================================================
+    // FULL THROTTLE — optional forecast visualization (not the default).
+    // Flies the forecast from today through Payday, then restarts at 14
+    // days for each following pay cycle and loops. Bills fire on their
+    // forecast date, weather follows the forecast for that simulated day,
+    // sponsors follow the approved day schedule, and the city journey
+    // progresses normally. Instruments keep showing REAL finances.
+    // There is no manual day control anywhere.
+    // =====================================================================
+    const FD_FT_SEC_PER_DAY = 2.4;        // inside the 14-day journey
+    const FD_FT_SEC_PER_DAY_CRUISE = 0.5; // cycle days still beyond 14 out (monthly pay)
+    const FD_FT_ARRIVAL_HOLD = 3.5;       // seconds parked at Payday before the next cycle
+    var fdFT = null;
+    let fdFTSeq = 0;
+
+    // Same thresholds as buildFlightDeckInputs(), evaluated as if the
+    // simulated day were today.
+    function fdWeatherAtOffset(series, k) {
+      const tail = series.slice(k).map(d => d.balance);
+      if (!tail.length) return 'optimal';
+      const cash = tail[0];
+      const lowestNext3 = Math.min(...tail.slice(0, 4));
+      const next14 = tail.slice(0, 15);
+      const lowest = Math.min(...tail);
+      if (cash < 0 || lowestNext3 < 0) return 'mayday';
+      if (next14.some(b => b < 0)) return 'storm';
+      if (lowest < 200) return 'headwinds';
+      return 'optimal';
+    }
+
+    function fdBuildThrottlePlan() {
+      const real = fdRealFlightInputs() || {};
+      const series = buildForecastSeries(60);
+      const paydays = [];
+      series.forEach((d, i) => { if (i > 0 && (d.events || []).some(e => e.type === 'payday')) paydays.push(i); });
+      const first = typeof real.daysUntilPayday === 'number' ? real.daysUntilPayday : (paydays.length ? paydays[0] : null);
+      if (first == null) return null;
+      const stops = [first, ...paydays.filter(o => o > first)];
+      const legs = [{ a: 0, b: stops[0], initial: true }];
+      for (let i = 1; i < stops.length; i++) legs.push({ a: stops[i - 1], b: stops[i] });
+      // Only one payday in range: loop that same approach from 14 days out.
+      const loopLeg = legs.length > 1 ? null : { a: stops[0] - 14, b: stops[0] };
+      return { series, legs, loopLeg, realWeather: real.weatherKey || 'optimal' };
+    }
+
+    function fdFTLeg() { return fdFT.looping && fdFT.plan.loopLeg ? fdFT.plan.loopLeg : fdFT.plan.legs[fdFT.legIdx]; }
+
+    function fdThrottleInputs() {
+      const plan = fdFT.plan, leg = fdFTLeg();
+      const k = Math.max(0, Math.min(plan.series.length - 1, Math.floor(fdFT.s)));
+      const weatherKey = (leg.initial && k === 0) ? plan.realWeather : fdWeatherAtOffset(plan.series, k);
+      const out = {
+        weatherKey,
+        daysUntilPayday: Math.max(0, Math.min(14, leg.b - fdFT.s)),
+        bills: [],                        // no ambient clouds: bills appear when they occur
+        billEvents: fdFT.recentEvents.slice()
+      };
+      return out;
+    }
+
+    function fdFTFireBillsOn(k) {
+      const day = fdFT.plan.series[k];
+      if (!day || fdFT.firedDays.has(k)) return;
+      fdFT.firedDays.add(k);
+      (day.events || []).filter(e => e.type === 'bill').forEach(e => {
+        const ev = { seq: ++fdFTSeq, name: String(e.label || 'BILL').toUpperCase(), amount: e.amount, date: day.date, severity: 'heavy' };
+        fdFT.recentEvents.push(ev);
+        if (fdFT.recentEvents.length > 6) fdFT.recentEvents.shift();
+        fdFT.lastEvent = ev;
+      });
+    }
+
+    function fdFTStartLeg() {
+      const leg = fdFTLeg();
+      fdFT.s = leg.a;
+      fdFT.hold = 0;
+      fdFT.firedDays = new Set();
+      if (leg.initial) fdFTFireBillsOn(0);
+    }
+
+    function fdFTAdvanceLeg() {
+      const legs = fdFT.plan.legs;
+      if (fdFT.looping && fdFT.plan.loopLeg) { fdFTStartLeg(); return; }
+      if (fdFT.legIdx + 1 < legs.length) fdFT.legIdx++;
+      else {
+        // Horizon reached: refresh the forecast and restart at the first
+        // full cycle (14 days out) — never back at "today".
+        const fresh = fdBuildThrottlePlan();
+        if (fresh) fdFT.plan = fresh;
+        fdFT.looping = true;
+        fdFT.legIdx = fdFT.plan.legs.length > 1 ? 1 : 0;
+      }
+      if (fdFT.legIdx > 0) fdFT.looping = true;
+      fdFTStartLeg();
+    }
+
+    function fdFTTick(ts) {
+      if (!fdFT) return;
+      fdFT.raf = requestAnimationFrame(fdFTTick);
+      const dt = fdFT.lastTs == null ? 0 : Math.min(0.1, (ts - fdFT.lastTs) / 1000);
+      fdFT.lastTs = ts;
+      if (!fdPlaying || !dt) { fdFTRenderHud(); return; }
+      const leg = fdFTLeg();
+      if (fdFT.hold > 0) {
+        fdFT.hold -= dt;
+        if (fdFT.hold <= 0) fdFTAdvanceLeg();
+      } else {
+        const prev = fdFT.s;
+        const rate = (leg.b - fdFT.s > 14) ? 1 / FD_FT_SEC_PER_DAY_CRUISE : 1 / FD_FT_SEC_PER_DAY;
+        fdFT.s = Math.min(leg.b, fdFT.s + dt * rate);
+        for (let k = Math.max(0, Math.floor(prev) + 1); k <= Math.floor(fdFT.s); k++) fdFTFireBillsOn(k);
+        if (fdFT.s >= leg.b) fdFT.hold = FD_FT_ARRIVAL_HOLD;
+      }
+      fdFTRenderHud();
+    }
+
+    function fdFTRenderHud() {
+      const hud = document.getElementById('fd-ft-hud');
+      const chip = document.getElementById('fd-ft-chip');
+      if (!fdFT) { if (hud) hud.classList.add('hidden'); if (chip) chip.classList.add('hidden'); return; }
+      const plan = fdFT.plan, leg = fdFTLeg();
+      const k = Math.max(0, Math.min(plan.series.length - 1, Math.floor(fdFT.s)));
+      const day = plan.series[k];
+      const toGo = Math.max(0, Math.ceil(leg.b - fdFT.s - 1e-9));
+      const dateTxt = day ? friendlyDate(day.date) : '';
+      const bal = day ? day.balance : 0;
+      const ev = fdFT.lastEvent;
+      const evTxt = ev && k - Math.floor(plan.series.findIndex(d => d.date === ev.date)) <= 1
+        ? ` · ${ev.name} −$${Math.round(ev.amount).toLocaleString()}` : '';
+      const landed = fdFT.hold > 0;
+      const text = `${dateTxt} · ${landed ? 'PAYDAY — LANDED' : `T-${toGo}D TO PAYDAY`} · PROJECTED ${fdMoney(bal)}${evTxt}`;
+      if (hud) {
+        hud.classList.remove('hidden');
+        const t = hud.querySelector('.fd-ft-hud-text');
+        if (t && t.textContent !== text) t.textContent = text;
+      }
+      if (chip) {
+        chip.classList.remove('hidden');
+        const c = `SIM · ${dateTxt.toUpperCase()}`;
+        if (chip.dataset.t !== c) { chip.dataset.t = c; chip.innerHTML = `<span>FULL THROTTLE</span><span>${escapeHtml(c)}</span>`; }
+      }
+    }
+
+    function fdStartFullThrottle() {
+      if (fdFT) return;
+      const plan = fdBuildThrottlePlan();
+      if (!plan) { showToast("Full Throttle needs a payday in your schedule to fly the forecast.", "info"); return; }
+      fdFT = { plan, legIdx: 0, looping: false, s: 0, hold: 0, lastTs: null, raf: null, firedDays: new Set(), recentEvents: [], lastEvent: null };
+      fdFTStartLeg();
+      if (!fdPlaying) fdTogglePlay();
+      fdFT.raf = requestAnimationFrame(fdFTTick);
+      fdFTUpdateButton();
+    }
+
+    function fdStopFullThrottle() {
+      if (!fdFT) return;
+      if (fdFT.raf) cancelAnimationFrame(fdFT.raf);
+      fdFT = null;
+      fdFTRenderHud();
+      fdFTUpdateButton();
+      // Back to reality: real days, real weather, real destination scale.
+      if (typeof renderFlightDeck === 'function' && !document.getElementById('page-flightdeck').classList.contains('hidden')) renderFlightDeck();
+    }
+
+    function fdToggleFullThrottle() { fdFT ? fdStopFullThrottle() : fdStartFullThrottle(); }
+
+    function fdFTUpdateButton() {
+      const btn = document.getElementById('fd-ft-btn');
+      if (!btn) return;
+      btn.classList.toggle('fd-btn-active', !!fdFT);
+      btn.setAttribute('aria-pressed', fdFT ? 'true' : 'false');
+      btn.textContent = fdFT ? '■ Exit Full Throttle' : '» Full Throttle';
+    }
+
+    // Days used for sponsor visibility: the journey the user is looking at.
+    function fdJourneyDays() {
+      try {
+        const d = window.flightDeckDataSource();
+        return d && typeof d.daysUntilPayday === 'number' ? d.daysUntilPayday : 14;
+      } catch (e) { return 14; }
+    }
+    // Approved schedule: none at 14/12, 1 at 10, 2 at 8, 3 at 5, all by 2.
+    function fdSponsorAllowance(days) {
+      if (days > 10) return 0;
+      if (days > 8) return 1;
+      if (days > 5) return 2;
+      if (days > 2) return Math.min(3, FD_SPONSOR_CONFIG.length);
+      return FD_SPONSOR_CONFIG.length;
+    }
 
     let fdWorld = null; // engine instance, created once
 
@@ -8618,8 +8815,9 @@
 
       function rollCloudDangerSeverity(slotIdx) {
         const bills = (activeData && activeData.bills) ? activeData.bills : [];
-        if (!bills.length) return null;
-        const b = bills[slotIdx % bills.length];
+        const open = bills.filter(x => !x.cleared);
+        if (!open.length) return null;
+        const b = open[slotIdx % open.length];
         return b ? (b.severity || null) : null;
       }
 
@@ -8800,7 +8998,7 @@
         const container = document.getElementById('fd-world-layer');
         if (!container) return;
         const rect = container.getBoundingClientRect();
-        const dpr = window.devicePixelRatio || 1;
+        const dpr = Math.min(2, window.devicePixelRatio || 1);
         W = rect.width;
         H = rect.height;
         canvas.width = W * dpr;
@@ -9168,6 +9366,11 @@
           activeScenarioKey = key;                 // drives weather, motion, cloud light
         }
         activeData = { ...flightScenarios[activeScenarioKey], ...activeData, ...d, weatherState: key };
+        if (Array.isArray(d.billEvents)) {
+          d.billEvents.forEach(ev => {
+            if (ev && ev.seq > lastBillEventSeq) { lastBillEventSeq = ev.seq; pendingBillEvents.push(ev); }
+          });
+        }
         if (typeof d.daysUntilPayday === 'number') {
           activeData.daysUntilPayday = Math.max(0, Math.min(14, d.daysUntilPayday));
         }
@@ -9445,6 +9648,10 @@
       let billCloudVisits = [];
       let nextBillCloudAt = 2.5;
       let lastBillName = null;
+      // Full Throttle: bills that occur during the forecast simulation are
+      // delivered as one-off events and spawn their cloud immediately.
+      let pendingBillEvents = [];
+      let lastBillEventSeq = 0;
 
       function spawnBillCloud(bills, horizonY) {
         const t = flightTime;
@@ -9453,7 +9660,7 @@
         if (!pool.length) pool = bills.filter(b => !onScreen.includes(b.name));
         if (!pool.length) return;
         // Sooner-due bills come around a little more often.
-        const weights = pool.map(b => 1 + Math.max(0, 1 - (Number(b.days) || 7) / 10));
+        const weights = pool.map(b => b.cleared ? 0.5 : 1 + Math.max(0, 1 - (Number(b.days) || 7) / 10));
         let roll = Math.random() * weights.reduce((a, b) => a + b, 0), bill = pool[0];
         for (let i = 0; i < pool.length; i++) { roll -= weights[i]; if (roll <= 0) { bill = pool[i]; break; } }
 
@@ -9463,10 +9670,12 @@
         const hMax = Math.max(80, horizonY * 0.92);
         const h = hMax * (0.72 + Math.random() * 0.28);
         const w = Math.max(h * (1.35 + Math.random() * 1.25), W * 0.13); // narrow towers to broad banks
-        // Clear of the center pillar and the Payday destination.
-        const x0 = side === 'left' ? W * (0.1 + Math.random() * 0.2) : W * (0.73 + Math.random() * 0.14);
+        // Inside the windshield safe zone (25%-75%) that every layout shows:
+        // left lane before the centre pillar; right lane beyond the Payday
+        // destination, lifted above it so the destination stays visible.
+        const x0 = side === 'left' ? W * (0.31 + Math.random() * 0.08) : W * (0.64 + Math.random() * 0.04);
         billCloudVisits.push({
-          name: bill.name, label: String(bill.name).toUpperCase(),
+          name: bill.name, label: String(bill.name).toUpperCase() + (bill.cleared ? ' · CLEARED' : ''),
           seed: Math.floor(Math.random() * 1e9), side, dir: side === 'left' ? -1 : 1,
           x0, w, h, baseOff: 4 + Math.random() * 16, start: t, dur: 20 + Math.random() * 8
         });
@@ -9478,10 +9687,19 @@
         const bills = (activeData && Array.isArray(activeData.bills)) ? activeData.bills : [];
         const t = flightTime;
         // Drop clouds for bills that no longer exist (e.g. weather changed).
-        billCloudVisits = billCloudVisits.filter(v => bills.some(b => b.name === v.name) && t - v.start < v.dur);
-        if (!bills.length) return;
-        const maxVisible = bills.length >= 3 ? 2 : 1;
-        if (t >= nextBillCloudAt && billCloudVisits.length < maxVisible) spawnBillCloud(bills, horizonY);
+        billCloudVisits = billCloudVisits.filter(v => (v.event || bills.some(b => b.name === v.name)) && t - v.start < v.dur);
+        // An occurring bill (Full Throttle) takes priority over ambient clouds.
+        if (pendingBillEvents.length && billCloudVisits.length < 3) {
+          const ev = pendingBillEvents.shift();
+          const before = billCloudVisits.length;
+          spawnBillCloud([{ name: ev.name, days: 0, severity: ev.severity }], horizonY);
+          if (billCloudVisits.length > before) billCloudVisits[billCloudVisits.length - 1].event = true;
+        }
+        if (bills.length) {
+          const maxVisible = bills.length >= 3 ? 2 : 1;
+          if (t >= nextBillCloudAt && billCloudVisits.length < maxVisible) spawnBillCloud(bills, horizonY);
+        }
+        if (!billCloudVisits.length) return;
 
         const pal = cumulusPalette(days, activeScenarioKey);          // relit if scene/weather changes
         billCloudVisits.forEach(v => {
@@ -9489,11 +9707,12 @@
           const alpha = Math.min(1, (t - v.start) / 3, (v.start + v.dur - t) / 3);
           // Flying toward the horizon: off-axis objects grow and slide outward.
           const scale = 0.78 + 0.34 * age;
-          const x = v.x0 + v.dir * W * 0.1 * age;
+          const x = v.x0 + v.dir * W * 0.05 * age;
           // Near Payday the city fills the frame, so clouds belong ABOVE the
           // skyline rather than hanging in front of the buildings.
           const lowAlt = Math.max(0, Math.min(1, (4 - days) / 3));
-          const baseY = (horizonY + v.baseOff + 12 * age) - lowAlt * horizonY * 0.42;
+          const liftAboveDest = v.side === 'right' ? horizonY * 0.3 : 0;
+          const baseY = (horizonY + v.baseOff + 12 * age) - lowAlt * horizonY * 0.42 - liftAboveDest;
           drawSprite(getCumulusSprite(v.seed, v.w, v.h, pal, v.label), x, baseY, scale, alpha * 0.97);
         });
       }
@@ -9634,7 +9853,7 @@
         // -----------------------------------------------------------------------
         // B. REAL ALTITUDE DESCENT & EXPANDING SURFACE DETAIL
         // -----------------------------------------------------------------------
-        // Scale interpolates smoothly across the continuous day slider (1.00 -> 1.90)
+        // Scale interpolates smoothly across the continuous daysUntilPayday journey (1.00 -> 1.90)
         const currentFlightScale = upperKf.scale + (lowerKf.scale - upperKf.scale) * blendT;
       
         // Continental ground drift: Earth rotates gently west-to-east beneath the aircraft
@@ -10278,17 +10497,9 @@
       const viewData = getActiveViewData();
       const culprit = findLowestBalanceCulprit(series, lowestIdx);
 
-      fdWeatherKey = FD_WEATHER_FROM_FINANCES[(window.flightDeckDataSource() || {}).weatherKey] || fdMapWeatherKey(status.key);
+      fdWeatherKey = FD_WEATHER_FROM_FINANCES[(fdRealFlightInputs() || {}).weatherKey] || fdMapWeatherKey(status.key);
       const wMeta = FD_WEATHER_META[fdWeatherKey];
 
-      // Payday destination grows as it's actually approached — the
-      // emotional payoff should visibly get closer, not sit static.
-      const paydayGlowEl = document.getElementById('fd-payday-glow');
-      if (paydayGlowEl) {
-        const daysOut = viewData.nextIncome ? viewData.daysUntilIncome : 30;
-        const destScale = Math.max(1, Math.min(1.6, 1.6 - (daysOut / 30) * 0.6));
-        paydayGlowEl.style.setProperty('--fd-dest-scale', destScale.toFixed(2));
-      }
 
       // Stencil image (set once; harmless to reset each render)
       const stencilEl = document.getElementById('fd-stencil');
@@ -10331,15 +10542,28 @@
       // an actual vertical timeline, filling the whole screen.
       const entries = [];
       series.forEach(day => { day.events.forEach(ev => entries.push({ date: day.date, ev })); });
-      const routeItems = entries.slice(0, 6);
+      const cleared = fdClearedBillsThisCycle(viewData);
+      const landed = fdIsLandedToday(viewData);
+      const clearedRows = [];
+      if (cleared.length > 2) {
+        const total = cleared.reduce((a, c) => a + c.amount, 0);
+        clearedRows.push({ name: `${cleared.length - 1} BILLS`, meta: `-$${Math.round(total - cleared[cleared.length - 1].amount).toLocaleString()} · CLEARED` });
+        const last = cleared[cleared.length - 1];
+        clearedRows.push({ name: last.title.toUpperCase(), meta: `${friendlyDate(last.date)} · -$${Math.round(last.amount).toLocaleString()} · CLEARED` });
+      } else {
+        cleared.forEach(c => clearedRows.push({ name: c.title.toUpperCase(), meta: `${friendlyDate(c.date)} · -$${Math.round(c.amount).toLocaleString()} · CLEARED` }));
+      }
+      const routeItems = entries.slice(0, 6 - clearedRows.length);
       const timelineEl = document.getElementById('fd-d2-timeline');
       if (timelineEl) {
-        let html = `<div class="fd-d2-row"><div class="fd-d2-dot" style="background:#5eead4"></div><div class="fd-d2-info"><div class="fd-d2-name">TODAY</div><div class="fd-d2-meta">${fdMoney(current)}</div></div></div>`;
+        let html = clearedRows.map(r => `<div class="fd-d2-row fd-d2-cleared"><div class="fd-d2-dot" style="background:#4b6b60"></div><div class="fd-d2-info"><div class="fd-d2-name">${escapeHtml(r.name)}</div><div class="fd-d2-meta">${escapeHtml(r.meta)}</div></div></div>`).join('');
+        html += `<div class="fd-d2-row"><div class="fd-d2-dot" style="background:#5eead4"></div><div class="fd-d2-info"><div class="fd-d2-name">TODAY</div><div class="fd-d2-meta">${fdMoney(current)}</div></div></div>`;
         html += routeItems.map((it) => {
-          const color = it.ev.type === 'payday' ? '#6ee7b7' : '#ffb454';
+          const color = it.ev.type === 'payday' ? '#6ee7b7' : it.ev.type === 'goal' ? '#a5b4fc' : '#ffb454';
           const dateTxt = new Date(it.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
           const amtTxt = (it.ev.type === 'goal' ? '→' : it.ev.type === 'payday' ? '+' : '-') + '$' + Math.round(it.ev.amount).toLocaleString();
-          return `<div class="fd-d2-row"><div class="fd-d2-dot" style="background:${color}"></div><div class="fd-d2-info"><div class="fd-d2-name">${(it.ev.label || '').toUpperCase()}</div><div class="fd-d2-meta">${dateTxt} · ${amtTxt}</div></div></div>`;
+          const isLandedPayday = landed && it.ev.type === 'payday' && it.date === localDateStr(new Date());
+          return `<div class="fd-d2-row"><div class="fd-d2-dot" style="background:${color}"></div><div class="fd-d2-info"><div class="fd-d2-name">${(it.ev.label || '').toUpperCase()}</div><div class="fd-d2-meta">${isLandedPayday ? 'Today' : dateTxt} · ${amtTxt}${isLandedPayday ? ' · LANDED' : ''}</div></div></div>`;
         }).join('');
         timelineEl.innerHTML = html;
       }
@@ -10361,7 +10585,7 @@
       }
       const miniEl = document.getElementById('fd-display3-mini');
       if (miniEl) {
-        const daysTxt = viewData.nextIncome ? `${viewData.daysUntilIncome}D` : '—';
+        const daysTxt = landed ? 'LANDED' : viewData.nextIncome ? `${viewData.daysUntilIncome}D` : '—';
         miniEl.innerHTML = `
           <div><div class="fd-mini-label">TO PAYDAY</div><div class="fd-mini-value" style="color:#6ee7b7">${daysTxt}</div></div>
           <div><div class="fd-mini-label">LOWEST</div><div class="fd-mini-value" style="color:${fdFloorColor(lowest)}">${fdMoney(lowest)}</div></div>
@@ -10371,25 +10595,29 @@
       if (tickerTrack) {
         const daysTxt = viewData.nextIncome ? `${viewData.daysUntilIncome} DAYS` : 'UNSCHEDULED';
         const msgs = [
-          `>>> PAYDAY IN ${daysTxt} >>>`,
+          landed ? `>>> LANDED — PAYDAY TODAY >>>` : `>>> PAYDAY IN ${daysTxt} >>>`,
           `>>> FORECAST ${wMeta.text} >>>`,
           `>>> SAFE SPEND ${fdMoney(viewData.safeSpend)} >>>`,
           `>>> LOWEST BALANCE ${fdMoney(lowest)} >>>`,
         ];
         if (culprit) msgs.push(`>>> NEXT BILL ${culprit.label.toUpperCase()} -$${Math.round(culprit.amount).toLocaleString()} >>>`);
+        if (cleared.length) msgs.push(`>>> ${cleared.length} BILL${cleared.length === 1 ? '' : 'S'} CLEARED THIS CYCLE >>>`);
         const text = msgs.join('     ');
         tickerTrack.innerText = text + '     ' + text;
       }
       const statusEl = document.getElementById('fd-display3-status');
-      if (statusEl) { statusEl.innerText = `STATUS: ${wMeta.text}`; statusEl.style.color = wMeta.color; }
+      if (statusEl) {
+        statusEl.innerText = landed ? 'STATUS: LANDED — PAYDAY' : `STATUS: ${wMeta.text}`;
+        statusEl.style.color = landed ? '#6ee7b7' : wMeta.color;
+      }
 
       // Display 5 — Mission Computer: real Paycheck Pilot intelligence
       const d5 = document.getElementById('fd-display5');
       if (d5) {
         const inHousehold = !!(state.household && state.household.id && state.household.accountMode === 'shared');
-        const nextIncomeTxt = viewData.nextIncome
-          ? `${new Date(viewData.nextIncome.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} +$${Math.round(viewData.nextIncome.amount).toLocaleString()}`
-          : 'Unscheduled';
+        const nextIncomeTxt = !viewData.nextIncome ? 'Unscheduled'
+          : landed ? `LANDED TODAY +$${Math.round(viewData.nextIncome.amount).toLocaleString()}`
+          : `${new Date(viewData.nextIncome.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} +$${Math.round(viewData.nextIncome.amount).toLocaleString()}`;
         const nextBillTxt = culprit ? `${culprit.label} -$${Math.round(culprit.amount).toLocaleString()}` : 'None upcoming';
         const culpritTxt = culprit ? `${culprit.label} on ${new Date(culprit.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : 'No single large bill';
         const logLines = [
@@ -10398,6 +10626,8 @@
           `${viewData.upcomingBills.length} BILL${viewData.upcomingBills.length === 1 ? '' : 'S'} BEFORE NEXT INCOME`,
           `SYNC: ${inHousehold ? 'HOUSEHOLD LINKED' : 'SOLO MODE'}`,
           `FORECAST ENGINE: ACTIVE`,
+          ...cleared.map(c => `CLEARED — ${c.title.toUpperCase()} -$${Math.round(c.amount).toLocaleString()}`),
+          ...(landed ? ['PAYDAY — LANDED'] : []),
         ];
         const logDoubled = [...logLines, ...logLines];
         d5.innerHTML = `
@@ -10415,122 +10645,64 @@
           </div>`;
       }
 
-      // Bill clouds — dynamically generated from real bills. Upcoming
-      // bills get the approach-and-pass journey; overdue bills (past
-      // due, not marked paid) stay visibly parked in the world instead
-      // of disappearing, since that matches financial reality.
-      const cloudContainer = document.getElementById('fd-bill-clouds');
-      if (cloudContainer) {
-        const today0 = new Date(); today0.setHours(0, 0, 0, 0);
-        const todayStr = `${today0.getFullYear()}-${String(today0.getMonth() + 1).padStart(2, '0')}-${String(today0.getDate()).padStart(2, '0')}`;
-        const overdueBills = (viewData.allBills || []).filter(b => b.dueDate && b.dueDate < todayStr);
 
-        const upcoming = entries.filter(e => e.ev.type === 'bill').slice(0, 3);
-        let html = upcoming.map((it, i) => {
-          const dateTxt = new Date(it.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase();
-          const delay = (i * 8) + 's';
-          const tops = ['18%', '10%', '22%'];
-          const xsets = [['5%', '15%', '25%', '38%'], ['60%', '48%', '38%', '26%'], ['30%', '22%', '14%', '4%']];
-          const xs = xsets[i % xsets.length];
-          return `<div class="fd-bill${fdPlaying ? '' : ' fd-anim-paused'}" style="top:${tops[i % tops.length]};--x0:${xs[0]};--x1:${xs[1]};--x2:${xs[2]};--x3:${xs[3]};animation:fdLandmarkApproach 24s ease-in infinite;animation-delay:${delay};animation-fill-mode:both;">
-            <div class="fd-bill-shape">
-              <div class="fd-bill-lobe1"></div><div class="fd-bill-lobe2"></div>
-              <div class="fd-bill-date" style="animation-delay:${delay}">${dateTxt}</div>
-              <div class="fd-bill-name" style="animation-delay:${delay}">${(it.ev.label || '').toUpperCase()}</div>
-              <div class="fd-bill-amt" style="animation-delay:${delay}">-$${Math.round(it.ev.amount).toLocaleString()}</div>
-            </div>
-          </div>`;
-        }).join('');
-
-        html += overdueBills.slice(0, 3).map((b, i) => {
-          const daysLate = Math.round((today0 - new Date(b.dueDate + 'T00:00:00')) / 86400000);
-          const leftPos = [62, 70, 54][i % 3];
-          const topPos = [30, 40, 22][i % 3];
-          return `<div class="fd-bill fd-bill-overdue" style="top:${topPos}%;left:${leftPos}%;animation:fdOverdueDrift 4s ease-in-out infinite;">
-            <div class="fd-bill-shape">
-              <div class="fd-bill-lobe1"></div><div class="fd-bill-lobe2"></div>
-              <div class="fd-bill-overdue-tag">${daysLate}D OVERDUE</div>
-              <div class="fd-bill-name" style="opacity:1;color:#fecaca;">${(b.title || '').toUpperCase()}</div>
-              <div class="fd-bill-amt" style="opacity:1;">-$${Math.round(b.amount).toLocaleString()}</div>
-            </div>
-          </div>`;
-        }).join('');
-
-        cloudContainer.innerHTML = html;
-      }
-
-      // ---------- Mobile panel — same computed values, dedicated
-      // stacked presentation instead of the desktop overlay-on-photo
-      // layout, which is hidden entirely below the mobile breakpoint. ----------
-      const mVerdict = document.getElementById('fd-m-verdict');
-      if (mVerdict) { mVerdict.innerText = headline; mVerdict.style.color = wMeta.color; }
-
-      const mBalance = document.getElementById('fd-m-balance');
-      if (mBalance) {
-        mBalance.innerHTML = current < 0 ? '-$' : '$';
-        const wrap = document.createElement('span');
-        mBalance.appendChild(wrap);
-        fdRenderReel(wrap, Math.abs(current).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','));
-      }
-      const mMini = document.getElementById('fd-m-mini');
-      if (mMini) {
-        const daysTxt = viewData.nextIncome ? `${viewData.daysUntilIncome}D` : '—';
-        mMini.innerHTML = `
-          <div><div class="fd-m-mini-label">TO PAYDAY</div><div class="fd-m-mini-value" style="color:#6ee7b7">${daysTxt}</div></div>
-          <div><div class="fd-m-mini-label">LOWEST</div><div class="fd-m-mini-value" style="color:${fdFloorColor(lowest)}">${fdMoney(lowest)}</div></div>
-          <div><div class="fd-m-mini-label">SAFE SPEND</div><div class="fd-m-mini-value" style="color:#ffd54a">${fdMoney(viewData.safeSpend)}</div></div>`;
-      }
-      const mTicker = document.getElementById('fd-m-ticker-track');
-      if (mTicker) {
-        const daysTxt2 = viewData.nextIncome ? `${viewData.daysUntilIncome} DAYS` : 'UNSCHEDULED';
-        const mMsgs = [`>>> PAYDAY IN ${daysTxt2} >>>`, `>>> FORECAST ${wMeta.text} >>>`, `>>> SAFE SPEND ${fdMoney(viewData.safeSpend)} >>>`];
-        const mText = mMsgs.join('     ');
-        mTicker.innerText = mText + '     ' + mText;
-      }
-
-      const mWeatherRing = document.getElementById('fd-m-weather-ring');
-      const mWeatherLabel = document.getElementById('fd-m-weather-label');
-      if (mWeatherRing) { mWeatherRing.style.borderColor = wMeta.color; mWeatherRing.style.boxShadow = `0 0 10px 2px ${wMeta.color}88`; }
-      if (mWeatherLabel) { mWeatherLabel.innerText = wMeta.text; mWeatherLabel.style.color = wMeta.color; }
-
-      const mComputer = document.getElementById('fd-m-computer');
-      if (mComputer) {
-        const inHousehold2 = !!(state.household && state.household.id && state.household.accountMode === 'shared');
-        const nextIncomeTxt2 = viewData.nextIncome
-          ? `${new Date(viewData.nextIncome.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} +$${Math.round(viewData.nextIncome.amount).toLocaleString()}`
-          : 'Unscheduled';
-        const nextBillTxt2 = culprit ? `${culprit.label} -$${Math.round(culprit.amount).toLocaleString()}` : 'None upcoming';
-        mComputer.innerHTML = `
-          <div class="fd-m-computer-row">NEXT BILL: <b>${escapeHtml(nextBillTxt2)}</b></div>
-          <div class="fd-m-computer-row">NEXT INCOME: <b>${escapeHtml(nextIncomeTxt2)}</b></div>
-          <div class="fd-m-computer-row">PROJECTED FLOOR: <b>${fdMoney(lowest)}</b></div>
-          <div class="fd-m-computer-row">HOUSEHOLD: <b>${inHousehold2 ? 'SYNCED' : 'SOLO'}</b></div>`;
-      }
-
-      const mRoute = document.getElementById('fd-m-route');
-      if (mRoute) {
-        const mRouteItems = entries.slice(0, 4);
-        let mHtml = `<div class="fd-m-route-row"><div class="fd-m-route-dot" style="background:#5eead4"></div><div class="fd-m-route-name">TODAY</div><div class="fd-m-route-meta">${fdMoney(current)}</div></div>`;
-        mHtml += mRouteItems.map((it) => {
-          const color = it.ev.type === 'payday' ? '#6ee7b7' : '#ffb454';
-          const dateTxt = new Date(it.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-          const amtTxt = (it.ev.type === 'goal' ? '→' : it.ev.type === 'payday' ? '+' : '-') + '$' + Math.round(it.ev.amount).toLocaleString();
-          return `<div class="fd-m-route-row"><div class="fd-m-route-dot" style="background:${color}"></div><div class="fd-m-route-name">${(it.ev.label || '').toUpperCase()}</div><div class="fd-m-route-meta">${dateTxt} · ${amtTxt}</div></div>`;
-        }).join('');
-        mRoute.innerHTML = mHtml;
-      }
-
-      const mAltitude = document.getElementById('fd-m-altitude');
-      if (mAltitude) {
-        const healthPct2 = Math.max(6, Math.min(100, Math.round((lowest / Math.max(current, 1)) * 100)));
-        mAltitude.innerHTML = `
-          <div class="fd-m-altitude-row"><span>Current</span><b style="color:#6ee7b7">${fdMoney(current)}</b></div>
-          <div class="fd-m-altitude-row"><span>Projected floor</span><b style="color:${fdFloorColor(lowest)}">${fdMoney(lowest)}</b></div>
-          <div class="fd-m-altitude-bar"><div class="fd-m-altitude-fill" style="width:${healthPct2}%;background:${wMeta.color};box-shadow:0 0 4px ${wMeta.color}"></div></div>`;
-      }
-
+      fdSyncCockpitLayout();
       if (!fdCanvasState) fdStartCanvas();
       fdInitBillboards();
+    }
+
+    // One cockpit, two arrangements, chosen by the cockpit's own width (not
+    // the device): wide overlays the displays on the photo; compact shows
+    // the windshield safe zone with the same displays reflowed below.
+    const FD_COMPACT_BELOW = 900;
+    let fdLayoutObserver = null;
+    function fdSyncCockpitLayout() {
+      const root = document.getElementById('fd-root');
+      if (!root) return;
+      const apply = () => {
+        const w = root.getBoundingClientRect().width;
+        if (!w) return; // hidden
+        root.classList.toggle('fd-compact', w < FD_COMPACT_BELOW);
+        // Keep the Overhead Panel clear of any sticky app header (phones).
+        const hdr = [...document.querySelectorAll('.sticky, header')].find(e => {
+          const cs = getComputedStyle(e), r = e.getBoundingClientRect();
+          return cs.display !== 'none' && (cs.position === 'sticky' || cs.position === 'fixed') && r.height > 20 && r.width > w * 0.5 && !e.contains(root);
+        });
+        root.style.setProperty('--fd-ohp-top', hdr ? Math.round(hdr.getBoundingClientRect().height) + 'px' : '0px');
+      };
+      apply();
+      if (!fdLayoutObserver && typeof ResizeObserver === 'function') {
+        fdLayoutObserver = new ResizeObserver(() => { apply(); fdDockOverheadPanel(); });
+        fdLayoutObserver.observe(root);
+        let queued = false;
+        const onScroll = () => { if (queued) return; queued = true; requestAnimationFrame(() => { queued = false; fdDockOverheadPanel(); }); };
+        window.addEventListener('scroll', onScroll, { passive: true, capture: true });
+        window.addEventListener('resize', onScroll, { passive: true });
+      }
+      fdDockOverheadPanel();
+    }
+
+    // Pause / Full Throttle (and future controls) stay reachable while the
+    // instruments are being read: if the Overhead Panel scrolls out of view
+    // inside the cockpit, the same panel docks to the top of the screen.
+    function fdDockOverheadPanel() {
+      const root = document.getElementById('fd-root');
+      const slot = document.getElementById('fd-ohp-slot');
+      const ohp = document.getElementById('fd-ohp');
+      if (!root || !slot || !ohp) return;
+      const top = parseFloat(getComputedStyle(root).getPropertyValue('--fd-ohp-top')) || 0;
+      const rr = root.getBoundingClientRect(), sr = slot.getBoundingClientRect();
+      const h = ohp.offsetHeight;
+      const shouldDock = rr.width > 0 && sr.top < top && rr.bottom > top + h + 40;
+      if (shouldDock) {
+        slot.style.height = h + 'px';
+        ohp.classList.add('fd-ohp-docked');
+        ohp.style.top = top + 'px'; ohp.style.left = rr.left + 'px'; ohp.style.width = rr.width + 'px';
+      } else if (ohp.classList.contains('fd-ohp-docked')) {
+        ohp.classList.remove('fd-ohp-docked');
+        ohp.style.top = ohp.style.left = ohp.style.width = '';
+        slot.style.height = '';
+      }
     }
 
     function renderFinancialRadar(series) {
