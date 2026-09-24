@@ -8420,6 +8420,12 @@
       fdFT.hold = 0;
       fdFT.firedDays = new Set();
       if (leg.initial) fdFTFireBillsOn(0);
+      // Looping back out to 14 days: a sponsor still crossing from Payday
+      // must not carry into the no-sponsor stages (14/12 days).
+      if (fdSponsorAllowance(Math.min(14, leg.b - leg.a)) === 0) {
+        const slot = document.getElementById('fd-sponsor-plane-slot');
+        if (slot) slot.innerHTML = '';
+      }
     }
 
     function fdFTAdvanceLeg() {
