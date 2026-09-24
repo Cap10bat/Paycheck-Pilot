@@ -4368,15 +4368,70 @@
       return roundCents(personalAccounts().reduce((sum, acc) => acc.type === 'credit' ? sum : sum + (Number(acc.balance) || 0), 0));
     }
 
-    // The soonest income event across the user's own schedule and every
-    // configured household member's paycheck — what Household View
-    // evaluates against, instead of only the primary user's own payday.
-    function getNextHouseholdIncomeEvent() {
-      const candidates = [];
-      if (state.income && state.income.nextDate) candidates.push({ date: state.income.nextDate, amount: Number(state.income.amount) || 0, label: 'Your Paycheck' });
+    // HOUSEHOLD INCOME — the one list of paycheck schedules every household
+    // calculation uses (Dashboard, Safe Spend, Forecast, Money Mayday,
+    // Flight Deck, Financial Weather):
+    //   1. the viewer's own paycheck (state.income);
+    //   2. every other member's OWN paycheck, synced from their device in
+    //      state.income_by_owner -- no manual re-entry needed;
+    //   3. manual "Additional Household Income" entries (people not using
+    //      the app), skipped when they duplicate 1 or 2 by name or by an
+    //      identical schedule, so no paycheck is ever counted twice --
+    //      including a member's own paycheck on their own device.
+    function inHouseholdMode() {
+      return !!(state.household && state.household.id && state.household.accountMode === 'shared');
+    }
+    // A schedule's next payday on or after today (a member who hasn't opened
+    // the app recently still has a past date saved).
+    function rollPayDateForward(sched) {
+      if (!sched || !sched.nextDate) return null;
+      const todayStr = localDateStr(new Date());
+      let d = sched.nextDate, guard = 0;
+      while (d < todayStr && guard < 400) {
+        const n = getNextPaycheckDate(d, sched.frequency, sched);
+        if (!n || n <= d) break;
+        d = n; guard++;
+      }
+      return d;
+    }
+    function householdIncomeSources() {
+      const me = state.user ? state.user.id : null;
+      const norm = s => normalizeDescription(s || '');
+      const sources = [];
+      const covered = [{ name: norm(currentOwnerLabel()), sched: state.income }];
+      if (state.income && state.income.nextDate) {
+        sources.push({ label: 'Your Paycheck', ownerLabel: currentOwnerLabel(), schedule: state.income, isOwn: true });
+      }
+      if (inHouseholdMode()) {
+        Object.entries(state.income_by_owner || {}).forEach(([ownerId, inc]) => {
+          if (!inc || ownerId === me || !inc.nextDate || !(Number(inc.amount) > 0)) return;
+          const name = String(inc.ownerLabel || inc.lastEditedBy || '').trim();
+          const who = name && name !== 'User' ? name : 'Household Member';
+          sources.push({ label: `${who}'s Paycheck`, ownerLabel: who, ownerId, isMember: true, isOwn: false,
+            schedule: { ...inc, nextDate: rollPayDateForward(inc) } });
+          covered.push({ name: norm(name), sched: inc });
+        });
+      }
       (state.householdPaychecks || []).forEach(hp => {
-        if (hp && hp.nextDate) candidates.push({ date: hp.nextDate, amount: Number(hp.amount) || 0, label: hp.ownerLabel ? `${hp.ownerLabel}'s Paycheck` : 'Household Paycheck' });
+        if (!hp || !hp.nextDate) return;
+        const n = norm(hp.ownerLabel);
+        const duplicate = covered.some(c =>
+          (n && c.name && c.name !== 'user' && c.name === n) ||
+          (c.sched && c.sched.nextDate && Number(c.sched.amount) === Number(hp.amount) && c.sched.frequency === hp.frequency &&
+            rollPayDateForward(c.sched) === rollPayDateForward(hp)));
+        if (duplicate) return;
+        sources.push({ label: hp.ownerLabel ? `${hp.ownerLabel}'s Paycheck` : 'Household Paycheck', ownerLabel: hp.ownerLabel || 'Household',
+          hpId: hp.id, isOwn: false, schedule: hp });
       });
+      return sources;
+    }
+
+    // The soonest income event across the household's paychecks — what
+    // Household View evaluates against, instead of only the viewer's own.
+    function getNextHouseholdIncomeEvent() {
+      const candidates = householdIncomeSources()
+        .map(s => ({ date: s.isOwn ? s.schedule.nextDate : rollPayDateForward(s.schedule), amount: Number(s.schedule.amount) || 0, label: s.label }))
+        .filter(c => c.date);
       if (!candidates.length) return null;
       candidates.sort((a, b) => a.date < b.date ? -1 : 1);
       return candidates[0];
@@ -6399,7 +6454,12 @@
       const upcomingTotal = upcomingBills.reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
 
       const safeSpendReserve = computeSafeSpendReserve(allBills, cutoffDate, nextIncome ? nextIncome.amount : 0);
-      const safeSpend = roundCents(cash - safeSpendReserve);
+      // Also capped by the lowest projected balance over the Money Mayday
+      // window: an early paycheck too small to cover the bills right after
+      // it must not make that money look free to spend.
+      const windowSeries = solo ? buildPersonalForecastSeries(14) : buildForecastSeries(14);
+      const lowestInWindow = windowSeries.length ? Math.min(...windowSeries.map(s => s.balance)) : Infinity;
+      const safeSpend = roundCents(Math.min(cash - safeSpendReserve, lowestInWindow));
 
       const today = new Date(); today.setHours(0, 0, 0, 0);
       const daysUntilIncome = cutoffDate ? Math.max(0, Math.round((new Date(cutoffDate + 'T00:00:00') - today) / 86400000)) : 0;
@@ -6586,9 +6646,9 @@
       const householdIncomeLine = document.getElementById('dash-household-income-line');
       const householdIncomeTotal = document.getElementById('dash-household-income-total');
       if (householdIncomeLine && householdIncomeTotal) {
-        const otherPaychecks = state.householdPaychecks || [];
+        const otherPaychecks = householdIncomeSources().filter(s => !s.isOwn);
         if (otherPaychecks.length > 0) {
-          const total = (highlightAmountValid ? Number(state.income.amount) : 0) + otherPaychecks.reduce((sum, hp) => sum + (Number(hp.amount) || 0), 0);
+          const total = (highlightAmountValid ? Number(state.income.amount) : 0) + otherPaychecks.reduce((sum, s) => sum + (Number(s.schedule.amount) || 0), 0);
           householdIncomeTotal.innerText = `$${formatCurrency(total)}`;
           householdIncomeLine.classList.remove('hidden');
         } else {
@@ -6935,8 +6995,14 @@
           events.push({ date: dateStr, ownerLabel: currentOwnerLabel(), amount: state.income.amount, frequency: state.income.frequency, frequencyLabel: describeFrequency(state.income), isPrimary: true, isNext: i === 0 });
         });
       }
+      householdIncomeSources().filter(s => s.isMember).forEach(src => {
+        getPaycheckOccurrences(src.schedule.nextDate, src.schedule.frequency, daysAhead, today, src.schedule).forEach(dateStr => {
+          events.push({ date: dateStr, ownerLabel: src.ownerLabel, amount: src.schedule.amount, frequency: src.schedule.frequency, frequencyLabel: describeFrequency(src.schedule), isPrimary: false, isMember: true });
+        });
+      });
+      const manualShown = new Set(householdIncomeSources().filter(s => s.hpId).map(s => s.hpId));
       (state.householdPaychecks || []).forEach(hp => {
-        if (!hp || !hp.nextDate) return;
+        if (!hp || !hp.nextDate || !manualShown.has(hp.id)) return;
         getPaycheckOccurrences(hp.nextDate, hp.frequency, daysAhead, today, hp).forEach((dateStr, i) => {
           events.push({ date: dateStr, ownerLabel: hp.ownerLabel || 'Household Member', amount: hp.amount, frequency: hp.frequency, frequencyLabel: describeFrequency(hp), isPrimary: false, hpId: hp.id, isNext: i === 0 });
         });
@@ -6969,11 +7035,12 @@
           </div>
           <div class="flex items-center gap-2 shrink-0 flex-wrap justify-end">
             <span class="font-bold text-brand-400">$${formatCurrency(ev.amount)}</span>
-            ${ev.isNext
+            ${ev.isMember ? `<span class="px-2 py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-[10px] font-bold">From their app</span>` : ''}
+            ${ev.isNext && !ev.isMember
               ? `<button type="button" onclick="${ev.isPrimary ? 'confirmPaydayReceived()' : `receiveHouseholdPaycheck(${jsArg(ev.hpId)})`}" class="px-2.5 py-1.5 bg-brand-500/20 hover:bg-brand-500/30 text-brand-400 rounded-lg text-[10px] font-bold">Receive</button>`
               : ''
             }
-            ${ev.isPrimary
+            ${ev.isMember ? '' : ev.isPrimary
               ? `<button type="button" onclick="navigateTo('reconcile'); openPaydaySettingsEdit();" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-[10px] font-bold">Edit</button>`
               : `<button type="button" onclick="setComingUpEditingPayday(${jsArg(ev.hpId)})" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-[10px] font-bold">Edit</button>
                  <button type="button" onclick="deleteHouseholdPaycheck(${jsArg(ev.hpId)})" class="px-2.5 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 rounded-lg text-[10px] font-bold">Delete</button>`
@@ -7452,20 +7519,15 @@
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
+      // Every household paycheck -- the viewer's own, each member's own
+      // (synced), and manual entries -- deduplicated in householdIncomeSources().
       const paydays = [];
-      if (state.income && state.income.nextDate) {
-        getPaycheckOccurrences(state.income.nextDate, state.income.frequency, daysAhead, today, state.income).forEach(dateStr => {
-          paydays.push({ date: new Date(dateStr + 'T00:00:00'), amount: Number(state.income.amount) || 0, label: 'Payday Deposit', isOwn: true });
-        });
-      }
-      // Other confirmed household members' paychecks (configured via
-      // Financial Reset) — same engine as above, applied per schedule, so
-      // Forecast reflects the full household income picture rather than
-      // only the current user's own paycheck.
-      (state.householdPaychecks || []).forEach(hp => {
-        if (!hp || !hp.nextDate) return;
-        getPaycheckOccurrences(hp.nextDate, hp.frequency, daysAhead, today, hp).forEach(dateStr => {
-          paydays.push({ date: new Date(dateStr + 'T00:00:00'), amount: Number(hp.amount) || 0, label: `Payday Deposit (${hp.ownerLabel || 'Household'})`, isOwn: false });
+      householdIncomeSources().forEach(src => {
+        const sch = src.schedule;
+        const start = src.isOwn ? sch.nextDate : rollPayDateForward(sch);
+        getPaycheckOccurrences(start, sch.frequency, daysAhead, today, sch).forEach(dateStr => {
+          paydays.push({ date: new Date(dateStr + 'T00:00:00'), amount: Number(sch.amount) || 0,
+            label: src.isOwn ? 'Payday Deposit' : `Payday Deposit (${src.ownerLabel})`, isOwn: src.isOwn });
         });
       });
 
