@@ -7080,7 +7080,7 @@
             ${detailLine}
           </td>
           <td class="p-4"><span class="px-2 py-1 rounded-lg text-[10px] font-semibold bg-slate-800 text-slate-300">${escapeHtml(t.category || 'General')}</span></td>
-          <td class="p-4 text-right font-bold ${t.type === 'income' ? 'text-emerald-400' : 'text-slate-100'}">${t.type === 'income' ? '+' : '-'}$${formatCurrency(t.amount)}</td>
+          <td class="p-4 text-right font-bold ${t.type === 'income' ? 'text-emerald-400' : 'text-slate-100'}">${t.toAccountId ? '⇄ ' : t.type === 'income' ? '+' : '-'}$${formatCurrency(t.amount)}</td>
           <td class="p-4 text-center">
             <button onclick="deleteTransaction(${jsArg(t.id)})" class="text-slate-500 hover:text-rose-400 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
           </td>
@@ -13422,6 +13422,16 @@
       acct.balance = roundCents((Number(acct.balance) || 0) + sign * roundCents(tx.amount) * direction);
       acct.lastModifiedAt = new Date().toISOString();
       acct.lastModifiedBy = currentOwnerLabel();
+      // Account-to-account transfer: the money lands in the destination,
+      // so total cash is unchanged.
+      if (tx.toAccountId) {
+        const dest = (state.accounts || []).find(a => a.id === tx.toAccountId);
+        if (dest) {
+          dest.balance = roundCents((Number(dest.balance) || 0) + roundCents(tx.amount) * direction);
+          dest.lastModifiedAt = acct.lastModifiedAt;
+          dest.lastModifiedBy = acct.lastModifiedBy;
+        }
+      }
       return true;
     }
 
@@ -13724,10 +13734,40 @@
       document.getElementById('withdraw-reason-input').value = '';
       const avail = document.getElementById('withdraw-available');
       const acct = defaultPaymentAccount();
+      const src = acct ? goalSourceAccount(acct.id) : null;
+      const held = acct ? goalHeldCash(goal) : 0;
       if (avail) avail.innerText = `Available in this goal: $${formatCurrency(goal.current)}`
-        + (acct ? ` — moves into ${acct.name}` : '');
+        + (acct ? ` — moves into ${acct.name}` : '')
+        + (acct && src && held < Number(goal.current) ? (held > 0 ? ` (beyond the $${formatCurrency(held)} set aside here, it comes out of ${src.name})` : ` from ${src.name}`) : '');
       if (backdrop && modal) { backdrop.classList.remove('hidden'); modal.classList.remove('hidden'); }
       if (window.lucide) lucide.createIcons();
+    }
+
+    // Cash a goal holds that in-app deposits took out of spendable cash.
+    // Only this part can go straight back to checking; the rest of a goal's
+    // balance (a starting amount, money already sitting in savings) lives in
+    // a real account and has to move from there.
+    function goalHeldCash(goal) {
+      let held = 0;
+      (state.transactions || []).forEach(t => {
+        if (t.goalId !== goal.id || !txMovedMoney(t)) return;
+        if (t.source === 'goal-contribution') held += Number(t.amount) || 0;
+        else if (t.source === 'goal-withdrawal' && !t.toAccountId) held -= Number(t.amount) || 0;
+      });
+      return roundCents(Math.max(0, held));
+    }
+    // Savings account a goal withdrawal can draw the rest from.
+    function goalSourceAccount(excludeId) {
+      return moneyAccountsForMe()
+        .filter(a => a.type === 'savings' && a.id !== excludeId && (Number(a.balance) || 0) > 0)
+        .sort((a, b) => (Number(b.balance) || 0) - (Number(a.balance) || 0))[0] || null;
+    }
+    function goalWithdrawalPlan(goal, amount) {
+      const account = defaultPaymentAccount();
+      const fromHeld = account ? roundCents(Math.min(amount, goalHeldCash(goal))) : 0;
+      const source = account ? goalSourceAccount(account.id) : null;
+      const fromSavings = source ? roundCents(Math.min(amount - fromHeld, Number(source.balance) || 0)) : 0;
+      return { account, source, fromHeld, fromSavings, untracked: roundCents(amount - fromHeld - fromSavings) };
     }
 
     function handleGoalWithdrawSubmit(e) {
@@ -13742,24 +13782,40 @@
       const amount = roundCents(Math.min(requested, Number(goal.current) || 0));   // can't take more than it holds
       if (amount <= 0) { showToast("That goal has nothing in it yet", "info"); return; }
 
-      const account = defaultPaymentAccount();
+      // Money comes from where it really is: cash this goal set aside goes
+      // back to checking; anything beyond that transfers out of savings.
+      // Never credited from nowhere (that inflated cash and Safe Spend).
+      const plan = goalWithdrawalPlan(goal, amount);
+      const account = plan.account;
       const nowIso = new Date().toISOString();
       const actor = currentOwnerLabel();
-      const withdrawal = {
-        id: 'tx_' + Date.now(),
-        title: `From goal: ${goal.title}${reason ? ' — ' + reason : ''}`,
-        amount, type: 'income', category: 'Savings Goal',
-        date: localDateStr(new Date(nowIso)),
+      const base = {
+        category: 'Savings Goal', date: localDateStr(new Date(nowIso)),
         goalId: goal.id, goalDirection: 'withdrawal',
-        accountId: account ? account.id : null,
-        balanceApplied: !!account,
         scope: goal.scope || 'personal',
         ownerId: state.user ? state.user.id : null, ownerLabel: actor,
         source: 'goal-withdrawal',
         createdAt: nowIso, createdBy: actor, lastModifiedAt: nowIso, lastModifiedBy: actor
       };
-      state.transactions.unshift(withdrawal);
-      applyTxToBalance(withdrawal, +1);          // 'income' type: money lands in the account
+      const titleBase = `From goal: ${goal.title}${reason ? ' — ' + reason : ''}`;
+      if (plan.fromHeld > 0) {
+        const tx = { ...base, id: 'tx_' + Date.now(), title: titleBase, amount: plan.fromHeld, type: 'income',
+          accountId: account.id, balanceApplied: true };
+        state.transactions.unshift(tx);
+        applyTxToBalance(tx, +1);
+      }
+      if (plan.fromSavings > 0) {
+        const tx = { ...base, id: 'tx_' + (Date.now() + 1), title: `${titleBase} (${plan.source.name} → ${account.name})`,
+          amount: plan.fromSavings, type: 'transfer', accountId: plan.source.id, toAccountId: account.id, balanceApplied: true };
+        state.transactions.unshift(tx);
+        applyTxToBalance(tx, +1);
+      }
+      if (plan.untracked > 0) {
+        // Not in any account Paycheck Pilot tracks: record the goal change
+        // only, so it can be undone, without inventing cash.
+        state.transactions.unshift({ ...base, id: 'tx_' + (Date.now() + 2), title: `${titleBase} (not from a tracked account)`,
+          amount: plan.untracked, type: 'income', accountId: null, balanceApplied: false });
+      }
 
       goal.current = roundCents((Number(goal.current) || 0) - amount);
       const owed = roundCents(((goal.repayment && goal.repayment.owed) || 0) + amount);
@@ -13779,6 +13835,9 @@
       showToast(weeks > 0
         ? `$${formatCurrency(amount)} moved — $${formatCurrency(goal.repayment.perWeek)}/week puts it back`
         : `$${formatCurrency(amount)} moved from ${goal.title}`, "success");
+      if (plan.untracked > 0) {
+        showToast(`$${formatCurrency(plan.untracked)} isn't in an account Paycheck Pilot tracks — log it when it reaches your account.`, "info");
+      }
       saveStateToStorage();
       navigateTo('goals');
     }
