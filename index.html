@@ -2062,6 +2062,19 @@
               <button onclick="openPaydayBriefing()" class="shrink-0 px-3 py-1.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-[11px] transition-all">Payday Briefing</button>
             </div>
 
+            <!-- MISSED PAYDAY CHECK-IN: a payday passed while the app was closed -->
+            <div id="dash-missed-payday-banner" class="hidden p-4 rounded-2xl border border-amber-500/40 bg-amber-500/10 text-xs font-medium space-y-3">
+              <div class="flex items-start gap-3">
+                <span class="text-xl leading-none">💰</span>
+                <span id="dash-missed-payday-text" class="text-slate-200"></span>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                <button type="button" id="dash-missed-payday-add" onclick="resolveMissedPayday('add')" class="px-3 py-3.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-[11px] transition-all">Yes — add it</button>
+                <button type="button" onclick="resolveMissedPayday('counted')" class="px-3 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl text-[11px] transition-all">Already in my balance</button>
+                <button type="button" onclick="resolveMissedPayday('none')" class="px-3 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold rounded-xl text-[11px] transition-all">It didn't arrive</button>
+              </div>
+            </div>
+
             <!-- INCOME REPAIR WARNING — shown only when a payday date exists
                  but the paycheck amount is missing/zero/invalid (see
                  isIncomeScheduleIncomplete()) -->
@@ -4802,7 +4815,9 @@
       const backdrop = document.getElementById('modal-backdrop');
       const modal = document.getElementById('modal-bill-reminder');
       if (!backdrop || !modal) return;
-      document.getElementById('bill-reminder-text').innerText = `Did you pay "${bill.title}" ($${formatCurrency(bill.amount)}), due ${friendlyDate(bill.dueDate)}?`;
+      const missed = billOccurrencesBefore(bill, localDateStr(new Date()), false).length;
+      document.getElementById('bill-reminder-text').innerText = `Did you pay "${bill.title}" ($${formatCurrency(bill.amount)}), due ${friendlyDate(bill.dueDate)}?`
+        + (missed > 1 ? ` ${missed} payments are outstanding — mark each one as you pay it.` : '');
       modal.dataset.billId = billId;
       backdrop.classList.remove('hidden');
       modal.classList.remove('hidden');
@@ -4842,7 +4857,8 @@
     }
 
     function getUpcomingBillsTotal() {
-      return roundCents(getUpcomingBills().reduce((sum, b) => sum + (Number(b.amount) || 0), 0));
+      const cutoff = state.income.nextDate;
+      return roundCents(getUpcomingBills().reduce((sum, b) => sum + (cutoff ? billAmountDueBy(b, cutoff, true) : (Number(b.amount) || 0)), 0));
     }
 
     // Generalized version of getUpcomingBills() — bills due before ANY
@@ -4863,11 +4879,31 @@
     // same-day bills exceed that income, is still reserved. Centralized
     // here so every caller (dashboard, onboarding preview, payday
     // confirmation) computes this the same way.
+    // Every occurrence of a bill due before endStr (inclusive: up to and
+    // including it) -- a monthly bill missed for two cycles owes two
+    // payments, and a weekly bill due three times before payday is three.
+    function billOccurrencesBefore(b, endStr, inclusive) {
+      const out = [];
+      if (!b || !b.dueDate || !endStr) return out;
+      let d = b.dueDate, guard = 0;
+      while ((inclusive ? d <= endStr : d < endStr) && guard < 400) {
+        out.push(d);
+        if (!b.recurrence || b.recurrence === 'none') break;
+        const n = getNextRecurrenceDate(d, b.recurrence, b.anchorDay || dayOfDateStr(b.dueDate));
+        if (!n || n <= d) break;
+        d = n; guard++;
+      }
+      return out;
+    }
+    function billAmountDueBy(b, endStr, inclusive) {
+      return roundCents((Number(b.amount) || 0) * billOccurrencesBefore(b, endStr, inclusive).length);
+    }
+
     function computeSafeSpendReserve(bills, cutoffDate, incomeAmount) {
       const relevant = bills.filter(b => !b.completed && !b.paused);
       if (!cutoffDate) return roundCents(relevant.reduce((sum, b) => sum + (Number(b.amount) || 0), 0));
-      const strictlyBeforeTotal = relevant.filter(b => b.dueDate < cutoffDate).reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
-      const sameDayTotal = relevant.filter(b => b.dueDate === cutoffDate).reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
+      const strictlyBeforeTotal = relevant.reduce((sum, b) => sum + billAmountDueBy(b, cutoffDate, false), 0);
+      const sameDayTotal = relevant.filter(b => billOccurrencesBefore(b, cutoffDate, true).includes(cutoffDate)).reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
       const sameDayShortfall = Math.max(0, sameDayTotal - (Number(incomeAmount) || 0));
       return roundCents(strictlyBeforeTotal + sameDayShortfall);
     }
@@ -4899,7 +4935,7 @@
       // comment in buildForecastSeries() for why the day loop below can
       // never represent a past due date on its own.
       const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-      const overdueTotal = bills.filter(b => b.dueDate && b.dueDate < todayStr).reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
+      const overdueTotal = bills.reduce((sum, b) => sum + billAmountDueBy(b, todayStr, false), 0);
       // Every real occurrence within the window — not just the single
       // static nextDate — so a weekly/biweekly earner's second (or third)
       // paycheck landing inside this 14-day check is correctly credited,
@@ -4959,7 +4995,7 @@
       // comment in buildForecastSeries() for why the day loop below can
       // never represent a past due date on its own.
       const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-      const overdueTotal = activeBills.filter(b => b.dueDate && b.dueDate < todayStr).reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
+      const overdueTotal = activeBills.reduce((sum, b) => sum + billAmountDueBy(b, todayStr, false), 0);
 
       let running = roundCents(startCash - overdueTotal);
       const series = [];
@@ -5083,7 +5119,7 @@
       return anyAdvanced;
     }
 
-    function advanceStaleIncomeSchedule() {
+    function advanceStaleIncomeSchedule(recordMissed) {
       if (!state.income.nextDate) return false;
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -5092,18 +5128,33 @@
       ensureAnchorDay(state.income, 'nextDate');
       let nextDateStr = state.income.nextDate;
       let guard = 0;
-      while (new Date(nextDateStr + 'T00:00:00') < today && guard < 24) {
-        nextDateStr = getNextPaycheckDate(nextDateStr, state.income.frequency, state.income);
+      const passed = [];
+      // No fixed cycle cap: a date saved long ago (or entered by mistake)
+      // still lands on the next real payday instead of stopping in the past.
+      while (new Date(nextDateStr + 'T00:00:00') < today && guard < 1000) {
+        passed.push(nextDateStr);
+        const n = getNextPaycheckDate(nextDateStr, state.income.frequency, state.income);
+        if (!n || n <= nextDateStr) break;
+        nextDateStr = n;
         guard++;
       }
       if (nextDateStr === state.income.nextDate) return false;
       state.income.nextDate = nextDateStr;
+      // Paydays that passed while the app was closed are never assumed to
+      // have landed: they're queued for a check-in on the Dashboard. Kept
+      // on the user's own income record, so it syncs only as theirs.
+      if (recordMissed && Number(state.income.amount) > 0) {
+        const known = new Set((state.income.missedPaydays || []).map(m => m.date));
+        const added = passed.slice(-6).filter(d => !known.has(d)).map(date => ({ date, amount: Number(state.income.amount) }));
+        state.income.missedPaydays = [...(state.income.missedPaydays || []), ...added].slice(-6);
+      }
       // Returns the number of cycles advanced (always >=1 here, so still
       // truthy for every existing caller) rather than a plain boolean —
       // lets renderDashboard() tell the user when more than one cycle was
       // silently caught up, without changing any of the arithmetic above.
       return guard;
     }
+
 
     // PREMIUM MICRO-ANIMATIONS
     // Smoothly counts a number element from its last rendered value to a
@@ -6457,7 +6508,9 @@
         : getNextHouseholdIncomeEvent();
       const cutoffDate = nextIncome ? nextIncome.date : null;
       const upcomingBills = cutoffDate ? allBills.filter(b => b.dueDate <= cutoffDate) : allBills;
-      const upcomingTotal = upcomingBills.reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
+      const upcomingTotal = cutoffDate
+        ? roundCents(upcomingBills.reduce((sum, b) => sum + billAmountDueBy(b, cutoffDate, true), 0))
+        : upcomingBills.reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
 
       const safeSpendReserve = computeSafeSpendReserve(allBills, cutoffDate, nextIncome ? nextIncome.amount : 0);
       // Also capped by the lowest projected balance over the Money Mayday
@@ -6503,7 +6556,7 @@
           const cash = getSpendableCash();
           const nextIncome = getNextHouseholdIncomeEvent();
           const billsBefore = nextIncome ? billsBeforeDate(visibleBills(), nextIncome.date) : billsBeforeDate(visibleBills(), null);
-          const billsBeforeTotal = billsBefore.reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
+          const billsBeforeTotal = billsBefore.reduce((sum, b) => sum + (nextIncome ? billAmountDueBy(b, nextIncome.date, true) : (Number(b.amount) || 0)), 0);
           const projected = cash + (nextIncome ? nextIncome.amount : 0) - billsBeforeTotal;
 
           document.getElementById('snapshot-cash').innerText = `${formatMoney(cash)}`;
@@ -6534,7 +6587,7 @@
         }
       }
       if (advanceStaleHouseholdPaychecks()) saveStateToStorage();
-      const cyclesAdvanced = advanceStaleIncomeSchedule();
+      const cyclesAdvanced = advanceStaleIncomeSchedule(true);
       if (cyclesAdvanced) {
         saveStateToStorage();
         if (cyclesAdvanced > 1) {
@@ -6695,6 +6748,7 @@
         if (state.income.nextDate && getDaysUntilPayday() === 0) paydayBanner.classList.remove('hidden');
         else paydayBanner.classList.add('hidden');
       }
+      renderMissedPaydayBanner();
 
       // Risk Banner — same true-deficit check as the Mayday button above,
       // not the raw cash-vs-bills figure.
@@ -7288,7 +7342,7 @@
       const lowestNext14 = Math.min(...next14.map(s => s.balance));
       const lowestNext30 = Math.min(...series.map(s => s.balance));
       const overdueBills = (solo ? personalBills() : visibleBills()).filter(b => !b.paused && getBillStatus(b) === 'overdue');
-      const overdueTotal = overdueBills.reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
+      const overdueTotal = overdueBills.reduce((sum, b) => sum + billAmountDueBy(b, localDateStr(new Date()), false), 0);
       const upcomingTotal = solo
         ? personalBills().filter(b => !b.completed && !b.paused && (!state.income.nextDate || b.dueDate <= state.income.nextDate)).reduce((sum, b) => sum + (Number(b.amount) || 0), 0)
         : getUpcomingBillsTotal();
@@ -7580,7 +7634,7 @@
       // balance at all, even though it's genuinely unpaid. Reflected as an
       // immediate deduction from the starting balance instead.
       const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-      const overdueTotal = activeBills.filter(b => b.dueDate && b.dueDate < todayStr).reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
+      const overdueTotal = activeBills.reduce((sum, b) => sum + billAmountDueBy(b, todayStr, false), 0);
 
       let running = roundCents(startCash - overdueTotal);
       const series = [];
@@ -14188,6 +14242,53 @@
 
     // Advances income.nextDate to the following pay cycle, via the same
     // canonical engine used everywhere else paycheck dates are stepped.
+    // Missed paydays still waiting for a check-in, oldest first. One already
+    // added on another device (a synced payday-confirmation transaction)
+    // is never asked about again.
+    function pendingMissedPaydays() {
+      const added = new Set((state.transactions || []).filter(t => t.source === 'payday-confirmation' && t.payDate && (!t.ownerId || !state.user || t.ownerId === state.user.id)).map(t => t.payDate));
+      return (state.income.missedPaydays || []).filter(m => !added.has(m.date)).sort((a, b) => a.date < b.date ? -1 : 1);
+    }
+    function renderMissedPaydayBanner() {
+      const banner = document.getElementById('dash-missed-payday-banner');
+      if (!banner) return;
+      const pending = pendingMissedPaydays();
+      if (!pending.length) { banner.classList.add('hidden'); return; }
+      const m = pending[0];
+      const acct = defaultPaymentAccount();
+      document.getElementById('dash-missed-payday-text').innerText =
+        `Did your $${formatCurrency(m.amount)} paycheck arrive on ${friendlyDate(m.date)}? Paycheck Pilot doesn't assume it did.`
+        + (pending.length > 1 ? ` (${pending.length - 1} more payday${pending.length > 2 ? 's' : ''} to check after this.)` : '');
+      const addBtn = document.getElementById('dash-missed-payday-add');
+      if (addBtn) addBtn.innerText = acct ? `Yes — add it to ${acct.name}` : 'Yes — add it';
+      banner.classList.remove('hidden');
+    }
+    function resolveMissedPayday(action) {
+      const m = pendingMissedPaydays()[0];
+      if (!m) return;
+      if (action === 'add') {
+        const account = defaultPaymentAccount();
+        if (!account) { showToast("Add an account first, then record your paycheck.", "error"); return; }
+        const nowIso = new Date().toISOString();
+        const actor = currentOwnerLabel();
+        const tx = {
+          id: 'tx_' + Date.now(), title: `Paycheck (${friendlyDate(m.date)})`, amount: roundCents(m.amount), type: 'income', category: 'Income',
+          date: m.date, payDate: m.date, accountId: account.id, balanceApplied: true, scope: 'personal',
+          ownerId: state.user ? state.user.id : null, ownerLabel: actor, source: 'payday-confirmation',
+          createdAt: nowIso, createdBy: actor, lastModifiedAt: nowIso, lastModifiedBy: actor
+        };
+        state.transactions.unshift(tx);
+        applyTxToBalance(tx, +1);
+        logActivity("Missed Payday Recorded", `${actor} confirmed the $${formatCurrency(m.amount)} paycheck from ${m.date} arrived; added to ${account.name}.`);
+        showToast(`Added $${formatCurrency(m.amount)} to ${account.name}`, "success");
+      } else {
+        logActivity("Missed Payday Checked", `${currentOwnerLabel()} marked the ${m.date} paycheck as ${action === 'counted' ? 'already in their balance' : 'not received'}.`);
+      }
+      state.income.missedPaydays = (state.income.missedPaydays || []).filter(x => x.date !== m.date);
+      saveStateToStorage();
+      renderDashboard();
+    }
+
     function confirmPaydayReceived() {
       ensureAnchorDay(state.income, 'nextDate');
       state.income.nextDate = getNextPaycheckDate(state.income.nextDate || localDateStr(new Date()), state.income.frequency, state.income);
