@@ -8298,9 +8298,18 @@
       const gapMs = (10 + Math.random() * 12) * 1000;
       setTimeout(fdSpawnNextPlane, durationMs + gapMs);
     }
+    // A sponsor still crossing when the journey enters a no-sponsor stage
+    // (payday rolling over to the next cycle, or Full Throttle looping back
+    // to 14 days) is removed, so 14/12 days never show one.
+    function fdGroundSponsors() {
+      const slot = document.getElementById('fd-sponsor-plane-slot');
+      if (slot && slot.firstChild && fdSponsorAllowance(fdJourneyDays()) === 0) slot.innerHTML = '';
+    }
+
     function fdInitBillboards() {
       if (fdPlaneScheduled) return;
       fdPlaneScheduled = true;
+      setInterval(fdGroundSponsors, 500);
       setTimeout(fdSpawnNextPlane, 4000 + Math.random() * 4000); // initial delay before the first pass
     }
 
@@ -8420,12 +8429,8 @@
       fdFT.hold = 0;
       fdFT.firedDays = new Set();
       if (leg.initial) fdFTFireBillsOn(0);
-      // Looping back out to 14 days: a sponsor still crossing from Payday
-      // must not carry into the no-sponsor stages (14/12 days).
-      if (fdSponsorAllowance(Math.min(14, leg.b - leg.a)) === 0) {
-        const slot = document.getElementById('fd-sponsor-plane-slot');
-        if (slot) slot.innerHTML = '';
-      }
+      // Looping back out to 14 days: no sponsor carries over from Payday.
+      fdGroundSponsors();
     }
 
     function fdFTAdvanceLeg() {
@@ -9866,6 +9871,7 @@
         // 1 at 8 days, still closing in while the harbor takes over.
         const descentT = Math.max(0, Math.min(1.75, (12 - normDay) / 4));
         const descentE = (u => u * u * (3 - 2 * u))(Math.min(1, descentT));
+        let descentCity = null; // screen position of the coastal city while descending
       
         // Continental ground drift: Earth rotates gently west-to-east beneath the aircraft
         const descentSpeedFactor = 1.0 + (14 - normDay) * 0.12;
@@ -9962,8 +9968,10 @@
             const tX = Math.min(visL - m, Math.max(visR + m - tW, destX - (900 / img.naturalWidth) * tW)) + turbX;
             const tY = Math.min(-m, Math.max(H + m - tH, H * 0.5 - (575 / img.naturalHeight) * tH)) + turbY;
             const e = descentE;
-            ctx.drawImage(img, drawX + (tX - drawX) * e, drawY + (tY - drawY) * e,
-                          drawW + (tW - drawW) * e, drawH + (tH - drawH) * e);
+            const rX = drawX + (tX - drawX) * e, rY = drawY + (tY - drawY) * e;
+            const rW = drawW + (tW - drawW) * e, rH = drawH + (tH - drawH) * e;
+            ctx.drawImage(img, rX, rY, rW, rH);
+            descentCity = { x: rX + (900 / img.naturalWidth) * rW, y: rY + (575 / img.naturalHeight) * rH, visL, visR };
             ctx.restore();
             return;
           }
@@ -10023,8 +10031,17 @@
         ctx.save();
         ctx.globalCompositeOperation = 'screen';
 
-        const emberX = destX + turbX * 0.2;
-        const emberY = curveApexY + 1;
+        let emberX = destX + turbX * 0.2;
+        let emberY = curveApexY + 1;
+        // Descending: the destination beacon leaves the horizon and follows
+        // the coastal city down, kept inside the visible glass, so the
+        // destination stays marked on every day of the descent.
+        if (descentCity && descentE > 0) {
+          const cx = Math.max(descentCity.visL + 40, Math.min(descentCity.visR - 40, descentCity.x));
+          const cy = Math.max(emberY, Math.min(H * 0.8, descentCity.y));
+          emberX += (cx - emberX) * descentE;
+          emberY += (cy - emberY) * descentE;
+        }
 
         // Weather-induced visibility factor
         let weatherVisibility = 1.0;
@@ -10033,9 +10050,10 @@
         else if (activeScenarioKey === 'mayday') weatherVisibility = 0.40; // dimmed, never gone
 
         if (normDay >= 5.5 && weatherVisibility > 0.05) {
-          // Limb arc and horizon beacon belong to the orbital view; they
-          // fade as the descent looks down onto the coast.
-          ctx.globalAlpha = Math.max(0, 1 - descentE * 2);
+          // Limb arc and horizon flare belong to the orbital view; they fade
+          // as the descent looks down onto the coast. The beacon itself stays.
+          const horizonA = Math.max(0, 1 - descentE * 2);
+          ctx.globalAlpha = horizonA;
           // High Altitude Stratospheric Rayleigh Ozone Crescent (curves with Earth's limb)
           // Naturally thins and recedes as altitude decreases toward regional descent
           const ozoneAlpha = Math.min(1.0, curvatureIntensity) * weatherVisibility;
@@ -10058,6 +10076,7 @@
           }
 
           // Payday Destination Beacon on the Horizon
+          ctx.globalAlpha = 1;
           const progressFrac = (14 - normDay) / 14;
           const domeRadius = 170 + progressFrac * 130;
 
@@ -10091,6 +10110,7 @@
           ctx.fill();
 
           // Lens Flare along Horizon
+          ctx.globalAlpha = horizonA;
           const flareW = 250 + progressFrac * 120;
           const flare = ctx.createLinearGradient(emberX - flareW * 0.5, 0, emberX + flareW * 0.5, 0);
           flare.addColorStop(0.0, 'rgba(251, 191, 36, 0)');
@@ -10103,6 +10123,7 @@
           ctx.fillRect(emberX - flareW * 0.5, emberY - 1.5, flareW, 3);
 
           // Core Ember
+          ctx.globalAlpha = 1;
           ctx.filter = 'none';
           ctx.fillStyle = `rgba(255, 255, 255, ${weatherVisibility.toFixed(2)})`;
           ctx.beginPath();
