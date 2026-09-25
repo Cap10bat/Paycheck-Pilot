@@ -1,0 +1,11 @@
+{
+  "name": "paycheck-pilot",
+  "private": true,
+  "description": "Build tooling only: the app is the static index.html.",
+  "scripts": {
+    "build:css": "tailwindcss -c tailwind.config.js -i src/tailwind.css -o app.css --minify"
+  },
+  "devDependencies": {
+    "tailwindcss": "3.4.19"
+  }
+}

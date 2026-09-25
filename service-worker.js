@@ -1,4 +1,4 @@
-const CACHE_NAME = "paycheck-pilot-v1";
+const CACHE_NAME = "paycheck-pilot-v2";
 // App shell cached on install so the offline-fallback path below (in the
 // fetch handler) actually has something to serve. Previously nothing
 // populated this cache at all, so an offline launch attempt resolved to
@@ -6,7 +6,19 @@ const CACHE_NAME = "paycheck-pilot-v1";
 // offline experience. Google's Android Vitals treats this class of
 // failure as a negative quality signal for TWAs specifically, so this
 // isn't just a UX nicety for a Play Store submission.
-const APP_SHELL = ["./", "./manifest.json"];
+// Everything the app needs to start with no connection: the page, its
+// styles, fonts and libraries (all self-hosted -- no CDNs).
+const APP_SHELL = [
+    "./", "./index.html", "./manifest.json", "./app.css",
+    "./vendor/fonts/inter.css",
+    "./vendor/fonts/inter-latin-300-normal.woff2", "./vendor/fonts/inter-latin-400-normal.woff2",
+    "./vendor/fonts/inter-latin-500-normal.woff2", "./vendor/fonts/inter-latin-600-normal.woff2",
+    "./vendor/fonts/inter-latin-700-normal.woff2", "./vendor/fonts/inter-latin-800-normal.woff2",
+    "./vendor/lucide-1.48.0.min.js", "./vendor/chart-4.5.1.umd.min.js",
+    "./vendor/canvas-confetti-1.6.0.browser.js", "./vendor/supabase-js-2.117.1.umd.js",
+    "./vendor/papaparse-5.4.1.min.js",
+    "./icons/icon-192.png", "./icons/icon-512.png"
+];
 
 // ---------------------------------------------------------------------
 // EXISTING — unchanged from production
@@ -14,7 +26,8 @@ const APP_SHELL = ["./", "./manifest.json"];
 self.addEventListener("install", event => {
     self.skipWaiting();
     event.waitUntil(
-        caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)).catch(() => {})
+        // One by one, so a single failed file can't leave the cache empty.
+        caches.open(CACHE_NAME).then(cache => Promise.all(APP_SHELL.map(url => cache.add(url).catch(() => {}))))
     );
 });
 
@@ -35,8 +48,22 @@ self.addEventListener("fetch", event => {
         return;
     }
 
+    // Network first, keeping the cache current so an offline launch gets
+    // the latest version seen; offline, serve from cache (the app shell
+    // for page navigations, whatever the URL's query string).
+    if (event.request.method !== "GET") return;
     event.respondWith(
-        fetch(event.request).catch(() => caches.match(event.request))
+        fetch(event.request)
+            .then(response => {
+                if (response && response.ok) {
+                    const copy = response.clone();
+                    caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy)).catch(() => {});
+                }
+                return response;
+            })
+            .catch(() => caches.match(event.request, { ignoreSearch: true })
+                .then(hit => hit || (event.request.mode === "navigate" ? caches.match("./") : null))
+                .then(res => res || Response.error()))
     );
 });
 

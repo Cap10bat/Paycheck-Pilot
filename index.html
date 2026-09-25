@@ -17,53 +17,22 @@
   <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   
-  <!-- Inter Font -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-          },
-          colors: {
-            brand: {
-              50: '#ecfdf5',
-              100: '#d1fae5',
-              400: '#34d399',
-              500: '#10b981',
-              600: '#059669',
-              700: '#047857',
-              900: '#064e3b',
-              accent: '#3b82f6',
-              dark: '#0b1329',
-              card: '#131f37',
-              border: '#1e2d4a'
-            }
-          }
-        }
-      }
-    }
-  </script>
+  <!-- Fonts, styles and libraries are all served from this site (no CDNs),
+       so the installed app works offline. -->
+  <link href="vendor/fonts/inter.css" rel="stylesheet">
 
   <!-- Lucide Icons -->
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="vendor/lucide-1.48.0.min.js"></script>
   
-  <!-- Chart.js CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Chart.js -->
+  <script src="vendor/chart-4.5.1.umd.min.js"></script>
   
-  <!-- Canvas Confetti CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- Canvas Confetti -->
+  <script src="vendor/canvas-confetti-1.6.0.browser.js"></script>
 
   <!-- Supabase JS Client -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="vendor/supabase-js-2.117.1.umd.js"></script>
+  <script src="vendor/papaparse-5.4.1.min.js"></script>
 
   <style>
     ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -1662,6 +1631,10 @@
 
 
   </style>
+  <!-- Tailwind utilities, built from this file (npm run build:css after
+       changing classes). Last in <head>, where the former runtime CDN
+       placed its styles, so utilities keep the same precedence. -->
+  <link href="app.css" rel="stylesheet">
 </head>
 <body class="h-full bg-[#070c18] text-slate-100 font-sans antialiased selection:bg-brand-500 selection:text-white">
 
