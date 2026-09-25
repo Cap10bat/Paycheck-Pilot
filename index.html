@@ -4141,7 +4141,7 @@
         },
         // A real account starts EMPTY. Sample finances live only in
         // createDemoState() -- seeded placeholders previously reached real
-        // accounts (see repairKnownIncomeContaminationOnce()).
+        // accounts.
         accounts: [],
         income: {
           amount: 0,
@@ -5107,50 +5107,6 @@
     // stale date keeps sorting as "next" indefinitely, distorting the
     // Next Income Card, Mission Status, and Payday Countdown in Household
     // View long after that person was actually paid.
-    // One-time, narrowly-targeted repair for the confirmed Stephen/Boo
-    // income contamination (see investigation: createDefaultState()'s
-    // untouched placeholder seeded into income_by_owner, and an import-
-    // wizard average mistakenly tagged as Stephen's own household entry).
-    // Matches ONLY the exact confirmed values, so it cannot alter any
-    // other account's real data — a genuine $2,500 paycheck a user
-    // actually entered has lastEditedBy set and is left alone; any
-    // household paycheck entry not matching all three fields exactly is
-    // left alone. Runs at most once per device, then disarms itself.
-    function repairKnownIncomeContaminationOnce() {
-      if (state.__incomeContaminationRepairApplied) return false;
-      let changed = false;
-
-      const myId = state.user && state.user.id;
-      const myEntry = myId && state.income_by_owner ? state.income_by_owner[myId] : null;
-      const isExactKnownPlaceholder = myEntry &&
-        Number(myEntry.amount) === 2500 &&
-        myEntry.nextDate === '2026-09-15' &&
-        !myEntry.lastEditedBy;
-      if (isExactKnownPlaceholder) {
-        // Confirmed correct value from the investigation — written
-        // directly, since waiting for a local re-edit would leave the
-        // account showing the wrong paycheck until that happened.
-        state.income_by_owner[myId].amount = 1364;
-        state.income_by_owner[myId].nextDate = '2026-09-11';
-        if (state.income && Number(state.income.amount) === 2500 && state.income.nextDate === '2026-09-15' && !state.income.lastEditedBy) {
-          state.income.amount = 1364;
-          state.income.nextDate = '2026-09-11';
-        }
-        changed = true;
-      }
-
-      const staleIndex = (state.householdPaychecks || []).findIndex(hp =>
-        hp.ownerLabel === 'Stephen' && Number(hp.amount) === 1300 && hp.nextDate === '2026-09-11'
-      );
-      if (staleIndex !== -1) {
-        state.householdPaychecks.splice(staleIndex, 1);
-        changed = true;
-      }
-
-      state.__incomeContaminationRepairApplied = true;
-      return changed;
-    }
-
     function advanceStaleHouseholdPaychecks() {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -5770,7 +5726,6 @@
           stampRecurrenceAnchors();
           deduplicateHouseholdPaychecks();
           advanceStaleHouseholdPaychecks();
-          repairKnownIncomeContaminationOnce();
           localStorage.setItem('paycheck_pilot_state', JSON.stringify(state));
           // Only log when this pull actually found something newer than what
           // was already local — with periodic polling, most pulls find
@@ -11868,8 +11823,8 @@
       if (editId) {
         // Duplicate prevention on edit: block if the new name/details would
         // collide with a DIFFERENT existing record — e.g. editing "Alex"
-        // and typing "Boo" by mistake, which previously produced two
-        // separate entries both named "Boo", double-counted by Forecast.
+        // and typing "Sam" by mistake, which previously produced two
+        // separate entries both named "Sam", double-counted by Forecast.
         // excludeId is the record being edited itself, so it's never
         // flagged as colliding with its own unchanged fields.
         const collision = findExistingHouseholdPaycheck(ownerLabel, amount, nextDate, frequency, editId);
