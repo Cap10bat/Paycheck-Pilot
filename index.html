@@ -2024,7 +2024,7 @@
 
             <div id="dash-risk-banner" class="hidden p-4 rounded-2xl border text-xs font-medium flex items-center gap-3">
               <i data-lucide="alert-triangle" class="w-5 h-5 shrink-0"></i>
-              <span id="dash-risk-message"></span>
+              <span id="dash-risk-message"></span><button type="button" onclick="openHelpArticle('warnings', event)" class="ml-1 normal-case tracking-normal font-semibold text-[10px] text-slate-400 hover:text-white underline underline-offset-2">Why?</button>
             </div>
 
             <!-- PAYDAY BRIEFING PROMPT — shown only when today is (or is past) the scheduled payday -->
@@ -2121,7 +2121,7 @@
                     <div class="relative z-10 flex flex-col gap-2">
                       <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-brand-400">
                         <i data-lucide="shield-check" class="w-4 h-4"></i>
-                        <span>Safe Spend (Until Payday)</span>
+                        <span>Safe Spend (Until Payday)</span><button type="button" onclick="openHelpArticle('safe-spend', event)" class="ml-1 normal-case tracking-normal font-semibold text-[10px] text-slate-400 hover:text-white underline underline-offset-2">Why?</button>
                       </div>
 
                       <div class="text-4xl sm:text-5xl font-black text-white tracking-tight" id="dash-safe-spend">$0.00</div>
@@ -2214,7 +2214,7 @@
                 </div>
 
                 <div class="flex justify-between items-center z-10">
-                  <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Financial Weather</span>
+                  <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Financial Weather</span><button type="button" onclick="openHelpArticle('weather-changed', event)" class="ml-1 normal-case tracking-normal font-semibold text-[10px] text-slate-400 hover:text-white underline underline-offset-2">Why?</button>
                   <i data-lucide="cloud-sun" class="w-5 h-5 text-brand-400"></i>
                 </div>
                 <div id="fin-weather-statebox" class="space-y-1.5 text-center py-1 z-10">
@@ -2246,7 +2246,7 @@
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               <div class="glass-card p-3.5 sm:p-5 rounded-2xl border border-slate-800/80">
                 <div class="flex items-center justify-between text-[10px] sm:text-xs text-slate-400 mb-1.5 sm:mb-2">
-                  <span class="font-semibold uppercase tracking-wider">Lowest Projected Balance</span>
+                  <span class="font-semibold uppercase tracking-wider">Lowest Projected Balance<button type="button" onclick="openHelpArticle('tiles', event)" class="ml-1 normal-case tracking-normal font-semibold text-[10px] text-slate-400 hover:text-white underline underline-offset-2">Why?</button></span>
                   <i data-lucide="trending-down" class="w-4 h-4 text-brand-400 shrink-0"></i>
                 </div>
                 <div id="dash-lowpoint-value" class="text-lg sm:text-2xl font-bold text-white">--</div>
@@ -3200,13 +3200,13 @@
             <!-- Flight School -->
             <div class="glass-card p-4 sm:p-6 rounded-3xl border border-brand-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div class="flex items-center gap-3">
-                <img class="pp-cockpit-icon h-10 w-10 rounded-lg object-cover shrink-0" alt="Flight School" />
+                <img class="pp-cockpit-icon h-10 w-10 rounded-lg object-cover shrink-0" alt="Help" />
                 <div>
-                  <h3 class="font-bold text-white text-base">✈ Flight School</h3>
-                  <p class="text-xs text-slate-400">Learn how Safe Spend, Forecast, Money Mayday, and the rest of Paycheck Pilot actually work.</p>
+                  <h3 class="font-bold text-white text-base">✈ Help</h3>
+                  <p class="text-xs text-slate-400">Can I afford this? Why did Safe Spend change? Why am I in Money Mayday? Plain answers, with your own numbers.</p>
                 </div>
               </div>
-              <button onclick="openFlightSchool()" class="shrink-0 px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Open Flight School</button>
+              <button onclick="openFlightSchool()" class="shrink-0 px-4 py-2.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Open Help</button>
             </div>
           </div>
 
@@ -3316,9 +3316,9 @@
     <div id="modal-flight-school" class="glass-card p-4 sm:p-6 rounded-3xl border border-brand-500/40 w-full max-w-lg hidden space-y-4 max-h-[85vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
         <div class="flex items-center gap-2">
-          <img class="pp-cockpit-icon h-8 w-8 rounded-lg object-cover shrink-0" alt="Flight School" />
+          <img class="pp-cockpit-icon h-8 w-8 rounded-lg object-cover shrink-0" alt="Help" />
           <div>
-            <h3 class="font-bold text-white text-base">✈ Flight School</h3>
+            <h3 class="font-bold text-white text-base">✈ Help</h3>
             <p id="flight-school-subtitle" class="text-[10px] text-slate-500">Understand how Paycheck Pilot works</p>
           </div>
         </div>
@@ -3646,7 +3646,7 @@
           <span class="text-xl leading-none">🚨</span>
           <div>
             <h3 class="font-bold text-white text-base">Money Mayday</h3>
-            <p class="text-[10px] text-slate-500">When you'll run short, why, and what actually helps</p>
+            <p class="text-[10px] text-slate-500">When you'll run short, why, and what actually helps<button type="button" onclick="openHelpArticle('mayday', event)" class="ml-1 normal-case tracking-normal font-semibold text-[10px] text-slate-400 hover:text-white underline underline-offset-2">Why?</button></p>
           </div>
         </div>
         <button onclick="closeModals()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
@@ -12935,101 +12935,243 @@
     }
 
     // ==========================================
-    // FLIGHT SCHOOL — built-in help & learning system
-    // Purely explanatory: reads nothing from state, calls no calculation
-    // functions, and modifies nothing. Six static topics plus an optional
-    // guided tour, all rendered into one shared modal content area.
+    // HELP — organised by the questions people actually ask, not by
+    // feature. Every statement here describes what the app really does
+    // (keep it in step with the code). Articles marked `live` add the
+    // user's own current numbers, read from the same functions the
+    // Dashboard uses. Opened from Settings, and from "Why?" links on the
+    // numbers themselves.
     // ==========================================
-    const FLIGHT_SCHOOL_TOPICS = [
-      {
-        icon: "shield-check",
-        title: "Safe Spend",
-        summary: "The one number that matters most.",
-        body: `
-          <p>Safe Spend is the amount you can safely spend right now without putting your upcoming bills at risk before your next paycheck arrives.</p>
-          <p class="mt-3"><strong class="text-white">How it's calculated:</strong></p>
-          <p>Safe Spend = your total liquid cash (checking, savings, and cash accounts) minus every bill still due before your next payday.</p>
-          <p class="mt-3">It updates the moment anything changes — add a bill, mark one paid, or your balance moves, and Safe Spend recalculates immediately. Every other feature in Paycheck Pilot exists to help you understand or protect this one number.</p>
-        `
-      },
-      {
-        icon: "plane",
-        title: "Forecast Flight System",
-        summary: "Your financial future, mapped day by day.",
-        body: `
-          <p>Forecast predicts your financial future by simulating your cash position day by day for the next 60 days — a real calculation from your actual bills and paydays, not a rough estimate.</p>
-          <p class="mt-3"><strong class="text-white">What you're looking at:</strong></p>
-          <p><span class="text-brand-400 font-semibold">The airplane</span> marks your projected position on that timeline, moving smoothly along the path as time passes.</p>
-          <p><span class="text-indigo-400 font-semibold">Waypoints</span> mark real events on the path — a bill coming due, a goal you could fund, a milestone worth noticing.</p>
-          <p><span class="text-emerald-400 font-semibold">Payday markers</span> show exactly when your next deposits land.</p>
-          <p>The path itself traces your <span class="text-white font-semibold">projected balance</span> — so a dip you'd otherwise only discover the hard way shows up here first, while you still have time to plan around it.</p>
-        `
-      },
-      {
-        icon: "life-buoy",
-        title: "Money Mayday",
-        summary: "A plan when the numbers don't add up.",
-        body: `
-          <p>🚨 Money Mayday activates automatically whenever your upcoming obligations add up to more than the cash you actually have available.</p>
-          <p class="mt-3"><strong class="text-white">What it gives you:</strong></p>
-          <p><span class="text-white font-semibold">Recovery paths</span> — your bills are split into what you must pay no matter what, and what you have room to delay.</p>
-          <p><span class="text-white font-semibold">Biller agreed to a new date?</span> — record it on the bill. Only that payment moves, and only because the biller agreed; nothing changes with the biller just by changing it in the app.</p>
-          <p><span class="text-white font-semibold">Projected outcomes</span> — see exactly what your position looks like once you've deferred what you can, so you know where you really stand.</p>
-          <p class="mt-3">It's built to help, not to alarm — Money Mayday shows you the path through, not just the problem.</p>
-        `
-      },
-      {
-        icon: "wallet",
-        title: "Payday Briefing",
-        summary: "What this paycheck needs to cover.",
-        body: `
-          <p>When your paycheck lands, Payday Briefing answers one question: what has to happen with this check before your next one arrives?</p>
-          <p class="mt-3"><strong class="text-white">How it works:</strong></p>
-          <p>A <span class="text-white font-semibold">checklist</span> is generated automatically from your real bills — only what's actually due before your next payday, nothing further out.</p>
-          <p>Each item is a genuine <span class="text-white font-semibold">obligation</span> pulled straight from your bill list, not a separate copy of it.</p>
-          <p>Checking one off is real <span class="text-white font-semibold">completion</span> — it pays the bill using the exact same system as everywhere else in the app, and your Safe Spend updates immediately.</p>
-          <p class="mt-3">Goals are never part of this checklist. Bills come first — goals stay optional.</p>
-        `
-      },
-      {
-        icon: "cloud-sun",
-        title: "Financial Weather",
-        summary: "A forecast, not a decoration.",
-        body: `
-          <p>Weather predicts your near-term financial conditions using the same Forecast data everywhere else in the app — a genuine prediction, not a mood icon.</p>
-          <div class="mt-3 space-y-2">
-            <p>☀ <span class="text-white font-semibold">Clear Skies</span> — stable finances, a healthy buffer, nothing pressing ahead.</p>
-            <p>⛅ <span class="text-white font-semibold">Partly Cloudy</span> — your buffer is thin right now.</p>
-            <p>🌧 <span class="text-white font-semibold">Rain Ahead</span> — you're fine today, but cash pressure is building later this month.</p>
-            <p>⛈ <span class="text-white font-semibold">Storm Warning</span> — a deficit is projected before your next paycheck.</p>
-            <p>🚨 <span class="text-white font-semibold">Emergency Deficit</span> — Money Mayday is active right now.</p>
-          </div>
-        `
-      },
-      {
-        icon: "users",
-        title: "Household Mode",
-        summary: "Share what makes sense — keep the rest yours.",
-        body: `
-          <p>Every account, bill, goal, and transaction in Paycheck Pilot carries an ownership label: <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-700/50 text-slate-300">Personal</span> or <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/20 text-indigo-300">Household</span>.</p>
-          <p class="mt-3"><strong class="text-white">Personal</strong> means only you can see it, even inside a shared household. <strong class="text-white">Household</strong> means everyone in your household sees it too.</p>
-          <p class="mt-3">Bills, Goals, and Forecast can be shared by default when you set up a household — a joint rent bill or a shared savings goal makes sense for everyone to see. Accounts, Transactions, and Income stay personal unless your household specifically opts them in — your own balances stay yours by default.</p>
-        `
-      }
+    const HELP_SECTIONS = [
+      { title: "Can I spend this?", icon: "wallet", articles: [
+        { id: 'afford', q: "Can I afford this?", live: true, body: `
+          <p><strong class="text-white">If it costs less than your Safe Spend, it won't put a bill at risk before your next paycheck.</strong></p>
+          <p>Safe Spend already sets aside every bill due before payday. What's left has to cover everything that isn't a bill — food, gas, kids, fun — until you're paid. So also check the per-day number: after this purchase, is there still enough for each day until payday?</p>
+          <p>If Safe Spend is $0 or negative, there's no spending room: anything you spend makes a shortfall bigger.</p>` },
+        { id: 'safe-spend', q: "What Safe Spend includes (and doesn't)", live: true, body: `
+          <p><strong class="text-white">Safe Spend = the cash in your checking and cash accounts, minus every bill payment due before your next paycheck.</strong></p>
+          <ul class="list-disc pl-4 space-y-1">
+            <li><strong class="text-white">Counted:</strong> checking and cash accounts, and every payment of every bill before payday (a weekly bill due three times counts three times). A bill due on payday itself is covered by that paycheck; only any amount it doesn't cover is set aside.</li>
+            <li><strong class="text-white">Not counted:</strong> savings accounts and credit cards. Savings are shown separately so you can choose to use them.</li>
+            <li><strong class="text-white">Also:</strong> Safe Spend is never higher than the lowest your balance is projected to get before your next paycheck (or in the next 14 days, whichever is longer). So an early small paycheck can't make money look free when a big bill follows it.</li>
+          </ul>
+          <p>Food, gas and other everyday spending come <em>out of</em> Safe Spend — unless you've added them as bills.</p>` },
+        { id: 'per-day', q: "Why the per-day number matters", live: true, body: `
+          <p>Money has to last until payday. $250 is a lot for 2 days and very little for 25. The per-day number is Safe Spend divided by the days until your next paycheck.</p>
+          <p>That's why Weather looks at both: under $25 a day (or $200 total) is <strong class="text-white">Headwinds</strong>; under $50 a day (or $500) is <strong class="text-white">Partly Cloudy</strong>.</p>` }
+      ]},
+      { title: "Why did my numbers change?", icon: "refresh-cw", articles: [
+        { id: 'safe-changed', q: "Why did Safe Spend change?", live: true, body: `
+          <p>Safe Spend recalculates the moment anything it depends on changes. The usual causes:</p>
+          <ol class="list-decimal pl-4 space-y-1">
+            <li><strong class="text-white">A balance changed</strong> — you edited an account, logged a transaction, or marked a bill paid (which takes it out of your account).</li>
+            <li><strong class="text-white">A bill was added, edited, or became overdue.</strong> Overdue bills are subtracted right away.</li>
+            <li><strong class="text-white">Payday.</strong> Once you answer "Has it landed?", your next payday moves forward and the bills before <em>that</em> payday are set aside.</li>
+            <li><strong class="text-white">A new day started</strong> — bills and paydays got a day closer.</li>
+            <li><strong class="text-white">In a household:</strong> a partner's paycheck or a shared bill synced, or you switched between Solo and Household view.</li>
+          </ol>` },
+        { id: 'weather-changed', q: "Why did my weather change?", live: true, body: `
+          <p>Weather is one verdict read from your forecast, and it changes when the numbers cross one of these lines:</p>
+          ${'' /* same rules as computeFinancialWeather() */}
+          <ul class="list-disc pl-4 space-y-1">
+            <li><strong class="text-white">Mayday:</strong> your balance is below $0 today (after overdue bills).</li>
+            <li><strong class="text-white">Storm:</strong> your balance is projected to go below $0 before your next paycheck (or within 14 days, whichever is longer).</li>
+            <li><strong class="text-white">Headwinds:</strong> Safe Spend is under $200 or under $25 a day, a bill is overdue, or your balance dips under $200 in the next 30 days.</li>
+            <li><strong class="text-white">Partly Cloudy:</strong> Safe Spend is under $500 or under $50 a day.</li>
+            <li><strong class="text-white">Clear Skies:</strong> none of the above.</li>
+          </ul>` },
+        { id: 'forecast-changed', q: "Why did my forecast change?", body: `
+          <p>The forecast walks your checking and cash forward one day at a time for 60 days: overdue bills first, then each bill on its due date and each paycheck on its payday. It changes whenever one of those inputs changes — a balance, a bill, a payday answer, a partner's synced paycheck — and every morning, as the days move.</p>
+          <p>It's a projection from what you've entered, not a prediction of your bank. If a balance is out of date, the forecast is too.</p>` },
+        { id: 'warnings', q: "Why am I seeing a warning?", live: true, body: `
+          <ul class="list-disc pl-4 space-y-1">
+            <li><strong class="text-white">Red Money Mayday banner:</strong> a shortfall is projected — it says when, by how much, and which bill causes it.</li>
+            <li><strong class="text-white">Amber banner:</strong> Headwinds — money is tight until payday, or a bill is overdue.</li>
+            <li><strong class="text-white">Payday banner:</strong> today is payday and Paycheck Pilot is asking whether the money landed.</li>
+            <li><strong class="text-white">"Did your paycheck arrive?":</strong> a payday passed while the app was closed. It never assumes the money came.</li>
+            <li><strong class="text-white">Overdue bill reminder:</strong> a bill's due date passed and it isn't marked paid.</li>
+          </ul>` }
+      ]},
+      { title: "Am I going to be short?", icon: "life-buoy", articles: [
+        { id: 'mayday', q: "Why am I in Money Mayday?", live: true, body: `
+          <p><strong class="text-white">Your balance is projected to go below $0 before your next paycheck (or within 14 days, whichever is longer).</strong> Nothing has bounced — it's a projection, so there's usually time to act.</p>
+          <p>Open Money Mayday to see the walk from today's cash to the low point: cash today, minus overdue bills, plus paychecks, minus bills. The bill on the day you go below $0 is marked.</p>
+          <p>It assumes you spend nothing else before then — groceries and gas make the gap bigger.</p>
+          <p><strong class="text-white">Short now vs short ahead:</strong> "short today" means you're already below $0 (usually overdue bills). "Short on [date]" means it's ahead of you.</p>` },
+        { id: 'storm', q: "Why is Flight Deck showing Storm?", live: true, body: `
+          <p>Flight Deck shows the same weather as the Dashboard. <strong class="text-white">STORM</strong> means a shortfall is projected ahead of you — the same as Money Mayday "short on [date]". <strong class="text-white">MAYDAY</strong> means you're short today. HEADWINDS means tight; CLEAR SKIES means no shortfall and a reasonable buffer.</p>` },
+        { id: 'short-what-to-do', q: "What to do when you'll be short", body: `
+          <p>In order of what usually helps most:</p>
+          <ol class="list-decimal pl-4 space-y-1">
+            <li><strong class="text-white">Check it's real.</strong> Already paid a bill on the list? Mark it paid. Is your balance current?</li>
+            <li><strong class="text-white">Savings.</strong> Money Mayday shows your savings and whether moving some covers the gap. Move it in your bank, then update both balances here.</li>
+            <li><strong class="text-white">Call the biller before the due date.</strong> Ask for a date after your next paycheck or a partial payment. Only if they agree, record it with "Biller gave me a new date".</li>
+            <li><strong class="text-white">Protect essentials first:</strong> housing, utilities, childcare, transportation.</li>
+            <li><strong class="text-white">Get help.</strong> See "Help outside the app".</li>
+          </ol>
+          <p>Paycheck Pilot can't move money or contact billers for you. Changing a date in the app doesn't change it with the biller.</p>` },
+        { id: 'call-biller', q: "Talking to a biller before the due date", body: `
+          <p>Most billers have more options <em>before</em> a payment is missed than after. Try:</p>
+          <p class="p-3 bg-slate-900/80 rounded-xl border border-slate-800">"My paycheck arrives on [date]. Can I move this payment to [date], or pay part now and the rest then? I want to avoid falling behind."</p>
+          <p>Ask for any fee in writing. If they agree, open the bill and tap <strong class="text-white">Biller gave me a new date</strong>. Only that one payment moves; next month's stays on its normal day.</p>` },
+        { id: 'help-outside', q: "Help outside the app", body: `
+          <ul class="list-disc pl-4 space-y-1">
+            <li><strong class="text-white">2-1-1</strong> (call 211 or visit 211.org in the US): local help with rent, utilities, food and more.</li>
+            <li><strong class="text-white">Your utility company:</strong> ask about hardship programs and payment plans.</li>
+            <li><strong class="text-white">Your landlord:</strong> ask early; many would rather arrange a date than start late fees.</li>
+          </ul>` }
+      ]},
+      { title: "Something happened", icon: "alert-circle", articles: [
+        { id: 'paycheck-late', q: "My paycheck is late, smaller, or didn't come", body: `
+          <ul class="list-disc pl-4 space-y-1">
+            <li><strong class="text-white">Late:</strong> on payday, answer <em>Not yet</em>. Nothing moves; Safe Spend is marked as counting a paycheck that isn't here, and the banner says what you have until it arrives. The next day it asks again.</li>
+            <li><strong class="text-white">Smaller:</strong> answer <em>Different amount…</em> and enter what landed. Your usual pay stays the same.</li>
+            <li><strong class="text-white">Didn't come:</strong> answer <em>It didn't arrive</em> when asked. Paycheck Pilot won't count it, and your warnings will reflect that. Contact your employer or payroll right away.</li>
+          </ul>` },
+        { id: 'already-paid', q: "I already paid a bill but the app says it's overdue", body: `
+          <p>Mark it paid. In Money Mayday, tap <strong class="text-white">Already paid?</strong> next to it and choose:</p>
+          <ul class="list-disc pl-4 space-y-1">
+            <li><strong class="text-white">Take it out of Checking</strong> — if your balance here doesn't include the payment yet.</li>
+            <li><strong class="text-white">My balance already shows it</strong> — if you've already updated your balance. It won't be subtracted twice.</li>
+          </ul>
+          <p>Ticking the bill on the Bills page takes it out of your account. If your balance already included it, correct the balance on the Accounts page afterwards.</p>` },
+        { id: 'partial-arrangement', q: "I paid part of a bill, or made an arrangement", body: `
+          <p><strong class="text-white">New date agreed:</strong> open the bill and tap <strong class="text-white">Biller gave me a new date</strong>. Only that payment moves.</p>
+          <p><strong class="text-white">Paid part:</strong> log what you paid as a transaction so your balance is right. Paycheck Pilot can't split one bill payment yet, so it still expects the full amount on the due date — your forecast will look slightly worse than reality by the amount already paid. It errs on the side of caution.</p>` },
+        { id: 'surprise-expense', q: "I had a surprise expense", body: `
+          <p>Log it with <strong class="text-white">Log Transaction</strong> (Dashboard or Transactions). It comes out of your account right away and Safe Spend, Weather and Money Mayday update immediately — so you'll see if it creates a shortfall before payday.</p>` }
+      ]},
+      { title: "Keeping it accurate", icon: "check-circle-2", articles: [
+        { id: 'update-balances', q: "Why you need to update balances", live: true, body: `
+          <p><strong class="text-white">Paycheck Pilot doesn't connect to your bank. It only knows the balances you give it.</strong> If you've spent money you haven't logged, every number — Safe Spend, Weather, Money Mayday — is too optimistic.</p>
+          <p>Update your balances on payday, after any big purchase, and whenever they've drifted from your bank app. Logging transactions as you go keeps them current.</p>` },
+        { id: 'payday', q: "What to do on payday", live: true, body: `
+          <p>On payday the Dashboard asks <strong class="text-white">"Has it landed?"</strong>:</p>
+          <ul class="list-disc pl-4 space-y-1">
+            <li><strong class="text-white">Yes — add it:</strong> adds the paycheck to your account and moves to your next payday, in one step.</li>
+            <li><strong class="text-white">Already in my balance:</strong> you've already updated your balance — it moves to your next payday without adding it again.</li>
+            <li><strong class="text-white">Different amount…:</strong> adds what actually landed.</li>
+            <li><strong class="text-white">Not yet:</strong> nothing moves; it asks again tomorrow.</li>
+          </ul>
+          <p>Until you answer, Safe Spend counts the paycheck as expected today — and says so.</p>` },
+        { id: 'data-link', q: "What is Data Link? Do I need it?", body: `
+          <p>Data Link is a planned bank connection. <strong class="text-white">It isn't available yet</strong>, and Paycheck Pilot never asks for your bank username or password.</p>
+          <p>Until it arrives, keep balances current by hand (Accounts), by logging transactions, or by importing a statement file.</p>` },
+        { id: 'import', q: "Importing a bank statement", body: `
+          <p>Upload a CSV statement from your bank (Reconcile &amp; Data → Upload Statement). It's read on your device. Paycheck Pilot suggests your paycheck schedule, accounts and repeating bills.</p>
+          <p>Bills that look like ones you already track (similar name, amount or due day) start <strong class="text-white">unticked</strong> with "Looks like your existing bill…", so nothing is counted twice. Tick one only if it's genuinely different.</p>` },
+        { id: 'goals', q: "Saving toward a goal", body: `
+          <p>A goal deposit takes the money out of your checking — it's no longer spending money, so Safe Spend drops. Paycheck Pilot won't let a deposit overdraw the account, and asks before using money your bills need.</p>
+          <p>If you actually moved the money into a savings account, update that account's balance too.</p>` },
+        { id: 'numbers-wrong', q: "The numbers look wrong", body: `
+          <ol class="list-decimal pl-4 space-y-1">
+            <li>Are your account balances current?</li>
+            <li>Did you answer the payday question — and was a paycheck added twice (once by you, once by "Yes — add it")?</li>
+            <li>Is a bill you've paid still unticked, or listed twice?</li>
+            <li>In a household: are you in Solo or Household view?</li>
+            <li>Try <strong class="text-white">Repair My Data</strong> (Reconcile &amp; Data).</li>
+            <li>Still wrong? Contact support.</li>
+          </ol>` }
+      ]},
+      { title: "Sharing money with someone", icon: "users", articles: [
+        { id: 'household-how', q: "How Household Mode works", body: `
+          <p>Everything you add is <strong class="text-white">Personal</strong> (only you see it) or <strong class="text-white">Household</strong> (everyone in your household sees it).</p>
+          <p>Each member enters their own paycheck in their own app. In Household view, Paycheck Pilot counts every member's paycheck automatically — you don't need to enter your partner's pay yourself.</p>
+          <p>Your partner's own personal bills and accounts stay private, so Household view counts their pay in full without seeing what they owe. It says so under Safe Spend.</p>` },
+        { id: 'solo-vs-household', q: "Solo vs Household view — why does my partner see a different number?", body: `
+          <ul class="list-disc pl-4 space-y-1">
+            <li><strong class="text-white">Household view:</strong> every account and bill you can see, plus every member's paycheck.</li>
+            <li><strong class="text-white">Solo view:</strong> the same accounts and bills — including shared ones — counting only your own paycheck. It answers "could I cover this without anyone else's pay?"</li>
+          </ul>
+          <p>Each view tells you what the other one shows. Your partner's numbers can differ from yours because they see their own personal accounts and bills, not yours.</p>` },
+        { id: 'shared-bills', q: "Shared bills", body: `
+          <p>A bill marked Household counts in full in both views, for everyone. Paycheck Pilot doesn't know how you split it, so it never assumes someone else is paying — shared rent can't disappear from anyone's view.</p>` },
+        { id: 'household-sync', q: "I can't see my partner's paycheck", body: `
+          <p>Open <strong class="text-white">Settings → Household → Household Sync Check</strong> and tap <em>Sync &amp; check</em>. It shows each member it found, their next paycheck, the last sync time and anything blocking it. Both of you need Household Sync Mode set to "Household", and your partner needs to have set up their paycheck and synced once.</p>` }
+      ]},
+      { title: "What does this mean?", icon: "book-open", articles: [
+        { id: 'weather-states', q: "Weather: Clear Skies, Partly Cloudy, Headwinds, Storm, Mayday", body: `
+          <ul class="list-disc pl-4 space-y-1">
+            <li>☀ <strong class="text-white">Clear Skies</strong> — no shortfall, Safe Spend at least $500 and $50 a day, nothing overdue.</li>
+            <li>🌤 <strong class="text-white">Partly Cloudy</strong> — bills covered; a modest buffer (under $500 or under $50 a day).</li>
+            <li>⛅ <strong class="text-white">Headwinds</strong> — tight (under $200 or $25 a day), a bill is overdue, or pressure within 30 days.</li>
+            <li>⛈ <strong class="text-white">Storm</strong> — you're projected to run short before your next paycheck (Money Mayday).</li>
+            <li>🚨 <strong class="text-white">Mayday</strong> — you're short today (Money Mayday).</li>
+          </ul>
+          <p>The Dashboard, Flight Deck and Forecast all use this one verdict.</p>` },
+        { id: 'flight-deck', q: "What is the Flight Deck?", body: `
+          <p>The same numbers as the Dashboard, shown as a flight to your next payday. The route lists your bills and paychecks in order; the weather is the Dashboard's weather. Nothing on the Flight Deck changes your money.</p>` },
+        { id: 'cleared', q: "What does CLEARED mean?", body: `<p>A bill you've marked paid during this pay cycle. It stays on the Flight Deck route as CLEARED until your next pay cycle starts.</p>` },
+        { id: 'landed', q: "What does LANDED mean?", body: `<p>Today is payday. It doesn't mean the money has arrived — answer "Has it landed?" on the Dashboard so your balance and schedule are right.</p>` },
+        { id: 'full-throttle', q: "What does Full Throttle do?", body: `<p>It fast-forwards the Flight Deck through your coming days so you can watch the forecast play out — bills, paydays and the weather on each future day. It's a preview labelled FORECAST SIMULATION: it doesn't change anything, and the weather it shows is for future days, not today. Tap Pause to stop.</p>` },
+        { id: 'tiles', q: "What are the four numbers on the Dashboard?", body: `
+          <ul class="list-disc pl-4 space-y-1">
+            <li><strong class="text-white">Lowest Projected Balance:</strong> the lowest your checking and cash are projected to get, and when, over the same window Money Mayday checks.</li>
+            <li><strong class="text-white">Next Paycheck:</strong> the next paycheck counted, and whose it is.</li>
+            <li><strong class="text-white">Bills Before Payday:</strong> every bill payment due through your next paycheck.</li>
+            <li><strong class="text-white">Savings:</strong> your savings balances. Not counted in Safe Spend, but available if you choose to use them.</li>
+          </ul>` }
+      ]},
+      { title: "Trust & privacy", icon: "shield", articles: [
+        { id: 'can-cant-know', q: "What Paycheck Pilot can and can't know", body: `
+          <p><strong class="text-white">It knows:</strong> the balances, bills and paychecks you enter or import, and what household members share.</p>
+          <p><strong class="text-white">It can't know:</strong> spending you haven't logged, whether a paycheck actually arrived until you say so, debts you haven't added as bills, and your partner's private bills.</p>
+          <p>Every number is a projection from what you've entered. When in doubt, check your bank.</p>` },
+        { id: 'privacy', q: "Your data and privacy", body: `<p>Paycheck Pilot never asks for bank logins and doesn't sell your data. <button type="button" onclick="closeModals(); openPublicPage('privacy')" class="underline text-brand-400">Read the Privacy Policy</button>.</p>` },
+        { id: 'contact', q: "Contact support", body: `<p>Email <strong class="text-white">support@paycheckpilot.app</strong>. For account or data requests, include the email address on your account.</p>` }
+      ]}
     ];
+    const HELP_TOUR = ['safe-spend', 'afford', 'weather-states', 'mayday', 'payday', 'update-balances', 'solo-vs-household'];
+    function helpArticleById(id) {
+      for (const sec of HELP_SECTIONS) { const a = sec.articles.find(x => x.id === id); if (a) return a; }
+      return null;
+    }
+    // "Your numbers right now" -- from the same functions the Dashboard uses.
+    function helpLiveHtml(id) {
+      try {
+        if (!state.user) return '';
+        const v = getActiveViewData();
+        const w = computeFinancialWeather(v.safeSpend, v.cash);
+        const md = buildMaydayAnalysis(v);
+        const rows = [];
+        if (['afford', 'safe-spend', 'per-day', 'safe-changed'].includes(id)) {
+          rows.push(`Safe Spend: <strong class="text-white">${formatMoney(v.safeSpend)}</strong>${v.safeSpend >= 0 && v.daysUntilIncome > 0 ? ` — about ${formatMoney(v.dailyAvailable)} a day for ${v.daysUntilIncome} day${v.daysUntilIncome === 1 ? '' : 's'}` : ''}.`);
+          if (v.nextIncome) rows.push(`Next paycheck: ${escapeHtml(v.nextIncome.label)}, $${formatCurrency(v.nextIncome.amount)} on ${escapeHtml(friendlyDate(v.nextIncome.date))}.`);
+          rows.push(`Bills set aside before then: $${formatCurrency(v.upcomingTotal)}.`);
+        }
+        if (['weather-changed', 'warnings', 'storm'].includes(id)) rows.push(`Your weather: <strong class="text-white">${escapeHtml(w.title)}</strong> — ${escapeHtml(w.reason)}.`);
+        if (['mayday', 'storm', 'warnings'].includes(id)) rows.push(md ? escapeHtml(maydayBannerText(md)) : 'No shortfall is projected right now.');
+        if (id === 'payday') rows.push(isPaydayToday() ? 'Today is payday — answer "Has it landed?" on the Dashboard.' : (state.income && state.income.nextDate ? `Your next payday: ${escapeHtml(friendlyDate(state.income.nextDate))}.` : 'Set up your payday first.'));
+        if (id === 'update-balances') {
+          const last = visibleAccounts().filter(isSpendableAccount).map(a => a.lastModifiedAt).filter(Boolean).sort().pop();
+          rows.push(last ? `Your checking/cash balances were last changed on ${escapeHtml(new Date(last).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }))}.` : 'Paycheck Pilot has no record of when your balances were last updated.');
+        }
+        if (!rows.length) return '';
+        return `<div class="p-3 rounded-xl border border-brand-500/30 bg-brand-500/10 space-y-1"><p class="text-[10px] font-bold uppercase tracking-wider text-brand-300">Your numbers right now</p>${rows.map(r => `<p class="text-slate-200">${r}</p>`).join('')}</div>`;
+      } catch (e) { return ''; }
+    }
 
     let flightSchoolTourActive = false;
     let flightSchoolTopicIndex = 0;
+    let helpCurrentId = null;
 
     function openFlightSchool() {
       const backdrop = document.getElementById('modal-backdrop');
       const modal = document.getElementById('modal-flight-school');
       flightSchoolTourActive = false;
+      document.querySelectorAll('#modal-backdrop > div').forEach(m => m.classList.add('hidden'));
       if (backdrop && modal) {
         backdrop.classList.remove('hidden');
         modal.classList.remove('hidden');
       }
       renderFlightSchoolHome();
+    }
+    // Opened from a "Why?" link next to a number.
+    function openHelpArticle(id, ev) {
+      if (ev) ev.stopPropagation();
+      openFlightSchool();
+      helpCurrentId = id;
+      renderFlightSchoolTopic();
     }
 
     function closeFlightSchool() {
@@ -13040,49 +13182,42 @@
     function renderFlightSchoolHome() {
       const content = document.getElementById('flight-school-content');
       const subtitle = document.getElementById('flight-school-subtitle');
-      if (subtitle) subtitle.innerText = "Understand how Paycheck Pilot works";
+      if (subtitle) subtitle.innerText = "Answers to the questions people actually ask";
       if (!content) return;
-
       content.innerHTML = `
-        <p class="text-xs text-slate-400">A short guide to the ideas behind Paycheck Pilot — browse a topic, or take the full guided tour.</p>
         <button onclick="startFlightSchoolTour()" class="w-full py-2.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-2">
-          <i data-lucide="play-circle" class="w-4 h-4"></i> Start Guided Tour
+          <i data-lucide="play-circle" class="w-4 h-4"></i> The essentials in 7 steps
         </button>
-        <div class="space-y-2 pt-1">
-          ${FLIGHT_SCHOOL_TOPICS.map((t, i) => `
-            <button onclick="openFlightSchoolTopic(${i})" class="w-full p-3 bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-brand-500/40 rounded-xl text-left transition-all flex items-center justify-between gap-3">
-              <span class="flex items-center gap-3">
-                <span class="w-8 h-8 rounded-lg bg-brand-500/15 flex items-center justify-center shrink-0">
-                  <i data-lucide="${t.icon}" class="w-4 h-4 text-brand-400"></i>
-                </span>
-                <span>
-                  <span class="block text-sm font-semibold text-white">${escapeHtml(t.title)}</span>
-                  <span class="block text-[11px] text-slate-500">${escapeHtml(t.summary)}</span>
-                </span>
-              </span>
-              <i data-lucide="chevron-right" class="w-4 h-4 text-slate-600 shrink-0"></i>
-            </button>
-          `).join('')}
-        </div>
+        ${HELP_SECTIONS.map(sec => `
+          <div class="space-y-1.5 pt-1">
+            <p class="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-400"><i data-lucide="${sec.icon}" class="w-3.5 h-3.5"></i> ${escapeHtml(sec.title)}</p>
+            ${sec.articles.map(a => `
+              <button onclick="openHelpArticle(${jsArg(a.id)})" class="w-full px-3 py-2.5 bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-brand-500/40 rounded-xl text-left transition-all flex items-center justify-between gap-2">
+                <span class="text-xs font-semibold text-white">${escapeHtml(a.q)}</span>
+                <i data-lucide="chevron-right" class="w-4 h-4 text-slate-600 shrink-0"></i>
+              </button>`).join('')}
+          </div>`).join('')}
       `;
       lucide.createIcons();
     }
 
-    function openFlightSchoolTopic(index) {
+    function openFlightSchoolTopic(id) {
       flightSchoolTourActive = false;
-      flightSchoolTopicIndex = index;
+      helpCurrentId = id;
       renderFlightSchoolTopic();
     }
 
     function startFlightSchoolTour() {
       flightSchoolTourActive = true;
       flightSchoolTopicIndex = 0;
+      helpCurrentId = HELP_TOUR[0];
       renderFlightSchoolTopic();
     }
 
     function flightSchoolNext() {
-      if (flightSchoolTopicIndex < FLIGHT_SCHOOL_TOPICS.length - 1) {
+      if (flightSchoolTopicIndex < HELP_TOUR.length - 1) {
         flightSchoolTopicIndex++;
+        helpCurrentId = HELP_TOUR[flightSchoolTopicIndex];
         renderFlightSchoolTopic();
       } else {
         flightSchoolTourActive = false;
@@ -13093,6 +13228,7 @@
     function flightSchoolBack() {
       if (flightSchoolTopicIndex > 0) {
         flightSchoolTopicIndex--;
+        helpCurrentId = HELP_TOUR[flightSchoolTopicIndex];
         renderFlightSchoolTopic();
       } else {
         renderFlightSchoolHome();
@@ -13107,38 +13243,26 @@
     function renderFlightSchoolTopic() {
       const content = document.getElementById('flight-school-content');
       const subtitle = document.getElementById('flight-school-subtitle');
-      const topic = FLIGHT_SCHOOL_TOPICS[flightSchoolTopicIndex];
+      const topic = helpArticleById(helpCurrentId);
       if (!content || !topic) return;
-
-      if (subtitle) {
-        subtitle.innerText = flightSchoolTourActive
-          ? `Guided Tour · ${flightSchoolTopicIndex + 1} of ${FLIGHT_SCHOOL_TOPICS.length}`
-          : topic.title;
-      }
-
+      if (subtitle) subtitle.innerText = flightSchoolTourActive ? `The essentials · ${flightSchoolTopicIndex + 1} of ${HELP_TOUR.length}` : 'Help';
       content.innerHTML = `
         ${flightSchoolTourActive ? `
           <div class="flex items-center gap-1.5">
-            ${FLIGHT_SCHOOL_TOPICS.map((_, i) => `<div class="h-1 flex-1 rounded-full ${i <= flightSchoolTopicIndex ? 'bg-brand-500' : 'bg-slate-800'}"></div>`).join('')}
-          </div>
-        ` : ''}
-        <div class="flex items-center gap-3 pt-1">
-          <span class="w-10 h-10 rounded-xl bg-brand-500/15 flex items-center justify-center shrink-0">
-            <i data-lucide="${topic.icon}" class="w-5 h-5 text-brand-400"></i>
-          </span>
-          <h4 class="text-base font-bold text-white">${escapeHtml(topic.title)}</h4>
-        </div>
-        <div class="text-xs text-slate-300 leading-relaxed">${topic.body}</div>
+            ${HELP_TOUR.map((_, i) => `<div class="h-1 flex-1 rounded-full ${i <= flightSchoolTopicIndex ? 'bg-brand-500' : 'bg-slate-800'}"></div>`).join('')}
+          </div>` : ''}
+        <h4 class="text-base font-bold text-white pt-1">${escapeHtml(topic.q)}</h4>
+        ${topic.live ? helpLiveHtml(topic.id) : ''}
+        <div class="text-xs text-slate-300 leading-relaxed space-y-2">${topic.body}</div>
         <div class="flex items-center gap-2 pt-3 border-t border-slate-800">
           ${flightSchoolTourActive ? `
             <button onclick="flightSchoolBack()" class="${flightSchoolTopicIndex === 0 ? 'invisible' : ''} px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all">Back</button>
-            <button onclick="skipFlightSchoolTour()" class="text-[11px] text-slate-500 hover:text-slate-300 px-2">Skip Tour</button>
-            <button onclick="flightSchoolNext()" class="ml-auto px-4 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">${flightSchoolTopicIndex === FLIGHT_SCHOOL_TOPICS.length - 1 ? 'Finish' : 'Next'}</button>
+            <button onclick="skipFlightSchoolTour()" class="text-[11px] text-slate-500 hover:text-slate-300 px-2">Skip</button>
+            <button onclick="flightSchoolNext()" class="ml-auto px-4 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">${flightSchoolTopicIndex === HELP_TOUR.length - 1 ? 'Finish' : 'Next'}</button>
           ` : `
             <button onclick="renderFlightSchoolHome()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5">
-              <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> All Topics
+              <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> All questions
             </button>
-            <button onclick="startFlightSchoolTour()" class="ml-auto px-4 py-2 bg-brand-500/15 hover:bg-brand-500 hover:text-slate-950 text-brand-400 rounded-xl text-xs font-semibold transition-all">Start Guided Tour</button>
           `}
         </div>
       `;
@@ -15261,7 +15385,7 @@
               <p class="text-[11px] text-slate-500">We read every message and reply as quickly as we can.</p>
             </div>
           </div>
-          <p><strong class="text-white">Before you write in:</strong> a lot of "how does this work" questions are already answered in <strong class="text-brand-400">✈ Flight School</strong> (Settings → Flight School) — Safe Spend, Forecast, Money Mayday, Payday Briefing, Financial Weather, and Household sharing are all covered there.</p>
+          <p><strong class="text-white">Before you write in:</strong> a lot of "how does this work" questions are already answered in <strong class="text-brand-400">✈ Help</strong> (Settings → Help) — Safe Spend, Forecast, Money Mayday, Payday Briefing, Financial Weather, and Household sharing are all covered there.</p>
           <p><strong class="text-white">For account or data requests</strong> (export, deletion, household issues), include the email address on your account so we can find you quickly.</p>
         `;
         lucide.createIcons();
@@ -15272,11 +15396,11 @@
           <p>Paycheck Pilot isn't a budgeting app — it's a financial navigation system. It exists to answer three questions: Can I spend it? Will I make it? How do I survive?</p>
           <p><strong class="text-white">Safe Spend</strong> is the number everything else supports — what you can safely spend right now without endangering an upcoming bill.</p>
           <p><strong class="text-white">Forecast</strong> simulates your cash position day by day for the next 60 days, so a dip shows up on the flight path before it shows up in your bank account.</p>
-          <p><strong class="text-white">Money Mayday</strong> steps in when obligations outpace available cash, with a real recovery plan instead of just a warning.</p>
+          <p><strong class="text-white">Money Mayday</strong> warns you when your balance is projected to go below $0 — when, by how much, which bill causes it, and the options that actually help.</p>
           <p><strong class="text-white">Payday Briefing</strong> tells you exactly what each paycheck needs to cover before the next one arrives.</p>
-          <p><strong class="text-white">Financial Weather</strong> translates your Forecast into a plain-language outlook — Clear Skies through Emergency Deficit.</p>
-          <p><strong class="text-white">Household</strong> lets you share what makes sense — bills, goals, forecast — while keeping accounts, transactions, and income personal by default.</p>
-          <p class="pt-2 text-slate-500">Want the full walkthrough? Open <strong class="text-brand-400">✈ Flight School</strong> from Settings.</p>
+          <p><strong class="text-white">Financial Weather</strong> turns your Forecast into one plain verdict — Clear Skies, Partly Cloudy, Headwinds, Storm or Mayday — shared by the Dashboard and Flight Deck.</p>
+          <p><strong class="text-white">Household</strong> shares the bills and accounts you mark Household, and counts every member's own paycheck in Household view; personal items stay private.</p>
+          <p class="pt-2 text-slate-500">Questions? Open <strong class="text-brand-400">✈ Help</strong> from Settings.</p>
         `;
       }
     }
