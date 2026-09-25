@@ -15630,7 +15630,7 @@
       step: 1, files: [], transactions: [],
       paycheckCandidate: null, useDetectedSchedule: false,
       accountCandidates: [], accountChoices: {}, accountMergeTargets: {}, accountNames: {}, accountBalances: {},
-      billCandidates: [], billSelected: {},
+      billCandidates: [], billSelected: {}, billMatches: {},
       spendingInsights: null, destination: 'personal'
     };
 
@@ -15639,7 +15639,7 @@
         step: 1, files: [], transactions: [],
         paycheckCandidate: null, useDetectedSchedule: false,
         accountCandidates: [], accountChoices: {}, accountMergeTargets: {}, accountNames: {}, accountBalances: {},
-        billCandidates: [], billSelected: {},
+        billCandidates: [], billSelected: {}, billMatches: {},
         spendingInsights: null, destination: 'personal'
       };
     }
@@ -15728,7 +15728,12 @@
     // requiring one exact format. ----------
     function guessAccountNameFromFilename(fileName) {
       const base = String(fileName || '').replace(/\.[^.]+$/, '').replace(/[_-]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
-      return base || 'Imported Account';
+      // Bank download names ("stmt", "export", "transactions 0925") say
+      // nothing about the account; don't turn them into account names.
+      const words = base.toLowerCase().replace(/[0-9]/g, ' ').split(/\s+/).filter(Boolean);
+      const generic = ['stmt', 'statement', 'statements', 'export', 'exported', 'download', 'transactions', 'transaction', 'activity', 'history', 'file', 'data', 'csv', 'report', 'account', 'accounts'];
+      if (!words.length || words.every(w => generic.includes(w) || w.length < 3)) return 'Imported Account';
+      return base;
     }
 
     // Reduces any account-number-like string down to just its last 4 digits,
@@ -16185,6 +16190,35 @@
     // never updates or merges an existing bill, per the requirement — a
     // detected candidate that matches an existing bill is simply left out
     // of what gets created.
+    // A detected bill that is probably one the user already tracks
+    // ("CITY APARTMENTS RENT -1,200" vs "Apartment Rent $1,200"): a shared
+    // word plus a close amount (±5%) or due day (±3), or with no shared word
+    // a near-identical amount (±1%) on the same due day. Strict on purpose:
+    // two different $15 subscriptions must not be mistaken for one.
+    function findExistingBillForCandidate(c) {
+      // Words every bill shares say nothing about which bill it is.
+      const filler = ['subscription', 'subscriptions', 'payment', 'monthly', 'bill', 'bills', 'service', 'services', 'autopay', 'online', 'purchase', 'debit', 'card', 'recurring', 'utility', 'utilities', 'company', 'insurance', 'loan', 'account', 'with', 'from'];
+      const words = t => normalizeDescription(t).replace(/[^a-z ]/g, ' ').split(/\s+/).filter(w => w.length >= 4 && !filler.includes(w));
+      const cWords = words(c.title + ' ' + ((c.occurrences && c.occurrences[0] && c.occurrences[0].description) || ''));
+      const cDay = dayOfDateStr(c.likelyDueDate);
+      let best = null;
+      (state.bills || []).forEach(b => {
+        const amt = Number(b.amount) || 0;
+        const lo = Math.min(c.rangeLow, c.averageAmount), hi = Math.max(c.rangeHigh, c.averageAmount);
+        const amountClose = amt > 0 && amt >= lo * 0.95 - 1 && amt <= hi * 1.05 + 1;
+        const bDay = dayOfDateStr(b.dueDate);
+        const dd = (cDay && bDay) ? Math.abs(cDay - bDay) : 99;
+        const dayClose = c.recurrence === 'monthly' && Math.min(dd, 31 - dd) <= 3;
+        const bWords = words(b.title);
+        const nameMatch = bWords.some(w => cWords.some(x => x.startsWith(w.slice(0, 5)) || w.startsWith(x.slice(0, 5))));
+        const amountExact = amt > 0 && Math.abs(amt - c.averageAmount) <= Math.max(0.01, amt * 0.01);
+        const isMatch = (nameMatch && (amountClose || dayClose)) || (amountExact && dayClose);
+        const score = amountClose + dayClose + nameMatch;
+        if (isMatch && (!best || score > best.score)) best = { bill: b, score, amountClose, dayClose, nameMatch };
+      });
+      return best;
+    }
+
     function billDedupeKey(title, amount, dueDate, category) {
       return `${normalizeDescription(title)}__${Number(amount).toFixed(2)}__${dueDate}__${String(category || '').toLowerCase().trim()}`;
     }
@@ -16254,7 +16288,20 @@
       });
 
       statementImportState.billCandidates = detectRecurringBillCandidates(allTransactions);
-      statementImportState.billCandidates.forEach((_, i) => { statementImportState.billSelected[i] = true; });
+      statementImportState.billMatches = {};
+      const claimed = {};   // an existing bill matches at most one detected bill (the closest)
+      statementImportState.billCandidates.forEach((c, i) => {
+        const m = findExistingBillForCandidate(c);
+        if (m && (!claimed[m.bill.id] || m.score > claimed[m.bill.id].score)) claimed[m.bill.id] = { i, score: m.score, bill: m.bill };
+      });
+      Object.values(claimed).forEach(({ i, bill }) => {
+        statementImportState.billMatches[i] = { id: bill.id, title: bill.title, amount: Number(bill.amount) || 0 };
+      });
+      statementImportState.billCandidates.forEach((c, i) => {
+        const match = statementImportState.billMatches[i];
+        // Already tracked: left unticked so it isn't counted twice.
+        statementImportState.billSelected[i] = !match;
+      });
 
       const billNorms = new Set(statementImportState.billCandidates.map(b => normalizeDescription(b.occurrences[0].description)));
       statementImportState.spendingInsights = computeSpendingInsights(allTransactions, billNorms);
@@ -16488,6 +16535,7 @@
                 </span>
                 <span class="block text-[10px] text-slate-500 mt-0.5">${b.occurrenceCount} occurrences · ${escapeHtml(b.frequency)}</span>
                 <span class="block text-slate-300 mt-0.5">${b.amountType === 'fixed' ? `$${formatCurrency(b.averageAmount)}` : `Expected Range: $${formatCurrency(b.rangeLow)} – $${formatCurrency(b.rangeHigh)}`}</span>
+                ${(statementImportState.billMatches || {})[i] ? `<span class="block text-[10px] text-amber-300 mt-1">Looks like your existing bill “${escapeHtml(statementImportState.billMatches[i].title)}” ($${formatCurrency(statementImportState.billMatches[i].amount)}). Left unticked so it isn't counted twice — tick it only if this is a different bill.</span>` : ''}
               </span>
             </label>
           `).join('')}
