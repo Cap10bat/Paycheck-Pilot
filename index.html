@@ -13093,8 +13093,8 @@
           <p>Upload a CSV statement from your bank (Reconcile &amp; Data → Upload Statement). It's read on your device. Paycheck Pilot suggests your paycheck schedule, accounts and repeating bills.</p>
           <p>Bills that look like ones you already track (similar name, amount or due day) start <strong class="text-white">unticked</strong> with "Looks like your existing bill…", so nothing is counted twice. Tick one only if it's genuinely different.</p>` },
         { id: 'goals', q: "Saving toward a goal", body: `
-          <p>A goal deposit takes the money out of your checking — it's no longer spending money, so Safe Spend drops. Paycheck Pilot won't let a deposit overdraw the account, and asks before using money your bills need.</p>
-          <p>If you actually moved the money into a savings account, update that account's balance too.</p>` },
+          <p>A goal deposit moves the money from checking into your savings account here (if you have one), so your total cash stays the same — but it's no longer spending money, so Safe Spend drops. Paycheck Pilot won't let a deposit overdraw the account, and asks before using money your bills need.</p>
+          <p>Move the money in your bank too, so both match. With no savings account here, the deposit is set aside from checking and shown on the goal.</p>` },
         { id: 'numbers-wrong', q: "The numbers look wrong", body: `
           <ol class="list-decimal pl-4 space-y-1">
             <li>Are your account balances current?</li>
@@ -14280,10 +14280,16 @@
       let held = 0;
       (state.transactions || []).forEach(t => {
         if (t.goalId !== goal.id || !txMovedMoney(t)) return;
-        if (t.source === 'goal-contribution') held += Number(t.amount) || 0;
+        if (t.source === 'goal-contribution' && !t.toAccountId) held += Number(t.amount) || 0;
         else if (t.source === 'goal-withdrawal' && !t.toAccountId) held -= Number(t.amount) || 0;
       });
       return roundCents(Math.max(0, held));
+    }
+    // Savings account a goal deposit goes into (largest one; balance may be 0).
+    function goalSavingsAccount(excludeId) {
+      return moneyAccountsForMe()
+        .filter(a => a.type === 'savings' && a.id !== excludeId)
+        .sort((a, b) => (Number(b.balance) || 0) - (Number(a.balance) || 0))[0] || null;
     }
     // Savings account a goal withdrawal can draw the rest from.
     function goalSourceAccount(excludeId) {
@@ -14385,7 +14391,11 @@
       const needed = goal ? goalAmountStillNeeded(goal) : 0;
       document.getElementById('deposit-available').innerText = [
         goal ? (needed > 0 ? `${goal.title} still needs $${formatCurrency(needed)}.` : `${goal.title} is fully funded.`) : '',
-        account ? `Comes out of ${account.name} ($${formatCurrency(Number(account.balance) || 0)} available).` : 'No account to take it from — it will be recorded against the goal only.'
+        account
+          ? (goalSavingsAccount(account.id)
+            ? `Moves from ${account.name} ($${formatCurrency(Number(account.balance) || 0)} available) to ${goalSavingsAccount(account.id).name}.`
+            : `Comes out of ${account.name} ($${formatCurrency(Number(account.balance) || 0)} available). You have no savings account here, so it's set aside, not added to one.`)
+          : 'No account to take it from — it will be recorded against the goal only.'
       ].join(' ');
 
       if (backdrop && modal) {
@@ -14450,11 +14460,14 @@
       const actor = currentOwnerLabel();
       const contribution = {
         id: 'tx_' + Date.now(),
-        title: `Goal: ${goal.title}`,
+        title: `Goal: ${goal.title}${account && goalSavingsAccount(account.id) ? ` (${account.name} → ${goalSavingsAccount(account.id).name})` : ''}`,
         amount, type: 'transfer', category: 'Savings Goal',
         date: localDateStr(new Date(nowIso)),
         goalId: goal.id,
         accountId: account ? account.id : null,
+        // Lands in savings when there is one, so the money isn't lost from
+        // every account total (it still leaves Safe Spend: savings don't count).
+        ...(account && goalSavingsAccount(account.id) ? { toAccountId: goalSavingsAccount(account.id).id } : {}),
         balanceApplied: !!account,
         scope: goal.scope || 'personal',
         ownerId: state.user ? state.user.id : null, ownerLabel: actor,
