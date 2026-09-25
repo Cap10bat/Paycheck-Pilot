@@ -3135,6 +3135,15 @@
                       <input type="radio" name="account_mode" id="radio-indiv-accounts" onchange="updateAccountMode()" class="accent-brand-500" />
                     </label>
                   </div>
+
+                  <!-- Household Sync Check: what this device can see of the household -->
+                  <div class="space-y-2 pt-2 border-t border-slate-800">
+                    <div class="flex items-center justify-between gap-2">
+                      <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Household Sync Check</span>
+                      <button type="button" id="hh-diag-btn" onclick="runHouseholdSyncCheck()" class="px-3 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-[11px] font-bold transition-all">Sync &amp; check</button>
+                    </div>
+                    <div id="hh-diagnostics" class="space-y-2 text-xs"></div>
+                  </div>
                 </div>
                 <div class="flex gap-2">
                   <button onclick="promptCreateHousehold()" class="flex-1 py-2 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Manage Household / Join</button>
@@ -4386,6 +4395,20 @@
       }
       return d;
     }
+    // Each member's own display name, shared through the household's synced
+    // data (state.memberProfiles, keyed by user id; each device publishes
+    // only its own entry). Never derived from email.
+    function myMemberProfile() {
+      return { displayName: ((state.user && state.user.displayName) || '').trim() };
+    }
+    function memberDisplayName(userId, income) {
+      if (state.user && userId === state.user.id) return currentOwnerLabel();
+      const prof = (state.memberProfiles || {})[userId];
+      const candidates = [prof && prof.displayName, income && income.ownerLabel, income && income.lastEditedBy];
+      const name = candidates.map(c => String(c || '').trim()).find(c => c && c !== 'User');
+      return name || 'Household Member';
+    }
+
     function householdIncomeSources() {
       const me = state.user ? state.user.id : null;
       const norm = s => normalizeDescription(s || '');
@@ -4397,8 +4420,8 @@
       if (inHouseholdMode()) {
         Object.entries(state.income_by_owner || {}).forEach(([ownerId, inc]) => {
           if (!inc || ownerId === me || !inc.nextDate || !(Number(inc.amount) > 0)) return;
-          const name = String(inc.ownerLabel || inc.lastEditedBy || '').trim();
-          const who = name && name !== 'User' ? name : 'Household Member';
+          const who = memberDisplayName(ownerId, inc);
+          const name = who === 'Household Member' ? '' : who;
           sources.push({ label: `${who}'s Paycheck`, ownerLabel: who, ownerId, isMember: true, isOwn: false,
             schedule: { ...inc, nextDate: rollPayDateForward(inc) } });
           covered.push({ name: norm(name), sched: inc });
@@ -5353,6 +5376,10 @@
       const qolSyncEl = document.getElementById('dash-qol-sync');
       if (qolSyncEl && status === 'syncing') qolSyncEl.innerText = 'Syncing…';
       else if (qolSyncEl && state.lastSyncTime) qolSyncEl.innerText = new Date(state.lastSyncTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      const settingsPage = document.getElementById('page-settings');
+      if (settingsPage && !settingsPage.classList.contains('hidden')) {
+        try { renderHouseholdDiagnostics(); } catch (e) { console.warn('Household diagnostics:', e); }
+      }
     }
 
     // Household discovery — closes the gap where a device that never
@@ -5673,7 +5700,10 @@
           const mergedCollections = {};
           SYNCED_COLLECTIONS.forEach(coll => { mergedCollections[coll] = merged[coll]; });
           const localLineage = state.syncLineage || newSyncLineage();
-          state = { ...state, ...cloudPayload, ...mergedCollections, user: authoritativeUser, income: authoritativeIncome, income_by_owner: mergedIncomeByOwner, isDemo: false, syncLineage: localLineage };
+          const localDashboardView = state.dashboardView;
+          const mergedProfiles = { ...(cloudPayload.memberProfiles || {}) };
+          if (authoritativeUser && authoritativeUser.id) mergedProfiles[authoritativeUser.id] = myMemberProfile();
+          state = { ...state, ...cloudPayload, ...mergedCollections, memberProfiles: mergedProfiles, dashboardView: localDashboardView, user: authoritativeUser, income: authoritativeIncome, income_by_owner: mergedIncomeByOwner, isDemo: false, syncLineage: localLineage };
           // Base = what the cloud held. Anything only on this device still
           // reads as a pending local change, so it can't be dropped later.
           saveSyncBase(cloudPayload);
@@ -5788,12 +5818,15 @@
         // field is left as-is alongside it, for backward compatibility
         // with any device that hasn't updated yet.
         state.income_by_owner = { ...(state.income_by_owner || {}), [state.user.id]: state.income };
+        const cloudProfiles = (cloudRead.data && cloudRead.data.data && cloudRead.data.data.memberProfiles) || state.memberProfiles || {};
+        state.memberProfiles = { ...cloudProfiles, [state.user.id]: myMemberProfile() };
 
         // Freeze the exact payload being uploaded. Recording the base from
         // live `state` after the await would bake in any edit made during
         // the upload, and the next sync would then drop that edit.
         const pushedPayload = JSON.parse(JSON.stringify(state));
         delete pushedPayload.syncLineage; // per-device identity, never shared
+        delete pushedPayload.dashboardView; // each member's own Solo/Household choice
         const syncRecord = {
           id: syncKey,
           updated_at: state.lastSyncTime,
@@ -12581,8 +12614,12 @@
       const input = document.getElementById('settings-display-name');
       if (!input || !state.user) return;
       state.user.displayName = input.value.trim();
+      // Shared with the household on the next sync, so members' paychecks
+      // and the member list show this name on everyone's devices.
+      state.memberProfiles = { ...(state.memberProfiles || {}), [state.user.id]: myMemberProfile() };
       saveStateToStorage();
       showToast("Display name saved", "success");
+      renderHouseholdDiagnostics();
     }
 
     function renderSettingsPage() {
@@ -12596,6 +12633,7 @@
       }
 
       const inHousehold = !!(state.household && state.household.id);
+      renderHouseholdDiagnostics();
 
       const soloNotice = document.getElementById('hh-solo-notice');
       const activeDetails = document.getElementById('hh-active-details');
@@ -12615,7 +12653,7 @@
       if (listContainer) {
         listContainer.innerHTML = (state.household.memberList || []).map(m => `
           <div class="p-2 bg-slate-900/80 rounded-lg border border-slate-800 flex justify-between items-center text-xs">
-            <span class="text-slate-200 font-medium">${escapeHtml(m.name)}</span>
+            <span class="text-slate-200 font-medium">${escapeHtml(memberListLabel(m))}</span>
             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-500/20 text-brand-300 uppercase">${escapeHtml(m.role)}</span>
           </div>
         `).join('');
@@ -12654,6 +12692,84 @@
     // Pulls the live household_members roster from Supabase so Settings
     // reflects who has actually joined — not just what this device knew
     // about at the last create/join action.
+    // Household Sync Check (Settings): sync mode and status, every member
+    // this device knows about with their next paycheck, and manual income
+    // entries -- so household troubleshooting needs no guesswork.
+    function renderHouseholdDiagnostics() {
+      const el = document.getElementById('hh-diagnostics');
+      if (!el) return;
+      const me = state.user ? state.user.id : null;
+      const inHH = !!(state.household && state.household.id);
+      const statusText = { syncing: 'Syncing…', synced: 'Synced', offline: 'Offline', error: 'Sync error' }[syncStatusState] || syncStatusState;
+      const statusCls = { synced: 'text-brand-400', syncing: 'text-amber-400', error: 'text-rose-400' }[syncStatusState] || 'text-slate-400';
+      const last = state.lastSyncTime ? new Date(state.lastSyncTime) : null;
+      const lastTxt = last && !isNaN(last) ? `${friendlyDate(localDateStr(last))}, ${last.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : 'Never';
+      const mode = inHouseholdMode() ? 'Household (synced with members)' : inHH ? 'Solo Pilot (synced only to you)' : 'Not in a household';
+
+      const warnings = [];
+      if (state.isDemo) warnings.push("Demo Mode doesn't sync.");
+      if (inHH && !inHouseholdMode()) warnings.push("This device is on Solo Pilot, so it isn't exchanging data with your household. Choose Household (synced with members) above.");
+      if (syncStatusState === 'error') warnings.push('The last sync failed. Check your connection, then tap Sync & check.');
+
+      const list = (state.household && state.household.memberList) || [];
+      const counted = new Set(householdIncomeSources().filter(s => s.isMember).map(s => s.ownerId));
+      const ids = [];
+      const add = id => { if (id && !ids.includes(id)) ids.push(id); };
+      add(me);
+      list.forEach(m => add(m.userId));
+      if (inHH) Object.keys(state.income_by_owner || {}).forEach(add);
+
+      const freqLabel = inc => { try { return describeFrequency(inc); } catch (e) { return inc.frequency || ''; } };
+      const memberRows = ids.map(id => {
+        const isMe = id === me;
+        const inc = isMe ? state.income : (state.income_by_owner || {})[id];
+        const m = list.find(x => x.userId === id);
+        const name = isMe ? `You${state.user && state.user.displayName ? ` (${state.user.displayName})` : ''}` : memberDisplayName(id, inc);
+        const hasPay = inc && inc.nextDate && Number(inc.amount) > 0;
+        const payTxt = hasPay ? `Next paycheck ${friendlyDate(isMe ? inc.nextDate : rollPayDateForward(inc))} · $${formatCurrency(inc.amount)} · ${freqLabel(inc)}` : 'No paycheck synced yet';
+        const hints = [];
+        if (!isMe && !hasPay) hints.push('Ask them to open Paycheck Pilot, choose Household (synced with members) and save their Payday Settings.');
+        if (!isMe && name === 'Household Member') hints.push('No display name shared yet: they can set one in Settings → Profile.');
+        if (isMe && !(state.user && state.user.displayName)) hints.push('Set a display name in Settings → Profile so your household sees your name.');
+        const countedTxt = isMe ? '' : !inHouseholdMode() ? '' : hasPay ? (counted.has(id) ? 'Counted in the household forecast' : 'Not counted') : '';
+        return `
+          <div class="p-2.5 bg-slate-900/80 rounded-lg border border-slate-800 space-y-0.5">
+            <div class="flex justify-between gap-2"><span class="text-slate-200 font-semibold">${escapeHtml(name)}</span>${m && m.role ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-500/20 text-brand-300 uppercase">${escapeHtml(m.role)}</span>` : ''}</div>
+            ${m && m.email && !isMe ? `<p class="text-[10px] text-slate-500">${escapeHtml(m.email)}</p>` : ''}
+            <p class="${hasPay ? 'text-slate-300' : 'text-amber-300'}">${escapeHtml(payTxt)}</p>
+            ${countedTxt ? `<p class="text-[10px] ${counted.has(id) ? 'text-brand-400' : 'text-rose-400'}">${escapeHtml(countedTxt)}</p>` : ''}
+            ${hints.map(h => `<p class="text-[10px] text-slate-500">${escapeHtml(h)}</p>`).join('')}
+          </div>`;
+      }).join('');
+
+      const manual = state.householdPaychecks || [];
+      const manualCounted = new Set(householdIncomeSources().filter(s => s.hpId).map(s => s.hpId));
+      const manualRows = manual.map(hp => `
+          <p class="text-[11px] ${manualCounted.has(hp.id) ? 'text-slate-300' : 'text-slate-500'}">${escapeHtml(hp.ownerLabel || 'Income')} · $${formatCurrency(hp.amount)} — ${manualCounted.has(hp.id) ? 'counted' : 'skipped (same paycheck as a member above)'}</p>`).join('');
+
+      el.innerHTML = `
+        <div class="p-2.5 bg-slate-900/60 rounded-lg border border-slate-800 space-y-1">
+          <div class="flex justify-between gap-2"><span class="text-slate-400">Sync mode</span><span class="text-slate-200 text-right">${escapeHtml(mode)}</span></div>
+          <div class="flex justify-between gap-2"><span class="text-slate-400">Sync status</span><span class="font-semibold ${statusCls}">${escapeHtml(statusText)}</span></div>
+          <div class="flex justify-between gap-2"><span class="text-slate-400">Last sync</span><span class="text-slate-200">${escapeHtml(lastTxt)}</span></div>
+          <div class="flex justify-between gap-2"><span class="text-slate-400">Members found</span><span class="text-slate-200">${inHH ? ids.length : 1}</span></div>
+        </div>
+        ${warnings.map(w => `<p class="p-2 rounded-lg bg-rose-500/10 border border-rose-500/30 text-rose-300 text-[11px]">${escapeHtml(w)}</p>`).join('')}
+        ${inHH ? memberRows : '<p class="text-slate-500">Join or create a household to share paychecks and bills.</p>'}
+        ${manual.length ? `<div class="pt-1 space-y-0.5"><p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Additional household income (manual)</p>${manualRows}</div>` : ''}`;
+    }
+    async function runHouseholdSyncCheck() {
+      const btn = document.getElementById('hh-diag-btn');
+      if (btn) { btn.disabled = true; btn.innerText = 'Checking…'; }
+      try {
+        await refreshHouseholdMembers();
+        await syncNow();
+      } finally {
+        if (btn) { btn.disabled = false; btn.innerText = 'Sync & check'; }
+        renderHouseholdDiagnostics();
+      }
+    }
+
     async function refreshHouseholdMembers() {
       if (!state.household.id || !state.user || state.isDemo || !supabaseClient) return;
 
@@ -12676,11 +12792,12 @@
         if (listContainer) {
           listContainer.innerHTML = state.household.memberList.map(m => `
             <div class="p-2 bg-slate-900/80 rounded-lg border border-slate-800 flex justify-between items-center text-xs">
-              <span class="text-slate-200 font-medium">${escapeHtml(m.name)}</span>
+              <span class="text-slate-200 font-medium">${escapeHtml(memberListLabel(m))}</span>
               <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-500/20 text-brand-300 uppercase">${escapeHtml(m.role)}</span>
             </div>
           `).join('');
         }
+        renderHouseholdDiagnostics();
       } catch (err) {
         console.warn("Household member refresh failed:", err);
       }
@@ -14440,10 +14557,18 @@
     // household_members rows returned by Supabase.
     function buildMemberListFromRows(rows) {
       return (rows || []).map(m => ({
-        name: state.user && m.user_id === state.user.id ? `You${m.role === 'owner' ? ' (Owner)' : ''}` : `Household Member${m.role === 'owner' ? ' (Owner)' : ''}`,
+        userId: m.user_id,
+        name: state.user && m.user_id === state.user.id ? `You${m.role === 'owner' ? ' (Owner)' : ''}` : `${memberDisplayName(m.user_id, (state.income_by_owner || {})[m.user_id])}${m.role === 'owner' ? ' (Owner)' : ''}`,
         role: m.role,
         email: m.email
       }));
+    }
+    // Names are resolved on THIS device: a list synced from another member
+    // would otherwise call that member "You".
+    function memberListLabel(m) {
+      if (!m || !m.userId) return m ? m.name : '';
+      const isMe = state.user && m.userId === state.user.id;
+      return `${isMe ? 'You' : memberDisplayName(m.userId, (state.income_by_owner || {})[m.userId])}${m.role === 'owner' ? ' (Owner)' : ''}`;
     }
 
     async function defaultSoloHousehold() {
