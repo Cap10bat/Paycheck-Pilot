@@ -6048,6 +6048,49 @@
       }
     }
 
+    // ANDROID / BROWSER BACK BUTTON
+    // The installed app closes on Back when there is no history to go back
+    // through. One guard entry is kept on the history stack; Back consumes
+    // it, the app handles the press itself (close the open window, or go
+    // to the previous page), then re-arms the guard. Only from the
+    // Dashboard does Back leave the app, after a "press again" warning.
+    let pageBackStack = [];
+    let backNavInProgress = false;
+    function armBackGuard() {
+      try { if (!(history.state && history.state.ppGuard)) history.pushState({ ppGuard: true }, ''); } catch (e) {}
+    }
+    function handleBackButton() {
+      const inApp = document.getElementById('screen-app')?.classList.contains('active');
+      if (!inApp || !state.user) return; // sign-in / onboarding: normal Back
+      const backdrop = document.getElementById('modal-backdrop');
+      if (backdrop && !backdrop.classList.contains('hidden')) {
+        if (criticalWizardActive) showToast("Use this window's Cancel or Close button so nothing is left half-done.", 'info');
+        else closeModals();
+        armBackGuard();
+        return;
+      }
+      const current = getCurrentPageId();
+      if (current === 'dashboard') {
+        showToast('Press Back again to exit Paycheck Pilot', 'info');
+        return; // guard not re-armed: the next Back leaves the app
+      }
+      let prev = 'dashboard';
+      while (pageBackStack.length) { const p = pageBackStack.pop(); if (p !== current) { prev = p; break; } }
+      if (current === 'flightdeck') prev = 'dashboard';
+      backNavInProgress = true;
+      try { navigateTo(prev); } finally { backNavInProgress = false; }
+    }
+    window.addEventListener('popstate', handleBackButton);
+    // Any window opened after an exit warning re-arms the guard, so Back
+    // closes it instead of leaving the app.
+    document.addEventListener('DOMContentLoaded', () => {
+      const backdrop = document.getElementById('modal-backdrop');
+      if (backdrop && window.MutationObserver) {
+        new MutationObserver(() => { if (!backdrop.classList.contains('hidden')) armBackGuard(); })
+          .observe(backdrop, { attributes: true, attributeFilter: ['class'] });
+      }
+    });
+
     function getCurrentPageId() {
       const pages = ['dashboard', 'flightdeck', 'accounts', 'coming-up', 'ledger', 'goals', 'forecast', 'activity', 'reconcile', 'devtools', 'settings'];
       for (let p of pages) {
@@ -6072,6 +6115,13 @@
     }
 
     function navigateTo(pageId) {
+      // Remember where the user came from so Android Back can return there.
+      const fromPage = getCurrentPageId();
+      if (!backNavInProgress && fromPage !== pageId && document.getElementById('screen-app')?.classList.contains('active')) {
+        if (pageId === 'dashboard') pageBackStack = [];
+        else if (fromPage !== 'dashboard') { pageBackStack.push(fromPage); if (pageBackStack.length > 20) pageBackStack.shift(); }
+      }
+      armBackGuard();
       // Leaving Flight Deck (opened from the Dashboard) returns Forecast to
       // the user's saved mode next time.
       if (pageId !== 'flightdeck' && typeof fdFT !== 'undefined' && fdFT) fdStopFullThrottle();
