@@ -2027,12 +2027,8 @@
             </div>
 
             <!-- PAYDAY BRIEFING PROMPT — shown only when today is (or is past) the scheduled payday -->
-            <div id="dash-payday-briefing-banner" class="hidden p-4 rounded-2xl border border-brand-500/40 bg-brand-500/10 text-xs font-medium flex items-center justify-between gap-3">
-              <div class="flex items-center gap-3">
-                <span class="text-xl leading-none">💰</span>
-                <span class="text-slate-200">Your paycheck has landed. Review what needs to happen before your next one.</span>
-              </div>
-              <button onclick="openPaydayBriefing()" class="shrink-0 px-3 py-1.5 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-[11px] transition-all">Payday Briefing</button>
+            <div id="dash-payday-briefing-banner" class="hidden p-4 rounded-2xl border border-brand-500/40 bg-brand-500/10 text-xs font-medium space-y-3">
+              <div id="dash-payday-prompt"></div>
             </div>
 
             <!-- MISSED PAYDAY CHECK-IN: a payday passed while the app was closed -->
@@ -6744,6 +6740,12 @@
           const md = buildMaydayAnalysis(viewData);
           contextEl.innerText = md && md.shortNow ? `Short Today: ${formatMoney(md.needed)}` : `Below $0 On: ${friendlyDate(viewData.mayday.date)}`;
           contextEl.className = 'text-[11px] font-semibold text-rose-400';
+        } else if (isPaydayToday() && viewData.nextIncome && viewData.nextIncome.date === state.income.nextDate) {
+          // The paycheck hasn't been confirmed yet: say that the number counts it.
+          contextEl.innerText = paydayNotYetToday()
+            ? `Counting today's $${formatCurrency(state.income.amount)} paycheck — not here yet`
+            : `Counts your $${formatCurrency(state.income.amount)} paycheck expected today`;
+          contextEl.className = 'text-[11px] font-semibold text-amber-300';
         } else if (viewData.upcomingBills.length === 0) {
           contextEl.innerText = viewData.nextIncome ? `Bills Covered Through: ${friendlyDate(viewData.nextIncome.date)}` : 'No bills currently due';
           contextEl.className = 'text-[11px] font-semibold text-brand-400';
@@ -6826,7 +6828,7 @@
       // scheduled payday, and income has actually been set up.
       const paydayBanner = document.getElementById('dash-payday-briefing-banner');
       if (paydayBanner) {
-        if (state.income.nextDate && getDaysUntilPayday() === 0) paydayBanner.classList.remove('hidden');
+        if (isPaydayToday()) { paydayBanner.classList.remove('hidden'); document.getElementById('dash-payday-prompt').innerHTML = paydayPromptHtml('dash'); }
         else paydayBanner.classList.add('hidden');
       }
       renderMissedPaydayBanner();
@@ -7179,8 +7181,8 @@
           <div class="flex items-center gap-2 shrink-0 flex-wrap justify-end">
             <span class="font-bold text-brand-400">$${formatCurrency(ev.amount)}</span>
             ${ev.isMember ? `<span class="px-2 py-1 rounded-lg bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 text-[10px] font-bold">From their app</span>` : ''}
-            ${ev.isNext && !ev.isMember
-              ? `<button type="button" onclick="${ev.isPrimary ? 'confirmPaydayReceived()' : `receiveHouseholdPaycheck(${jsArg(ev.hpId)})`}" class="px-2.5 py-1.5 bg-brand-500/20 hover:bg-brand-500/30 text-brand-400 rounded-lg text-[10px] font-bold">Receive</button>`
+            ${ev.isNext && !ev.isMember && (!ev.isPrimary || isPaydayToday())
+              ? `<button type="button" onclick="${ev.isPrimary ? `navigateTo('dashboard')` : `receiveHouseholdPaycheck(${jsArg(ev.hpId)})`}" class="px-2.5 py-1.5 bg-brand-500/20 hover:bg-brand-500/30 text-brand-400 rounded-lg text-[10px] font-bold">Receive</button>`
               : ''
             }
             ${ev.isMember ? '' : ev.isPrimary
@@ -14682,15 +14684,87 @@
       renderDashboard();
     }
 
-    function confirmPaydayReceived() {
+    // ONE-STEP PAYDAY -- the same honest question the missed-payday check-in
+    // asks, on the day itself: did it land? "Yes" adds it to the account and
+    // moves the schedule forward in one step, so Safe Spend never drops by a
+    // whole paycheck (the old "Confirm Payday" moved the schedule but left
+    // the balance for the user to fix). "Not yet" keeps it as expected and
+    // says so; tomorrow it becomes the missed-payday check-in.
+    function isPaydayToday() {
+      return !!(state.income && state.income.nextDate && state.income.nextDate === localDateStr(new Date()) && !isIncomeScheduleIncomplete());
+    }
+    function paydayNotYetToday() {
+      return isPaydayToday() && state.income.paydayNotYet === state.income.nextDate;
+    }
+    function paydayPromptHtml(prefix) {
+      const amt = Number(state.income.amount) || 0;
+      const acct = defaultPaymentAccount();
+      const where = acct ? acct.name : 'your account';
+      let text;
+      if (paydayNotYetToday()) {
+        const cash = getSpendableCash();
+        const next = visibleBills().filter(b => !b.completed && !b.paused && b.dueDate >= localDateStr(new Date())).sort((a, b) => a.dueDate < b.dueDate ? -1 : 1)[0];
+        text = `Your $${formatCurrency(amt)} paycheck hasn't arrived yet. Until it does, you have ${formatMoney(cash)}${next ? ` — ${next.title} ($${formatCurrency(next.amount)}) is due ${friendlyDate(next.dueDate)}` : ''}. Paycheck Pilot is still counting it as expected today.`;
+      } else {
+        text = `Payday: $${formatCurrency(amt)} expected today. Has it landed in ${where}?`;
+      }
+      const btn = 'px-3 py-3 font-bold rounded-xl text-[11px] transition-all';
+      return `
+        <div class="flex items-start gap-3"><span class="text-xl leading-none">💰</span><span class="text-slate-200">${escapeHtml(text)}</span></div>
+        <div class="flex flex-wrap gap-2 mt-3">
+          ${acct ? `<button type="button" onclick="resolveTodayPayday('add')" class="${btn} bg-brand-500 hover:bg-brand-600 text-slate-950">${paydayNotYetToday() ? "It's here — add" : 'Yes — add'} $${formatCurrency(amt)} to ${escapeHtml(acct.name)}</button>` : ''}
+          <button type="button" onclick="resolveTodayPayday('counted')" class="${btn} bg-slate-800 hover:bg-slate-700 text-slate-200">Already in my balance</button>
+          ${acct ? `<button type="button" onclick="document.getElementById('${prefix}-payday-other').classList.toggle('hidden')" class="${btn} bg-slate-800 hover:bg-slate-700 text-slate-200">Different amount…</button>` : ''}
+          ${paydayNotYetToday() ? '' : `<button type="button" onclick="resolveTodayPayday('notyet')" class="${btn} bg-slate-800 hover:bg-slate-700 text-slate-400">Not yet</button>`}
+        </div>
+        <div id="${prefix}-payday-other" class="hidden mt-3 flex flex-wrap items-center gap-2">
+          <label for="${prefix}-payday-amount" class="text-slate-300">Amount that landed:</label>
+          <input id="${prefix}-payday-amount" type="number" step="0.01" min="0.01" inputmode="decimal" class="w-28 bg-slate-900 border border-slate-700 rounded-lg px-2 py-2 text-slate-100" />
+          <button type="button" onclick="resolveTodayPayday('add', document.getElementById('${prefix}-payday-amount').value)" class="${btn} bg-brand-500 hover:bg-brand-600 text-slate-950">Add it</button>
+        </div>`;
+    }
+    function advancePaySchedule() {
       ensureAnchorDay(state.income, 'nextDate');
       state.income.nextDate = getNextPaycheckDate(state.income.nextDate || localDateStr(new Date()), state.income.frequency, state.income);
-
-      logActivity("Payday Confirmed", `Payday schedule confirmed for $${formatCurrency(state.income.amount || 0)}. Next payday: ${state.income.nextDate}. Account balances are not updated automatically.`);
+      delete state.income.paydayNotYet;
+    }
+    function resolveTodayPayday(action, customAmount) {
+      if (!isPaydayToday()) return;
+      const payDate = state.income.nextDate;
+      const actor = currentOwnerLabel();
+      if (action === 'notyet') {
+        state.income.paydayNotYet = payDate;
+        logActivity("Payday Not Yet Arrived", `${actor} said the ${payDate} paycheck hasn't landed yet.`);
+        saveStateToStorage();
+        renderDashboard();
+        renderPaydayBriefingContent();
+        return;
+      }
+      if (action === 'add') {
+        const account = defaultPaymentAccount();
+        if (!account) { showToast("Add an account first, then record your paycheck.", "error"); return; }
+        const amount = roundCents(customAmount != null ? parseFloat(customAmount) : Number(state.income.amount) || 0);
+        if (!(amount > 0)) { showToast("Enter the amount that landed.", "error"); return; }
+        const nowIso = new Date().toISOString();
+        const tx = {
+          id: 'tx_' + Date.now(), title: `Paycheck (${friendlyDate(payDate)})`, amount, type: 'income', category: 'Income',
+          date: payDate, payDate, accountId: account.id, balanceApplied: true, scope: 'personal',
+          ownerId: state.user ? state.user.id : null, ownerLabel: actor, source: 'payday-confirmation',
+          createdAt: nowIso, createdBy: actor, lastModifiedAt: nowIso, lastModifiedBy: actor
+        };
+        state.transactions.unshift(tx);
+        applyTxToBalance(tx, +1);
+        advancePaySchedule();
+        logActivity("Payday Received", `${actor} confirmed the ${payDate} paycheck landed: $${formatCurrency(amount)} added to ${account.name}. Next payday: ${state.income.nextDate}.`);
+        showToast(`Added $${formatCurrency(amount)} to ${account.name}`, "success");
+      } else {
+        advancePaySchedule();
+        logActivity("Payday Received", `${actor} confirmed the ${payDate} paycheck is already in their balance. Next payday: ${state.income.nextDate}.`);
+        showToast("Payday recorded — your balance already includes it", "success");
+      }
       saveStateToStorage();
-      showToast("Payday confirmed", "success");
-      renderPaydayBriefingContent();
       navigateTo('dashboard');
+      openPaydayBriefing();
     }
 
     // Reuses the existing, untouched completeBill() so checking an item off
@@ -14716,9 +14790,8 @@
             <span class="text-2xl leading-none">💰</span>
             <p class="text-sm font-bold text-white">Today's your payday</p>
             <p class="text-slate-300">Paycheck Amount: <strong class="text-brand-400">$${formatCurrency(state.income.amount || 0)}</strong></p>
-            <p class="text-[11px] text-slate-500">Confirming updates your payday schedule and builds your checklist for the next stretch. Your account balances aren't changed automatically — update them yourself once the deposit lands.</p>
           </div>
-          <button onclick="confirmPaydayReceived()" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Confirm Payday</button>
+          ${paydayPromptHtml('brief')}
         `;
         lucide.createIcons();
         return;
@@ -14737,10 +14810,10 @@
 
       content.innerHTML = `
         <div class="p-4 bg-brand-500/10 border border-brand-500/30 rounded-2xl space-y-1">
-          <p class="flex items-center gap-1.5 text-brand-300 font-bold"><i data-lucide="check-circle-2" class="w-4 h-4"></i> Payday Confirmed</p>
+          <p class="flex items-center gap-1.5 text-brand-300 font-bold"><i data-lucide="check-circle-2" class="w-4 h-4"></i> Payday Recorded</p>
           <p class="text-slate-300">Paycheck Amount: <strong class="text-white">$${formatCurrency(state.income.amount || 0)}</strong></p>
           <p class="text-slate-300">Next Payday Date: <strong class="text-white">${escapeHtml(friendlyDate(state.income.nextDate))}</strong></p>
-          <p class="text-[11px] text-slate-500 pt-1">Confirming payday updates your payday schedule. Account balances must be updated separately.</p>
+          <p class="text-[11px] text-slate-500 pt-1">Your paycheck is recorded and your balances include it. The checklist below is everything due before your next one.</p>
         </div>
 
         <div class="space-y-2">
