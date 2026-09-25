@@ -2020,6 +2020,7 @@
               <button type="button" id="dash-view-toggle-solo" onclick="setDashboardView('solo')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all">Solo</button>
               <button type="button" id="dash-view-toggle-household" onclick="setDashboardView('household')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all">Household</button>
             </div>
+            <p id="dash-view-explainer" class="hidden text-[11px] text-slate-400 -mt-1"></p>
 
             <div id="dash-risk-banner" class="hidden p-4 rounded-2xl border text-xs font-medium flex items-center gap-3">
               <i data-lucide="alert-triangle" class="w-5 h-5 shrink-0"></i>
@@ -2077,8 +2078,9 @@
                 <p id="dash-payday-highlight-amount" class="text-lg sm:text-xl font-black text-brand-400">$0.00</p>
               </div>
             </div>
+            <p id="dash-household-caveat" class="hidden text-[11px] text-slate-400"></p>
             <div id="dash-household-income-line" class="hidden px-1 -mt-3 flex items-center justify-between text-[11px] text-slate-400">
-              <span>Household Income Total (all confirmed paychecks)</span>
+              <span id="dash-household-income-label">Household pay in the next 14 days</span>
               <strong id="dash-household-income-total" class="text-indigo-300">$0.00</strong>
             </div>
 
@@ -2099,7 +2101,7 @@
                   <p id="snapshot-bills" class="text-sm sm:text-base font-black text-rose-400">$0.00</p>
                 </div>
                 <div>
-                  <p class="text-[10px] text-slate-500">Projected Position</p>
+                  <p class="text-[10px] text-slate-500">Lowest Projected Point</p>
                   <p id="snapshot-projected" class="text-sm sm:text-base font-black text-white">$0.00</p>
                 </div>
               </div>
@@ -4382,6 +4384,12 @@
     // what Household View continues to use (unchanged).
     function personalAccounts() { return state.accounts.filter(a => a.scope !== 'household' && isVisibleToCurrentUser(a)); }
     function personalBills() { return state.bills.filter(b => b.scope !== 'household' && isVisibleToCurrentUser(b)); }
+    // SOLO VIEW = every account and bill you can see (yours and shared),
+    // counting only YOUR paycheck. It answers "could I cover this without
+    // anyone else's pay?" -- it never hides shared rent, and a joint account
+    // doesn't vanish from it. Household view adds every member's paycheck.
+    function soloBills() { return visibleBills(); }
+    function soloSpendableCash() { return getSpendableCash(); }
     function personalLiquidCash() {
       return roundCents(personalAccounts().reduce((sum, acc) => acc.type === 'credit' ? sum : sum + (Number(acc.balance) || 0), 0));
     }
@@ -4972,7 +4980,7 @@
     // tiers can become genuinely Solo-View-aware instead of always reading
     // household-combined data regardless of the active view.
     function buildPersonalForecastSeries(daysAhead = 30) {
-      const startCash = personalSpendableCash();
+      const startCash = soloSpendableCash();
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
@@ -4983,7 +4991,7 @@
         });
       }
 
-      const activeBills = personalBills().filter(b => !b.completed && !b.paused);
+      const activeBills = soloBills().filter(b => !b.completed && !b.paused);
       const billOccurrences = [];
       activeBills.forEach(b => {
         billOccurrences.push({ bill: b, dueDate: b.dueDate });
@@ -6569,10 +6577,12 @@
     // the existing combined visibleAccounts()/visibleBills() and evaluates
     // against the soonest income event across every configured household
     // paycheck, not just the primary user's own — per spec.
-    function getActiveViewData() {
-      const solo = isSoloView();
-      const cash = solo ? personalSpendableCash() : getSpendableCash();
-      const allBills = (solo ? personalBills() : visibleBills()).filter(b => !b.completed && !b.paused);
+    // viewSolo (optional) reads the OTHER view without switching, so each
+    // view can say what the other one shows.
+    function getActiveViewData(viewSolo) {
+      const solo = viewSolo === undefined ? isSoloView() : (!!viewSolo && inHouseholdMode());
+      const cash = solo ? soloSpendableCash() : getSpendableCash();
+      const allBills = (solo ? soloBills() : visibleBills()).filter(b => !b.completed && !b.paused);
       const nextIncome = solo
         ? (state.income && state.income.nextDate ? { date: state.income.nextDate, amount: Number(state.income.amount) || 0, label: 'Your Paycheck' } : null)
         : getNextHouseholdIncomeEvent();
@@ -6621,36 +6631,47 @@
       const inactiveCls = 'px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-400 hover:text-white';
       if (soloBtn) soloBtn.className = state.dashboardView === 'solo' ? activeCls : inactiveCls;
       if (householdBtn) householdBtn.className = state.dashboardView === 'household' ? activeCls : inactiveCls;
+      const explainer = document.getElementById('dash-view-explainer');
+      if (explainer) {
+        explainer.classList.toggle('hidden', !inHousehold);
+        explainer.innerText = state.dashboardView === 'solo'
+          ? 'Solo: every account and bill you can see — yours and shared — counting only your own paycheck.'
+          : "Household: every account and bill you can see, plus every member's paycheck. Your partner's view can differ: it uses the accounts and bills they can see.";
+      }
 
       const snapshot = document.getElementById('dash-household-snapshot');
       if (snapshot) {
         if (inHousehold && state.dashboardView === 'household') {
-          const cash = getSpendableCash();
-          const nextIncome = getNextHouseholdIncomeEvent();
-          const billsBefore = nextIncome ? billsBeforeDate(visibleBills(), nextIncome.date) : billsBeforeDate(visibleBills(), null);
-          const billsBeforeTotal = billsBefore.reduce((sum, b) => sum + (nextIncome ? billAmountDueBy(b, nextIncome.date, true) : (Number(b.amount) || 0)), 0);
-          const projected = cash + (nextIncome ? nextIncome.amount : 0) - billsBeforeTotal;
+          // Every number here comes from the same household forecast as Safe
+          // Spend and Money Mayday, so the snapshot can't contradict them.
+          const hv = getActiveViewData(false);
+          const cash = hv.cash;
+          const nextIncome = hv.nextIncome;
+          const billsBeforeTotal = hv.upcomingTotal;
+          // Same window Money Mayday checks, so a green number here can never
+          // sit beside a shortfall.
+          const win = hv.windowSeries || [];
+          const lowBefore = win.length ? Math.min(...win.map(d => d.balance)) : cash;
 
           document.getElementById('snapshot-cash').innerText = `${formatMoney(cash)}`;
           document.getElementById('snapshot-income').innerText = nextIncome ? `$${formatCurrency(nextIncome.amount)}` : 'None scheduled';
           document.getElementById('snapshot-income-when').innerText = nextIncome ? `${nextIncome.label} · ${friendlyDate(nextIncome.date)}` : '';
           document.getElementById('snapshot-bills').innerText = `$${formatCurrency(billsBeforeTotal)}`;
           const projectedEl = document.getElementById('snapshot-projected');
-          projectedEl.innerText = `${projected >= 0 ? '+' : '-'}$${formatCurrency(Math.abs(projected))}`;
-          projectedEl.className = `text-sm sm:text-base font-black ${projected >= 0 ? 'text-brand-400' : 'text-rose-400'}`;
+          projectedEl.innerText = formatMoney(lowBefore);
+          projectedEl.className = `text-sm sm:text-base font-black ${lowBefore >= 0 ? 'text-brand-400' : 'text-rose-400'}`;
 
           const guidanceEl = document.getElementById('dash-guidance-text');
           if (guidanceEl) {
-            if (!nextIncome) {
+            const hmd = buildMaydayAnalysis(hv);
+            if (hmd) {
+              guidanceEl.innerText = maydayBannerText(hmd);
+            } else if (!nextIncome) {
               guidanceEl.innerText = "No upcoming household income scheduled yet.";
             } else {
-              const daysOut = Math.max(0, Math.round((new Date(nextIncome.date + 'T00:00:00') - new Date(new Date().setHours(0,0,0,0))) / 86400000));
+              const daysOut = hv.daysUntilIncome;
               const whenText = daysOut === 0 ? 'today' : daysOut === 1 ? 'tomorrow' : `in ${daysOut} days`;
-              guidanceEl.innerText = billsBeforeTotal === 0
-                ? `Next household income arrives ${whenText}. All upcoming bills are covered until then.`
-                : projected >= 0
-                  ? `Next household income arrives ${whenText}. Household remains positive through ${friendlyDate(nextIncome.date)}.`
-                  : `Next household income arrives ${whenText}, but bills before then exceed available cash by $${formatCurrency(Math.abs(projected))}.`;
+              guidanceEl.innerText = `Next household income arrives ${whenText}. No shortfall projected — the lowest projected point is ${formatMoney(lowBefore)}.`;
             }
           }
           snapshot.classList.remove('hidden');
@@ -6781,6 +6802,14 @@
         } else {
           lines.push({ icon: '✓', cls: 'text-slate-400', text: 'Set up a payday schedule to see flight advisory guidance.' });
         }
+        if (inHouseholdMode()) {
+          const other = getActiveViewData(!viewData.solo);
+          const omd = buildMaydayAnalysis(other);
+          const what = omd ? (omd.shortNow ? `${formatMoney(omd.needed)} short today` : `${formatMoney(omd.needed)} short on ${friendlyDate(omd.lowDate)}`) : `no shortfall projected, ${formatMoney(other.safeSpend)} safe to spend`;
+          lines.push({ icon: 'ⓘ', cls: omd ? 'text-rose-300' : 'text-slate-400', text: viewData.solo
+            ? `With everyone's paychecks (Household view): ${what}.`
+            : `With only your own paycheck (Solo view): ${what}.` });
+        }
         advisoryList.innerHTML = lines.map(l => `<p class="flex items-start gap-1.5 ${l.cls}"><span>${l.icon}</span><span class="text-slate-300">${escapeHtml(l.text)}</span></p>`).join('');
       }
 
@@ -6789,12 +6818,24 @@
       const householdIncomeTotal = document.getElementById('dash-household-income-total');
       if (householdIncomeLine && householdIncomeTotal) {
         const otherPaychecks = householdIncomeSources().filter(s => !s.isOwn);
+        const caveat = document.getElementById('dash-household-caveat');
         if (otherPaychecks.length > 0) {
-          const total = (highlightAmountValid ? Number(state.income.amount) : 0) + otherPaychecks.reduce((sum, s) => sum + (Number(s.schedule.amount) || 0), 0);
+          // A real period total from the forecast (adding a weekly amount to
+          // a biweekly one meant nothing).
+          const next14 = buildForecastSeries(14);
+          const total = next14.reduce((sum, d) => sum + d.events.filter(e => e.type === 'payday').reduce((n, e) => n + (Number(e.amount) || 0), 0), 0);
           householdIncomeTotal.innerText = `$${formatCurrency(total)}`;
           householdIncomeLine.classList.remove('hidden');
+          if (caveat) {
+            const names = [...new Set(otherPaychecks.map(s => s.ownerLabel || 'Household'))];
+            const who = names.length === 1 ? names[0] : names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1];
+            const synced = state.lastSyncTime ? ` Last synced: ${new Date(state.lastSyncTime).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}.` : '';
+            caveat.innerText = `Household view counts ${who}'s pay in full. Their own bills and accounts that aren't shared don't show here, so it may overstate what's available.${synced}`;
+            caveat.classList.toggle('hidden', !!viewData.solo);
+          }
         } else {
           householdIncomeLine.classList.add('hidden');
+          if (caveat) caveat.classList.add('hidden');
         }
       }
 
@@ -7432,10 +7473,10 @@
       const lowestInWindow = Math.min(...windowPart.map(s => s.balance));
       const lowestInWindowDate = (windowPart.find(s => s.balance === lowestInWindow) || {}).date;
       const lowestNext30 = Math.min(...series.slice(0, 31).map(s => s.balance));
-      const overdueBills = (solo ? personalBills() : visibleBills()).filter(b => !b.paused && getBillStatus(b) === 'overdue');
+      const overdueBills = (solo ? soloBills() : visibleBills()).filter(b => !b.paused && getBillStatus(b) === 'overdue');
       const overdueTotal = overdueBills.reduce((sum, b) => sum + billAmountDueBy(b, localDateStr(new Date()), false), 0);
       const upcomingTotal = solo
-        ? personalBills().filter(b => !b.completed && !b.paused && (!state.income.nextDate || b.dueDate <= state.income.nextDate)).reduce((sum, b) => sum + (Number(b.amount) || 0), 0)
+        ? soloBills().filter(b => !b.completed && !b.paused && (!state.income.nextDate || b.dueDate <= state.income.nextDate)).reduce((sum, b) => sum + (Number(b.amount) || 0), 0)
         : getUpcomingBillsTotal();
 
       // Walks the existing forecast series to find the first day a threshold
@@ -14377,7 +14418,7 @@
       }
       const billsTotal = roundCents(Object.values(billMap).reduce((n, r) => n + r.total, 0));
       // Overdue occurrences are already out of the starting balance.
-      const overdueBills = (v.solo ? personalBills() : visibleBills())
+      const overdueBills = (v.solo ? soloBills() : visibleBills())
         .filter(b => !b.completed && !b.paused && getBillStatus(b) === 'overdue')
         .map(b => ({ bill: b, amount: billAmountDueBy(b, todayStr, false) }))
         .filter(o => o.amount > 0);
@@ -14389,7 +14430,7 @@
       const firstDay = series[firstIdx];
       const triggerEv = firstIdx > 0 ? firstDay.events.filter(e => e.type === 'bill').sort((a, b) => (Number(b.amount) || 0) - (Number(a.amount) || 0))[0] : null;
 
-      const savingsAccounts = (v.solo ? personalAccounts() : visibleAccounts()).filter(a => a.type === 'savings' && (Number(a.balance) || 0) > 0);
+      const savingsAccounts = visibleAccounts().filter(a => a.type === 'savings' && (Number(a.balance) || 0) > 0);
       const savingsTotal = roundCents(savingsAccounts.reduce((n, a) => n + (Number(a.balance) || 0), 0));
       // First paycheck after the low point, for "ask for a date after ..."
       let nextPayAfter = null;
@@ -14423,7 +14464,8 @@
       const amountLine = md.firstDate === md.lowDate
         ? `${formatMoney(md.needed)} short on ${friendlyDate(md.lowDate)}.`
         : `below $0 on ${friendlyDate(md.firstDate)}, reaching ${formatMoney(md.needed)} short on ${friendlyDate(md.lowDate)}.`;
-      const after = md.paycheckTotal > 0 ? ` That already counts ${md.paychecks.length === 1 ? `your ${friendlyDate(md.paychecks[0].date)} paycheck` : `${md.paychecks.length} paychecks`}.` : '';
+      const whose = pc => { const m = /\((.+)\)$/.exec(pc.label || ''); return m ? `${m[1]}'s` : 'your'; };
+      const after = md.paycheckTotal > 0 ? ` That already counts ${md.paychecks.length === 1 ? `${whose(md.paychecks[0])} ${friendlyDate(md.paychecks[0].date)} paycheck` : `${md.paychecks.length} paychecks`}.` : '';
       const cause = md.trigger ? ` ${md.trigger.title} ($${formatCurrency(md.trigger.amount)}) is what pushes you below $0.` : '';
       return `Money Mayday: ${amountLine}${after}${cause} Open Money Mayday to see your options.`;
     }
