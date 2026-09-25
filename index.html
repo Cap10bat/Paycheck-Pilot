@@ -3952,9 +3952,10 @@
         <div>
           <label class="block text-xs font-semibold text-slate-400 mb-1">Contribution Amount ($)</label>
           <input type="number" step="0.01" min="0.01" id="deposit-amount-input" required placeholder="e.g. 150.00" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-3 text-lg font-bold text-brand-400 outline-none focus:border-brand-500" />
-          <p class="text-[10px] text-slate-500 mt-1">Enter any amount. Stored in real contribution history for precise ETA calculations.</p>
+          <p id="deposit-available" class="text-[10px] text-slate-500 mt-1"></p>
+          <p id="deposit-warning" class="hidden text-[11px] text-amber-300 mt-2"></p>
         </div>
-        <button type="submit" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Confirm Deposit</button>
+        <button type="submit" id="deposit-submit-btn" class="w-full py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Confirm Deposit</button>
       </form>
     </div>
 
@@ -14137,7 +14138,17 @@
       const modal = document.getElementById('modal-goal-deposit');
 
       document.getElementById('deposit-goal-id').value = id;
-      document.getElementById('deposit-amount-input').value = '';
+      const input = document.getElementById('deposit-amount-input');
+      input.value = '';
+      input.oninput = resetDepositWarning;
+      resetDepositWarning();
+      const goal = state.goals.find(g => g.id === id);
+      const account = defaultPaymentAccount();
+      const needed = goal ? goalAmountStillNeeded(goal) : 0;
+      document.getElementById('deposit-available').innerText = [
+        goal ? (needed > 0 ? `${goal.title} still needs $${formatCurrency(needed)}.` : `${goal.title} is fully funded.`) : '',
+        account ? `Comes out of ${account.name} ($${formatCurrency(Number(account.balance) || 0)} available).` : 'No account to take it from — it will be recorded against the goal only.'
+      ].join(' ');
 
       if (backdrop && modal) {
         backdrop.classList.remove('hidden');
@@ -14145,19 +14156,58 @@
       }
     }
 
+    function goalAmountStillNeeded(goal) {
+      return roundCents(Math.max(0, (Number(goal.target) || 0) - (Number(goal.current) || 0)));
+    }
+    function resetDepositWarning() {
+      const warn = document.getElementById('deposit-warning');
+      if (warn) { warn.classList.add('hidden'); warn.innerText = ''; }
+      const btn = document.getElementById('deposit-submit-btn');
+      if (btn) { btn.innerText = 'Confirm Deposit'; delete btn.dataset.confirmFor; }
+    }
+    function showDepositWarning(text) {
+      const warn = document.getElementById('deposit-warning');
+      if (warn) { warn.innerText = text; warn.classList.remove('hidden'); }
+    }
+
     function handleGoalDepositSubmit(e) {
       e.preventDefault();
       const id = document.getElementById('deposit-goal-id').value;
-      const amount = roundCents(parseFloat(document.getElementById('deposit-amount-input').value) || 0);
+      const requested = roundCents(parseFloat(document.getElementById('deposit-amount-input').value) || 0);
 
       const goal = state.goals.find(g => g.id === id);
-      if (!goal || amount <= 0) return;
+      if (!goal || requested <= 0) return;
+
+      // Never past the target: the extra would leave checking for nothing.
+      const needed = goalAmountStillNeeded(goal);
+      if (needed <= 0) { showDepositWarning(`${goal.title} is already fully funded.`); return; }
+      const amount = roundCents(Math.min(requested, needed));
 
       // A goal holds no money of its own -- paying toward it is real money
       // leaving an account, so it comes out of spendable cash (like paying a
       // bill). Recorded as a 'transfer': shown as money out in the ledger,
       // never counted as spending in insights, and reversible by deleting it.
       const account = defaultPaymentAccount();
+      if (account) {
+        // Never overdraw the account the money comes from.
+        const available = roundCents(Number(account.balance) || 0);
+        if (amount > available) {
+          showDepositWarning(available > 0
+            ? `${account.name} only has $${formatCurrency(available)}. Enter $${formatCurrency(available)} or less.`
+            : `${account.name} has no money available to move.`);
+          return;
+        }
+        // Money already promised to bills before payday: ask once.
+        const safe = roundCents(Number(getActiveViewData().safeSpend) || 0);
+        const btn = document.getElementById('deposit-submit-btn');
+        if (amount > safe && btn && btn.dataset.confirmFor !== String(amount)) {
+          showDepositWarning(`Careful: your Safe Spend is $${formatCurrency(Math.max(0, safe))}. Moving $${formatCurrency(amount)} uses money your bills need before payday. Tap "Deposit anyway" to continue.`);
+          btn.innerText = 'Deposit anyway';
+          btn.dataset.confirmFor = String(amount);
+          return;
+        }
+      }
+      if (amount < requested) showToast(`Only $${formatCurrency(amount)} was needed to finish ${goal.title}, so that's all that moved.`, "info");
       const nowIso = new Date().toISOString();
       const actor = currentOwnerLabel();
       const contribution = {
