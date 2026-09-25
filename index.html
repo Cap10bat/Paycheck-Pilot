@@ -3658,6 +3658,32 @@
       <div id="deficit-modal-content" class="space-y-4 text-xs"></div>
     </div>
 
+    <!-- BILLER-AGREED NEW DATE: moves one payment, only when the biller agreed -->
+    <div id="modal-bill-arrangement" class="glass-card p-4 sm:p-6 rounded-3xl border border-slate-700 w-full max-w-md hidden space-y-4 max-h-[85vh] overflow-y-auto">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="font-bold text-white text-base">Biller gave me a new date</h3>
+        <button type="button" onclick="closeBillArrangement()" aria-label="Close" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+      </div>
+      <form onsubmit="saveBillArrangement(event)" novalidate class="space-y-3 text-xs">
+        <input type="hidden" id="arr-bill-id" />
+        <p id="arr-bill-summary" class="text-slate-300"></p>
+        <div>
+          <label for="arr-date" class="block font-semibold text-slate-400 mb-1">New date the biller agreed to</label>
+          <input type="date" id="arr-date" required class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-3 text-sm text-slate-100 outline-none focus:border-brand-500" />
+          <p id="arr-hint" class="text-[11px] text-slate-500 mt-1"></p>
+        </div>
+        <label class="flex items-start gap-2 text-slate-300">
+          <input type="checkbox" id="arr-agreed" class="mt-0.5 w-4 h-4 accent-emerald-500" />
+          <span>The biller agreed to this new date. <span class="text-slate-500">Changing it here doesn't change it with them.</span></span>
+        </label>
+        <p id="arr-error" class="hidden text-rose-300"></p>
+        <div class="flex gap-2 pt-1">
+          <button type="button" onclick="closeBillArrangement()" class="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl">Cancel</button>
+          <button type="submit" class="flex-1 py-3 bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold rounded-xl">Save new date</button>
+        </div>
+      </form>
+    </div>
+
     <!-- PAYDAY BRIEFING MODAL -->
     <div id="modal-payday-briefing" class="glass-card p-4 sm:p-6 rounded-3xl border border-brand-500/40 w-full max-w-lg hidden space-y-4 max-h-[85vh] overflow-y-auto">
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -4889,11 +4915,20 @@
       while ((inclusive ? d <= endStr : d < endStr) && guard < 400) {
         out.push(d);
         if (!b.recurrence || b.recurrence === 'none') break;
-        const n = getNextRecurrenceDate(d, b.recurrence, b.anchorDay || dayOfDateStr(b.dueDate));
+        const n = billNextOccurrence(b, d);
         if (!n || n <= d) break;
         d = n; guard++;
       }
       return out;
+    }
+    // A new date the biller agreed to moves ONE payment. While
+    // bill.arrangement is set, bill.dueDate is that arranged payment and the
+    // regular schedule continues from the original date -- so next month's
+    // payment is neither lost nor shifted.
+    function billNextOccurrence(b, fromDate) {
+      const arranged = b.arrangement && b.arrangement.from && fromDate === b.dueDate;
+      const base = arranged ? b.arrangement.from : fromDate;
+      return getNextRecurrenceDate(base, b.recurrence, b.anchorDay || dayOfDateStr(base));
     }
     function billAmountDueBy(b, endStr, inclusive) {
       return roundCents((Number(b.amount) || 0) * billOccurrencesBefore(b, endStr, inclusive).length);
@@ -4960,7 +4995,7 @@
           let nextDate = b.dueDate;
           let guard = 0;
           while (guard < 12) {
-            nextDate = getNextRecurrenceDate(nextDate, b.recurrence, b.anchorDay || dayOfDateStr(b.dueDate));
+            nextDate = billNextOccurrence(b, nextDate);
             if (!nextDate) break;
             const occDate = new Date(nextDate + 'T00:00:00');
             if ((occDate - today) > daysAhead * 86400000) break;
@@ -7025,6 +7060,7 @@
                   ${scopeBadgeHtml(b)}
                 </div>
                 <p class="text-xs text-slate-400 mt-0.5">Category: ${escapeHtml(b.category)} • Due: <strong class="text-slate-200">${escapeHtml(friendlyDate(b.dueDate))}</strong></p>
+                ${b.arrangement && !b.completed ? `<p class="text-[10px] text-amber-300 mt-0.5">Arranged with biller: this payment moved from ${escapeHtml(friendlyDate(b.arrangement.from))}. Only this payment.</p>` : ''}
                 ${completionTx ? `<p class="text-[10px] text-brand-400 mt-0.5">Completed by <strong>${escapeHtml(completionTx.createdBy || completionTx.ownerLabel)}</strong> on ${escapeHtml(friendlyDate(completionTx.date))}</p>` : ''}
               </div>
             </div>
@@ -7032,6 +7068,7 @@
           </div>
           <div class="flex items-center flex-wrap gap-1.5 pt-2 border-t border-slate-800/70">
             <button onclick="openAddBillModal(${jsArg(b.id)})" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-[10px] font-semibold flex items-center gap-1"><i data-lucide="pencil" class="w-3 h-3"></i> Edit</button>
+            ${!b.completed && !b.paused ? `<button onclick="openBillArrangement(${jsArg(b.id)})" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-[10px] font-semibold">Biller gave me a new date</button>` : ''}
             ${b.recurrence && b.recurrence !== 'none' ? `
               <button onclick="skipBillOccurrence(${jsArg(b.id)})" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-[10px] font-semibold">Skip This Time</button>
               ${b.paused
@@ -7672,7 +7709,7 @@
           let nextDate = b.dueDate;
           let guard = 0;
           while (guard < 12) {
-            nextDate = getNextRecurrenceDate(nextDate, b.recurrence, b.anchorDay || dayOfDateStr(b.dueDate));
+            nextDate = billNextOccurrence(b, nextDate);
             if (!nextDate) break;
             const occDate = new Date(nextDate + 'T00:00:00');
             if ((occDate - today) > daysAhead * 86400000) break;
@@ -12904,7 +12941,7 @@
           <p>🚨 Money Mayday activates automatically whenever your upcoming obligations add up to more than the cash you actually have available.</p>
           <p class="mt-3"><strong class="text-white">What it gives you:</strong></p>
           <p><span class="text-white font-semibold">Recovery paths</span> — your bills are split into what you must pay no matter what, and what you have room to delay.</p>
-          <p><span class="text-white font-semibold">Defer options</span> — push a flexible bill's due date back to free up breathing room before payday.</p>
+          <p><span class="text-white font-semibold">Biller agreed to a new date?</span> — record it on the bill. Only that payment moves, and only because the biller agreed; nothing changes with the biller just by changing it in the app.</p>
           <p><span class="text-white font-semibold">Projected outcomes</span> — see exactly what your position looks like once you've deferred what you can, so you know where you really stand.</p>
           <p class="mt-3">It's built to help, not to alarm — Money Mayday shows you the path through, not just the problem.</p>
         `
@@ -13597,11 +13634,12 @@
       if (!bill || !bill.recurrence || bill.recurrence === 'none') return;
 
       ensureAnchorDay(bill, 'dueDate');
-      const nextDate = getNextRecurrenceDate(bill.dueDate, bill.recurrence, bill.anchorDay);
+      const nextDate = billNextOccurrence(bill, bill.dueDate);
       if (!nextDate) return;
 
       const skippedDate = bill.dueDate;
       bill.dueDate = nextDate;
+      delete bill.arrangement;
       logActivity("Bill Occurrence Skipped", `Skipped ${bill.title} due ${skippedDate}. Next due ${nextDate}.`);
       saveStateToStorage();
       showToast(`Skipped this occurrence of ${bill.title}`, "info");
@@ -13771,6 +13809,7 @@
             id: txId,
             billId: bill.id,
             billDueDate: bill.dueDate,
+            ...(bill.arrangement ? { arrangement: { ...bill.arrangement } } : {}),
             title: `Bill Payment: ${bill.title}${opts.alreadyInBalance ? ' (already in balance)' : ''}`,
             amount: bill.amount,
             type: 'expense',
@@ -13800,10 +13839,11 @@
         // row per past payment.
         if (bill.recurrence && bill.recurrence !== 'none' && !bill.paused) {
           ensureAnchorDay(bill, 'dueDate');
-      const nextDate = getNextRecurrenceDate(bill.dueDate, bill.recurrence, bill.anchorDay);
+          const nextDate = billNextOccurrence(bill, bill.dueDate);
           if (nextDate) {
             bill.dueDate = nextDate;
             bill.completed = false;
+            delete bill.arrangement;
             logActivity("Bill Recurred", `${bill.title} will recur on ${nextDate}.`);
           }
         }
@@ -13940,13 +13980,15 @@
           const bill = state.bills.find(b => b.id === removed.billId);
           if (bill) {
             const recurring = bill.recurrence && bill.recurrence !== 'none';
-            const advancedTo = recurring ? getNextRecurrenceDate(removed.billDueDate, bill.recurrence, bill.anchorDay || dayOfDateStr(removed.billDueDate)) : null;
+            const base = removed.arrangement ? removed.arrangement.from : removed.billDueDate;
+            const advancedTo = recurring ? getNextRecurrenceDate(base, bill.recurrence, bill.anchorDay || dayOfDateStr(base)) : null;
             const untouched = recurring ? (bill.dueDate === advancedTo && !bill.completed)
                                         : (bill.dueDate === removed.billDueDate && bill.completed);
             if (untouched) {
-              billRevert = { bill, dueDate: bill.dueDate, completed: bill.completed };
+              billRevert = { bill, dueDate: bill.dueDate, completed: bill.completed, arrangement: bill.arrangement };
               bill.dueDate = removed.billDueDate;
               bill.completed = false;
+              if (removed.arrangement) bill.arrangement = { ...removed.arrangement };
               bill.lastModifiedAt = new Date().toISOString();
             }
           }
@@ -13965,6 +14007,7 @@
           if (billRevert) {
             billRevert.bill.dueDate = billRevert.dueDate;
             billRevert.bill.completed = billRevert.completed;
+            if (billRevert.arrangement) billRevert.bill.arrangement = billRevert.arrangement; else delete billRevert.bill.arrangement;
             billRevert.bill.lastModifiedAt = new Date().toISOString();
           }
         });
@@ -14434,7 +14477,8 @@
           : '';
         const callTarget = md.causes.find(c => c.dates.includes(md.firstDate)) || md.causes[0];
         const callLine = callTarget
-          ? `<strong class="text-white">Call ${escapeHtml(callTarget.title)}${md.shortNow ? ' today' : ` before ${escapeHtml(friendlyDate(md.firstDate))}`}.</strong> Ask for ${md.nextPayAfter ? `a date after your ${escapeHtml(friendlyDate(md.nextPayAfter.date))} paycheck` : 'more time'}, or a partial payment. Only if they agree, change the bill's due date here.`
+          ? `<strong class="text-white">Call ${escapeHtml(callTarget.title)}${md.shortNow ? ' today' : ` before ${escapeHtml(friendlyDate(md.firstDate))}`}.</strong> Ask for ${md.nextPayAfter ? `a date after your ${escapeHtml(friendlyDate(md.nextPayAfter.date))} paycheck` : 'more time'}, or a partial payment. If they agree, record it — only that payment moves.`
+            + (callTarget.billId ? `<button type="button" onclick="openBillArrangement(${jsArg(callTarget.billId)}, true)" class="mt-2 block px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-[11px] font-semibold">Biller gave me a new date</button>` : '')
           : '';
         const options = [
           md.causes.some(c => c.billId) ? `<strong class="text-white">Already paid something on this list?</strong> Tap “Already paid?” next to it — the forecast updates immediately.` : null,
@@ -14493,26 +14537,81 @@
           <button type="button" onclick="maydayMarkPaid(${jsArg(billId)}, true)" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-[11px] font-semibold">Yes — my balance already shows it</button>
         </div>`;
     }
+    // BILLER-AGREED NEW DATE (replaces "Defer +7 Days", which moved the date
+    // in the app only and shifted every future month). One payment moves,
+    // only after the user confirms the biller agreed, and only to a date
+    // before the next regular payment -- the rest of the schedule stays.
+    let arrangementReturnToMayday = false;
+    function arrangementLimits(bill) {
+      const today = localDateStr(new Date());
+      const recurring = bill.recurrence && bill.recurrence !== 'none';
+      const base = bill.arrangement ? bill.arrangement.from : bill.dueDate;
+      const nextRegular = recurring ? getNextRecurrenceDate(base, bill.recurrence, bill.anchorDay || dayOfDateStr(base)) : null;
+      return { today, nextRegular, base };
+    }
+    function openBillArrangement(billId, fromMayday) {
+      const bill = state.bills.find(b => b.id === billId);
+      if (!bill) return;
+      arrangementReturnToMayday = !!fromMayday;
+      const { today, nextRegular, base } = arrangementLimits(bill);
+      document.getElementById('arr-bill-id').value = bill.id;
+      document.getElementById('arr-bill-summary').innerHTML = `<strong class="text-white">${escapeHtml(bill.title)}</strong> · $${formatCurrency(bill.amount)} · due ${escapeHtml(friendlyDate(bill.dueDate))}${getBillStatus(bill) === 'overdue' ? ' <span class="text-rose-300">(overdue)</span>' : ''}`;
+      const input = document.getElementById('arr-date');
+      input.value = '';
+      input.min = today;
+      if (nextRegular) {
+        const last = new Date(nextRegular + 'T00:00:00'); last.setDate(last.getDate() - 1);
+        input.max = localDateStr(last);
+      } else input.removeAttribute('max');
+      document.getElementById('arr-hint').innerText = nextRegular
+        ? `Only this payment moves. Your next regular payment stays on ${friendlyDate(nextRegular)}.`
+        : 'Only this payment moves.';
+      document.getElementById('arr-agreed').checked = false;
+      document.getElementById('arr-error').classList.add('hidden');
+      document.querySelectorAll('#modal-backdrop > div').forEach(m => m.classList.add('hidden'));
+      document.getElementById('modal-backdrop').classList.remove('hidden');
+      document.getElementById('modal-bill-arrangement').classList.remove('hidden');
+    }
+    function closeBillArrangement() {
+      if (arrangementReturnToMayday) { arrangementReturnToMayday = false; closeModals(); openDeficitNavigatorModal(); }
+      else closeModals();
+    }
+    function saveBillArrangement(e) {
+      e.preventDefault();
+      const bill = state.bills.find(b => b.id === document.getElementById('arr-bill-id').value);
+      if (!bill) return;
+      const newDate = document.getElementById('arr-date').value;
+      const err = document.getElementById('arr-error');
+      const fail = msg => { err.innerText = msg; err.classList.remove('hidden'); };
+      err.classList.add('hidden');
+      const { today, nextRegular } = arrangementLimits(bill);
+      if (!document.getElementById('arr-agreed').checked) return fail('Only save a new date the biller has agreed to — otherwise the bill is still due on the original date.');
+      if (!newDate || newDate < today) return fail('Pick today or a later date.');
+      if (newDate === bill.dueDate) return fail('That is already the due date.');
+      if (nextRegular && newDate >= nextRegular) return fail(`Pick a date before your next regular payment on ${friendlyDate(nextRegular)} — otherwise two payments would be due at once.`);
+      ensureAnchorDay(bill, 'dueDate');
+      const from = bill.arrangement ? bill.arrangement.from : bill.dueDate;
+      const was = bill.dueDate;
+      bill.arrangement = { from, to: newDate, agreedAt: new Date().toISOString(), agreedBy: currentOwnerLabel() };
+      bill.dueDate = newDate;
+      bill.lastModifiedAt = new Date().toISOString();
+      bill.lastModifiedBy = currentOwnerLabel();
+      logActivity("Bill Date Arranged", `${currentOwnerLabel()} recorded that ${bill.title} agreed to a new date: ${newDate} (was ${was}). Only this payment moved.`);
+      saveStateToStorage();
+      showToast(`${bill.title}: this payment is now due ${friendlyDate(newDate)}`, "success");
+      const back = arrangementReturnToMayday;
+      arrangementReturnToMayday = false;
+      closeModals();
+      navigateTo(getCurrentPageId());
+      if (back) openDeficitNavigatorModal();
+    }
+
     function maydayMarkPaid(billId, alreadyInBalance) {
       completeBill(billId, { alreadyInBalance: !!alreadyInBalance });
       setTimeout(() => {
         const modal = document.getElementById('modal-deficit');
         if (modal && !modal.classList.contains('hidden')) openDeficitNavigatorModal();
       }, 400);
-    }
-
-    function postponeBill(id) {
-      const bill = state.bills.find(b => b.id === id);
-      if (bill) {
-        const curDate = new Date(bill.dueDate + 'T00:00:00');
-        curDate.setDate(curDate.getDate() + 7);
-        bill.dueDate = localDateStr(curDate);
-        logActivity("Bill Deferred", `Postponed ${bill.title} by 7 days to ${bill.dueDate}.`);
-        saveStateToStorage();
-        showToast(`Deferred ${bill.title} by 7 days`, "info");
-        openDeficitNavigatorModal();
-        renderDashboard();
-      }
     }
 
     // ==========================================
