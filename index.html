@@ -4895,7 +4895,7 @@
       const modal = document.getElementById('modal-bill-reminder');
       const billId = modal ? modal.dataset.billId : null;
       closeModals();
-      if (billId) completeBill(billId);
+      if (billId) askBillPaid(billId);
     }
 
     function billReminderNotYet() {
@@ -7019,7 +7019,7 @@
               </div>
               <div class="flex items-center gap-3">
                 <span class="font-bold text-rose-400">$${formatCurrency(b.amount)}</span>
-                <button onclick="completeBill(${jsArg(b.id)})" class="px-2 py-1 bg-brand-500/20 text-brand-400 hover:bg-brand-500 hover:text-slate-950 rounded-lg text-[10px] font-bold transition-all">Complete</button>
+                <button onclick="askBillPaid(${jsArg(b.id)})" class="px-2 py-1 bg-brand-500/20 text-brand-400 hover:bg-brand-500 hover:text-slate-950 rounded-lg text-[10px] font-bold transition-all">Complete</button>
               </div>
             </div>
           `).join('');
@@ -7128,7 +7128,7 @@
         <div data-bill-row="${escapeHtml(b.id)}" class="glass-card p-4 rounded-2xl border ${b.completed ? 'border-slate-800/40 opacity-60' : b.paused ? 'border-slate-700/50 opacity-70' : billStatus === 'overdue' ? 'border-rose-500/40' : 'border-slate-800'} space-y-3">
           <div class="flex items-center justify-between gap-3">
             <div class="flex items-center gap-3 min-w-0">
-              <button onclick="completeBill(${jsArg(b.id)})" class="shrink-0 w-6 h-6 rounded-lg border border-slate-700 flex items-center justify-center ${b.completed ? 'bg-brand-500 text-slate-950 border-brand-500' : 'hover:border-brand-500'}">
+              <button onclick="askBillPaid(${jsArg(b.id)})" aria-label="Mark ${escapeHtml(b.title)} paid" class="shrink-0 w-6 h-6 rounded-lg border border-slate-700 flex items-center justify-center ${b.completed ? 'bg-brand-500 text-slate-950 border-brand-500' : 'hover:border-brand-500'}">
                 ${b.completed ? '<i data-lucide="check" class="w-4 h-4"></i>' : ''}
               </button>
               <div class="min-w-0">
@@ -13075,12 +13075,12 @@
             <li><strong class="text-white">Didn't come:</strong> answer <em>It didn't arrive</em> when asked. Paycheck Pilot won't count it, and your warnings will reflect that. Contact your employer or payroll right away.</li>
           </ul>` },
         { id: 'already-paid', q: "I already paid a bill but the app says it's overdue", body: `
-          <p>Mark it paid. In Money Mayday, tap <strong class="text-white">Already paid?</strong> next to it and choose:</p>
+          <p>Mark it paid — on the Bills page, the Dashboard, the reminder, the Payday Briefing or in Money Mayday. Paycheck Pilot always asks:</p>
           <ul class="list-disc pl-4 space-y-1">
             <li><strong class="text-white">Take it out of Checking</strong> — if your balance here doesn't include the payment yet.</li>
             <li><strong class="text-white">My balance already shows it</strong> — if you've already updated your balance. It won't be subtracted twice.</li>
           </ul>
-          <p>Ticking the bill on the Bills page takes it out of your account. If your balance already included it, correct the balance on the Accounts page afterwards.</p>` },
+` },
         { id: 'partial-arrangement', q: "I paid part of a bill, or made an arrangement", body: `
           <p><strong class="text-white">New date agreed:</strong> open the bill and tap <strong class="text-white">Biller gave me a new date</strong>. Only that payment moves.</p>
           <p><strong class="text-white">Paid part:</strong> log what you paid as a transaction so your balance is right. Paycheck Pilot can't split one bill payment yet, so it still expects the full amount on the due date — your forecast will look slightly worse than reality by the amount already paid. It errs on the side of caution.</p>` },
@@ -14977,8 +14977,31 @@
     // completing it anywhere else in the app — then refreshes this modal's
     // own content once completeBill's brief flash animation finishes.
     function checkOffPaydayItem(id) {
-      completeBill(id);
-      setTimeout(() => renderPaydayBriefingContent(), 300);
+      askBillPaid(id, 'briefing');
+    }
+
+    // ALREADY PAID? -- the same honest question everywhere a bill is marked
+    // paid (Bills page, Dashboard, overdue reminder, Payday Briefing, Money
+    // Mayday): take it out of the account now, or the balance already shows
+    // it (so it's never subtracted twice).
+    function askBillPaid(id, returnTo) {
+      const bill = state.bills.find(b => b.id === id);
+      if (!bill) return;
+      if (bill.completed) { completeBill(id); return; }
+      const acct = (bill.payFromAccountId && (state.accounts || []).find(a => a.id === bill.payFromAccountId)) || defaultPaymentAccount();
+      const back = jsArg(returnTo || '');
+      const actions = [];
+      if (acct) actions.push({ label: `Yes — take it out of ${acct.name}`, onclick: `finishBillPaid(${jsArg(id)}, false, ${back})`, primary: true });
+      actions.push({ label: acct ? 'Yes — my balance already shows it' : 'Yes, mark it paid', onclick: `finishBillPaid(${jsArg(id)}, true, ${back})`, primary: !acct });
+      actions.push({ label: 'Cancel', onclick: `closeModals()${returnTo === 'briefing' ? '; openPaydayBriefing()' : ''}` });
+      openCustomModal(`Mark ${bill.title} paid?`,
+        `Paid the ${friendlyDate(bill.dueDate)} payment of $${formatCurrency(bill.amount)}? If you've already updated your balance to include it, choose "my balance already shows it" so it isn't subtracted twice.`,
+        actions);
+    }
+    function finishBillPaid(id, alreadyInBalance, returnTo) {
+      closeModals();
+      completeBill(id, { alreadyInBalance: !!alreadyInBalance });
+      if (returnTo === 'briefing') setTimeout(() => { openPaydayBriefing(); renderPaydayBriefingContent(); }, 320);
     }
 
     function renderPaydayBriefingContent() {
