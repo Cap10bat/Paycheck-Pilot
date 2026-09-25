@@ -2131,6 +2131,13 @@
                         <span id="dash-next-paydate-inline" class="text-slate-200 font-semibold">--</span>.
                       </p>
                       <p id="dash-safe-spend-context" class="text-[11px] font-semibold text-slate-300">--</p>
+                      <div id="dash-balance-freshness" class="hidden p-2.5 rounded-xl border border-amber-500/40 bg-amber-500/10 text-[11px] text-amber-200 space-y-2">
+                        <p id="dash-balance-freshness-text"></p>
+                        <div class="flex flex-wrap gap-2">
+                          <button type="button" onclick="navigateTo('accounts')" class="px-3 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-lg">Update balances</button>
+                          <button type="button" onclick="confirmBalancesCurrent()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-lg">They match my bank</button>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -4169,8 +4176,8 @@
     function createDemoState() {
       const s = createDefaultState();
       s.accounts = [
-        { id: 'acc_1', name: 'Primary Checking', balance: 2450.00, type: 'checking', scope: 'personal' },
-        { id: 'acc_2', name: 'Emergency Savings', balance: 5200.00, type: 'savings', scope: 'personal' }
+        { id: 'acc_1', name: 'Primary Checking', balance: 2450.00, type: 'checking', scope: 'personal', balanceUpdatedAt: new Date().toISOString() },
+        { id: 'acc_2', name: 'Emergency Savings', balance: 5200.00, type: 'savings', scope: 'personal', balanceUpdatedAt: new Date().toISOString() }
       ];
       s.income = { amount: 2500, frequency: 'biweekly', nextDate: localDateStr(new Date(Date.now() + 5 * 86400000)) };
       s.bills = [
@@ -4487,6 +4494,38 @@
     // Financial Weather. getTotalLiquidCash() (all non-credit) is kept for
     // the Accounts page's Total Cash display.
     function isSpendableAccount(acc) { return acc && acc.type !== 'credit' && acc.type !== 'savings'; }
+    // BALANCE FRESHNESS -- every number rests on balances typed in by hand.
+    // When a checking/cash balance hasn't changed in 7+ days (or we have no
+    // record of when it did), say so instead of presenting it as current.
+    const BALANCE_STALE_DAYS = 7;
+    function balanceFreshness() {
+      const accts = visibleAccounts().filter(isSpendableAccount);
+      if (!accts.length) return null;
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      let oldest = null, unknown = null;
+      accts.forEach(a => {
+        const t = a.balanceUpdatedAt || a.lastModifiedAt;
+        if (!t) { unknown = unknown || a; return; }
+        const d = new Date(t); d.setHours(0, 0, 0, 0);
+        const days = calendarDaysBetween(d, today);
+        if (!oldest || days > oldest.days) oldest = { account: a, days };
+      });
+      if (unknown) return { unknown: true, account: unknown };
+      return oldest && oldest.days >= BALANCE_STALE_DAYS ? { unknown: false, account: oldest.account, days: oldest.days } : null;
+    }
+    function balanceFreshnessText(f) {
+      if (!f) return '';
+      return f.unknown
+        ? `Paycheck Pilot doesn't know when ${f.account.name}'s balance was last updated. Every number here depends on it.`
+        : `${f.account.name} was last updated ${f.days} days ago. If you've spent since, Safe Spend is too high.`;
+    }
+    function confirmBalancesCurrent() {
+      const now = new Date().toISOString();
+      visibleAccounts().filter(isSpendableAccount).forEach(a => { a.balanceUpdatedAt = now; });
+      logActivity("Balances Confirmed", `${currentOwnerLabel()} confirmed their checking and cash balances match their bank.`);
+      saveStateToStorage();
+      navigateTo(getCurrentPageId());
+    }
     function personalSpendableCash() {
       return roundCents(personalAccounts().reduce((sum, acc) => isSpendableAccount(acc) ? sum + (Number(acc.balance) || 0) : sum, 0));
     }
@@ -6774,6 +6813,13 @@
           contextEl.innerText = `Safe Spending: $${formatCurrency(Math.max(0, viewData.dailyAvailable))}/day`;
           contextEl.className = 'text-[11px] font-semibold text-slate-300';
         }
+      }
+
+      const freshEl = document.getElementById('dash-balance-freshness');
+      if (freshEl) {
+        const fr = balanceFreshness();
+        freshEl.classList.toggle('hidden', !fr);
+        if (fr) document.getElementById('dash-balance-freshness-text').innerText = balanceFreshnessText(fr);
       }
 
       const advisoryList = document.getElementById('dash-flight-advisory-list');
@@ -13044,7 +13090,8 @@
       { title: "Keeping it accurate", icon: "check-circle-2", articles: [
         { id: 'update-balances', q: "Why you need to update balances", live: true, body: `
           <p><strong class="text-white">Paycheck Pilot doesn't connect to your bank. It only knows the balances you give it.</strong> If you've spent money you haven't logged, every number — Safe Spend, Weather, Money Mayday — is too optimistic.</p>
-          <p>Update your balances on payday, after any big purchase, and whenever they've drifted from your bank app. Logging transactions as you go keeps them current.</p>` },
+          <p>Update your balances on payday, after any big purchase, and whenever they've drifted from your bank app. Logging transactions as you go keeps them current.</p>
+          <p>If a checking or cash balance hasn't changed in ${BALANCE_STALE_DAYS} days, the Dashboard says so under Safe Spend. Update it, or tap "They match my bank" if it's still right.</p>` },
         { id: 'payday', q: "What to do on payday", live: true, body: `
           <p>On payday the Dashboard asks <strong class="text-white">"Has it landed?"</strong>:</p>
           <ul class="list-disc pl-4 space-y-1">
@@ -13143,8 +13190,8 @@
         if (['mayday', 'storm', 'warnings'].includes(id)) rows.push(md ? escapeHtml(maydayBannerText(md)) : 'No shortfall is projected right now.');
         if (id === 'payday') rows.push(isPaydayToday() ? 'Today is payday — answer "Has it landed?" on the Dashboard.' : (state.income && state.income.nextDate ? `Your next payday: ${escapeHtml(friendlyDate(state.income.nextDate))}.` : 'Set up your payday first.'));
         if (id === 'update-balances') {
-          const last = visibleAccounts().filter(isSpendableAccount).map(a => a.lastModifiedAt).filter(Boolean).sort().pop();
-          rows.push(last ? `Your checking/cash balances were last changed on ${escapeHtml(new Date(last).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }))}.` : 'Paycheck Pilot has no record of when your balances were last updated.');
+          const fr = balanceFreshness();
+          rows.push(fr ? escapeHtml(balanceFreshnessText(fr)) : `Your checking and cash balances were updated within the last ${BALANCE_STALE_DAYS} days.`);
         }
         if (!rows.length) return '';
         return `<div class="p-3 rounded-xl border border-brand-500/30 bg-brand-500/10 space-y-1"><p class="text-[10px] font-bold uppercase tracking-wider text-brand-300">Your numbers right now</p>${rows.map(r => `<p class="text-slate-200">${r}</p>`).join('')}</div>`;
@@ -13471,6 +13518,7 @@
         const acc = state.accounts.find(a => a.id === editId);
         if (acc) {
           acc.name = name;
+          if (acc.balance !== balance) acc.balanceUpdatedAt = new Date().toISOString();
           acc.balance = balance;
           acc.type = type;
           acc.scope = scope;
@@ -13479,7 +13527,7 @@
         }
         logActivity("Account Updated", `Updated ${name} balance to ${formatMoney(balance)}.`);
       } else {
-        const newAcc = { id: 'acc_' + Date.now(), name, balance, type, scope, ownerId: state.user ? state.user.id : null, ownerLabel: currentOwnerLabel() };
+        const newAcc = { id: 'acc_' + Date.now(), name, balance, type, scope, ownerId: state.user ? state.user.id : null, ownerLabel: currentOwnerLabel(), balanceUpdatedAt: new Date().toISOString() };
         state.accounts.push(newAcc);
         logActivity("Account Added", `Created account ${name} with ${formatMoney(balance)}.`);
       }
@@ -13907,6 +13955,7 @@
       const sign = tx.type === 'income' ? 1 : -1;
       acct.balance = roundCents((Number(acct.balance) || 0) + sign * roundCents(tx.amount) * direction);
       acct.lastModifiedAt = new Date().toISOString();
+      acct.balanceUpdatedAt = acct.lastModifiedAt;
       acct.lastModifiedBy = currentOwnerLabel();
       // Account-to-account transfer: the money lands in the destination,
       // so total cash is unchanged.
@@ -13915,6 +13964,7 @@
         if (dest) {
           dest.balance = roundCents((Number(dest.balance) || 0) + roundCents(tx.amount) * direction);
           dest.lastModifiedAt = acct.lastModifiedAt;
+          dest.balanceUpdatedAt = acct.lastModifiedAt;
           dest.lastModifiedBy = acct.lastModifiedBy;
         }
       }
@@ -14597,7 +14647,7 @@
         content.innerHTML = `
           <div class="p-4 bg-brand-500/10 border border-brand-500/30 rounded-2xl space-y-2">
             <h4 class="font-bold text-brand-300 text-sm">No shortfall projected${escapeHtml(viewLabel)}</h4>
-            <p class="text-slate-300">Your lowest projected balance before your next paycheck is <strong class="text-white">${formatMoney(low)}</strong>. This assumes your balances are current and your paycheck arrives on time.</p>
+            <p class="text-slate-300">Your lowest projected balance before your next paycheck is <strong class="text-white">${formatMoney(low)}</strong>. This assumes your balances are current and your paycheck arrives on time.${balanceFreshness() ? ` <span class="text-amber-300">${escapeHtml(balanceFreshnessText(balanceFreshness()))}</span>` : ''}</p>
           </div>`;
       } else if (content) {
         const pay = md.payAccount;
@@ -14652,7 +14702,7 @@
               ${walk.map(([l, a, c]) => `<div class="flex justify-between gap-2"><span class="text-slate-300">${escapeHtml(l)}</span><span class="${c} font-semibold shrink-0">${a}</span></div>`).join('')}
               <div class="flex justify-between gap-2 pt-1 border-t border-rose-800/60"><span class="text-rose-200 font-bold">= Projected on ${escapeHtml(friendlyDate(md.lowDate))}</span><span class="text-rose-400 font-black shrink-0">${formatMoney(md.lowBalance)}</span></div>
             </div>
-            <p class="text-[11px] text-slate-400 pt-1">This is a projection from the balances and bills you've entered — nothing has bounced${days > 0 ? `, and you have ${days} day${days === 1 ? '' : 's'}` : ''}. It already assumes you spend nothing else before then: groceries, gas and other spending make the gap bigger.</p>
+            <p class="text-[11px] text-slate-400 pt-1">This is a projection from the balances and bills you've entered — nothing has bounced${days > 0 ? `, and you have ${days} day${days === 1 ? '' : 's'}` : ''}. It already assumes you spend nothing else before then: groceries, gas and other spending make the gap bigger.${balanceFreshness() ? ` <span class="text-amber-300">${escapeHtml(balanceFreshnessText(balanceFreshness()))}</span>` : ''}</p>
           </div>
 
           <div class="space-y-2">
@@ -17161,6 +17211,7 @@
         if (target) {
           mergedAccountSnapshots.push({ accountId: target.id, previousBalance: target.balance });
           target.balance = a.balance;
+          target.balanceUpdatedAt = new Date().toISOString();
           mergedCount++;
         }
       });
