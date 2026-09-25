@@ -8464,8 +8464,19 @@
         })
         .sort((a, b) => a.date.localeCompare(b.date));
     }
+    // LANDED only once today's paycheck has actually been recorded (the
+    // payday "Has it landed?" answer). Before that, payday is expected,
+    // not landed -- and the text says so.
+    function fdLandedTx() {
+      const today = localDateStr(new Date());
+      const me = state.user ? state.user.id : null;
+      return (state.transactions || []).find(t => t.source === 'payday-confirmation' && t.payDate === today && (!t.ownerId || t.ownerId === me)) || null;
+    }
     function fdIsLandedToday(viewData) {
-      return !!(viewData && viewData.nextIncome && viewData.daysUntilIncome === 0);
+      return !!fdLandedTx();
+    }
+    function fdPaydayExpectedToday(viewData) {
+      return !!(viewData && viewData.nextIncome && viewData.daysUntilIncome === 0) && !fdLandedTx();
     }
 
     function fdMoney(n) { const r = Math.round(Number(n) || 0); return (r < 0 ? '-$' : '$') + Math.abs(r).toLocaleString(); }
@@ -8775,7 +8786,7 @@
       const evTxt = ev && k - Math.floor(plan.series.findIndex(d => d.date === ev.date)) <= 1
         ? ` · ${ev.name} −$${Math.round(ev.amount).toLocaleString()}` : '';
       const landed = fdFT.hold > 0;
-      const text = `${dateTxt} · ${landed ? 'PAYDAY — LANDED' : `T-${toGo}D TO PAYDAY`} · PROJECTED ${fdMoney(bal)}${evTxt}`;
+      const text = `${dateTxt} · ${landed ? 'PAYDAY (PROJECTED)' : `T-${toGo}D TO PAYDAY`} · PROJECTED ${fdMoney(bal)}${evTxt}`;
       if (hud) {
         hud.classList.remove('hidden');
         const t = hud.querySelector('.fd-ft-hud-text');
@@ -10927,6 +10938,8 @@
       series.forEach(day => { day.events.forEach(ev => entries.push({ date: day.date, ev })); });
       const cleared = fdClearedBillsThisCycle(viewData);
       const landed = fdIsLandedToday(viewData);
+      const expected = fdPaydayExpectedToday(viewData);
+      const landedTx = fdLandedTx();
       const clearedRows = [];
       if (cleared.length > 2) {
         const total = cleared.reduce((a, c) => a + c.amount, 0);
@@ -10945,8 +10958,8 @@
           const color = it.ev.type === 'payday' ? '#6ee7b7' : it.ev.type === 'goal' ? '#a5b4fc' : '#ffb454';
           const dateTxt = new Date(it.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
           const amtTxt = (it.ev.type === 'goal' ? '→' : it.ev.type === 'payday' ? '+' : '-') + '$' + Math.round(it.ev.amount).toLocaleString();
-          const isLandedPayday = landed && it.ev.type === 'payday' && it.date === localDateStr(new Date());
-          return `<div class="fd-d2-row"><div class="fd-d2-dot" style="background:${color}"></div><div class="fd-d2-info"><div class="fd-d2-name">${escapeHtml((it.ev.label || '').toUpperCase())}</div><div class="fd-d2-meta">${isLandedPayday ? 'Today' : dateTxt} · ${amtTxt}${isLandedPayday ? ' · LANDED' : ''}</div></div></div>`;
+          const isLandedPayday = expected && it.ev.type === 'payday' && it.date === localDateStr(new Date());
+          return `<div class="fd-d2-row"><div class="fd-d2-dot" style="background:${color}"></div><div class="fd-d2-info"><div class="fd-d2-name">${escapeHtml((it.ev.label || '').toUpperCase())}</div><div class="fd-d2-meta">${isLandedPayday ? 'Today' : dateTxt} · ${amtTxt}${isLandedPayday ? ' · EXPECTED' : ''}</div></div></div>`;
         }).join('');
         timelineEl.innerHTML = html;
       }
@@ -10968,7 +10981,7 @@
       }
       const miniEl = document.getElementById('fd-display3-mini');
       if (miniEl) {
-        const daysTxt = landed ? 'LANDED' : viewData.nextIncome ? `${viewData.daysUntilIncome}D` : '—';
+        const daysTxt = landed ? 'LANDED' : expected ? 'TODAY' : viewData.nextIncome ? `${viewData.daysUntilIncome}D` : '—';
         miniEl.innerHTML = `
           <div><div class="fd-mini-label">TO PAYDAY</div><div class="fd-mini-value" style="color:#6ee7b7">${daysTxt}</div></div>
           <div><div class="fd-mini-label">LOWEST</div><div class="fd-mini-value" style="color:${fdFloorColor(lowest)}">${fdMoney(lowest)}</div></div>
@@ -10978,7 +10991,7 @@
       if (tickerTrack) {
         const daysTxt = viewData.nextIncome ? `${viewData.daysUntilIncome} DAYS` : 'UNSCHEDULED';
         const msgs = [
-          landed ? `>>> LANDED — PAYDAY TODAY >>>` : `>>> PAYDAY IN ${daysTxt} >>>`,
+          landed ? `>>> LANDED — PAYCHECK RECORDED >>>` : expected ? `>>> PAYDAY TODAY — AWAITING DEPOSIT >>>` : `>>> PAYDAY IN ${daysTxt} >>>`,
           `>>> FORECAST ${wMeta.text} >>>`,
           `>>> SAFE SPEND ${fdMoney(viewData.safeSpend)} >>>`,
           `>>> LOWEST BALANCE ${fdMoney(lowest)} >>>`,
@@ -10990,8 +11003,8 @@
       }
       const statusEl = document.getElementById('fd-display3-status');
       if (statusEl) {
-        statusEl.innerText = landed ? 'STATUS: LANDED — PAYDAY' : `STATUS: ${wMeta.text}`;
-        statusEl.style.color = landed ? '#6ee7b7' : wMeta.color;
+        statusEl.innerText = landed ? 'STATUS: LANDED — PAYCHECK RECORDED' : expected ? 'STATUS: PAYDAY — AWAITING DEPOSIT' : `STATUS: ${wMeta.text}`;
+        statusEl.style.color = landed ? '#6ee7b7' : expected ? '#fbbf24' : wMeta.color;
       }
 
       // Display 5 — Mission Computer: real Paycheck Pilot intelligence
@@ -10999,7 +11012,8 @@
       if (d5) {
         const inHousehold = !!(state.household && state.household.id && state.household.accountMode === 'shared');
         const nextIncomeTxt = !viewData.nextIncome ? 'Unscheduled'
-          : landed ? `LANDED TODAY +$${Math.round(viewData.nextIncome.amount).toLocaleString()}`
+          : landedTx ? `LANDED TODAY +$${Math.round(landedTx.amount).toLocaleString()}`
+          : expected ? `EXPECTED TODAY +$${Math.round(viewData.nextIncome.amount).toLocaleString()}`
           : `${new Date(viewData.nextIncome.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} +$${Math.round(viewData.nextIncome.amount).toLocaleString()}`;
         const nextBillTxt = culprit ? `${culprit.label} -$${Math.round(culprit.amount).toLocaleString()}` : 'None upcoming';
         const culpritTxt = culprit ? `${culprit.label} on ${new Date(culprit.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : 'No single large bill';
@@ -11010,7 +11024,7 @@
           `SYNC: ${inHousehold ? 'HOUSEHOLD LINKED' : 'SOLO MODE'}`,
           `FORECAST ENGINE: ACTIVE`,
           ...cleared.map(c => `CLEARED — ${c.title.toUpperCase()} -$${Math.round(c.amount).toLocaleString()}`),
-          ...(landed ? ['PAYDAY — LANDED'] : []),
+          ...(landed ? ['PAYDAY — LANDED (PAYCHECK RECORDED)'] : expected ? ['PAYDAY — AWAITING DEPOSIT'] : []),
         ];
         const logDoubled = [...logLines, ...logLines];
         d5.innerHTML = `
@@ -13120,7 +13134,7 @@
         { id: 'flight-deck', q: "What is the Flight Deck?", body: `
           <p>The same numbers as the Dashboard, shown as a flight to your next payday. The route lists your bills and paychecks in order; the weather is the Dashboard's weather. Nothing on the Flight Deck changes your money.</p>` },
         { id: 'cleared', q: "What does CLEARED mean?", body: `<p>A bill you've marked paid during this pay cycle. It stays on the Flight Deck route as CLEARED until your next pay cycle starts.</p>` },
-        { id: 'landed', q: "What does LANDED mean?", body: `<p>Today is payday. It doesn't mean the money has arrived — answer "Has it landed?" on the Dashboard so your balance and schedule are right.</p>` },
+        { id: 'landed', q: "What does LANDED mean?", body: `<p>Your paycheck arrived and is recorded — you answered "Yes — add it" or "Already in my balance" on the Dashboard today. Until you do, Flight Deck says <strong class="text-white">PAYDAY — AWAITING DEPOSIT</strong> instead: the money is expected, not confirmed.</p>` },
         { id: 'full-throttle', q: "What does Full Throttle do?", body: `<p>It fast-forwards the Flight Deck through your coming days so you can watch the forecast play out — bills, paydays and the weather on each future day. It's a preview labelled FORECAST SIMULATION: it doesn't change anything, and the weather it shows is for future days, not today. Tap Pause to stop.</p>` },
         { id: 'tiles', q: "What are the four numbers on the Dashboard?", body: `
           <ul class="list-disc pl-4 space-y-1">
@@ -14934,6 +14948,15 @@
         logActivity("Payday Received", `${actor} confirmed the ${payDate} paycheck landed: $${formatCurrency(amount)} added to ${account.name}. Next payday: ${state.income.nextDate}.`);
         showToast(`Added $${formatCurrency(amount)} to ${account.name}`, "success");
       } else {
+        // Recorded (so it counts as landed and is never asked about again)
+        // but not added -- the balance already includes it.
+        const nowIso = new Date().toISOString();
+        state.transactions.unshift({
+          id: 'tx_' + Date.now(), title: `Paycheck (${friendlyDate(payDate)}) — already in balance`, amount: roundCents(Number(state.income.amount) || 0), type: 'income', category: 'Income',
+          date: payDate, payDate, accountId: null, balanceApplied: false, scope: 'personal',
+          ownerId: state.user ? state.user.id : null, ownerLabel: actor, source: 'payday-confirmation',
+          createdAt: nowIso, createdBy: actor, lastModifiedAt: nowIso, lastModifiedBy: actor
+        });
         advancePaySchedule();
         logActivity("Payday Received", `${actor} confirmed the ${payDate} paycheck is already in their balance. Next payday: ${state.income.nextDate}.`);
         showToast("Payday recorded — your balance already includes it", "success");
