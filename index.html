@@ -3649,7 +3649,7 @@
           <span class="text-xl leading-none">🚨</span>
           <div>
             <h3 class="font-bold text-white text-base">Money Mayday</h3>
-            <p class="text-[10px] text-slate-500">Your plan to make it to payday</p>
+            <p class="text-[10px] text-slate-500">When you'll run short, why, and what actually helps</p>
           </div>
         </div>
         <button onclick="closeModals()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
@@ -4538,7 +4538,7 @@
       // banner, instead of the raw cash-minus-bills figure (which ignores
       // income timing and was producing false alerts in exactly the
       // scenario those other systems were already fixed for).
-      const notifMayday = isSoloView() ? computeSoloMaydayStatus() : computeHouseholdMaydayStatus();
+      const notifMayday = getActiveViewData().mayday;
       if (notifMayday.active) {
         notifications.push({ type: 'financial-warning', label: 'Financial Warning' });
       }
@@ -4767,7 +4767,10 @@
           const key = n.type === 'payday' ? 'lastPaydayNotifiedDate' : 'lastWarningNotifiedDate';
           if (state[key] === todayStr) return;
           state[key] = todayStr;
-          const body = n.type === 'payday' ? 'Payday has arrived' : 'Upcoming bills exceed available funds';
+          const md = n.type === 'financial-warning' ? buildMaydayAnalysis(getActiveViewData()) : null;
+          const body = n.type === 'payday' ? 'Payday has arrived'
+            : md ? (md.shortNow ? `You're ${formatMoney(md.needed)} short today. Tap to see why.` : `You're projected to be ${formatMoney(md.needed)} short on ${friendlyDate(md.lowDate)}. Tap to see why.`)
+            : 'Money Mayday: a shortfall is projected. Tap to see why.';
           showNativeNotification('Paycheck Pilot', body, n.type === 'financial-warning' ? 'money-mayday' : 'dashboard', n.type);
           return;
         }
@@ -4905,50 +4908,29 @@
       return roundCents(strictlyBeforeTotal + sameDayShortfall);
     }
 
-    // True-deficit check: does cash ever actually go negative once real
-    // income timing is accounted for, rather than just "cash < total
-    // bills right now" (which is what produced the misleading Mayday
-    // trigger — $3,000 arriving tomorrow was being ignored). Reuses
-    // buildForecastSeries() unmodified — it already walks day-by-day,
-    // crediting income and debiting bills exactly as they occur, so
-    // scanning its own output for the first negative day IS this check,
-    // not a new simulation.
-    function computeHouseholdMaydayStatus(daysAhead = 14) {
-      const series = buildForecastSeries(daysAhead);
-      const firstNegative = series.find(s => s.balance < 0);
-      return { active: !!firstNegative, date: firstNegative ? firstNegative.date : null };
+    // MONEY MAYDAY -- one rule everywhere (Dashboard, Weather, Flight Deck,
+    // Forecast, Payday Briefing, phone alert): the projected balance goes
+    // below $0 before the later of the next paycheck or 14 days from today.
+    // It reads the same forecast series Safe Spend uses -- never a separate
+    // calculation -- so a monthly earner's shortfall on day 20, before
+    // payday, is caught too.
+    function maydayWindowDays(nextIncomeDate) {
+      if (!nextIncomeDate) return 14;
+      const d = new Date(nextIncomeDate + 'T00:00:00');
+      if (isNaN(d.getTime())) return 14;
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      return Math.max(14, Math.min(62, calendarDaysBetween(today, d)));
     }
-
-    // Same check, scoped to personal-only cash/bills/income (Solo View) —
-    // a small, separate day-by-day walk rather than parameterizing the
-    // shared buildForecastSeries(), so that function and every existing
-    // caller of it (Forecast page, Financial Weather in Household View)
-    // remain completely untouched.
-    function computeSoloMaydayStatus(daysAhead = 14) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const bills = personalBills().filter(b => !b.completed && !b.paused);
-      // Overdue bills are already-committed obligations — see the matching
-      // comment in buildForecastSeries() for why the day loop below can
-      // never represent a past due date on its own.
-      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-      const overdueTotal = bills.reduce((sum, b) => sum + billAmountDueBy(b, todayStr, false), 0);
-      // Every real occurrence within the window — not just the single
-      // static nextDate — so a weekly/biweekly earner's second (or third)
-      // paycheck landing inside this 14-day check is correctly credited,
-      // the same way buildForecastSeries() already does for Household View.
-      const incomeDates = state.income && state.income.nextDate
-        ? new Set(getPaycheckOccurrences(state.income.nextDate, state.income.frequency, daysAhead, today, state.income))
-        : new Set();
-      let running = roundCents(personalSpendableCash() - overdueTotal);
-      for (let i = 0; i <= daysAhead; i++) {
-        const day = new Date(today); day.setDate(today.getDate() + i); // +24h skips/duplicates a day at DST
-        const dayStr = localDateStr(day);
-        bills.forEach(b => { if (b.dueDate === dayStr) running = roundCents(running - (Number(b.amount) || 0)); });
-        if (incomeDates.has(dayStr)) running = roundCents(running + (Number(state.income.amount) || 0));
-        if (running < 0) return { active: true, date: dayStr };
-      }
-      return { active: false, date: null };
+    function maydayFromSeries(series) {
+      const first = (series || []).find(s => s.balance < 0);
+      return { active: !!first, date: first ? first.date : null };
+    }
+    function computeHouseholdMaydayStatus(daysAhead) {
+      const next = getNextHouseholdIncomeEvent();
+      return maydayFromSeries(buildForecastSeries(daysAhead || maydayWindowDays(next ? next.date : null)));
+    }
+    function computeSoloMaydayStatus(daysAhead) {
+      return maydayFromSeries(buildPersonalForecastSeries(daysAhead || maydayWindowDays(state.income && state.income.nextDate)));
     }
 
     // Personal-only equivalent of buildForecastSeries() — same technique
@@ -5003,7 +4985,7 @@
         billOccurrences.forEach(occ => {
           if (occ.dueDate === dayStr) {
             running = roundCents(running - (Number(occ.bill.amount) || 0));
-            events.push({ type: 'bill', label: occ.bill.title, amount: occ.bill.amount, priority: occ.bill.priority, category: occ.bill.category });
+            events.push({ type: 'bill', billId: occ.bill.id, label: occ.bill.title, amount: occ.bill.amount, priority: occ.bill.priority, category: occ.bill.category });
           }
         });
         paydays.forEach(p => {
@@ -6572,16 +6554,18 @@
       const safeSpendReserve = computeSafeSpendReserve(allBills, cutoffDate, nextIncome ? nextIncome.amount : 0);
       // Also capped by the lowest projected balance over the Money Mayday
       // window: an early paycheck too small to cover the bills right after
-      // it must not make that money look free to spend.
-      const windowSeries = solo ? buildPersonalForecastSeries(14) : buildForecastSeries(14);
+      // it must not make that money look free to spend. The same series
+      // decides Money Mayday, so Safe Spend < $0 and Mayday always agree.
+      const windowDays = maydayWindowDays(cutoffDate);
+      const windowSeries = solo ? buildPersonalForecastSeries(windowDays) : buildForecastSeries(windowDays);
       const lowestInWindow = windowSeries.length ? Math.min(...windowSeries.map(s => s.balance)) : Infinity;
       const safeSpend = roundCents(Math.min(cash - safeSpendReserve, lowestInWindow));
 
       const today = new Date(); today.setHours(0, 0, 0, 0);
       const daysUntilIncome = cutoffDate ? Math.max(0, Math.round((new Date(cutoffDate + 'T00:00:00') - today) / 86400000)) : 0;
       const dailyAvailable = daysUntilIncome > 0 ? safeSpend / daysUntilIncome : safeSpend;
-      const mayday = solo ? computeSoloMaydayStatus(14) : computeHouseholdMaydayStatus(14);
-      return { solo, cash, allBills, upcomingBills, upcomingTotal, safeSpend, nextIncome, daysUntilIncome, dailyAvailable, mayday };
+      const mayday = maydayFromSeries(windowSeries);
+      return { solo, cash, allBills, upcomingBills, upcomingTotal, safeSpend, nextIncome, daysUntilIncome, dailyAvailable, mayday, windowSeries };
     }
 
     function setDashboardView(view) {
@@ -6722,7 +6706,8 @@
       const contextEl = document.getElementById('dash-safe-spend-context');
       if (contextEl) {
         if (viewData.mayday.active) {
-          contextEl.innerText = `Shortfall Before: ${friendlyDate(viewData.mayday.date)}`;
+          const md = buildMaydayAnalysis(viewData);
+          contextEl.innerText = md && md.shortNow ? `Short Today: ${formatMoney(md.needed)}` : `Below $0 On: ${friendlyDate(viewData.mayday.date)}`;
           contextEl.className = 'text-[11px] font-semibold text-rose-400';
         } else if (viewData.upcomingBills.length === 0) {
           contextEl.innerText = viewData.nextIncome ? `Bills Covered Through: ${friendlyDate(viewData.nextIncome.date)}` : 'No bills currently due';
@@ -6737,10 +6722,14 @@
       if (advisoryList) {
         const lines = [];
         if (viewData.mayday.active) {
-          lines.push({ icon: '⚠', cls: 'text-rose-300', text: `You will go negative around ${friendlyDate(viewData.mayday.date)}.` });
-          const billsBeforeMayday = viewData.upcomingBills.filter(b => b.dueDate <= viewData.mayday.date).sort((a, b) => (Number(b.amount) || 0) - (Number(a.amount) || 0));
-          if (billsBeforeMayday.length) {
-            lines.push({ icon: '⚠', cls: 'text-rose-300', text: `Deferring ${billsBeforeMayday[0].title} may resolve the shortfall.` });
+          // Straight from the forecast: when, by how much, and which bill
+          // does it. No advice to skip a bill.
+          const md = buildMaydayAnalysis(viewData);
+          if (md) {
+            lines.push({ icon: '⚠', cls: 'text-rose-300', text: md.shortNow
+              ? `You're ${formatMoney(md.needed)} short today.`
+              : `You're projected to go below $0 on ${friendlyDate(md.firstDate)}${md.trigger ? `, when ${md.trigger.title} ($${formatCurrency(md.trigger.amount)}) is due` : ''}.` });
+            if (!md.shortNow && md.lowDate !== md.firstDate) lines.push({ icon: '⚠', cls: 'text-rose-300', text: `Lowest point: ${formatMoney(md.lowBalance)} on ${friendlyDate(md.lowDate)}.` });
           }
         } else if (viewData.nextIncome) {
           const daysOut = viewData.daysUntilIncome;
@@ -6816,7 +6805,7 @@
           riskBanner.classList.remove('hidden');
           riskBanner.className = "p-4 rounded-2xl border border-rose-500/50 bg-rose-950/40 text-rose-200 text-xs font-medium flex items-center gap-3";
         }
-        if (riskMsg) riskMsg.innerText = `Your cash position is projected to go negative around ${friendlyDate(viewData.mayday.date)} even after upcoming income. Open Money Mayday for a plan.`;
+        if (riskMsg) riskMsg.innerText = maydayBannerText(buildMaydayAnalysis(viewData));
       } else if (safeSpend < 200) {
         if (riskBanner) {
           riskBanner.classList.remove('hidden');
@@ -7394,10 +7383,16 @@
     // ==========================================
     function computeFinancialWeather(safeSpend, cash) {
       const solo = isSoloView();
-      const series = solo ? buildPersonalForecastSeries(30) : buildForecastSeries(30);
-      const next14 = series.slice(0, 15);
-      const lowestNext14 = Math.min(...next14.map(s => s.balance));
-      const lowestNext30 = Math.min(...series.map(s => s.balance));
+      // Storm uses the one Money Mayday rule (below $0 before the later of
+      // the next paycheck or 14 days) on the same forecast as Safe Spend.
+      const nextIncomeDate = solo ? (state.income && state.income.nextDate) : ((getNextHouseholdIncomeEvent() || {}).date || null);
+      const windowDays = maydayWindowDays(nextIncomeDate);
+      const series = solo ? buildPersonalForecastSeries(Math.max(30, windowDays)) : buildForecastSeries(Math.max(30, windowDays));
+      const windowPart = series.slice(0, windowDays + 1);
+      const windowMayday = maydayFromSeries(windowPart);
+      const lowestInWindow = Math.min(...windowPart.map(s => s.balance));
+      const lowestInWindowDate = (windowPart.find(s => s.balance === lowestInWindow) || {}).date;
+      const lowestNext30 = Math.min(...series.slice(0, 31).map(s => s.balance));
       const overdueBills = (solo ? personalBills() : visibleBills()).filter(b => !b.paused && getBillStatus(b) === 'overdue');
       const overdueTotal = overdueBills.reduce((sum, b) => sum + billAmountDueBy(b, localDateStr(new Date()), false), 0);
       const upcomingTotal = solo
@@ -7438,8 +7433,8 @@
         return {
           key: 'emergency', icon: '🚨', title: 'Mayday',
           reason: overdueBills.length ? `${overdueBills.length} overdue bill(s) totaling $${formatCurrency(overdueTotal)}` : `Bills due now exceed available cash by $${formatCurrency(Math.abs(todaysTrueBalance))}`,
-          desc: "Bills due right now add up to more than you have on hand.",
-          predictive: "Money Mayday is active — open it for a plan to make it to payday.",
+          desc: overdueBills.length ? "Your overdue bills add up to more than you have on hand." : "Bills due right now add up to more than you have on hand.",
+          predictive: `You're ${formatMoney(Math.abs(todaysTrueBalance))} short today. Open Money Mayday to see why and your options.`,
           riskLabel: 'Money Mayday Active', riskClass: 'text-rose-400',
           borderClass: 'border-rose-500/50',
           factors: [
@@ -7447,28 +7442,31 @@
             `$${formatCurrency(upcomingTotal)} in bills due before payday`,
             overdueBills.length ? `${overdueBills.length} bill(s) already overdue, totaling $${formatCurrency(overdueTotal)}` : null
           ].filter(Boolean),
-          nextAction: "Open Money Mayday to see what can be deferred or paid partially before payday."
+          nextAction: overdueBills.length
+            ? "Already paid an overdue bill? Mark it paid. Otherwise open Money Mayday to see your options."
+            : "Open Money Mayday to see what's causing it and your options."
         };
       }
 
-      if (lowestNext14 < 0) {
+      if (windowMayday.active) {
         const crossing = firstCrossing(0);
-        const causeText = crossing && crossing.cause ? ` after ${crossing.cause.label}` : '';
+        const causeText = crossing && crossing.cause ? `, when ${crossing.cause.label} is due` : '';
+        const when = friendlyDate(windowMayday.date);
         return {
-          key: 'storm', icon: '⛈', title: 'Turbulence',
-          reason: crossing && crossing.cause ? `${crossing.cause.label} pushes the balance negative around ${friendlyDate(crossing.date)}` : `Projected balance dips negative around ${crossing ? friendlyDate(crossing.date) : 'the coming days'}`,
-          desc: "Your projected balance is on track to go negative before your next paycheck.",
-          predictive: crossing ? `A shortfall is projected around ${friendlyDate(crossing.date)}${causeText}.` : "A shortfall is projected in the days ahead.",
-          riskLabel: 'Deficit Projected', riskClass: 'text-rose-400',
+          key: 'storm', icon: '⛈', title: 'Storm',
+          reason: crossing && crossing.cause ? `${crossing.cause.label} pushes the balance below $0 on ${when}` : `Projected balance goes below $0 on ${when}`,
+          desc: "You're projected to run short. Nothing has bounced yet — there's time to act.",
+          predictive: `Projected to go below $0 on ${when}${causeText}.`,
+          riskLabel: 'Shortfall Ahead', riskClass: 'text-rose-400',
           borderClass: 'border-rose-500/40',
           daysUntilCrossing: crossing ? crossing.daysAway : null,
-          deficitDepth: Math.abs(lowestNext14),
+          deficitDepth: Math.abs(lowestInWindow),
           factors: [
-            `Projected balance dips to $${formatCurrency(lowestNext14)} within 14 days`,
-            crossing && crossing.cause ? `Driven largely by ${crossing.cause.label}` : null,
+            `Lowest projected balance: ${formatMoney(lowestInWindow)} on ${friendlyDate(lowestInWindowDate)}`,
+            crossing && crossing.cause ? `${crossing.cause.label} ($${formatCurrency(crossing.cause.amount)}) is due the day it goes below $0` : null,
             overdueBills.length ? `${overdueBills.length} bill(s) already overdue` : null
           ].filter(Boolean),
-          nextAction: "Review upcoming bills before payday and consider what can be paused or paid late."
+          nextAction: "Open Money Mayday to see what's causing it and your options."
         };
       }
 
@@ -7704,7 +7702,7 @@
         billOccurrences.forEach(occ => {
           if (occ.dueDate === dayStr) {
             running = roundCents(running - (Number(occ.bill.amount) || 0));
-            events.push({ type: 'bill', label: occ.bill.title, amount: occ.bill.amount, priority: occ.bill.priority, category: occ.bill.category, scope: occ.bill.scope });
+            events.push({ type: 'bill', billId: occ.bill.id, label: occ.bill.title, amount: occ.bill.amount, priority: occ.bill.priority, category: occ.bill.category, scope: occ.bill.scope });
           }
         });
 
@@ -7736,11 +7734,6 @@
 
     // Classifies the overall trip into one of the seven flight statuses.
     function classifyFlightStatus(series) {
-      const startBalance = series[0].balance;
-      const next7 = series.slice(0, 8).map(s => s.balance);
-      const allValues = series.map(s => s.balance);
-      const lowestNear = Math.min(...next7);
-      const lowestOverall = Math.min(...allValues);
       const daysUntilPayday = getDaysUntilPayday();
       const cycleDays = state.income.nextDate
         ? Math.round((new Date(getNextPaycheckDate(state.income.nextDate, state.income.frequency, state.income) + 'T00:00:00') - new Date(state.income.nextDate + 'T00:00:00')) / 86400000)
@@ -7748,11 +7741,15 @@
       const next5 = series.slice(0, 6).map(s => s.balance);
       const isClimbing = next5[next5.length - 1] > next5[0];
 
-      if (startBalance < 0 || lowestNear < 0) {
-        return { key: 'emergency', label: 'Emergency Deficit', badgeClass: 'bg-rose-500/20 text-rose-300 border-rose-500/50', dotClass: 'bg-rose-500 animate-ping', storm: true };
+      // Health comes from the one Weather verdict (same Money Mayday rule);
+      // this badge only adds trip-phase words when there's no shortfall.
+      const vd = getActiveViewData();
+      const wKey = computeFinancialWeather(vd.safeSpend, vd.cash).key;
+      if (wKey === 'emergency') {
+        return { key: 'emergency', label: 'Mayday — Short Now', badgeClass: 'bg-rose-500/20 text-rose-300 border-rose-500/50', dotClass: 'bg-rose-500 animate-ping', storm: true };
       }
-      if (lowestOverall < 0) {
-        return { key: 'turbulence', label: 'Turbulence Ahead', badgeClass: 'bg-amber-500/20 text-amber-300 border-amber-500/50', dotClass: 'bg-amber-400 animate-ping', storm: true };
+      if (wKey === 'storm') {
+        return { key: 'turbulence', label: 'Storm — Short Ahead', badgeClass: 'bg-amber-500/20 text-amber-300 border-amber-500/50', dotClass: 'bg-amber-400 animate-ping', storm: true };
       }
       if (daysUntilPayday <= 2) {
         return { key: 'approaching', label: 'Approaching Payday', badgeClass: 'bg-blue-500/20 text-blue-300 border-blue-500/50', dotClass: 'bg-blue-400 animate-ping', storm: false };
@@ -11187,13 +11184,13 @@
       const culprit = findLowestBalanceCulprit(series, lowestIdx);
 
       const realMsgs = [];
-      if (culprit) realMsgs.push(`NEXT BILL: ${culprit.label} ${new Date(culprit.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} (-$${Math.round(culprit.amount).toLocaleString()})`);
+      if (culprit) realMsgs.push(`BIGGEST BILL BEFORE LOW POINT: ${culprit.label} ${new Date(culprit.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} (-$${Math.round(culprit.amount).toLocaleString()})`);
       realMsgs.push(`LOWEST BALANCE: $${Math.round(lowest).toLocaleString()}`);
       if (viewData.nextIncome) realMsgs.push(`PAYDAY IN ${viewData.daysUntilIncome} DAYS`);
       realMsgs.push(`SAFE TO SPEND: $${Math.round(viewData.safeSpend).toLocaleString()}`);
       realMsgs.push(`FORECAST ${(status.label || 'ON TRACK').toUpperCase()}`);
       if (viewData.nextIncome) realMsgs.push(`NEXT PAYCHECK: ${viewData.nextIncome.label} (+$${Math.round(viewData.nextIncome.amount).toLocaleString()})`);
-      if (viewData.upcomingBills.length === 0) realMsgs.push(`ALL BILLS COVERED`);
+      if (viewData.upcomingBills.length === 0 && !(viewData.mayday && viewData.mayday.active)) realMsgs.push(`ALL BILLS COVERED`);
       realMsgs.push(`PROJECTED BALANCE: $${Math.round(values[0]).toLocaleString()}`);
 
       const sponsor = FD_SPONSOR_CONFIG[Math.floor(Math.random() * FD_SPONSOR_CONFIG.length)];
@@ -11257,7 +11254,7 @@
     }
 
     function renderForecast() {
-      const series = buildForecastSeries(60);
+      const series = flightDeckSeries(60);   // follows Solo/Household like every other number
       const values = series.map(s => s.balance);
       const lowest = Math.min(...values);
       const lowestIdx = values.indexOf(lowest);
@@ -11291,10 +11288,14 @@
       if (verdictEl && detailEl) {
         let verdict, detail, borderClass, iconClass, arcColor, iconName, showCta, confidenceFraction;
 
+        const fcWeather = computeFinancialWeather(viewData.safeSpend, viewData.cash);
+        const fcWindowLow = Math.min(...(viewData.windowSeries || series).map(d => d.balance));
         if (viewData.mayday && viewData.mayday.active) {
-          verdict = "You may run short";
-          const maydayDateStr = viewData.mayday.date ? new Date(viewData.mayday.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'soon';
-          detail = `Balance is projected to dip below zero around ${maydayDateStr}.`;
+          const md = buildMaydayAnalysis(viewData);
+          verdict = md && md.shortNow ? "You're short now" : "You may run short";
+          detail = md && md.shortNow
+            ? `You're ${formatMoney(md.needed)} short today.`
+            : md ? `Projected ${formatMoney(md.needed)} short on ${friendlyDate(md.lowDate)}${md.trigger ? `, when ${md.trigger.title} is due` : ''}.` : '';
           borderClass = 'border-rose-500/50 glow-rose';
           iconClass = 'text-rose-400';
           arcColor = '#f43f5e';
@@ -11304,10 +11305,10 @@
           // Mayday window remain safe before the projected deficit.
           const today0 = new Date(); today0.setHours(0, 0, 0, 0);
           const daysToDeficit = viewData.mayday.date ? Math.max(0, Math.round((new Date(viewData.mayday.date + 'T00:00:00') - today0) / 86400000)) : 0;
-          confidenceFraction = Math.max(0.06, Math.min(1, daysToDeficit / 14));
-        } else if (lowest < 200) {
+          confidenceFraction = Math.max(0.06, Math.min(1, daysToDeficit / Math.max(1, (viewData.windowSeries || []).length - 1 || 14)));
+        } else if (fcWeather.key === 'cloudy' || fcWeather.key === 'rain') {
           verdict = "It'll be tight";
-          detail = `Lowest projected balance is ${formatMoney(lowest)} — no deficit expected, but little room to spare.`;
+          detail = `${fcWeather.reason}. No shortfall projected, but little room to spare.`;
           borderClass = 'border-amber-500/50';
           iconClass = 'text-amber-400';
           arcColor = '#fbbf24';
@@ -11317,7 +11318,7 @@
         } else {
           verdict = "Yes, you're on track";
           const untilText = viewData.nextIncome ? ` until ${new Date(viewData.nextIncome.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}` : '';
-          detail = `Lowest projected balance is ${formatMoney(lowest)}${untilText} — you're clear.`;
+          detail = `Lowest projected balance${untilText} is ${formatMoney(fcWindowLow)} — no shortfall projected.`;
           borderClass = 'border-brand-500/50 glow-emerald';
           iconClass = 'text-brand-400';
           arcColor = '#10b981';
@@ -13726,7 +13727,7 @@
       return true;
     }
 
-    function completeBill(id) {
+    function completeBill(id, opts = {}) {
       const bill = state.bills.find(b => b.id === id);
       if (!bill) return;
       if (billCompletionPending.has(id)) return;
@@ -13758,6 +13759,9 @@
           // Deducted only when THIS device records the payment -- if another
           // member already recorded it, their deduction syncs over instead.
           const payAccount = (bill.payFromAccountId && (state.accounts || []).find(a => a.id === bill.payFromAccountId)) || defaultPaymentAccount();
+          // "My balance already shows it": record the payment without
+          // subtracting it a second time.
+          const deduct = !!payAccount && !opts.alreadyInBalance;
           // Log transaction into ledger — inherits the bill's own scope so a
           // household bill's payment record is visible to everyone too.
           // createdBy is who performed THIS action, on THIS device, right
@@ -13767,13 +13771,13 @@
             id: txId,
             billId: bill.id,
             billDueDate: bill.dueDate,
-            title: `Bill Payment: ${bill.title}`,
+            title: `Bill Payment: ${bill.title}${opts.alreadyInBalance ? ' (already in balance)' : ''}`,
             amount: bill.amount,
             type: 'expense',
             category: bill.category,
             date: localDateStr(new Date(nowIso)),
             accountId: payAccount ? payAccount.id : null,
-            balanceApplied: !!payAccount,
+            balanceApplied: deduct,
             scope: bill.scope || 'personal',
             ownerId: bill.ownerId || (state.user ? state.user.id : null),
             ownerLabel: bill.ownerLabel || actor,
@@ -13784,7 +13788,7 @@
             lastModifiedBy: actor
           });
           applyTxToBalance(state.transactions[0], +1);
-          logActivity("Bill Marked Paid", `${actor} marked "${bill.title}" ($${formatCurrency(bill.amount)}) as paid. Source: manual-bill-completion. Transaction: ${txId}.`);
+          logActivity("Bill Marked Paid", `${actor} marked "${bill.title}" ($${formatCurrency(bill.amount)}) as paid${opts.alreadyInBalance ? ' (already reflected in their balance — not subtracted again)' : ''}. Source: manual-bill-completion. Transaction: ${txId}.`);
         } else {
           logActivity("Bill Marked Paid", `${actor} marked "${bill.title}" as paid (already recorded by another household member — no duplicate transaction created).`);
         }
@@ -14296,98 +14300,175 @@
     }
 
     // DEFICIT NAVIGATOR 2.0 (BILL TETRIS)
+    // MONEY MAYDAY ANALYSIS -- every Money Mayday number and sentence comes
+    // from here, and everything here is read off the one forecast window
+    // getActiveViewData() already built (the same series behind Safe Spend
+    // and the Mayday trigger). The walk -- cash today, minus overdue bills,
+    // plus paychecks, minus bills -- adds up exactly to the lowest point.
+    function buildMaydayAnalysis(viewData) {
+      const v = viewData || getActiveViewData();
+      const series = v.windowSeries || [];
+      if (!v.mayday || !v.mayday.active || !series.length) return null;
+      let lowIdx = 0;
+      series.forEach((d, i) => { if (d.balance < series[lowIdx].balance) lowIdx = i; });
+      const firstIdx = series.findIndex(d => d.balance < 0);
+      const dayNet = d => d.events.reduce((n, e) => e.type === 'bill' ? n - (Number(e.amount) || 0) : e.type === 'payday' ? n + (Number(e.amount) || 0) : n, 0);
+      const start = roundCents(series[0].balance - dayNet(series[0]));
+      const overdue = roundCents(v.cash - start);
+      const todayStr = localDateStr(new Date());
+
+      const paychecks = [];
+      const billMap = {};
+      for (let i = 0; i <= lowIdx; i++) {
+        series[i].events.forEach(e => {
+          if (e.type === 'payday') paychecks.push({ date: series[i].date, amount: Number(e.amount) || 0, label: e.label });
+          if (e.type === 'bill') {
+            const k = e.billId || e.label;
+            const row = billMap[k] = billMap[k] || { billId: e.billId || null, title: e.label, total: 0, dates: [], priority: e.priority, overdue: 0 };
+            row.total = roundCents(row.total + (Number(e.amount) || 0));
+            row.dates.push(series[i].date);
+          }
+        });
+      }
+      const billsTotal = roundCents(Object.values(billMap).reduce((n, r) => n + r.total, 0));
+      // Overdue occurrences are already out of the starting balance.
+      const overdueBills = (v.solo ? personalBills() : visibleBills())
+        .filter(b => !b.completed && !b.paused && getBillStatus(b) === 'overdue')
+        .map(b => ({ bill: b, amount: billAmountDueBy(b, todayStr, false) }))
+        .filter(o => o.amount > 0);
+      overdueBills.forEach(o => {
+        const row = billMap[o.bill.id] = billMap[o.bill.id] || { billId: o.bill.id, title: o.bill.title, total: 0, dates: [], priority: o.bill.priority, overdue: 0 };
+        row.overdue = roundCents(row.overdue + o.amount);
+      });
+      const causes = Object.values(billMap).sort((a, b) => (b.total + b.overdue) - (a.total + a.overdue));
+      const firstDay = series[firstIdx];
+      const triggerEv = firstIdx > 0 ? firstDay.events.filter(e => e.type === 'bill').sort((a, b) => (Number(b.amount) || 0) - (Number(a.amount) || 0))[0] : null;
+
+      const savingsAccounts = (v.solo ? personalAccounts() : visibleAccounts()).filter(a => a.type === 'savings' && (Number(a.balance) || 0) > 0);
+      const savingsTotal = roundCents(savingsAccounts.reduce((n, a) => n + (Number(a.balance) || 0), 0));
+      // First paycheck after the low point, for "ask for a date after ..."
+      let nextPayAfter = null;
+      for (let i = lowIdx + 1; i < series.length && !nextPayAfter; i++) {
+        const p = series[i].events.find(e => e.type === 'payday');
+        if (p) nextPayAfter = { date: series[i].date, amount: Number(p.amount) || 0 };
+      }
+      if (!nextPayAfter && v.nextIncome && v.nextIncome.date > series[lowIdx].date) nextPayAfter = { date: v.nextIncome.date, amount: v.nextIncome.amount };
+      const today0 = new Date(); today0.setHours(0, 0, 0, 0);
+      return {
+        solo: v.solo, shortNow: series[0].balance < 0,
+        firstDate: firstDay.date, lowDate: series[lowIdx].date, lowBalance: series[lowIdx].balance,
+        needed: roundCents(-series[lowIdx].balance),
+        daysUntilShort: calendarDaysBetween(today0, new Date(firstDay.date + 'T00:00:00')),
+        cash: v.cash, overdue, paychecks, paycheckTotal: roundCents(paychecks.reduce((n, p) => n + p.amount, 0)),
+        billsTotal, causes, overdueBills,
+        trigger: triggerEv ? { title: triggerEv.label, amount: Number(triggerEv.amount) || 0 } : null,
+        savingsAccounts, savingsTotal, nextPayAfter,
+        payAccount: defaultPaymentAccount()
+      };
+    }
+
+    // Dashboard banner / phone alert sentence -- same numbers as the window.
+    function maydayBannerText(md) {
+      if (!md) return '';
+      if (md.shortNow) {
+        return `Money Mayday: you're ${formatMoney(md.needed)} short today.`
+          + (md.overdue > 0 ? ` This includes ${formatMoney(md.overdue)} of overdue bills — already paid one? Mark it paid.` : '')
+          + ' Open Money Mayday to see why and your options.';
+      }
+      const amountLine = md.firstDate === md.lowDate
+        ? `${formatMoney(md.needed)} short on ${friendlyDate(md.lowDate)}.`
+        : `below $0 on ${friendlyDate(md.firstDate)}, reaching ${formatMoney(md.needed)} short on ${friendlyDate(md.lowDate)}.`;
+      const after = md.paycheckTotal > 0 ? ` That already counts ${md.paychecks.length === 1 ? `your ${friendlyDate(md.paychecks[0].date)} paycheck` : `${md.paychecks.length} paychecks`}.` : '';
+      const cause = md.trigger ? ` ${md.trigger.title} ($${formatCurrency(md.trigger.amount)}) is what pushes you below $0.` : '';
+      return `Money Mayday: ${amountLine}${after}${cause} Open Money Mayday to see your options.`;
+    }
+
     function openDeficitNavigatorModal() {
       const backdrop = document.getElementById('modal-backdrop');
       const modal = document.getElementById('modal-deficit');
       const content = document.getElementById('deficit-modal-content');
 
       const viewData = getActiveViewData();
-      const cash = viewData.cash;
-      const upcoming = viewData.upcomingBills;
-      const totalBills = viewData.upcomingTotal;
-      const shortfall = Math.max(0, Math.abs(Math.min(0, viewData.safeSpend)));
+      const md = buildMaydayAnalysis(viewData);
+      const viewLabel = inHouseholdMode() ? ` — ${viewData.solo ? 'Solo View' : 'Household View'}` : '';
 
-      const mustPay = upcoming.filter(b => b.priority === 'critical');
-      const canDelay = upcoming.filter(b => b.priority !== 'critical');
-      const mustPayTotal = mustPay.reduce((sum, b) => sum + (Number(b.amount) || 0), 0);
-      const projectedOutcome = roundCents(cash - mustPayTotal);
-
-      // Largest contributing bills — ranked by amount across everything
-      // due, not just the must-pay split, so the biggest single driver of
-      // the shortfall is immediately visible.
-      const largestBills = upcoming.slice().sort((a, b) => (Number(b.amount) || 0) - (Number(a.amount) || 0)).slice(0, 3);
-
-      if (content) {
+      if (content && !md) {
+        const low = Math.min(...(viewData.windowSeries || [{ balance: viewData.cash }]).map(d => d.balance));
+        content.innerHTML = `
+          <div class="p-4 bg-brand-500/10 border border-brand-500/30 rounded-2xl space-y-2">
+            <h4 class="font-bold text-brand-300 text-sm">No shortfall projected${escapeHtml(viewLabel)}</h4>
+            <p class="text-slate-300">Your lowest projected balance before your next paycheck is <strong class="text-white">${formatMoney(low)}</strong>. This assumes your balances are current and your paycheck arrives on time.</p>
+          </div>`;
+      } else if (content) {
+        const pay = md.payAccount;
+        const walk = [
+          ['Checking & cash today', formatMoney(md.cash), 'text-white'],
+          md.overdue > 0 ? ['− Overdue bills', `-$${formatCurrency(md.overdue)}`, 'text-rose-300'] : null,
+          md.paycheckTotal > 0 ? [`+ Paychecks before then (${md.paychecks.map(p => friendlyDate(p.date)).join(', ')})`, `+$${formatCurrency(md.paycheckTotal)}`, 'text-brand-300'] : null,
+          md.billsTotal > 0 ? ['− Bills before then', `-$${formatCurrency(md.billsTotal)}`, 'text-rose-300'] : null
+        ].filter(Boolean);
+        const days = md.daysUntilShort;
+        const causeRows = md.causes.slice(0, 6).map(c => {
+          const due = c.overdue > 0
+            ? `Overdue $${formatCurrency(c.overdue)}${c.dates.length ? ` · then due ${c.dates.map(friendlyDate).join(', ')}` : ''}`
+            : `Due ${c.dates.map(friendlyDate).join(', ')}`;
+          const isTrigger = c.dates.includes(md.firstDate) && !md.shortNow;
+          return `
+            <div class="p-3 bg-slate-900/80 rounded-xl border ${isTrigger ? 'border-rose-500/50' : 'border-slate-800'} space-y-2" data-mayday-bill="${escapeHtml(String(c.billId || ''))}">
+              <div class="flex justify-between items-start gap-2">
+                <div>
+                  <strong class="text-white">${escapeHtml(c.title)}</strong>
+                  ${c.priority === 'critical' ? '<span class="ml-1 text-[9px] font-bold px-1.5 py-0.5 rounded bg-rose-500/15 text-rose-300">MUST PAY</span>' : ''}
+                  <span class="block text-slate-400">${escapeHtml(due)}${isTrigger ? ' · <span class="text-rose-300">this is the day you go below $0</span>' : ''}</span>
+                </div>
+                <span class="font-bold text-rose-400 shrink-0">$${formatCurrency(c.total + c.overdue)}</span>
+              </div>
+              ${c.billId ? `<div class="mayday-paid-actions"><button type="button" onclick="maydayShowPaidChoice(this, ${jsArg(c.billId)})" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-[11px] font-semibold">Already paid?</button></div>` : ''}
+            </div>`;
+        }).join('');
+        const more = md.causes.length > 6 ? `<p class="text-slate-500">+ ${md.causes.length - 6} more</p>` : '';
+        const savingsLine = md.savingsTotal > 0
+          ? (md.savingsTotal >= md.needed
+            ? `<strong class="text-white">Savings: ${formatMoney(md.savingsTotal)}</strong> (not counted in Safe Spend). Moving <strong class="text-white">${formatMoney(md.needed)}</strong> to ${escapeHtml(pay ? pay.name : 'checking')} before ${escapeHtml(friendlyDate(md.firstDate))} covers this. Then update both balances here.`
+            : `<strong class="text-white">Savings: ${formatMoney(md.savingsTotal)}</strong> (not counted in Safe Spend). Moving all of it covers ${formatMoney(md.savingsTotal)} of the ${formatMoney(md.needed)}.`)
+          : '';
+        const callTarget = md.causes.find(c => c.dates.includes(md.firstDate)) || md.causes[0];
+        const callLine = callTarget
+          ? `<strong class="text-white">Call ${escapeHtml(callTarget.title)}${md.shortNow ? ' today' : ` before ${escapeHtml(friendlyDate(md.firstDate))}`}.</strong> Ask for ${md.nextPayAfter ? `a date after your ${escapeHtml(friendlyDate(md.nextPayAfter.date))} paycheck` : 'more time'}, or a partial payment. Only if they agree, change the bill's due date here.`
+          : '';
+        const options = [
+          md.causes.some(c => c.billId) ? `<strong class="text-white">Already paid something on this list?</strong> Tap “Already paid?” next to it — the forecast updates immediately.` : null,
+          savingsLine || null,
+          callLine || null,
+          `<strong class="text-white">Need help?</strong> Call 2-1-1 or visit 211.org for local rent, utility and food assistance.`
+        ].filter(Boolean);
+        const stillShort = md.savingsTotal < md.needed;
         content.innerHTML = `
           <div class="p-4 bg-rose-950/40 border border-rose-500/40 rounded-2xl space-y-2">
-            <h4 class="font-bold text-rose-300 text-sm">Projected Shortfall${inHouseholdMode() ? ` — ${viewData.solo ? 'Solo View' : 'Household View'}` : ''}</h4>
-            <p>What you have: <strong class="text-white">${formatMoney(cash)}</strong></p>
-            <p>What's coming due: <strong class="text-rose-400">$${formatCurrency(totalBills)}</strong></p>
-            <p class="text-sm font-bold text-rose-400 pt-1 border-t border-rose-800/60">Gap to close: $${formatCurrency(shortfall)}</p>
-            ${viewData.mayday.date ? `<p class="text-[11px] text-rose-300">Earliest projected deficit: <strong>${escapeHtml(friendlyDate(viewData.mayday.date))}</strong></p>` : ''}
+            <h4 class="font-bold text-rose-300 text-sm">${md.shortNow ? `You're ${formatMoney(md.needed)} short today` : `${formatMoney(md.needed)} short on ${escapeHtml(friendlyDate(md.lowDate))}`}${escapeHtml(viewLabel)}</h4>
+            ${!md.shortNow && md.firstDate !== md.lowDate ? `<p class="text-[11px] text-rose-200">First goes below $0 on ${escapeHtml(friendlyDate(md.firstDate))}.</p>` : ''}
+            <div class="space-y-1 pt-1">
+              ${walk.map(([l, a, c]) => `<div class="flex justify-between gap-2"><span class="text-slate-300">${escapeHtml(l)}</span><span class="${c} font-semibold shrink-0">${a}</span></div>`).join('')}
+              <div class="flex justify-between gap-2 pt-1 border-t border-rose-800/60"><span class="text-rose-200 font-bold">= Projected on ${escapeHtml(friendlyDate(md.lowDate))}</span><span class="text-rose-400 font-black shrink-0">${formatMoney(md.lowBalance)}</span></div>
+            </div>
+            <p class="text-[11px] text-slate-400 pt-1">This is a projection from the balances and bills you've entered — nothing has bounced${days > 0 ? `, and you have ${days} day${days === 1 ? '' : 's'}` : ''}. It already assumes you spend nothing else before then: groceries, gas and other spending make the gap bigger.</p>
           </div>
 
           <div class="space-y-2">
-            <h4 class="font-bold text-white text-xs uppercase tracking-wider">Largest Contributing Bills</h4>
-            <p class="text-slate-400">The biggest drivers of the shortfall, in order.</p>
-            <div class="space-y-2 pt-2">
-              ${largestBills.length ? largestBills.map(b => `
-                <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800 flex justify-between items-center">
-                  <div>
-                    <strong class="text-white flex items-center gap-1.5 flex-wrap">${escapeHtml(b.title)} ${scopeBadgeHtml(b)}</strong>
-                    <span class="text-slate-400">Due: ${escapeHtml(friendlyDate(b.dueDate))}</span>
-                  </div>
-                  <span class="font-bold text-rose-400">$${formatCurrency(b.amount)}</span>
-                </div>
-              `).join('') : `<p class="text-slate-500 italic">Nothing due right now.</p>`}
-            </div>
+            <h4 class="font-bold text-white text-xs uppercase tracking-wider">What pushes you below zero</h4>
+            <div class="space-y-2">${causeRows}${more}</div>
           </div>
 
           <div class="space-y-2">
-            <h4 class="font-bold text-white text-xs uppercase tracking-wider">Bills You Must Pay</h4>
-            <p class="text-slate-400">These are due no matter what — rent, insurance, and anything else critical.</p>
-            <div class="space-y-2 pt-2">
-              ${mustPay.length ? mustPay.map(b => `
-                <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800 flex justify-between items-center">
-                  <div>
-                    <strong class="text-white flex items-center gap-1.5 flex-wrap">${escapeHtml(b.title)} ${scopeBadgeHtml(b)}</strong>
-                    <span class="text-slate-400">Due: ${escapeHtml(friendlyDate(b.dueDate))}</span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <span class="font-bold text-rose-400">$${formatCurrency(b.amount)}</span>
-                    <span class="text-[10px] text-rose-400 font-bold px-2 py-1 bg-rose-500/10 rounded-lg">Must Pay</span>
-                  </div>
-                </div>
-              `).join('') : `<p class="text-slate-500 italic">Nothing marked critical right now.</p>`}
-            </div>
+            <h4 class="font-bold text-white text-xs uppercase tracking-wider">Your options</h4>
+            ${options.map(o => `<p class="p-3 bg-slate-900/80 rounded-xl border border-slate-800 text-slate-300">${o}</p>`).join('')}
           </div>
 
-          <div class="space-y-2">
-            <h4 class="font-bold text-white text-xs uppercase tracking-wider">Recovery Opportunities</h4>
-            <p class="text-slate-400">Pushing these back a week frees up cash for what can't wait.</p>
-            <div class="space-y-2 pt-2">
-              ${canDelay.length ? canDelay.map(b => `
-                <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800 flex justify-between items-center">
-                  <div>
-                    <strong class="text-white flex items-center gap-1.5 flex-wrap">${escapeHtml(b.title)} ${scopeBadgeHtml(b)}</strong>
-                    <span class="text-slate-400">Priority: <span class="capitalize text-amber-400">${escapeHtml(b.priority)}</span> • Due: ${escapeHtml(friendlyDate(b.dueDate))}</span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <span class="font-bold text-rose-400">$${formatCurrency(b.amount)}</span>
-                    <button onclick="postponeBill(${jsArg(b.id)})" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-brand-400 rounded-lg text-[10px] font-bold">Defer +7 Days</button>
-                  </div>
-                </div>
-              `).join('') : `<p class="text-slate-500 italic">Nothing flexible to delay right now.</p>`}
-            </div>
-          </div>
-
-          <div class="p-4 rounded-2xl border ${projectedOutcome >= 0 ? 'bg-brand-500/10 border-brand-500/30' : 'bg-amber-500/10 border-amber-500/30'} space-y-1.5">
-            <h4 class="font-bold text-xs uppercase tracking-wider ${projectedOutcome >= 0 ? 'text-brand-300' : 'text-amber-300'}">Positive Outcome After Action</h4>
-            ${projectedOutcome >= 0
-              ? `<p class="text-slate-200">Defer what you can above, and you're covered — you'd have <strong class="text-brand-400">$${formatCurrency(projectedOutcome)}</strong> left after your must-pay bills.</p>`
-              : `<p class="text-slate-200">Even after deferring everything you can, you'd still be <strong class="text-amber-400">$${formatCurrency(Math.abs(projectedOutcome))}</strong> short on must-pay bills. Consider extra income, moving funds from savings, or reaching out to a biller for an extension.</p>`
-            }
-          </div>
+          ${stillShort ? `
+          <div class="p-4 rounded-2xl border bg-amber-500/10 border-amber-500/30 space-y-1.5">
+            <h4 class="font-bold text-xs uppercase tracking-wider text-amber-300">If nothing closes the gap</h4>
+            <p class="text-slate-200">Pay housing, utilities, childcare and transportation first — they protect everything else. Contact billers before the due date; many offer arrangements they won't offer after.</p>
+          </div>` : ''}
         `;
       }
 
@@ -14395,6 +14476,29 @@
         backdrop.classList.remove('hidden');
         modal.classList.remove('hidden');
       }
+    }
+
+    // "Already paid?" -- two honest answers, like the missed-payday prompt:
+    // take it out of the account now, or the balance already reflects it
+    // (so it isn't subtracted twice).
+    function maydayShowPaidChoice(btn, billId) {
+      const bill = state.bills.find(b => b.id === billId);
+      const wrap = btn && btn.closest('.mayday-paid-actions');
+      if (!bill || !wrap) return;
+      const acct = defaultPaymentAccount();
+      wrap.innerHTML = `
+        <p class="text-[11px] text-slate-400 mb-1.5">Paid the ${escapeHtml(friendlyDate(bill.dueDate))} payment of $${formatCurrency(bill.amount)}?</p>
+        <div class="flex flex-wrap gap-2">
+          ${acct ? `<button type="button" onclick="maydayMarkPaid(${jsArg(billId)}, false)" class="px-2.5 py-1.5 bg-brand-500/15 hover:bg-brand-500 hover:text-slate-950 text-brand-300 rounded-lg text-[11px] font-semibold">Yes — take it out of ${escapeHtml(acct.name)}</button>` : ''}
+          <button type="button" onclick="maydayMarkPaid(${jsArg(billId)}, true)" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-[11px] font-semibold">Yes — my balance already shows it</button>
+        </div>`;
+    }
+    function maydayMarkPaid(billId, alreadyInBalance) {
+      completeBill(billId, { alreadyInBalance: !!alreadyInBalance });
+      setTimeout(() => {
+        const modal = document.getElementById('modal-deficit');
+        if (modal && !modal.classList.contains('hidden')) openDeficitNavigatorModal();
+      }, 400);
     }
 
     function postponeBill(id) {
@@ -14526,9 +14630,11 @@
       const upcoming = getUpcomingBills();
       const cash = getSpendableCash();
       const totalUpcoming = getUpcomingBillsTotal();
-      const reserveNow = computeSafeSpendReserve(visibleBills(), state.income.nextDate || null, Number(state.income.amount) || 0);
-      const safeSpendNow = roundCents(cash - reserveNow);
-      const moneyMaydayNeeded = reserveNow > cash;
+      // Same Safe Spend and Money Mayday as the Dashboard -- one formula.
+      const briefView = getActiveViewData();
+      const safeSpendNow = briefView.safeSpend;
+      const moneyMaydayNeeded = briefView.mayday.active;
+      const afterList = roundCents(cash - totalUpcoming);
 
       content.innerHTML = `
         <div class="p-4 bg-brand-500/10 border border-brand-500/30 rounded-2xl space-y-1">
@@ -14564,14 +14670,14 @@
           </div>
           <div class="p-3 bg-slate-900/80 rounded-xl border border-slate-800">
             <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Once This List Is Paid</p>
-            <p class="text-base font-black text-brand-400">${formatMoney(cash)}</p>
+            <p class="text-base font-black ${afterList < 0 ? 'text-rose-400' : 'text-brand-400'}">${formatMoney(afterList)}</p>
           </div>
         </div>
 
         ${moneyMaydayNeeded ? `
           <div class="p-4 bg-rose-950/40 border border-rose-500/40 rounded-2xl space-y-2">
             <h4 class="font-bold text-rose-300 text-sm flex items-center gap-1.5"><span>🚨</span> Money Mayday</h4>
-            <p class="text-slate-300">Not all obligations can be completed with what you have right now. Recovery plan available.</p>
+            <p class="text-slate-300">${escapeHtml(maydayBannerText(buildMaydayAnalysis(briefView)))}</p>
             <button onclick="closeModals(); openDeficitNavigatorModal();" class="w-full py-2 bg-rose-500 hover:bg-rose-600 text-slate-950 font-bold rounded-xl text-xs transition-all">Open Money Mayday</button>
           </div>
         ` : ''}
