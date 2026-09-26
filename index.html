@@ -10280,17 +10280,18 @@
             // from the top), which read as flying backwards. Geometric zoom
             // keeps the approach speed even.
             const e = descentE;
-            const u = 900 / img.naturalWidth, v = 575 / img.naturalHeight;
-            const sx = drawX + u * drawW, sy = drawY + v * drawH;       // city at 12 days
+            // Fly straight at the payday city on the horizon -- the spot
+            // the far-off beacon marks at 12 days. It holds its place ahead
+            // of the aircraft and grows while the ground spreads out below.
+            const ax = destX, ay = curveApexY + 1;
+            const u = (ax - drawX) / drawW, v = (ay - drawY) / drawH;
             const rW = drawW * Math.pow(tW / drawW, e), rH = rW / imgAspect;
-            const ax = sx + (destX - sx) * e * 0.35;                     // stays ahead, eases toward destination side
-            const ay = sy + (H * 0.56 - sy) * e * 0.35;                  // never climbs toward the horizon
             let rX = ax - u * rW, rY = ay - v * rH;
             // Keep the glass covered (blended in, so the 12-day view is unchanged).
             const cX = Math.min(visL - m, Math.max(visR + m - rW, rX)), cY = Math.min(-m, Math.max(H + m - rH, rY));
             rX += (cX - rX) * e; rY += (cY - rY) * e;
             ctx.drawImage(img, rX, rY, rW, rH);
-            descentCity = { x: rX + (900 / img.naturalWidth) * rW, y: rY + (575 / img.naturalHeight) * rH, visL, visR };
+            descentCity = { x: rX + u * rW, y: rY + v * rH, visL, visR };
             ctx.restore();
             return;
           }
@@ -10310,7 +10311,7 @@
           // Coast -> harbor (8 -> 5 days) hands over between 7 and 6 days,
           // so whole-day views are never a double exposure of two photos.
           const handT = (upperKf.day === 8 && lowerKf.day === 5)
-            ? (u => u * u * (3 - 2 * u))(Math.max(0, Math.min(1, (blendT - 0.4) / 0.2)))
+            ? (u => u * u * (3 - 2 * u))(Math.max(0, Math.min(1, (blendT - 1 / 3) / (1 / 3))))
             : blendT;
           if (handT < 0.999 && upperPlate && upperPlate.loaded) drawContinuousEarthPlate(upperPlate, 1.0 - handT);
           if (handT > 0.001 && lowerPlate && lowerPlate.loaded) drawContinuousEarthPlate(lowerPlate, handT);
@@ -10352,15 +10353,9 @@
 
         let emberX = destX + turbX * 0.2;
         let emberY = curveApexY + 1;
-        // Descending: the destination beacon leaves the horizon and follows
-        // the coastal city down, kept inside the visible glass, so the
-        // destination stays marked on every day of the descent.
-        if (descentCity && descentE > 0) {
-          const cx = Math.max(descentCity.visL + 40, Math.min(descentCity.visR - 40, descentCity.x));
-          const cy = Math.max(emberY, Math.min(H * 0.8, descentCity.y));
-          emberX += (cx - emberX) * descentE;
-          emberY += (cy - emberY) * descentE;
-        }
+        // The far-off beacon stays put on the horizon and fades as the
+        // descent begins; from there the camera flies at the city itself
+        // (no beacon sliding across the glass).
 
         // Weather-induced visibility factor
         let weatherVisibility = 1.0;
@@ -10372,9 +10367,7 @@
           // Limb arc and horizon flare belong to the orbital view; they fade
           // as the descent looks down onto the coast. The beacon itself stays.
           const horizonA = Math.max(0, 1 - descentE * 2);
-          // Beacon rides the coastal city while it's on the glass; once the
-          // harbor has taken over (6 days) it fades as before.
-          const beaconA = descentCity ? 1 : horizonA;
+          const beaconA = horizonA;
           ctx.globalAlpha = horizonA;
           // High Altitude Stratospheric Rayleigh Ozone Crescent (curves with Earth's limb)
           // Naturally thins and recedes as altitude decreases toward regional descent
