@@ -14035,144 +14035,180 @@
     const GROCERY_BASE_SERVINGS = 4;
     const GROCERY_KID_PORTION = 0.6;
     const GROCERY_SESSION_START = new Date().toISOString();
-    // Each meal: name | cost tier | main protein | tags | ingredients for 4
-    // ("qty unit name/aisle"; a pantry staple with no amount is "name/S").
+    // Each meal: name | cost tier | main protein | tags | ingredients for 4 |
+    // dish family ("qty unit name/aisle"; a pantry staple with no amount is
+    // "name/S"). The id comes from the name, so a meal is never renamed or
+    // deleted -- saved recipes, cooking history and past runs point at it.
     // Tags: kid, veg (meatless), stretch (stretch to payday), classic (family
-    // classic), and cooking time -- quick (30 minutes or less), long (1-2
-    // hours), slow (slow cooker / all day); no time tag means 30-60 minutes.
+    // classic), mex (Mexican inspired), and cooking time -- quick (30 minutes
+    // or less), long (1-2 hours), slow (slow cooker / all day); no time tag
+    // means 30-60 minutes. "retired" keeps a meal for saved recipes, history
+    // and past runs but leaves it out of new suggestions and browsing.
+    // Dish family: suggestions use at most one meal per family each week.
     const GROCERY_MEAL_DATA = [
-      ['Chicken tacos', 'low', 'chicken', 'kid quick', '1.5 lb chicken thighs/M; 1 pkg flour tortillas/B; 1 head lettuce/P; 2 ct tomatoes/P; 1 bag shredded cheese/D; 1 jar salsa/A; taco seasoning/S'],
-      ['Sheet-pan chicken and potatoes', 'low', 'chicken', 'kid', '2 lb chicken thighs/M; 2 lb potatoes/P; 1 bag baby carrots/P; olive oil/S; garlic powder/S'],
-      ['Chicken fried rice', 'low', 'chicken', 'quick stretch', '1 lb chicken thighs/M; 0.5 bag rice/A; 1 bag frozen peas and carrots/F; 0.5 dozen eggs/D; 1 bottle soy sauce/A; vegetable oil/S'],
-      ['Chicken Alfredo', 'med', 'chicken', 'kid', '1.5 lb chicken breast/M; 1 box fettuccine/A; 1 jar Alfredo sauce/A; 1 head broccoli/P'],
-      ['BBQ chicken sandwiches', 'low', 'chicken', 'kid quick', '1.5 lb chicken breast/M; 1 bottle BBQ sauce/A; 1 pkg hamburger buns/B; 1 bag coleslaw mix/P'],
-      ['Chicken noodle soup', 'low', 'chicken', 'kid classic stretch', '1 lb chicken breast/M; 1 bag egg noodles/A; 2 carton chicken broth/A; 1 bag baby carrots/P; 1 bunch celery/P; 1 ct onion/P'],
-      ['Chicken stir-fry', 'med', 'chicken', 'quick', '1.5 lb chicken breast/M; 1 bag frozen stir-fry vegetables/F; 0.5 bag rice/A; 1 bottle teriyaki sauce/A'],
-      ['Chicken quesadillas', 'low', 'chicken', 'kid quick', '1 lb chicken breast/M; 1 pkg flour tortillas/B; 1 bag shredded cheese/D; 1 jar salsa/A; 1 tub sour cream/D'],
-      ['Chicken enchiladas', 'med', 'chicken', 'kid', '1.5 lb chicken breast/M; 1 pkg flour tortillas/B; 2 can enchilada sauce/C; 1 bag shredded cheese/D; 1 can black beans/C'],
-      ['Honey garlic drumsticks', 'low', 'chicken', 'kid', '3 lb chicken drumsticks/M; 0.5 bag rice/A; 1 bag frozen green beans/F; 1 bottle honey/A; garlic powder/S'],
-      ['Chicken Caesar wraps', 'med', 'chicken', 'quick', '1 lb chicken breast/M; 1 pkg flour tortillas/B; 1 head romaine lettuce/P; 1 bottle Caesar dressing/A; 1 bag shredded parmesan/D'],
-      ['Chicken pot pie', 'med', 'chicken', 'kid classic long', '1 lb chicken breast/M; 1 bag frozen mixed vegetables/F; 1 can cream of chicken soup/C; 1 pkg refrigerated pie crust/D'],
-      ['Spaghetti and meat sauce', 'low', 'beef', 'kid classic stretch', '1 lb ground beef/M; 1 box spaghetti/A; 1 jar pasta sauce/A; 1 ct frozen garlic bread/F'],
-      ['Cheeseburgers and fries', 'med', 'beef', 'kid quick classic', '1.5 lb ground beef/M; 1 pkg hamburger buns/B; 1 pkg sliced cheese/D; 1 head lettuce/P; 2 ct tomatoes/P; 1 bag frozen fries/F'],
-      ['Beef tacos', 'low', 'beef', 'kid quick classic', '1 lb ground beef/M; 1 box taco shells/A; 1 head lettuce/P; 1 bag shredded cheese/D; 1 jar salsa/A; taco seasoning/S'],
-      ['Beef chili', 'low', 'beef', 'stretch classic', '1 lb ground beef/M; 2 can kidney beans/C; 2 can diced tomatoes/C; 1 ct onion/P; chili powder/S'],
-      ['Beef and broccoli', 'med', 'beef', 'quick', '1.5 lb flank steak/M; 2 head broccoli/P; 0.5 bag rice/A; 1 bottle soy sauce/A'],
-      ['Sloppy joes', 'low', 'beef', 'kid quick classic', '1 lb ground beef/M; 1 can sloppy joe sauce/C; 1 pkg hamburger buns/B; 1 bag baby carrots/P'],
-      ["Shepherd's pie", 'med', 'beef', 'kid classic long', '1.5 lb ground beef/M; 3 lb potatoes/P; 1 bag frozen peas and carrots/F; 1 pkg butter/D; 1 carton milk/D'],
-      ['Pot roast', 'high', 'beef', 'slow classic', '3 lb chuck roast/M; 2 lb potatoes/P; 1 bag baby carrots/P; 1 ct onion/P; 1 carton beef broth/A'],
-      ['Steak and baked potatoes', 'high', 'beef', '', '2 lb sirloin steak/M; 2 lb potatoes/P; 1 bag salad mix/P; 1 tub sour cream/D'],
-      ['Beef stroganoff', 'med', 'beef', 'kid classic', '1 lb ground beef/M; 1 bag egg noodles/A; 1 pkg mushrooms/P; 1 tub sour cream/D; 1 carton beef broth/A'],
-      ['Meatloaf and green beans', 'med', 'beef', 'kid long classic', '2 lb ground beef/M; 0.5 dozen eggs/D; 1 ct breadcrumbs/A; 1 bottle ketchup/A; 2 lb potatoes/P; 1 bag frozen green beans/F'],
-      ['Baked ziti', 'low', 'beef', 'kid classic', '1 lb ground beef/M; 1 box ziti/A; 1 jar pasta sauce/A; 1 tub ricotta/D; 1 bag shredded mozzarella/D'],
-      ['Pork chops and applesauce', 'med', 'pork', 'kid classic', '2 lb pork chops/M; 1 jar applesauce/A; 2 lb potatoes/P; 1 bag frozen green beans/F'],
-      ['Pulled pork sandwiches', 'med', 'pork', 'kid slow', '3 lb pork shoulder/M; 1 bottle BBQ sauce/A; 1 pkg hamburger buns/B; 1 bag coleslaw mix/P'],
-      ['Sausage and peppers', 'low', 'pork', 'quick', '1.5 lb Italian sausage/M; 3 ct bell peppers/P; 1 ct onion/P; 1 pkg hoagie rolls/B'],
-      ['Pancakes and bacon', 'low', 'pork', 'kid quick stretch', '1 box pancake mix/A; 1 pkg bacon/M; 1 dozen eggs/D; 1 bottle syrup/A'],
-      ['Ham and cheese sliders', 'low', 'pork', 'kid quick', '1 lb deli ham/M; 1 pkg slider rolls/B; 1 pkg sliced cheese/D; 1 bag baby carrots/P'],
-      ['Pork carnitas bowls', 'med', 'pork', 'slow', '2 lb pork shoulder/M; 0.5 bag rice/A; 1 can black beans/C; 1 jar salsa/A; 3 ct limes/P'],
-      ['Sausage and white bean soup', 'low', 'pork', 'stretch', '1 lb smoked sausage/M; 2 can white beans/C; 1 carton chicken broth/A; 1 bag spinach/P; 1 ct onion/P'],
-      ['Teriyaki pork tenderloin', 'high', 'pork', '', '2 lb pork tenderloin/M; 1 bottle teriyaki sauce/A; 0.5 bag rice/A; 2 head broccoli/P'],
-      ['Turkey chili', 'low', 'turkey', 'stretch', '1 lb ground turkey/M; 2 can kidney beans/C; 2 can diced tomatoes/C; 1 ct onion/P; chili powder/S'],
-      ['Turkey burgers', 'med', 'turkey', 'quick', '1.5 lb ground turkey/M; 1 pkg hamburger buns/B; 1 head lettuce/P; 2 ct tomatoes/P; 1 bag frozen sweet potato fries/F'],
-      ['Turkey meatballs and pasta', 'med', 'turkey', 'kid', '1 lb ground turkey/M; 0.5 dozen eggs/D; 1 ct breadcrumbs/A; 1 box spaghetti/A; 1 jar pasta sauce/A'],
-      ['Turkey taco lettuce wraps', 'med', 'turkey', 'quick', '1 lb ground turkey/M; 1 head romaine lettuce/P; 1 jar salsa/A; 1 bag shredded cheese/D; taco seasoning/S'],
-      ['Fish tacos', 'med', 'fish', 'quick', '1 box frozen breaded fish/F; 1 pkg flour tortillas/B; 1 bag coleslaw mix/P; 3 ct limes/P; 1 tub sour cream/D'],
-      ['Baked salmon and rice', 'high', 'fish', '', '1.5 lb salmon/M; 0.5 bag rice/A; 1 bunch asparagus/P; 2 ct lemons/P'],
-      ['Tuna noodle casserole', 'low', 'fish', 'kid classic stretch', '3 can tuna/C; 1 bag egg noodles/A; 1 can cream of mushroom soup/C; 1 bag frozen peas/F; 1 bag shredded cheese/D'],
-      ['Fish sticks and mac and cheese', 'low', 'fish', 'kid quick', '1 box frozen fish sticks/F; 2 box mac and cheese/A; 1 bag frozen broccoli/F'],
-      ['Lemon tilapia and green beans', 'med', 'fish', 'quick', '1 bag frozen tilapia/F; 2 ct lemons/P; 1 bag frozen green beans/F; 0.5 bag rice/A'],
-      ['Shrimp stir-fry', 'high', 'shrimp', 'quick', '1 bag frozen shrimp/F; 1 bag frozen stir-fry vegetables/F; 0.5 bag rice/A; 1 bottle soy sauce/A'],
-      ['Shrimp scampi', 'high', 'shrimp', 'quick', '1 bag frozen shrimp/F; 1 box linguine/A; 1 pkg butter/D; 2 ct lemons/P; 1 head garlic/P'],
-      ['Shrimp tacos', 'high', 'shrimp', 'quick', '1 bag frozen shrimp/F; 1 pkg flour tortillas/B; 1 bag coleslaw mix/P; 3 ct limes/P'],
-      ['Veggie omelets and toast', 'low', 'eggs', 'quick veg', '1 dozen eggs/D; 2 ct bell peppers/P; 1 bag spinach/P; 1 bag shredded cheese/D; 1 loaf bread/B'],
-      ['Breakfast burritos', 'low', 'eggs', 'kid quick veg stretch', '1 dozen eggs/D; 1 pkg flour tortillas/B; 1 bag frozen hash browns/F; 1 bag shredded cheese/D; 1 jar salsa/A'],
-      ['Egg fried rice', 'low', 'eggs', 'quick veg stretch', '1 dozen eggs/D; 0.5 bag rice/A; 1 bag frozen peas and carrots/F; 1 bottle soy sauce/A; vegetable oil/S'],
-      ['Spinach quiche and salad', 'med', 'eggs', 'veg long', '1 dozen eggs/D; 1 pkg refrigerated pie crust/D; 1 bag shredded cheese/D; 1 bag spinach/P; 1 bag salad mix/P'],
-      ['Black bean quesadillas', 'low', 'beans', 'kid quick veg stretch', '2 can black beans/C; 1 pkg flour tortillas/B; 1 bag shredded cheese/D; 1 jar salsa/A'],
-      ['Vegetarian chili', 'low', 'beans', 'veg stretch', '2 can kidney beans/C; 1 can black beans/C; 2 can diced tomatoes/C; 1 ct onion/P; 2 ct bell peppers/P; chili powder/S'],
-      ['Bean and rice burritos', 'low', 'beans', 'veg stretch', '2 can pinto beans/C; 0.5 bag rice/A; 1 pkg flour tortillas/B; 1 bag shredded cheese/D; 1 jar salsa/A'],
-      ['Pasta primavera', 'med', 'beans', 'quick veg', '1 box penne/A; 2 ct zucchini/P; 2 ct bell peppers/P; 1 pint cherry tomatoes/P; 1 bag shredded parmesan/D; olive oil/S'],
-      ['Homemade cheese pizza', 'low', 'beans', 'kid veg', '2 ct pizza crusts/B; 1 jar pizza sauce/A; 1 bag shredded mozzarella/D; 1 bag salad mix/P'],
-      ['Grilled cheese and tomato soup', 'low', 'beans', 'kid quick veg classic stretch', '1 loaf bread/B; 1 pkg sliced cheese/D; 2 can tomato soup/C; 1 pkg butter/D'],
-      ['Lentil soup', 'low', 'beans', 'veg stretch', '1 bag lentils/A; 1 bag baby carrots/P; 1 bunch celery/P; 1 ct onion/P; 2 carton vegetable broth/A'],
-      ['Chickpea curry', 'low', 'beans', 'veg stretch', '2 can chickpeas/C; 1 can coconut milk/C; 1 can diced tomatoes/C; 0.5 bag rice/A; curry powder/S'],
-      ['Tofu veggie stir-fry', 'med', 'beans', 'quick veg', '2 pkg firm tofu/P; 1 bag frozen stir-fry vegetables/F; 0.5 bag rice/A; 1 bottle soy sauce/A'],
-      ['Baked mac and cheese', 'low', 'beans', 'kid veg classic stretch', '2 box elbow macaroni/A; 2 bag shredded cheese/D; 1 carton milk/D; 1 pkg butter/D; 1 bag frozen broccoli/F'],
-      ['Loaded baked potatoes', 'low', 'beans', 'kid veg long stretch', '3 lb potatoes/P; 1 bag shredded cheese/D; 1 tub sour cream/D; 1 head broccoli/P'],
-      ['Minestrone', 'low', 'beans', 'veg stretch', '1 can white beans/C; 1 can kidney beans/C; 2 can diced tomatoes/C; 1 box small pasta/A; 2 ct zucchini/P; 1 bag baby carrots/P; 2 carton vegetable broth/A'],
-      ['Spinach stuffed shells', 'med', 'beans', 'veg', '1 box jumbo pasta shells/A; 1 tub ricotta/D; 1 bag spinach/P; 1 jar pasta sauce/A; 1 bag shredded mozzarella/D'],
+      ['Chicken tacos', 'low', 'chicken', 'kid quick mex', '1.5 lb chicken thighs/M; 1 pkg flour tortillas/B; 1 head lettuce/P; 2 ct tomatoes/P; 1 bag shredded cheese/D; 1 jar salsa/A; taco seasoning/S', 'taco'],
+      ['Sheet-pan chicken and potatoes', 'low', 'chicken', 'kid', '2 lb chicken thighs/M; 2 lb potatoes/P; 1 bag baby carrots/P; olive oil/S; garlic powder/S', 'sheetpan'],
+      ['Chicken fried rice', 'low', 'chicken', 'quick stretch', '1 lb chicken thighs/M; 0.5 bag rice/A; 1 bag frozen peas and carrots/F; 0.5 dozen eggs/D; 1 bottle soy sauce/A; vegetable oil/S', 'friedrice'],
+      ['Chicken Alfredo', 'med', 'chicken', 'kid', '1.5 lb chicken breast/M; 1 box fettuccine/A; 1 jar Alfredo sauce/A; 1 head broccoli/P', 'pasta'],
+      ['BBQ chicken sandwiches', 'low', 'chicken', 'kid quick', '1.5 lb chicken breast/M; 1 bottle BBQ sauce/A; 1 pkg hamburger buns/B; 1 bag coleslaw mix/P', 'sandwich'],
+      ['Chicken noodle soup', 'low', 'chicken', 'kid classic stretch', '1 lb chicken breast/M; 1 bag egg noodles/A; 2 carton chicken broth/A; 1 bag baby carrots/P; 1 bunch celery/P; 1 ct onion/P', 'soup'],
+      ['Chicken stir-fry', 'med', 'chicken', 'quick', '1.5 lb chicken breast/M; 1 bag frozen stir-fry vegetables/F; 0.5 bag rice/A; 1 bottle teriyaki sauce/A', 'stirfry'],
+      ['Chicken quesadillas', 'low', 'chicken', 'kid quick mex', '1 lb chicken breast/M; 1 pkg flour tortillas/B; 1 bag shredded cheese/D; 1 jar salsa/A; 1 tub sour cream/D', 'quesadilla'],
+      ['Chicken enchiladas', 'med', 'chicken', 'kid mex', '1.5 lb chicken breast/M; 1 pkg flour tortillas/B; 2 can enchilada sauce/C; 1 bag shredded cheese/D; 1 can black beans/C', 'enchilada'],
+      ['Honey garlic drumsticks', 'low', 'chicken', 'kid', '3 lb chicken drumsticks/M; 0.5 bag rice/A; 1 bag frozen green beans/F; 1 bottle honey/A; garlic powder/S', 'bakedchicken'],
+      ['Chicken Caesar wraps', 'med', 'chicken', 'quick', '1 lb chicken breast/M; 1 pkg flour tortillas/B; 1 head romaine lettuce/P; 1 bottle Caesar dressing/A; 1 bag shredded parmesan/D', 'sandwich'],
+      ['Chicken pot pie', 'med', 'chicken', 'kid classic long', '1 lb chicken breast/M; 1 bag frozen mixed vegetables/F; 1 can cream of chicken soup/C; 1 pkg refrigerated pie crust/D', 'potpie'],
+      ['Spaghetti and meat sauce', 'low', 'beef', 'kid classic stretch', '1 lb ground beef/M; 1 box spaghetti/A; 1 jar pasta sauce/A; 1 ct frozen garlic bread/F', 'pasta'],
+      ['Cheeseburgers and fries', 'med', 'beef', 'kid quick classic', '1.5 lb ground beef/M; 1 pkg hamburger buns/B; 1 pkg sliced cheese/D; 1 head lettuce/P; 2 ct tomatoes/P; 1 bag frozen fries/F', 'burger'],
+      ['Beef tacos', 'low', 'beef', 'kid quick classic mex', '1 lb ground beef/M; 1 box taco shells/A; 1 head lettuce/P; 1 bag shredded cheese/D; 1 jar salsa/A; taco seasoning/S', 'taco'],
+      ['Beef chili', 'low', 'beef', 'stretch classic', '1 lb ground beef/M; 2 can kidney beans/C; 2 can diced tomatoes/C; 1 ct onion/P; chili powder/S', 'chili'],
+      ['Beef and broccoli', 'med', 'beef', 'quick', '1.5 lb flank steak/M; 2 head broccoli/P; 0.5 bag rice/A; 1 bottle soy sauce/A', 'stirfry'],
+      ['Sloppy joes', 'low', 'beef', 'kid quick classic', '1 lb ground beef/M; 1 can sloppy joe sauce/C; 1 pkg hamburger buns/B; 1 bag baby carrots/P', 'sandwich'],
+      ["Shepherd's pie", 'med', 'beef', 'kid classic long', '1.5 lb ground beef/M; 3 lb potatoes/P; 1 bag frozen peas and carrots/F; 1 pkg butter/D; 1 carton milk/D', 'casserole'],
+      ['Pot roast', 'high', 'beef', 'slow classic', '3 lb chuck roast/M; 2 lb potatoes/P; 1 bag baby carrots/P; 1 ct onion/P; 1 carton beef broth/A', 'roast'],
+      ['Steak and baked potatoes', 'high', 'beef', '', '2 lb sirloin steak/M; 2 lb potatoes/P; 1 bag salad mix/P; 1 tub sour cream/D', 'steak'],
+      ['Beef stroganoff', 'med', 'beef', 'kid classic', '1 lb ground beef/M; 1 bag egg noodles/A; 1 pkg mushrooms/P; 1 tub sour cream/D; 1 carton beef broth/A', 'noodles'],
+      ['Meatloaf and green beans', 'med', 'beef', 'kid long classic', '2 lb ground beef/M; 0.5 dozen eggs/D; 1 ct breadcrumbs/A; 1 bottle ketchup/A; 2 lb potatoes/P; 1 bag frozen green beans/F', 'meatloaf'],
+      ['Baked ziti', 'low', 'beef', 'kid classic', '1 lb ground beef/M; 1 box ziti/A; 1 jar pasta sauce/A; 1 tub ricotta/D; 1 bag shredded mozzarella/D', 'pasta'],
+      ['Pork chops and applesauce', 'med', 'pork', 'kid classic', '2 lb pork chops/M; 1 jar applesauce/A; 2 lb potatoes/P; 1 bag frozen green beans/F', 'porkchop'],
+      ['Pulled pork sandwiches', 'med', 'pork', 'kid slow', '3 lb pork shoulder/M; 1 bottle BBQ sauce/A; 1 pkg hamburger buns/B; 1 bag coleslaw mix/P', 'sandwich'],
+      ['Sausage and peppers', 'low', 'pork', 'quick', '1.5 lb Italian sausage/M; 3 ct bell peppers/P; 1 ct onion/P; 1 pkg hoagie rolls/B', 'sausage'],
+      ['Pancakes and bacon', 'low', 'pork', 'kid quick stretch', '1 box pancake mix/A; 1 pkg bacon/M; 1 dozen eggs/D; 1 bottle syrup/A', 'breakfastfordinner'],
+      ['Ham and cheese sliders', 'low', 'pork', 'kid quick', '1 lb deli ham/M; 1 pkg slider rolls/B; 1 pkg sliced cheese/D; 1 bag baby carrots/P', 'sandwich'],
+      ['Pork carnitas bowls', 'med', 'pork', 'slow mex', '2 lb pork shoulder/M; 0.5 bag rice/A; 1 can black beans/C; 1 jar salsa/A; 3 ct limes/P', 'burrito'],
+      ['Sausage and white bean soup', 'low', 'pork', 'stretch', '1 lb smoked sausage/M; 2 can white beans/C; 1 carton chicken broth/A; 1 bag spinach/P; 1 ct onion/P', 'soup'],
+      ['Teriyaki pork tenderloin', 'high', 'pork', '', '2 lb pork tenderloin/M; 1 bottle teriyaki sauce/A; 0.5 bag rice/A; 2 head broccoli/P', 'roast'],
+      ['Turkey chili', 'low', 'turkey', 'stretch', '1 lb ground turkey/M; 2 can kidney beans/C; 2 can diced tomatoes/C; 1 ct onion/P; chili powder/S', 'chili'],
+      ['Turkey burgers', 'med', 'turkey', 'quick', '1.5 lb ground turkey/M; 1 pkg hamburger buns/B; 1 head lettuce/P; 2 ct tomatoes/P; 1 bag frozen sweet potato fries/F', 'burger'],
+      ['Turkey meatballs and pasta', 'med', 'turkey', 'kid', '1 lb ground turkey/M; 0.5 dozen eggs/D; 1 ct breadcrumbs/A; 1 box spaghetti/A; 1 jar pasta sauce/A', 'pasta'],
+      ['Turkey taco lettuce wraps', 'med', 'turkey', 'quick mex', '1 lb ground turkey/M; 1 head romaine lettuce/P; 1 jar salsa/A; 1 bag shredded cheese/D; taco seasoning/S', 'taco'],
+      ['Fish tacos', 'med', 'fish', 'quick mex', '1 box frozen breaded fish/F; 1 pkg flour tortillas/B; 1 bag coleslaw mix/P; 3 ct limes/P; 1 tub sour cream/D', 'taco'],
+      ['Baked salmon and rice', 'high', 'fish', '', '1.5 lb salmon/M; 0.5 bag rice/A; 1 bunch asparagus/P; 2 ct lemons/P', 'fishdinner'],
+      ['Tuna noodle casserole', 'low', 'fish', 'kid classic stretch', '3 can tuna/C; 1 bag egg noodles/A; 1 can cream of mushroom soup/C; 1 bag frozen peas/F; 1 bag shredded cheese/D', 'casserole'],
+      ['Fish sticks and mac and cheese', 'low', 'fish', 'kid quick', '1 box frozen fish sticks/F; 2 box mac and cheese/A; 1 bag frozen broccoli/F', 'fishdinner'],
+      ['Lemon tilapia and green beans', 'med', 'fish', 'quick', '1 bag frozen tilapia/F; 2 ct lemons/P; 1 bag frozen green beans/F; 0.5 bag rice/A', 'fishdinner'],
+      ['Shrimp stir-fry', 'high', 'shrimp', 'quick', '1 bag frozen shrimp/F; 1 bag frozen stir-fry vegetables/F; 0.5 bag rice/A; 1 bottle soy sauce/A', 'stirfry'],
+      ['Shrimp scampi', 'high', 'shrimp', 'quick', '1 bag frozen shrimp/F; 1 box linguine/A; 1 pkg butter/D; 2 ct lemons/P; 1 head garlic/P', 'pasta'],
+      ['Shrimp tacos', 'high', 'shrimp', 'quick mex', '1 bag frozen shrimp/F; 1 pkg flour tortillas/B; 1 bag coleslaw mix/P; 3 ct limes/P', 'taco'],
+      ['Veggie omelets and toast', 'low', 'eggs', 'quick veg', '1 dozen eggs/D; 2 ct bell peppers/P; 1 bag spinach/P; 1 bag shredded cheese/D; 1 loaf bread/B', 'breakfastfordinner'],
+      ['Breakfast burritos', 'low', 'eggs', 'kid quick veg stretch', '1 dozen eggs/D; 1 pkg flour tortillas/B; 1 bag frozen hash browns/F; 1 bag shredded cheese/D; 1 jar salsa/A', 'breakfastfordinner'],
+      ['Egg fried rice', 'low', 'eggs', 'quick veg stretch', '1 dozen eggs/D; 0.5 bag rice/A; 1 bag frozen peas and carrots/F; 1 bottle soy sauce/A; vegetable oil/S', 'friedrice'],
+      ['Spinach quiche and salad', 'med', 'eggs', 'veg long', '1 dozen eggs/D; 1 pkg refrigerated pie crust/D; 1 bag shredded cheese/D; 1 bag spinach/P; 1 bag salad mix/P', 'quiche'],
+      ['Black bean quesadillas', 'low', 'beans', 'kid quick veg stretch mex', '2 can black beans/C; 1 pkg flour tortillas/B; 1 bag shredded cheese/D; 1 jar salsa/A', 'quesadilla'],
+      ['Vegetarian chili', 'low', 'beans', 'veg stretch', '2 can kidney beans/C; 1 can black beans/C; 2 can diced tomatoes/C; 1 ct onion/P; 2 ct bell peppers/P; chili powder/S', 'chili'],
+      ['Bean and rice burritos', 'low', 'beans', 'veg stretch mex', '2 can pinto beans/C; 0.5 bag rice/A; 1 pkg flour tortillas/B; 1 bag shredded cheese/D; 1 jar salsa/A', 'burrito'],
+      ['Pasta primavera', 'med', 'beans', 'quick veg', '1 box penne/A; 2 ct zucchini/P; 2 ct bell peppers/P; 1 pint cherry tomatoes/P; 1 bag shredded parmesan/D; olive oil/S', 'pasta'],
+      ['Homemade cheese pizza', 'low', 'beans', 'kid veg', '2 ct pizza crusts/B; 1 jar pizza sauce/A; 1 bag shredded mozzarella/D; 1 bag salad mix/P', 'pizza'],
+      ['Grilled cheese and tomato soup', 'low', 'beans', 'kid quick veg classic stretch', '1 loaf bread/B; 1 pkg sliced cheese/D; 2 can tomato soup/C; 1 pkg butter/D', 'soupandsandwich'],
+      ['Lentil soup', 'low', 'beans', 'veg stretch', '1 bag lentils/A; 1 bag baby carrots/P; 1 bunch celery/P; 1 ct onion/P; 2 carton vegetable broth/A', 'soup'],
+      ['Chickpea curry', 'low', 'beans', 'veg stretch', '2 can chickpeas/C; 1 can coconut milk/C; 1 can diced tomatoes/C; 0.5 bag rice/A; curry powder/S', 'curry'],
+      ['Tofu veggie stir-fry', 'med', 'beans', 'quick veg', '2 pkg firm tofu/P; 1 bag frozen stir-fry vegetables/F; 0.5 bag rice/A; 1 bottle soy sauce/A', 'stirfry'],
+      ['Baked mac and cheese', 'low', 'beans', 'kid veg classic stretch', '2 box elbow macaroni/A; 2 bag shredded cheese/D; 1 carton milk/D; 1 pkg butter/D; 1 bag frozen broccoli/F', 'macandcheese'],
+      ['Loaded baked potatoes', 'low', 'beans', 'kid veg long stretch', '3 lb potatoes/P; 1 bag shredded cheese/D; 1 tub sour cream/D; 1 head broccoli/P', 'bakedpotato'],
+      ['Minestrone', 'low', 'beans', 'veg stretch', '1 can white beans/C; 1 can kidney beans/C; 2 can diced tomatoes/C; 1 box small pasta/A; 2 ct zucchini/P; 1 bag baby carrots/P; 2 carton vegetable broth/A', 'soup'],
+      ['Spinach stuffed shells', 'med', 'beans', 'veg', '1 box jumbo pasta shells/A; 1 tub ricotta/D; 1 bag spinach/P; 1 jar pasta sauce/A; 1 bag shredded mozzarella/D', 'pasta'],
       // ---- Core family meals ----
-      ['Beef stew', 'med', 'beef', 'long classic', '2 lb beef stew meat/M; 2 lb potatoes/P; 1 bag baby carrots/P; 1 ct onion/P; 1 carton beef broth/A; flour/S'],
-      ['One-pot chicken and rice', 'low', 'chicken', 'kid classic stretch', '1.5 lb chicken thighs/M; 0.5 bag rice/A; 1 carton chicken broth/A; 1 bag frozen peas/F; 1 ct onion/P'],
-      ['Salisbury steak and mashed potatoes', 'low', 'beef', 'kid classic', '1.5 lb ground beef/M; 1 pkg mushrooms/P; 1 packet brown gravy mix/A; 3 lb potatoes/P; 1 bag frozen green beans/F'],
-      ['Hamburger steak and gravy', 'low', 'beef', 'classic', '1.5 lb ground beef/M; 2 ct onion/P; 1 packet brown gravy mix/A; 0.5 bag rice/A; 1 bag frozen corn/F'],
-      ['Roast chicken and vegetables', 'med', 'chicken', 'kid long classic', '1 ct whole chicken/M; 2 lb potatoes/P; 1 bag baby carrots/P; 1 ct onion/P; olive oil/S'],
-      ['Cheesy chicken and broccoli casserole', 'low', 'chicken', 'kid classic', '1.5 lb chicken breast/M; 0.5 bag rice/A; 1 bag frozen broccoli/F; 1 can cream of chicken soup/C; 1 bag shredded cheese/D'],
-      ['Country fried steak', 'med', 'beef', 'classic', '1.5 lb cube steak/M; 0.5 dozen eggs/D; 1 packet country gravy mix/A; 3 lb potatoes/P; 1 bag frozen corn/F; flour/S'],
-      ['Smothered pork chops', 'med', 'pork', 'classic', '2 lb pork chops/M; 1 can cream of mushroom soup/C; 1 ct onion/P; 0.5 bag rice/A; 1 bag frozen green beans/F'],
-      ['Baked chicken and mashed potatoes', 'low', 'chicken', 'kid classic long', '3 lb chicken drumsticks/M; 3 lb potatoes/P; 1 pkg butter/D; 1 carton milk/D; 1 bag frozen corn/F'],
-      ['Stuffed peppers', 'med', 'beef', 'classic long', '1 lb ground beef/M; 4 ct bell peppers/P; 0.5 bag rice/A; 1 jar pasta sauce/A; 1 bag shredded mozzarella/D'],
-      ['Chicken tenders and fries', 'low', 'chicken', 'kid quick', '1 bag frozen chicken tenders/F; 1 bag frozen fries/F; 1 bag baby carrots/P; 1 bottle ranch dressing/A'],
-      ['Sweet and sour chicken', 'med', 'chicken', 'kid', '1.5 lb chicken breast/M; 1 jar sweet and sour sauce/A; 2 ct bell peppers/P; 1 can pineapple chunks/C; 0.5 bag rice/A'],
-      ['Philly cheesesteak sandwiches', 'med', 'beef', 'quick', '1.5 lb shaved steak/M; 1 pkg hoagie rolls/B; 2 ct bell peppers/P; 1 ct onion/P; 1 pkg sliced provolone/D'],
-      ['Chicken salad sandwiches', 'low', 'chicken', 'quick', '1.5 lb chicken breast/M; 1 jar mayonnaise/A; 1 bunch celery/P; 1 pkg croissants/B; 1 bag grapes/P'],
+      ['Beef stew', 'med', 'beef', 'long classic', '2 lb beef stew meat/M; 2 lb potatoes/P; 1 bag baby carrots/P; 1 ct onion/P; 1 carton beef broth/A; flour/S', 'stew'],
+      ['One-pot chicken and rice', 'low', 'chicken', 'kid classic stretch', '1.5 lb chicken thighs/M; 0.5 bag rice/A; 1 carton chicken broth/A; 1 bag frozen peas/F; 1 ct onion/P', 'chickenrice'],
+      ['Salisbury steak and mashed potatoes', 'low', 'beef', 'kid classic', '1.5 lb ground beef/M; 1 pkg mushrooms/P; 1 packet brown gravy mix/A; 3 lb potatoes/P; 1 bag frozen green beans/F', 'gravybeef'],
+      ['Hamburger steak and gravy', 'low', 'beef', 'classic', '1.5 lb ground beef/M; 2 ct onion/P; 1 packet brown gravy mix/A; 0.5 bag rice/A; 1 bag frozen corn/F', 'gravybeef'],
+      ['Roast chicken and vegetables', 'med', 'chicken', 'kid long classic', '1 ct whole chicken/M; 2 lb potatoes/P; 1 bag baby carrots/P; 1 ct onion/P; olive oil/S', 'roast'],
+      ['Cheesy chicken and broccoli casserole', 'low', 'chicken', 'kid classic', '1.5 lb chicken breast/M; 0.5 bag rice/A; 1 bag frozen broccoli/F; 1 can cream of chicken soup/C; 1 bag shredded cheese/D', 'casserole'],
+      ['Country fried steak', 'med', 'beef', 'classic', '1.5 lb cube steak/M; 0.5 dozen eggs/D; 1 packet country gravy mix/A; 3 lb potatoes/P; 1 bag frozen corn/F; flour/S', 'gravybeef'],
+      ['Smothered pork chops', 'med', 'pork', 'classic', '2 lb pork chops/M; 1 can cream of mushroom soup/C; 1 ct onion/P; 0.5 bag rice/A; 1 bag frozen green beans/F', 'porkchop'],
+      ['Baked chicken and mashed potatoes', 'low', 'chicken', 'kid classic long', '3 lb chicken drumsticks/M; 3 lb potatoes/P; 1 pkg butter/D; 1 carton milk/D; 1 bag frozen corn/F', 'bakedchicken'],
+      ['Stuffed peppers', 'med', 'beef', 'classic long', '1 lb ground beef/M; 4 ct bell peppers/P; 0.5 bag rice/A; 1 jar pasta sauce/A; 1 bag shredded mozzarella/D', 'stuffed'],
+      ['Chicken tenders and fries', 'low', 'chicken', 'kid quick', '1 bag frozen chicken tenders/F; 1 bag frozen fries/F; 1 bag baby carrots/P; 1 bottle ranch dressing/A', 'friedchicken'],
+      ['Sweet and sour chicken', 'med', 'chicken', 'kid', '1.5 lb chicken breast/M; 1 jar sweet and sour sauce/A; 2 ct bell peppers/P; 1 can pineapple chunks/C; 0.5 bag rice/A', 'stirfry'],
+      ['Philly cheesesteak sandwiches', 'med', 'beef', 'quick', '1.5 lb shaved steak/M; 1 pkg hoagie rolls/B; 2 ct bell peppers/P; 1 ct onion/P; 1 pkg sliced provolone/D', 'sandwich'],
+      ['Chicken salad sandwiches', 'low', 'chicken', 'quick', '1.5 lb chicken breast/M; 1 jar mayonnaise/A; 1 bunch celery/P; 1 pkg croissants/B; 1 bag grapes/P', 'sandwich'],
       // ---- Mexican inspired ----
-      ['Chicken fajitas', 'med', 'chicken', 'kid quick', '1.5 lb chicken breast/M; 3 ct bell peppers/P; 1 ct onion/P; 1 pkg flour tortillas/B; 1 tub sour cream/D; fajita seasoning/S'],
-      ['Beef fajitas', 'high', 'beef', 'quick', '1.5 lb flank steak/M; 3 ct bell peppers/P; 1 ct onion/P; 1 pkg flour tortillas/B; 1 jar salsa/A; fajita seasoning/S'],
-      ['Beef enchiladas', 'med', 'beef', 'kid', '1 lb ground beef/M; 1 pkg flour tortillas/B; 2 can enchilada sauce/C; 1 bag shredded cheese/D; 1 ct onion/P'],
-      ['Taco soup', 'low', 'beef', 'kid stretch', '1 lb ground beef/M; 1 can pinto beans/C; 1 can black beans/C; 1 can corn/C; 2 can diced tomatoes/C; 1 bag tortilla chips/A; taco seasoning/S'],
-      ['Chicken burrito bowls', 'med', 'chicken', 'kid', '1.5 lb chicken thighs/M; 0.5 bag rice/A; 1 can black beans/C; 1 can corn/C; 1 jar salsa/A; 1 bag shredded cheese/D'],
-      ['Chicken burritos', 'low', 'chicken', 'kid', '1 lb chicken breast/M; 1 pkg large flour tortillas/B; 0.5 bag rice/A; 1 can refried beans/C; 1 bag shredded cheese/D; 1 jar salsa/A'],
-      ['Beef burritos', 'low', 'beef', 'kid', '1 lb ground beef/M; 1 pkg large flour tortillas/B; 1 can refried beans/C; 1 bag shredded cheese/D; 1 jar salsa/A; taco seasoning/S'],
-      ['Cheese quesadillas', 'low', 'beans', 'kid quick veg stretch', '1 pkg flour tortillas/B; 2 bag shredded cheese/D; 1 jar salsa/A; 1 tub sour cream/D'],
-      ['Bean and cheese enchiladas', 'low', 'beans', 'kid veg stretch', '2 can refried beans/C; 1 pkg flour tortillas/B; 2 can enchilada sauce/C; 2 bag shredded cheese/D'],
-      ['Beef and bean nachos', 'low', 'beef', 'kid quick', '1 lb ground beef/M; 1 bag tortilla chips/A; 1 can refried beans/C; 1 bag shredded cheese/D; 1 jar salsa/A; 1 tub sour cream/D'],
+      ['Chicken fajitas', 'med', 'chicken', 'kid quick mex', '1.5 lb chicken breast/M; 3 ct bell peppers/P; 1 ct onion/P; 1 pkg flour tortillas/B; 1 tub sour cream/D; fajita seasoning/S', 'fajita'],
+      ['Beef fajitas', 'high', 'beef', 'quick mex', '1.5 lb flank steak/M; 3 ct bell peppers/P; 1 ct onion/P; 1 pkg flour tortillas/B; 1 jar salsa/A; fajita seasoning/S', 'fajita'],
+      ['Beef enchiladas', 'med', 'beef', 'kid mex', '1 lb ground beef/M; 1 pkg flour tortillas/B; 2 can enchilada sauce/C; 1 bag shredded cheese/D; 1 ct onion/P', 'enchilada'],
+      ['Taco soup', 'low', 'beef', 'kid stretch mex', '1 lb ground beef/M; 1 can pinto beans/C; 1 can black beans/C; 1 can corn/C; 2 can diced tomatoes/C; 1 bag tortilla chips/A; taco seasoning/S', 'soup'],
+      ['Chicken burrito bowls', 'med', 'chicken', 'kid mex', '1.5 lb chicken thighs/M; 0.5 bag rice/A; 1 can black beans/C; 1 can corn/C; 1 jar salsa/A; 1 bag shredded cheese/D', 'burrito'],
+      ['Chicken burritos', 'low', 'chicken', 'kid mex', '1 lb chicken breast/M; 1 pkg large flour tortillas/B; 0.5 bag rice/A; 1 can refried beans/C; 1 bag shredded cheese/D; 1 jar salsa/A', 'burrito'],
+      ['Beef burritos', 'low', 'beef', 'kid mex', '1 lb ground beef/M; 1 pkg large flour tortillas/B; 1 can refried beans/C; 1 bag shredded cheese/D; 1 jar salsa/A; taco seasoning/S', 'burrito'],
+      ['Cheese quesadillas', 'low', 'beans', 'kid quick veg stretch mex', '1 pkg flour tortillas/B; 2 bag shredded cheese/D; 1 jar salsa/A; 1 tub sour cream/D', 'quesadilla'],
+      ['Bean and cheese enchiladas', 'low', 'beans', 'kid veg stretch mex', '2 can refried beans/C; 1 pkg flour tortillas/B; 2 can enchilada sauce/C; 2 bag shredded cheese/D', 'enchilada'],
+      ['Beef and bean nachos', 'low', 'beef', 'kid quick mex', '1 lb ground beef/M; 1 bag tortilla chips/A; 1 can refried beans/C; 1 bag shredded cheese/D; 1 jar salsa/A; 1 tub sour cream/D', 'nachos'],
       // ---- Pasta ----
-      ['Lasagna', 'med', 'beef', 'kid long classic', '1 lb ground beef/M; 1 box lasagna noodles/A; 2 jar pasta sauce/A; 1 tub ricotta/D; 2 bag shredded mozzarella/D; 1 ct frozen garlic bread/F'],
-      ['Ravioli bake', 'low', 'beans', 'kid veg', '1 bag frozen cheese ravioli/F; 1 jar pasta sauce/A; 1 bag shredded mozzarella/D; 1 bag salad mix/P'],
-      ['Cheesy beef pasta bake', 'low', 'beef', 'kid stretch', '1 lb ground beef/M; 1 box penne/A; 1 jar pasta sauce/A; 1 bag shredded mozzarella/D'],
-      ['Chicken parmesan', 'med', 'chicken', 'kid classic', '1.5 lb chicken breast/M; 0.5 dozen eggs/D; 1 ct breadcrumbs/A; 1 box spaghetti/A; 1 jar pasta sauce/A; 1 bag shredded mozzarella/D'],
-      ['Goulash', 'low', 'beef', 'kid classic stretch', '1 lb ground beef/M; 1 box elbow macaroni/A; 2 can diced tomatoes/C; 1 can tomato sauce/C; 1 ct onion/P'],
-      ['Cheeseburger macaroni', 'low', 'beef', 'kid quick stretch', '1 lb ground beef/M; 1 box elbow macaroni/A; 1 carton milk/D; 1 bag shredded cheese/D; 1 can tomato sauce/C'],
+      ['Lasagna', 'med', 'beef', 'kid long classic', '1 lb ground beef/M; 1 box lasagna noodles/A; 2 jar pasta sauce/A; 1 tub ricotta/D; 2 bag shredded mozzarella/D; 1 ct frozen garlic bread/F', 'pasta'],
+      ['Ravioli bake', 'low', 'beans', 'kid veg', '1 bag frozen cheese ravioli/F; 1 jar pasta sauce/A; 1 bag shredded mozzarella/D; 1 bag salad mix/P', 'pasta'],
+      ['Cheesy beef pasta bake', 'low', 'beef', 'kid stretch', '1 lb ground beef/M; 1 box penne/A; 1 jar pasta sauce/A; 1 bag shredded mozzarella/D', 'pasta'],
+      ['Chicken parmesan', 'med', 'chicken', 'kid classic', '1.5 lb chicken breast/M; 0.5 dozen eggs/D; 1 ct breadcrumbs/A; 1 box spaghetti/A; 1 jar pasta sauce/A; 1 bag shredded mozzarella/D', 'pasta'],
+      ['Goulash', 'low', 'beef', 'kid classic stretch', '1 lb ground beef/M; 1 box elbow macaroni/A; 2 can diced tomatoes/C; 1 can tomato sauce/C; 1 ct onion/P', 'skilletpasta'],
+      ['Cheeseburger macaroni', 'low', 'beef', 'kid quick stretch', '1 lb ground beef/M; 1 box elbow macaroni/A; 1 carton milk/D; 1 bag shredded cheese/D; 1 can tomato sauce/C', 'skilletpasta'],
       // ---- Budget friendly ----
-      ['Red beans and rice', 'low', 'pork', 'stretch', '1 lb smoked sausage/M; 2 can kidney beans/C; 0.5 bag rice/A; 1 ct onion/P; 1 ct bell peppers/P; 1 bunch celery/P; cajun seasoning/S'],
-      ['Ham and beans with cornbread', 'low', 'pork', 'long classic stretch', '1 ct ham hock/M; 1 bag dried navy beans/A; 1 ct onion/P; 1 box cornbread mix/A; 0.5 dozen eggs/D'],
-      ['Potato soup', 'low', 'pork', 'kid stretch', '3 lb potatoes/P; 1 ct onion/P; 1 carton chicken broth/A; 1 carton milk/D; 1 bag shredded cheese/D; 1 pkg bacon/M'],
-      ['Vegetable soup', 'low', 'beans', 'veg stretch', '1 bag frozen mixed vegetables/F; 2 can diced tomatoes/C; 2 lb potatoes/P; 1 ct onion/P; 2 carton vegetable broth/A; 1 loaf bread/B'],
-      ['Chicken and rice bake', 'low', 'chicken', 'kid stretch', '2 lb chicken thighs/M; 0.5 bag rice/A; 1 can cream of mushroom soup/C; 1 carton chicken broth/A; 1 bag frozen broccoli/F'],
-      ['Split pea soup', 'low', 'pork', 'long stretch', '1 bag split peas/A; 1 ct ham hock/M; 1 bag baby carrots/P; 1 ct onion/P; 1 bunch celery/P'],
-      ['Kielbasa and cabbage', 'low', 'pork', 'stretch', '1.5 lb kielbasa/M; 1 head cabbage/P; 2 lb potatoes/P; 1 ct onion/P'],
-      ['Tuna melts and tomato soup', 'low', 'fish', 'kid quick stretch', '2 can tuna/C; 1 loaf bread/B; 1 pkg sliced cheese/D; 2 can tomato soup/C; 1 jar mayonnaise/A'],
-      ['Salmon patties and corn', 'low', 'fish', 'quick classic stretch', '2 can salmon/C; 0.5 dozen eggs/D; 1 ct breadcrumbs/A; 1 bag frozen corn/F; 1 box mac and cheese/A'],
-      ['Shrimp and sausage jambalaya', 'med', 'shrimp', '', '1 bag frozen shrimp/F; 1 lb smoked sausage/M; 0.5 bag rice/A; 1 can diced tomatoes/C; 1 ct bell peppers/P; 1 ct onion/P; cajun seasoning/S'],
+      ['Red beans and rice', 'low', 'pork', 'stretch', '1 lb smoked sausage/M; 2 can kidney beans/C; 0.5 bag rice/A; 1 ct onion/P; 1 ct bell peppers/P; 1 bunch celery/P; cajun seasoning/S', 'cajunrice'],
+      ['Ham and beans with cornbread', 'low', 'pork', 'long classic stretch', '1 ct ham hock/M; 1 bag dried navy beans/A; 1 ct onion/P; 1 box cornbread mix/A; 0.5 dozen eggs/D', 'soup'],
+      ['Potato soup', 'low', 'pork', 'kid stretch', '3 lb potatoes/P; 1 ct onion/P; 1 carton chicken broth/A; 1 carton milk/D; 1 bag shredded cheese/D; 1 pkg bacon/M', 'soup'],
+      ['Vegetable soup', 'low', 'beans', 'veg stretch', '1 bag frozen mixed vegetables/F; 2 can diced tomatoes/C; 2 lb potatoes/P; 1 ct onion/P; 2 carton vegetable broth/A; 1 loaf bread/B', 'soup'],
+      ['Chicken and rice bake', 'low', 'chicken', 'kid stretch', '2 lb chicken thighs/M; 0.5 bag rice/A; 1 can cream of mushroom soup/C; 1 carton chicken broth/A; 1 bag frozen broccoli/F', 'chickenrice'],
+      ['Split pea soup', 'low', 'pork', 'long stretch', '1 bag split peas/A; 1 ct ham hock/M; 1 bag baby carrots/P; 1 ct onion/P; 1 bunch celery/P', 'soup'],
+      ['Kielbasa and cabbage', 'low', 'pork', 'stretch', '1.5 lb kielbasa/M; 1 head cabbage/P; 2 lb potatoes/P; 1 ct onion/P', 'sausage'],
+      ['Tuna melts and tomato soup', 'low', 'fish', 'kid quick stretch', '2 can tuna/C; 1 loaf bread/B; 1 pkg sliced cheese/D; 2 can tomato soup/C; 1 jar mayonnaise/A', 'soupandsandwich'],
+      ['Salmon patties and corn', 'low', 'fish', 'quick classic stretch', '2 can salmon/C; 0.5 dozen eggs/D; 1 ct breadcrumbs/A; 1 bag frozen corn/F; 1 box mac and cheese/A', 'fishdinner'],
+      ['Shrimp and sausage jambalaya', 'med', 'shrimp', '', '1 bag frozen shrimp/F; 1 lb smoked sausage/M; 0.5 bag rice/A; 1 can diced tomatoes/C; 1 ct bell peppers/P; 1 ct onion/P; cajun seasoning/S', 'cajunrice'],
       // ---- Stretch to payday ----
-      ['Rice and bean bowls', 'low', 'beans', 'quick veg stretch', '0.5 bag rice/A; 2 can black beans/C; 1 can corn/C; 1 jar salsa/A; 1 bag shredded cheese/D'],
-      ['Hot dogs and baked beans', 'low', 'pork', 'kid quick stretch', '1 pkg hot dogs/M; 1 pkg hot dog buns/B; 1 can baked beans/C; 1 bag baby carrots/P'],
-      ['Ramen stir-fry with egg', 'low', 'eggs', 'quick veg stretch', '4 pkg ramen noodles/A; 1 bag frozen stir-fry vegetables/F; 0.5 dozen eggs/D; 1 bottle soy sauce/A'],
-      ['Egg and potato hash', 'low', 'eggs', 'quick veg stretch', '1 bag frozen hash browns/F; 1 dozen eggs/D; 1 ct onion/P; 1 ct bell peppers/P; 1 bag shredded cheese/D'],
-      ['Egg salad sandwiches', 'low', 'eggs', 'quick veg stretch', '1 dozen eggs/D; 1 loaf bread/B; 1 jar mayonnaise/A; 1 bag baby carrots/P'],
-      ['BLT sandwiches', 'low', 'pork', 'quick', '1 pkg bacon/M; 1 loaf bread/B; 1 head lettuce/P; 3 ct tomatoes/P; 1 jar mayonnaise/A'],
-      ['French bread pizza', 'low', 'pork', 'kid quick', '1 loaf French bread/B; 1 jar pizza sauce/A; 1 bag shredded mozzarella/D; 1 pkg pepperoni/M'],
+      ['Rice and bean bowls', 'low', 'beans', 'quick veg stretch mex', '0.5 bag rice/A; 2 can black beans/C; 1 can corn/C; 1 jar salsa/A; 1 bag shredded cheese/D', 'burrito'],
+      ['Hot dogs and baked beans', 'low', 'pork', 'kid quick stretch', '1 pkg hot dogs/M; 1 pkg hot dog buns/B; 1 can baked beans/C; 1 bag baby carrots/P', 'hotdog'],
+      ['Ramen stir-fry with egg', 'low', 'eggs', 'quick veg stretch', '4 pkg ramen noodles/A; 1 bag frozen stir-fry vegetables/F; 0.5 dozen eggs/D; 1 bottle soy sauce/A', 'stirfry'],
+      ['Egg and potato hash', 'low', 'eggs', 'quick veg stretch', '1 bag frozen hash browns/F; 1 dozen eggs/D; 1 ct onion/P; 1 ct bell peppers/P; 1 bag shredded cheese/D', 'breakfastfordinner'],
+      ['Egg salad sandwiches', 'low', 'eggs', 'quick veg stretch', '1 dozen eggs/D; 1 loaf bread/B; 1 jar mayonnaise/A; 1 bag baby carrots/P', 'sandwich'],
+      ['BLT sandwiches', 'low', 'pork', 'quick', '1 pkg bacon/M; 1 loaf bread/B; 1 head lettuce/P; 3 ct tomatoes/P; 1 jar mayonnaise/A', 'sandwich'],
+      ['French bread pizza', 'low', 'pork', 'kid quick', '1 loaf French bread/B; 1 jar pizza sauce/A; 1 bag shredded mozzarella/D; 1 pkg pepperoni/M', 'pizza'],
       // ---- Breakfast for dinner ----
-      ['Pancakes and sausage', 'low', 'pork', 'kid quick', '1 box pancake mix/A; 1 pkg breakfast sausage links/M; 1 bottle syrup/A; 1 carton milk/D'],
-      ['Biscuits and gravy', 'low', 'pork', 'kid classic stretch', '1 lb breakfast sausage/M; 1 can refrigerated biscuits/D; 1 carton milk/D; 1 dozen eggs/D; flour/S'],
-      ['Scrambled eggs and toast', 'low', 'eggs', 'kid quick veg stretch', '1 dozen eggs/D; 1 loaf bread/B; 1 pkg butter/D; 1 bag apples/P'],
-      ['Breakfast casserole', 'low', 'pork', 'kid', '1 dozen eggs/D; 1 lb breakfast sausage/M; 1 bag frozen hash browns/F; 1 bag shredded cheese/D; 1 carton milk/D'],
-      ['French toast and bacon', 'low', 'pork', 'kid quick', '1 loaf bread/B; 1 dozen eggs/D; 1 carton milk/D; 1 pkg bacon/M; 1 bottle syrup/A'],
+      ['Pancakes and sausage', 'low', 'pork', 'kid quick', '1 box pancake mix/A; 1 pkg breakfast sausage links/M; 1 bottle syrup/A; 1 carton milk/D', 'breakfastfordinner'],
+      ['Biscuits and gravy', 'low', 'pork', 'kid classic stretch', '1 lb breakfast sausage/M; 1 can refrigerated biscuits/D; 1 carton milk/D; 1 dozen eggs/D; flour/S', 'breakfastfordinner'],
+      ['Scrambled eggs and toast', 'low', 'eggs', 'kid quick veg stretch', '1 dozen eggs/D; 1 loaf bread/B; 1 pkg butter/D; 1 bag apples/P', 'breakfastfordinner'],
+      ['Breakfast casserole', 'low', 'pork', 'kid', '1 dozen eggs/D; 1 lb breakfast sausage/M; 1 bag frozen hash browns/F; 1 bag shredded cheese/D; 1 carton milk/D', 'breakfastfordinner'],
+      ['French toast and bacon', 'low', 'pork', 'kid quick', '1 loaf bread/B; 1 dozen eggs/D; 1 carton milk/D; 1 pkg bacon/M; 1 bottle syrup/A', 'breakfastfordinner'],
       // ---- Sheet pan ----
-      ['Sheet-pan sausage and vegetables', 'low', 'pork', 'stretch', '1.5 lb smoked sausage/M; 2 lb potatoes/P; 2 ct bell peppers/P; 1 head broccoli/P; olive oil/S'],
-      ['Sheet-pan teriyaki chicken', 'med', 'chicken', 'kid', '2 lb chicken thighs/M; 1 bottle teriyaki sauce/A; 2 head broccoli/P; 0.5 bag rice/A'],
-      ['Italian chicken and potatoes', 'low', 'chicken', 'kid', '2 lb chicken thighs/M; 2 lb potatoes/P; 1 bottle Italian dressing/A; 2 ct zucchini/P'],
-      ['Cajun chicken and veggies', 'med', 'chicken', '', '1.5 lb chicken breast/M; 2 ct bell peppers/P; 2 ct zucchini/P; 1 ct onion/P; 0.5 bag rice/A; cajun seasoning/S'],
+      ['Sheet-pan sausage and vegetables', 'low', 'pork', 'stretch', '1.5 lb smoked sausage/M; 2 lb potatoes/P; 2 ct bell peppers/P; 1 head broccoli/P; olive oil/S', 'sheetpan'],
+      ['Sheet-pan teriyaki chicken', 'med', 'chicken', 'kid', '2 lb chicken thighs/M; 1 bottle teriyaki sauce/A; 2 head broccoli/P; 0.5 bag rice/A', 'sheetpan'],
+      ['Italian chicken and potatoes', 'low', 'chicken', 'kid', '2 lb chicken thighs/M; 2 lb potatoes/P; 1 bottle Italian dressing/A; 2 ct zucchini/P', 'sheetpan'],
+      ['Cajun chicken and veggies', 'med', 'chicken', '', '1.5 lb chicken breast/M; 2 ct bell peppers/P; 2 ct zucchini/P; 1 ct onion/P; 0.5 bag rice/A; cajun seasoning/S', 'sheetpan'],
       // ---- Slow cooker ----
-      ['Slow cooker chili', 'low', 'beef', 'slow classic stretch', '2 lb ground beef/M; 2 can kidney beans/C; 2 can diced tomatoes/C; 1 can tomato sauce/C; 1 ct onion/P; chili powder/S'],
-      ['Slow cooker BBQ chicken and potatoes', 'low', 'chicken', 'kid slow', '2 lb chicken breast/M; 1 bottle BBQ sauce/A; 3 lb potatoes/P; 1 bag frozen corn/F'],
-      ['Mississippi chicken', 'med', 'chicken', 'kid slow', '2 lb chicken breast/M; 1 packet ranch seasoning/A; 1 packet brown gravy mix/A; 1 jar pepperoncini/A; 1 pkg butter/D; 3 lb potatoes/P'],
-      ['White chicken chili', 'low', 'chicken', 'slow stretch', '1.5 lb chicken breast/M; 2 can white beans/C; 1 can diced green chiles/C; 1 carton chicken broth/A; 1 ct onion/P; 1 tub sour cream/D; cumin/S'],
-      ['Slow cooker chicken tortilla soup', 'low', 'chicken', 'kid slow stretch', '1.5 lb chicken breast/M; 1 can black beans/C; 1 can corn/C; 2 can diced tomatoes/C; 1 carton chicken broth/A; 1 bag tortilla chips/A; taco seasoning/S'],
-      ['Slow cooker beef and noodles', 'med', 'beef', 'kid slow classic', '2 lb beef stew meat/M; 1 bag egg noodles/A; 1 carton beef broth/A; 1 can cream of mushroom soup/C; 1 bag frozen peas/F'],
-      ['Slow cooker chicken and dumplings', 'low', 'chicken', 'kid slow classic', '1.5 lb chicken breast/M; 1 can refrigerated biscuits/D; 1 can cream of chicken soup/C; 1 carton chicken broth/A; 1 bag frozen mixed vegetables/F']
+      ['Slow cooker chili', 'low', 'beef', 'slow classic stretch', '2 lb ground beef/M; 2 can kidney beans/C; 2 can diced tomatoes/C; 1 can tomato sauce/C; 1 ct onion/P; chili powder/S', 'chili'],
+      ['Slow cooker BBQ chicken and potatoes', 'low', 'chicken', 'kid slow', '2 lb chicken breast/M; 1 bottle BBQ sauce/A; 3 lb potatoes/P; 1 bag frozen corn/F', 'slowcooker'],
+      ['Mississippi chicken', 'med', 'chicken', 'kid slow', '2 lb chicken breast/M; 1 packet ranch seasoning/A; 1 packet brown gravy mix/A; 1 jar pepperoncini/A; 1 pkg butter/D; 3 lb potatoes/P', 'slowcooker'],
+      ['White chicken chili', 'low', 'chicken', 'slow stretch', '1.5 lb chicken breast/M; 2 can white beans/C; 1 can diced green chiles/C; 1 carton chicken broth/A; 1 ct onion/P; 1 tub sour cream/D; cumin/S', 'chili'],
+      ['Slow cooker chicken tortilla soup', 'low', 'chicken', 'kid slow stretch mex', '1.5 lb chicken breast/M; 1 can black beans/C; 1 can corn/C; 2 can diced tomatoes/C; 1 carton chicken broth/A; 1 bag tortilla chips/A; taco seasoning/S', 'soup'],
+      ['Slow cooker beef and noodles', 'med', 'beef', 'kid slow classic', '2 lb beef stew meat/M; 1 bag egg noodles/A; 1 carton beef broth/A; 1 can cream of mushroom soup/C; 1 bag frozen peas/F', 'noodles'],
+      ['Slow cooker chicken and dumplings', 'low', 'chicken', 'kid slow classic', '1.5 lb chicken breast/M; 1 can refrigerated biscuits/D; 1 can cream of chicken soup/C; 1 carton chicken broth/A; 1 bag frozen mixed vegetables/F', 'slowcooker'],
+      // ---- Household staples ----
+      ['Spaghetti and meatballs', 'low', 'beef', 'kid classic', '1 lb ground beef/M; 0.5 dozen eggs/D; 1 ct breadcrumbs/A; 1 box spaghetti/A; 1 jar pasta sauce/A; 1 bag shredded parmesan/D', 'pasta'],
+      ['Tater tot casserole', 'low', 'beef', 'kid classic stretch', '1 lb ground beef/M; 1 bag frozen tater tots/F; 1 can cream of mushroom soup/C; 1 bag frozen green beans/F; 1 bag shredded cheese/D', 'casserole'],
+      ['Fried chicken', 'med', 'chicken', 'kid long classic', '3 lb chicken pieces/M; 1 carton buttermilk/D; 3 lb potatoes/P; 1 bag frozen corn/F; flour/S; vegetable oil/S', 'friedchicken'],
+      ['Baked ham dinner', 'med', 'pork', 'long classic', '3 lb boneless ham/M; 3 lb potatoes/P; 1 bag frozen green beans/F; 1 pkg dinner rolls/B', 'roast'],
+      ['Pork loin roast', 'med', 'pork', 'long classic', '3 lb pork loin/M; 2 lb potatoes/P; 1 bag baby carrots/P; 1 ct onion/P; garlic powder/S', 'roast'],
+      ['Chicken and noodles', 'low', 'chicken', 'kid classic stretch', '1.5 lb chicken breast/M; 1 bag frozen egg noodles/F; 2 carton chicken broth/A; 1 can cream of chicken soup/C; 3 lb potatoes/P', 'noodles'],
+      ['Beef tips and rice', 'med', 'beef', 'long classic', '1.5 lb beef stew meat/M; 1 packet brown gravy mix/A; 1 ct onion/P; 0.5 bag rice/A; 1 bag frozen green beans/F', 'gravybeef'],
+      ['Taco salad', 'low', 'beef', 'kid quick mex', '1 lb ground beef/M; 1 head romaine lettuce/P; 2 ct tomatoes/P; 1 bag shredded cheese/D; 1 bag tortilla chips/A; 1 jar salsa/A; taco seasoning/S', 'salad'],
+      ['Pepperoni pizza', 'low', 'pork', 'kid', '2 ct pizza crusts/B; 1 jar pizza sauce/A; 2 bag shredded mozzarella/D; 1 pkg pepperoni/M; 1 bag salad mix/P', 'pizza'],
+      ['Chili dogs', 'low', 'pork', 'kid quick stretch', '1 pkg hot dogs/M; 1 pkg hot dog buns/B; 1 can chili/C; 1 bag shredded cheese/D; 1 ct onion/P', 'hotdog'],
+      ['Hoagies (sub sandwiches)', 'med', 'pork', 'quick', '1 lb deli ham/M; 0.5 lb salami/M; 1 pkg hoagie rolls/B; 1 pkg sliced provolone/D; 1 head lettuce/P; 2 ct tomatoes/P; 1 bottle Italian dressing/A', 'sandwich'],
+      ['Pierogies and kielbasa', 'low', 'pork', 'quick stretch', '1 box frozen pierogies/F; 1 lb kielbasa/M; 1 ct onion/P; 1 tub sour cream/D; 1 bag frozen green beans/F', 'sausage'],
+      ['Swedish meatballs', 'med', 'beef', 'kid classic', '1 bag frozen meatballs/F; 1 bag egg noodles/A; 1 packet brown gravy mix/A; 1 tub sour cream/D; 1 bag frozen peas/F', 'noodles'],
+      ['Chicken wings', 'med', 'chicken', 'kid', '3 lb chicken wings/M; 1 bottle buffalo sauce/A; 1 bunch celery/P; 1 bag baby carrots/P; 1 bottle ranch dressing/A; 1 bag frozen fries/F', 'wings'],
+      ['Chef salad', 'med', 'turkey', 'quick', '0.5 lb deli turkey/M; 0.5 lb deli ham/M; 0.5 dozen eggs/D; 1 bag salad mix/P; 1 pkg sliced cheese/D; 2 ct tomatoes/P; 1 bottle ranch dressing/A', 'salad'],
+      ['Cobb salad', 'med', 'chicken', 'quick', '1 lb chicken breast/M; 1 pkg bacon/M; 0.5 dozen eggs/D; 1 head romaine lettuce/P; 2 ct avocados/P; 2 ct tomatoes/P; 1 bottle blue cheese dressing/A', 'salad'],
+      ['Tortellini soup', 'low', 'pork', 'kid quick', '1 lb Italian sausage/M; 1 bag frozen cheese tortellini/F; 1 can diced tomatoes/C; 2 carton chicken broth/A; 1 bag spinach/P', 'soup'],
+      ['Waffles and eggs', 'low', 'eggs', 'kid quick veg stretch', '1 box waffle mix/A; 1 dozen eggs/D; 1 carton milk/D; 1 bottle syrup/A; 1 pkg strawberries/P', 'breakfastfordinner'],
+      ['Shrimp fried rice', 'med', 'shrimp', 'quick', '1 bag frozen shrimp/F; 0.5 bag rice/A; 1 bag frozen peas and carrots/F; 0.5 dozen eggs/D; 1 bottle soy sauce/A', 'friedrice'],
+      ['Oven-baked fish fillets', 'low', 'fish', 'kid quick', '1 bag frozen fish fillets/F; 2 lb potatoes/P; 1 bag frozen peas/F; 2 ct lemons/P', 'fishdinner'],
+      // ---- More turkey ----
+      ['Turkey sloppy joes', 'low', 'turkey', 'kid quick stretch', '1 lb ground turkey/M; 1 can sloppy joe sauce/C; 1 pkg hamburger buns/B; 1 bag baby carrots/P', 'sandwich'],
+      ['Turkey club sandwiches', 'med', 'turkey', 'quick', '1 lb deli turkey/M; 1 pkg bacon/M; 1 loaf bread/B; 1 head lettuce/P; 2 ct tomatoes/P; 1 jar mayonnaise/A', 'sandwich'],
+      ['Roast turkey breast dinner', 'high', 'turkey', 'long classic', '3 lb turkey breast/M; 1 box stuffing mix/A; 3 lb potatoes/P; 1 bag frozen green beans/F; 1 can cranberry sauce/C', 'roast'],
+      ['Turkey and vegetable rice skillet', 'low', 'turkey', 'quick stretch', '1 lb ground turkey/M; 1 bag frozen mixed vegetables/F; 0.5 bag rice/A; 1 carton chicken broth/A; 1 bottle soy sauce/A', 'skillet'],
+      // ---- More fish and seafood ----
+      ['Tuna salad sandwiches', 'low', 'fish', 'quick stretch', '3 can tuna/C; 1 jar mayonnaise/A; 1 loaf bread/B; 1 bunch celery/P; 1 bag baby carrots/P', 'sandwich'],
+      ['Cornmeal fried catfish', 'med', 'fish', 'classic', '1 bag frozen catfish fillets/F; 1 bag cornmeal/A; 1 bag coleslaw mix/P; 1 bag frozen hush puppies/F', 'fishdinner'],
+      ['Clam chowder', 'med', 'fish', '', '3 can clams/C; 3 lb potatoes/P; 1 pkg bacon/M; 1 carton half-and-half/D; 1 ct onion/P', 'soup'],
+      ['Shrimp and grits', 'med', 'shrimp', 'quick', '1 bag frozen shrimp/F; 1 box quick grits/A; 1 bag shredded cheese/D; 1 pkg bacon/M; 1 bunch green onions/P', 'cajunrice']
     ];
     // "Foods to leave out" words that stand for a whole group.
     const GROCERY_LEAVE_GROUPS = {
@@ -14185,9 +14221,11 @@
     let groceryMealCache = null;
     function groceryMeals() {
       if (groceryMealCache) return groceryMealCache;
-      groceryMealCache = GROCERY_MEAL_DATA.map(([name, cost, protein, tags, ing]) => ({
+      groceryMealCache = GROCERY_MEAL_DATA.map(([name, cost, protein, tags, ing, family]) => ({
         id: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
-        name, cost, protein, tags: tags ? tags.split(' ') : [],
+        name, cost, protein, dishFamily: family || 'other',
+        retired: (tags || '').split(' ').includes('retired'),
+        tags: tags ? tags.split(' ').filter(t => t && t !== 'retired') : [],
         ingredients: ing.split(';').map(x => x.trim()).filter(Boolean).map(x => {
           const slash = x.lastIndexOf('/');
           const aisle = x.slice(slash + 1).trim();
@@ -14572,6 +14610,7 @@
     function groceryMealPool(prefs, tier) {
       const leave = ((prefs && prefs.leaveOut) || []).map(groceryNormTerm).filter(Boolean);
       return groceryMeals().filter(m => {
+        if (m.retired) return false;
         if (tier === 'low' && m.cost !== 'low') return false;
         if (tier === 'medium' && m.cost === 'high') return false;
         return !leave.some(term => groceryMealHas(m, term));
@@ -14586,13 +14625,35 @@
       for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
       return a;
     }
-    function pickGroceryMeals(count, prefs, tier, exclude) {
+    // Variety: within each week of dinners, at most one meal per dish family
+    // and at most two Mexican-inspired meals. `placed` are dinners already in
+    // the run's first slots (e.g. added from Saved Recipes); they count too.
+    const GROCERY_MAX_MEX_PER_WEEK = 2;
+    function groceryFitsWeek(meal, weekMeals) {
+      if (weekMeals.some(m => m.dishFamily === meal.dishFamily)) return false;
+      return !(meal.tags.includes('mex') && weekMeals.filter(m => m.tags.includes('mex')).length >= GROCERY_MAX_MEX_PER_WEEK);
+    }
+    function pickGroceryMeals(count, prefs, tier, exclude, placed) {
       const pool = groceryMealPool(prefs, tier).filter(m => !(exclude && exclude.has(m.id)));
       const pref = groceryShuffle(pool.filter(m => groceryPreferred(m, prefs)));
       const rest = groceryShuffle(pool.filter(m => !groceryPreferred(m, prefs)));
       const order = [...pref, ...rest];
+      const slots = (placed || []).map(p => groceryMealById(p.id)).filter(Boolean);
+      const offset = slots.length;
+      const used = new Set(slots.map(m => m.id));
       const ids = [];
-      for (let i = 0; order.length && i < count; i++) ids.push(order[i % order.length].id);
+      for (let i = 0; order.length && i < count; i++) {
+        const w = Math.floor((offset + i) / GROCERY_DINNERS_PER_WEEK) * GROCERY_DINNERS_PER_WEEK;
+        const week = slots.slice(w, offset + i);
+        // Best first: new and varied; then new; then varied repeats; then anything.
+        const meal = order.find(m => !used.has(m.id) && groceryFitsWeek(m, week))
+          || order.find(m => !used.has(m.id))
+          || order.find(m => !week.some(x => x.id === m.id) && groceryFitsWeek(m, week))
+          || order[i % order.length];
+        used.add(meal.id);
+        slots.push(meal);
+        ids.push(meal.id);
+      }
       return { ids, preferred: pref.length, pool: pool.length };
     }
 
@@ -15266,7 +15327,7 @@
         // Dinners added from Saved Recipes stay; suggestions fill the rest.
         const saved = (trip.meals || []).filter(m => m.source === 'saved' && m.keep !== false);
         const need = Math.max(0, count - saved.length);
-        const pick = pickGroceryMeals(need, prefs, trip.tier, new Set(saved.map(m => m.id)));
+        const pick = pickGroceryMeals(need, prefs, trip.tier, new Set(saved.map(m => m.id)), saved);
         trip.meals = [...saved, ...pick.ids.map(id => ({ id, name: (groceryMealById(id) || {}).name || id, keep: true }))];
         trip.mealsKey = key;
         trip.note = !need ? ''
@@ -15292,8 +15353,12 @@
       const prefs = groceryPrefs() || GROCERY_DEFAULT_PREFS;
       const used = new Set(trip.meals.map(m => m.id));
       const pool = groceryMealPool(prefs, trip.tier).filter(m => !used.has(m.id));
-      const pref = pool.filter(m => groceryPreferred(m, prefs));
-      const choices = pref.length ? pref : pool;
+      const w = Math.floor(Number(i) / GROCERY_DINNERS_PER_WEEK) * GROCERY_DINNERS_PER_WEEK;
+      const week = trip.meals.slice(w, w + GROCERY_DINNERS_PER_WEEK).filter((m, j) => w + j !== Number(i) && m.keep !== false).map(m => groceryMealById(m.id)).filter(Boolean);
+      const varied = pool.filter(m => groceryFitsWeek(m, week));
+      const base = varied.length ? varied : pool;
+      const pref = base.filter(m => groceryPreferred(m, prefs));
+      const choices = pref.length ? pref : base;
       if (!choices.length) { showToast('No other meals match your choices.', 'info'); return; }
       const meal = choices[Math.floor(Math.random() * choices.length)];
       trip.meals[Number(i)] = { id: meal.id, name: meal.name, keep: true };
@@ -16301,7 +16366,7 @@
       const sort = groceryUI.recipeSort || 'most';
       const q = (groceryUI.recipeQuery || '').trim().toLowerCase();
       const browsing = filter === 'library';
-      let rows = browsing ? groceryMeals().map(m => ({ meal: m, saved: recipeSavedFor(m.id) }))
+      let rows = browsing ? groceryMeals().map(m => ({ meal: m, saved: recipeSavedFor(m.id) })).filter(r => !r.meal.retired || r.saved)
         : savedRecipesVisible().map(r => ({ meal: groceryMealById(r.sourceRecipeId), saved: r }));
       if (filter === 'mine') rows = rows.filter(r => recipeIsFav(r.meal.id, 'mine'));
       if (filter === 'family') rows = rows.filter(r => recipeIsFav(r.meal.id, 'family'));
@@ -16313,7 +16378,7 @@
       rows.sort((a, b) => sort === 'az' ? a.meal.name.localeCompare(b.meal.name)
         : sort === 'recent' ? String(b.stats.last || '').localeCompare(String(a.stats.last || '')) || a.meal.name.localeCompare(b.meal.name)
         : b.stats.times - a.stats.times || a.meal.name.localeCompare(b.meal.name));
-      const chips = [['all', 'All'], ['mine', '♥ My Favorites'], ...(hh ? [['family', '🏠 Family Favorites'], ['justme', 'Just me']] : []), ['library', `All ${groceryMeals().length} dinners`]];
+      const chips = [['all', 'All'], ['mine', '♥ My Favorites'], ...(hh ? [['family', '🏠 Family Favorites'], ['justme', 'Just me']] : []), ['library', `All ${groceryMeals().filter(m => !m.retired).length} dinners`]];
       const chipHtml = chips.map(([k, l]) => `<button type="button" id="rc-filter-${k}" aria-pressed="${filter === k}" onclick="setRecipeFilter(${jsArg(k)})" class="min-h-[44px] px-3 rounded-xl text-xs font-bold ${filter === k ? 'bg-brand-500 text-slate-950' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}">${l}</button>`).join('');
       const card = r => {
         const m = r.meal;
