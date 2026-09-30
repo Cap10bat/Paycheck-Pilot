@@ -5538,6 +5538,37 @@
       try { localStorage.setItem(syncBaseStorageKey(), JSON.stringify(buildSyncSnapshot(payload))); } catch (e) {}
     }
 
+    // LOST UPLOAD CONFIRMATIONS. Every upload carries an id (__pushId) and
+    // the ids of earlier uploads it already contains (__seenPushes). Before
+    // uploading, this device notes the upload as unconfirmed. If the
+    // confirmation never arrives (network drop after the write landed), the
+    // next sync checks whether the cloud contains that upload -- directly or
+    // folded into another device's upload -- and if so uses it as the base.
+    // Without this, the stale base made the merge count the same payment
+    // twice (base + our change + the cloud's copy of our change).
+    function pendingPushKey() { return syncBaseStorageKey() + '_pending'; }
+    function notePendingPush(pushId, payload) {
+      try { localStorage.setItem(pendingPushKey(), JSON.stringify({ pushId, snap: buildSyncSnapshot(payload) })); } catch (e) {}
+    }
+    function clearPendingPush() { try { localStorage.removeItem(pendingPushKey()); } catch (e) {} }
+    function cloudContainsPush(cloudPayload, pushId) {
+      if (!cloudPayload || !pushId) return false;
+      return cloudPayload.__pushId === pushId || (Array.isArray(cloudPayload.__seenPushes) && cloudPayload.__seenPushes.includes(pushId));
+    }
+    // The base to merge against: the last confirmed upload/download, unless
+    // an unconfirmed upload of ours is already in the cloud -- then that is.
+    function resolveSyncBase(cloudPayload) {
+      let pending = null;
+      try { pending = JSON.parse(localStorage.getItem(pendingPushKey())); } catch (e) {}
+      if (pending && pending.snap && cloudContainsPush(cloudPayload, pending.pushId)
+          && pending.snap.__lineage === state.syncLineage && state.user && pending.snap.__user === state.user.id) {
+        try { localStorage.setItem(syncBaseStorageKey(), JSON.stringify(pending.snap)); } catch (e) {}
+        clearPendingPush();
+        return pending.snap;
+      }
+      return loadSyncBase();
+    }
+
     function mergeCollection(coll, baseMap, localArr, cloudArr) {
       const L = new Map(), C = new Map();
       (Array.isArray(localArr) ? localArr : []).forEach(i => { const k = syncItemKey(coll, i); if (k) L.set(k, i); });
@@ -5560,6 +5591,12 @@
         let chosen;
         if (!lChanged) chosen = c;                     // theirs (may be a deletion)
         else if (!cChanged) chosen = l;                // ours (may be a deletion)
+        else if (l && c && stableStringify(l) === stableStringify(c)) {
+          // Both sides hold the IDENTICAL item: it's one change that both
+          // already contain (e.g. our own upload whose confirmation was lost),
+          // never two changes to add together.
+          chosen = l;
+        }
         else if (l && c && ACCUMULATOR_FIELDS[coll]) {
           // Both changed the same account/goal. Money amounts ADD: if you
           // spent $50 and your partner spent $30 from the joint checking,
@@ -5598,7 +5635,7 @@
     // likely cause of one member's paycheck edits being reverted) and this
     // user's own income is merged three ways like everything else.
     function mergeWithCloud(localState, cloudPayload) {
-      const base = loadSyncBase();
+      const base = resolveSyncBase(cloudPayload);
       const merged = {};
       SYNCED_COLLECTIONS.forEach(coll => {
         merged[coll] = mergeCollection(coll, base ? (base[coll] || {}) : null, localState[coll], cloudPayload[coll]);
@@ -5625,7 +5662,37 @@
       return merged;
     }
 
-    async function pullCloudState(showStatusToast = false) {
+    // ONE SYNC AT A TIME. Every download and upload on this device runs
+    // through one queue, so a background pull can never interleave with an
+    // upload. (Overlap let a pull that fetched the cloud just before an
+    // upload landed finish just after it: the merge then read the upload's
+    // payment as "undone" by the cloud -- balance back, payment gone, bill
+    // overdue again -- inviting a second, real payment.)
+    let syncQueue = Promise.resolve();
+    let syncUploadSeq = 0;                                   // bumps on every confirmed upload
+    function enqueueSync(fn) {
+      const run = syncQueue.then(fn, fn);
+      syncQueue = run.catch(() => {});
+      return run;
+    }
+    // A pull/upload already waiting in the queue (not yet started) is reused
+    // rather than stacked -- it will run with the latest data anyway -- so a
+    // slow network can't build up a backlog of 10-second background pulls.
+    let queuedPull = null, queuedPush = null;
+    function pullCloudState(showStatusToast = false) {
+      if (queuedPull && !showStatusToast) return queuedPull;
+      const p = enqueueSync(() => { if (queuedPull === p) queuedPull = null; return pullCloudStateNow(showStatusToast); });
+      queuedPull = p;
+      return p;
+    }
+    function triggerCloudSync(isBackground = false) {
+      if (queuedPush && isBackground) return queuedPush;
+      const p = enqueueSync(() => { if (queuedPush === p) queuedPush = null; return triggerCloudSyncNow(isBackground); });
+      queuedPush = p;
+      return p;
+    }
+
+    async function pullCloudStateNow(showStatusToast = false) {
       if (!state.user || state.isDemo || !supabaseClient) {
         setSyncStatus('offline');
         return false;
@@ -5650,6 +5717,7 @@
       }
 
       setSyncStatus('syncing');
+      const uploadSeqAtFetch = syncUploadSeq;
 
       try {
         let { data, error } = await supabaseClient
@@ -5679,6 +5747,13 @@
           return false;
         }
 
+        if (syncUploadSeq !== uploadSeqAtFetch) {
+          // An upload was confirmed after this download started: what we
+          // fetched predates it. Never merge it (the queue makes this
+          // unreachable; this is the backstop).
+          setSyncStatus('synced');
+          return false;
+        }
         if (data && data.data) {
           const previousSyncTime = state.lastSyncTime;
           const cloudPayload = data.data;
@@ -5765,7 +5840,7 @@
       }
     }
 
-    async function triggerCloudSync(isBackground = false) {
+    async function triggerCloudSyncNow(isBackground = false, attempt = 0) {
       state.lastSyncTime = new Date().toISOString();
       const lastSyncEl = document.getElementById('diag-last-sync');
       if (lastSyncEl) lastSyncEl.innerText = new Date(state.lastSyncTime).toLocaleTimeString();
@@ -5838,6 +5913,11 @@
           // copy on this device can't overwrite a partner's newer paycheck.
           state.income_by_owner = { ...merged.income_by_owner };
           localStorage.setItem('paycheck_pilot_state', JSON.stringify(state));
+          // What we just merged against is now the base -- exactly as a
+          // download does. Otherwise, if this upload is refused or fails,
+          // the next attempt compares against an older base and counts the
+          // changes merged here a second time.
+          saveSyncBase(cloudRead.data.data);
         }
 
         // Owner-key this device's own income into the shared payload
@@ -5856,21 +5936,51 @@
         const pushedPayload = JSON.parse(JSON.stringify(state));
         delete pushedPayload.syncLineage; // per-device identity, never shared
         delete pushedPayload.dashboardView; // each member's own Solo/Household choice
+        // Upload identity: this upload's id, plus every earlier upload the
+        // cloud copy we just merged already contained (so a device whose
+        // confirmation was lost can tell its upload landed).
+        const cloudData = cloudRead.data && cloudRead.data.data;
+        const pushId = 'p_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        const seen = [...((cloudData && Array.isArray(cloudData.__seenPushes)) ? cloudData.__seenPushes : []), cloudData && cloudData.__pushId].filter(Boolean);
+        pushedPayload.__pushId = pushId;
+        pushedPayload.__seenPushes = [...new Set(seen)].slice(-40);
+        notePendingPush(pushId, pushedPayload);
         const syncRecord = {
           id: syncKey,
           updated_at: state.lastSyncTime,
           data: pushedPayload
         };
 
-        let { error } = await supabaseClient
-          .from('paycheck_pilot_sync')
-          .upsert(syncRecord);
+        // WRITE ONLY IF UNCHANGED SINCE WE READ IT. A blind upsert let two
+        // devices uploading at the same moment overwrite each other: the
+        // second upload erased the first device's payments (ledger AND
+        // balance). Now the write only lands if the row still carries the
+        // updated_at we merged against; if another device got there first,
+        // download, merge and try again.
+        const readUpdatedAt = cloudRead.data ? cloudRead.data.updated_at : null;
+        const writeOnce = () => readUpdatedAt
+          ? supabaseClient.from('paycheck_pilot_sync').update({ updated_at: syncRecord.updated_at, data: syncRecord.data })
+              .eq('id', syncKey).eq('updated_at', readUpdatedAt).select('id')
+          : supabaseClient.from('paycheck_pilot_sync').insert(syncRecord).select('id');
+        let { data: written, error } = await writeOnce();
 
         if (error && isAuthTokenError(error)) {
           const { error: refreshError } = await supabaseClient.auth.refreshSession();
           if (!refreshError) {
-            ({ error } = await supabaseClient.from('paycheck_pilot_sync').upsert(syncRecord));
+            ({ data: written, error } = await writeOnce());
           }
+        }
+
+        const conflict = (!error && Array.isArray(written) && written.length === 0)   // row changed since we read it
+          || (error && (error.code === '23505' || /duplicate key/i.test(error.message || ''))); // row created meanwhile
+        if (conflict) {
+          if (attempt < 3) return triggerCloudSyncNow(isBackground, attempt + 1);
+          // Still contended: never overwrite blind. Keep local changes and retry later.
+          console.warn("Cloud push postponed: another device kept updating the shared record.");
+          setSyncStatus('error');
+          pendingSyncRetry = true;
+          if (!isBackground) showToast("Couldn't sync right now — changes saved locally and will retry.", "info");
+          return;
         }
 
         if (error) {
@@ -5880,6 +5990,8 @@
           if (!isBackground) showToast("Cloud sync failed — changes saved locally.", "error");
         } else {
           saveSyncBase(pushedPayload); // cloud holds exactly this payload
+          clearPendingPush();
+          syncUploadSeq++;
           setSyncStatus('synced');
           pendingSyncRetry = false;
           if (!isBackground) showToast("Cloud Sync Complete", "success");
