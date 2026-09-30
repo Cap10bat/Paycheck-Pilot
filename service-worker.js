@@ -17,7 +17,10 @@ const APP_SHELL = [
     "./vendor/lucide-1.48.0.min.js", "./vendor/chart-4.5.1.umd.min.js",
     "./vendor/canvas-confetti-1.6.0.browser.js", "./vendor/supabase-js-2.117.1.umd.js",
     "./vendor/papaparse-5.4.1.min.js",
-    "./icons/icon-192.png", "./icons/icon-512.png"
+    "./icons/icon-192.png", "./icons/icon-512.png",
+    // Grocery Run state images (the mid size; others cache on first view)
+    "./images/grocery/mission-begins-800.webp", "./images/grocery/war-room-800.webp",
+    "./images/grocery/the-run-800.webp", "./images/grocery/record-reality-800.webp"
 ];
 
 // ---------------------------------------------------------------------
