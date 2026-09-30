@@ -14037,74 +14037,148 @@
     const GROCERY_SESSION_START = new Date().toISOString();
     // Each meal: name | cost tier | main protein | tags | ingredients for 4
     // ("qty unit name/aisle"; a pantry staple with no amount is "name/S").
+    // Tags: kid, veg (meatless), stretch (stretch to payday), classic (family
+    // classic), and cooking time -- quick (30 minutes or less), long (1-2
+    // hours), slow (slow cooker / all day); no time tag means 30-60 minutes.
     const GROCERY_MEAL_DATA = [
       ['Chicken tacos', 'low', 'chicken', 'kid quick', '1.5 lb chicken thighs/M; 1 pkg flour tortillas/B; 1 head lettuce/P; 2 ct tomatoes/P; 1 bag shredded cheese/D; 1 jar salsa/A; taco seasoning/S'],
       ['Sheet-pan chicken and potatoes', 'low', 'chicken', 'kid', '2 lb chicken thighs/M; 2 lb potatoes/P; 1 bag baby carrots/P; olive oil/S; garlic powder/S'],
-      ['Chicken fried rice', 'low', 'chicken', 'quick', '1 lb chicken thighs/M; 0.5 bag rice/A; 1 bag frozen peas and carrots/F; 0.5 dozen eggs/D; 1 bottle soy sauce/A; vegetable oil/S'],
+      ['Chicken fried rice', 'low', 'chicken', 'quick stretch', '1 lb chicken thighs/M; 0.5 bag rice/A; 1 bag frozen peas and carrots/F; 0.5 dozen eggs/D; 1 bottle soy sauce/A; vegetable oil/S'],
       ['Chicken Alfredo', 'med', 'chicken', 'kid', '1.5 lb chicken breast/M; 1 box fettuccine/A; 1 jar Alfredo sauce/A; 1 head broccoli/P'],
       ['BBQ chicken sandwiches', 'low', 'chicken', 'kid quick', '1.5 lb chicken breast/M; 1 bottle BBQ sauce/A; 1 pkg hamburger buns/B; 1 bag coleslaw mix/P'],
-      ['Chicken noodle soup', 'low', 'chicken', 'kid', '1 lb chicken breast/M; 1 bag egg noodles/A; 2 carton chicken broth/A; 1 bag baby carrots/P; 1 bunch celery/P; 1 ct onion/P'],
+      ['Chicken noodle soup', 'low', 'chicken', 'kid classic stretch', '1 lb chicken breast/M; 1 bag egg noodles/A; 2 carton chicken broth/A; 1 bag baby carrots/P; 1 bunch celery/P; 1 ct onion/P'],
       ['Chicken stir-fry', 'med', 'chicken', 'quick', '1.5 lb chicken breast/M; 1 bag frozen stir-fry vegetables/F; 0.5 bag rice/A; 1 bottle teriyaki sauce/A'],
       ['Chicken quesadillas', 'low', 'chicken', 'kid quick', '1 lb chicken breast/M; 1 pkg flour tortillas/B; 1 bag shredded cheese/D; 1 jar salsa/A; 1 tub sour cream/D'],
       ['Chicken enchiladas', 'med', 'chicken', 'kid', '1.5 lb chicken breast/M; 1 pkg flour tortillas/B; 2 can enchilada sauce/C; 1 bag shredded cheese/D; 1 can black beans/C'],
       ['Honey garlic drumsticks', 'low', 'chicken', 'kid', '3 lb chicken drumsticks/M; 0.5 bag rice/A; 1 bag frozen green beans/F; 1 bottle honey/A; garlic powder/S'],
       ['Chicken Caesar wraps', 'med', 'chicken', 'quick', '1 lb chicken breast/M; 1 pkg flour tortillas/B; 1 head romaine lettuce/P; 1 bottle Caesar dressing/A; 1 bag shredded parmesan/D'],
-      ['Chicken pot pie', 'med', 'chicken', 'kid', '1 lb chicken breast/M; 1 bag frozen mixed vegetables/F; 1 can cream of chicken soup/C; 1 pkg refrigerated pie crust/D'],
-      ['Spaghetti and meat sauce', 'low', 'beef', 'kid', '1 lb ground beef/M; 1 box spaghetti/A; 1 jar pasta sauce/A; 1 ct frozen garlic bread/F'],
-      ['Cheeseburgers and fries', 'med', 'beef', 'kid quick', '1.5 lb ground beef/M; 1 pkg hamburger buns/B; 1 pkg sliced cheese/D; 1 head lettuce/P; 2 ct tomatoes/P; 1 bag frozen fries/F'],
-      ['Beef tacos', 'low', 'beef', 'kid quick', '1 lb ground beef/M; 1 box taco shells/A; 1 head lettuce/P; 1 bag shredded cheese/D; 1 jar salsa/A; taco seasoning/S'],
-      ['Beef chili', 'low', 'beef', '', '1 lb ground beef/M; 2 can kidney beans/C; 2 can diced tomatoes/C; 1 ct onion/P; chili powder/S'],
+      ['Chicken pot pie', 'med', 'chicken', 'kid classic long', '1 lb chicken breast/M; 1 bag frozen mixed vegetables/F; 1 can cream of chicken soup/C; 1 pkg refrigerated pie crust/D'],
+      ['Spaghetti and meat sauce', 'low', 'beef', 'kid classic stretch', '1 lb ground beef/M; 1 box spaghetti/A; 1 jar pasta sauce/A; 1 ct frozen garlic bread/F'],
+      ['Cheeseburgers and fries', 'med', 'beef', 'kid quick classic', '1.5 lb ground beef/M; 1 pkg hamburger buns/B; 1 pkg sliced cheese/D; 1 head lettuce/P; 2 ct tomatoes/P; 1 bag frozen fries/F'],
+      ['Beef tacos', 'low', 'beef', 'kid quick classic', '1 lb ground beef/M; 1 box taco shells/A; 1 head lettuce/P; 1 bag shredded cheese/D; 1 jar salsa/A; taco seasoning/S'],
+      ['Beef chili', 'low', 'beef', 'stretch classic', '1 lb ground beef/M; 2 can kidney beans/C; 2 can diced tomatoes/C; 1 ct onion/P; chili powder/S'],
       ['Beef and broccoli', 'med', 'beef', 'quick', '1.5 lb flank steak/M; 2 head broccoli/P; 0.5 bag rice/A; 1 bottle soy sauce/A'],
-      ['Sloppy joes', 'low', 'beef', 'kid quick', '1 lb ground beef/M; 1 can sloppy joe sauce/C; 1 pkg hamburger buns/B; 1 bag baby carrots/P'],
-      ["Shepherd's pie", 'med', 'beef', 'kid', '1.5 lb ground beef/M; 3 lb potatoes/P; 1 bag frozen peas and carrots/F; 1 pkg butter/D; 1 carton milk/D'],
-      ['Pot roast', 'high', 'beef', '', '3 lb chuck roast/M; 2 lb potatoes/P; 1 bag baby carrots/P; 1 ct onion/P; 1 carton beef broth/A'],
+      ['Sloppy joes', 'low', 'beef', 'kid quick classic', '1 lb ground beef/M; 1 can sloppy joe sauce/C; 1 pkg hamburger buns/B; 1 bag baby carrots/P'],
+      ["Shepherd's pie", 'med', 'beef', 'kid classic long', '1.5 lb ground beef/M; 3 lb potatoes/P; 1 bag frozen peas and carrots/F; 1 pkg butter/D; 1 carton milk/D'],
+      ['Pot roast', 'high', 'beef', 'slow classic', '3 lb chuck roast/M; 2 lb potatoes/P; 1 bag baby carrots/P; 1 ct onion/P; 1 carton beef broth/A'],
       ['Steak and baked potatoes', 'high', 'beef', '', '2 lb sirloin steak/M; 2 lb potatoes/P; 1 bag salad mix/P; 1 tub sour cream/D'],
-      ['Beef stroganoff', 'med', 'beef', 'kid', '1 lb ground beef/M; 1 bag egg noodles/A; 1 pkg mushrooms/P; 1 tub sour cream/D; 1 carton beef broth/A'],
-      ['Meatloaf and green beans', 'med', 'beef', 'kid', '2 lb ground beef/M; 0.5 dozen eggs/D; 1 ct breadcrumbs/A; 1 bottle ketchup/A; 2 lb potatoes/P; 1 bag frozen green beans/F'],
-      ['Baked ziti', 'low', 'beef', 'kid', '1 lb ground beef/M; 1 box ziti/A; 1 jar pasta sauce/A; 1 tub ricotta/D; 1 bag shredded mozzarella/D'],
-      ['Pork chops and applesauce', 'med', 'pork', 'kid', '2 lb pork chops/M; 1 jar applesauce/A; 2 lb potatoes/P; 1 bag frozen green beans/F'],
-      ['Pulled pork sandwiches', 'med', 'pork', 'kid', '3 lb pork shoulder/M; 1 bottle BBQ sauce/A; 1 pkg hamburger buns/B; 1 bag coleslaw mix/P'],
+      ['Beef stroganoff', 'med', 'beef', 'kid classic', '1 lb ground beef/M; 1 bag egg noodles/A; 1 pkg mushrooms/P; 1 tub sour cream/D; 1 carton beef broth/A'],
+      ['Meatloaf and green beans', 'med', 'beef', 'kid long classic', '2 lb ground beef/M; 0.5 dozen eggs/D; 1 ct breadcrumbs/A; 1 bottle ketchup/A; 2 lb potatoes/P; 1 bag frozen green beans/F'],
+      ['Baked ziti', 'low', 'beef', 'kid classic', '1 lb ground beef/M; 1 box ziti/A; 1 jar pasta sauce/A; 1 tub ricotta/D; 1 bag shredded mozzarella/D'],
+      ['Pork chops and applesauce', 'med', 'pork', 'kid classic', '2 lb pork chops/M; 1 jar applesauce/A; 2 lb potatoes/P; 1 bag frozen green beans/F'],
+      ['Pulled pork sandwiches', 'med', 'pork', 'kid slow', '3 lb pork shoulder/M; 1 bottle BBQ sauce/A; 1 pkg hamburger buns/B; 1 bag coleslaw mix/P'],
       ['Sausage and peppers', 'low', 'pork', 'quick', '1.5 lb Italian sausage/M; 3 ct bell peppers/P; 1 ct onion/P; 1 pkg hoagie rolls/B'],
-      ['Pancakes and bacon', 'low', 'pork', 'kid quick', '1 box pancake mix/A; 1 pkg bacon/M; 1 dozen eggs/D; 1 bottle syrup/A'],
+      ['Pancakes and bacon', 'low', 'pork', 'kid quick stretch', '1 box pancake mix/A; 1 pkg bacon/M; 1 dozen eggs/D; 1 bottle syrup/A'],
       ['Ham and cheese sliders', 'low', 'pork', 'kid quick', '1 lb deli ham/M; 1 pkg slider rolls/B; 1 pkg sliced cheese/D; 1 bag baby carrots/P'],
-      ['Pork carnitas bowls', 'med', 'pork', '', '2 lb pork shoulder/M; 0.5 bag rice/A; 1 can black beans/C; 1 jar salsa/A; 3 ct limes/P'],
-      ['Sausage and white bean soup', 'low', 'pork', '', '1 lb smoked sausage/M; 2 can white beans/C; 1 carton chicken broth/A; 1 bag spinach/P; 1 ct onion/P'],
+      ['Pork carnitas bowls', 'med', 'pork', 'slow', '2 lb pork shoulder/M; 0.5 bag rice/A; 1 can black beans/C; 1 jar salsa/A; 3 ct limes/P'],
+      ['Sausage and white bean soup', 'low', 'pork', 'stretch', '1 lb smoked sausage/M; 2 can white beans/C; 1 carton chicken broth/A; 1 bag spinach/P; 1 ct onion/P'],
       ['Teriyaki pork tenderloin', 'high', 'pork', '', '2 lb pork tenderloin/M; 1 bottle teriyaki sauce/A; 0.5 bag rice/A; 2 head broccoli/P'],
-      ['Turkey chili', 'low', 'turkey', '', '1 lb ground turkey/M; 2 can kidney beans/C; 2 can diced tomatoes/C; 1 ct onion/P; chili powder/S'],
+      ['Turkey chili', 'low', 'turkey', 'stretch', '1 lb ground turkey/M; 2 can kidney beans/C; 2 can diced tomatoes/C; 1 ct onion/P; chili powder/S'],
       ['Turkey burgers', 'med', 'turkey', 'quick', '1.5 lb ground turkey/M; 1 pkg hamburger buns/B; 1 head lettuce/P; 2 ct tomatoes/P; 1 bag frozen sweet potato fries/F'],
       ['Turkey meatballs and pasta', 'med', 'turkey', 'kid', '1 lb ground turkey/M; 0.5 dozen eggs/D; 1 ct breadcrumbs/A; 1 box spaghetti/A; 1 jar pasta sauce/A'],
       ['Turkey taco lettuce wraps', 'med', 'turkey', 'quick', '1 lb ground turkey/M; 1 head romaine lettuce/P; 1 jar salsa/A; 1 bag shredded cheese/D; taco seasoning/S'],
       ['Fish tacos', 'med', 'fish', 'quick', '1 box frozen breaded fish/F; 1 pkg flour tortillas/B; 1 bag coleslaw mix/P; 3 ct limes/P; 1 tub sour cream/D'],
       ['Baked salmon and rice', 'high', 'fish', '', '1.5 lb salmon/M; 0.5 bag rice/A; 1 bunch asparagus/P; 2 ct lemons/P'],
-      ['Tuna noodle casserole', 'low', 'fish', 'kid', '3 can tuna/C; 1 bag egg noodles/A; 1 can cream of mushroom soup/C; 1 bag frozen peas/F; 1 bag shredded cheese/D'],
+      ['Tuna noodle casserole', 'low', 'fish', 'kid classic stretch', '3 can tuna/C; 1 bag egg noodles/A; 1 can cream of mushroom soup/C; 1 bag frozen peas/F; 1 bag shredded cheese/D'],
       ['Fish sticks and mac and cheese', 'low', 'fish', 'kid quick', '1 box frozen fish sticks/F; 2 box mac and cheese/A; 1 bag frozen broccoli/F'],
       ['Lemon tilapia and green beans', 'med', 'fish', 'quick', '1 bag frozen tilapia/F; 2 ct lemons/P; 1 bag frozen green beans/F; 0.5 bag rice/A'],
       ['Shrimp stir-fry', 'high', 'shrimp', 'quick', '1 bag frozen shrimp/F; 1 bag frozen stir-fry vegetables/F; 0.5 bag rice/A; 1 bottle soy sauce/A'],
       ['Shrimp scampi', 'high', 'shrimp', 'quick', '1 bag frozen shrimp/F; 1 box linguine/A; 1 pkg butter/D; 2 ct lemons/P; 1 head garlic/P'],
       ['Shrimp tacos', 'high', 'shrimp', 'quick', '1 bag frozen shrimp/F; 1 pkg flour tortillas/B; 1 bag coleslaw mix/P; 3 ct limes/P'],
       ['Veggie omelets and toast', 'low', 'eggs', 'quick veg', '1 dozen eggs/D; 2 ct bell peppers/P; 1 bag spinach/P; 1 bag shredded cheese/D; 1 loaf bread/B'],
-      ['Breakfast burritos', 'low', 'eggs', 'kid quick veg', '1 dozen eggs/D; 1 pkg flour tortillas/B; 1 bag frozen hash browns/F; 1 bag shredded cheese/D; 1 jar salsa/A'],
-      ['Egg fried rice', 'low', 'eggs', 'quick veg', '1 dozen eggs/D; 0.5 bag rice/A; 1 bag frozen peas and carrots/F; 1 bottle soy sauce/A; vegetable oil/S'],
-      ['Spinach quiche and salad', 'med', 'eggs', 'veg', '1 dozen eggs/D; 1 pkg refrigerated pie crust/D; 1 bag shredded cheese/D; 1 bag spinach/P; 1 bag salad mix/P'],
-      ['Black bean quesadillas', 'low', 'beans', 'kid quick veg', '2 can black beans/C; 1 pkg flour tortillas/B; 1 bag shredded cheese/D; 1 jar salsa/A'],
-      ['Vegetarian chili', 'low', 'beans', 'veg', '2 can kidney beans/C; 1 can black beans/C; 2 can diced tomatoes/C; 1 ct onion/P; 2 ct bell peppers/P; chili powder/S'],
-      ['Bean and rice burritos', 'low', 'beans', 'veg', '2 can pinto beans/C; 0.5 bag rice/A; 1 pkg flour tortillas/B; 1 bag shredded cheese/D; 1 jar salsa/A'],
+      ['Breakfast burritos', 'low', 'eggs', 'kid quick veg stretch', '1 dozen eggs/D; 1 pkg flour tortillas/B; 1 bag frozen hash browns/F; 1 bag shredded cheese/D; 1 jar salsa/A'],
+      ['Egg fried rice', 'low', 'eggs', 'quick veg stretch', '1 dozen eggs/D; 0.5 bag rice/A; 1 bag frozen peas and carrots/F; 1 bottle soy sauce/A; vegetable oil/S'],
+      ['Spinach quiche and salad', 'med', 'eggs', 'veg long', '1 dozen eggs/D; 1 pkg refrigerated pie crust/D; 1 bag shredded cheese/D; 1 bag spinach/P; 1 bag salad mix/P'],
+      ['Black bean quesadillas', 'low', 'beans', 'kid quick veg stretch', '2 can black beans/C; 1 pkg flour tortillas/B; 1 bag shredded cheese/D; 1 jar salsa/A'],
+      ['Vegetarian chili', 'low', 'beans', 'veg stretch', '2 can kidney beans/C; 1 can black beans/C; 2 can diced tomatoes/C; 1 ct onion/P; 2 ct bell peppers/P; chili powder/S'],
+      ['Bean and rice burritos', 'low', 'beans', 'veg stretch', '2 can pinto beans/C; 0.5 bag rice/A; 1 pkg flour tortillas/B; 1 bag shredded cheese/D; 1 jar salsa/A'],
       ['Pasta primavera', 'med', 'beans', 'quick veg', '1 box penne/A; 2 ct zucchini/P; 2 ct bell peppers/P; 1 pint cherry tomatoes/P; 1 bag shredded parmesan/D; olive oil/S'],
       ['Homemade cheese pizza', 'low', 'beans', 'kid veg', '2 ct pizza crusts/B; 1 jar pizza sauce/A; 1 bag shredded mozzarella/D; 1 bag salad mix/P'],
-      ['Grilled cheese and tomato soup', 'low', 'beans', 'kid quick veg', '1 loaf bread/B; 1 pkg sliced cheese/D; 2 can tomato soup/C; 1 pkg butter/D'],
-      ['Lentil soup', 'low', 'beans', 'veg', '1 bag lentils/A; 1 bag baby carrots/P; 1 bunch celery/P; 1 ct onion/P; 2 carton vegetable broth/A'],
-      ['Chickpea curry', 'low', 'beans', 'veg', '2 can chickpeas/C; 1 can coconut milk/C; 1 can diced tomatoes/C; 0.5 bag rice/A; curry powder/S'],
+      ['Grilled cheese and tomato soup', 'low', 'beans', 'kid quick veg classic stretch', '1 loaf bread/B; 1 pkg sliced cheese/D; 2 can tomato soup/C; 1 pkg butter/D'],
+      ['Lentil soup', 'low', 'beans', 'veg stretch', '1 bag lentils/A; 1 bag baby carrots/P; 1 bunch celery/P; 1 ct onion/P; 2 carton vegetable broth/A'],
+      ['Chickpea curry', 'low', 'beans', 'veg stretch', '2 can chickpeas/C; 1 can coconut milk/C; 1 can diced tomatoes/C; 0.5 bag rice/A; curry powder/S'],
       ['Tofu veggie stir-fry', 'med', 'beans', 'quick veg', '2 pkg firm tofu/P; 1 bag frozen stir-fry vegetables/F; 0.5 bag rice/A; 1 bottle soy sauce/A'],
-      ['Baked mac and cheese', 'low', 'beans', 'kid veg', '2 box elbow macaroni/A; 2 bag shredded cheese/D; 1 carton milk/D; 1 pkg butter/D; 1 bag frozen broccoli/F'],
-      ['Loaded baked potatoes', 'low', 'beans', 'kid veg', '3 lb potatoes/P; 1 bag shredded cheese/D; 1 tub sour cream/D; 1 head broccoli/P'],
-      ['Minestrone', 'low', 'beans', 'veg', '1 can white beans/C; 1 can kidney beans/C; 2 can diced tomatoes/C; 1 box small pasta/A; 2 ct zucchini/P; 1 bag baby carrots/P; 2 carton vegetable broth/A'],
-      ['Spinach stuffed shells', 'med', 'beans', 'veg', '1 box jumbo pasta shells/A; 1 tub ricotta/D; 1 bag spinach/P; 1 jar pasta sauce/A; 1 bag shredded mozzarella/D']
+      ['Baked mac and cheese', 'low', 'beans', 'kid veg classic stretch', '2 box elbow macaroni/A; 2 bag shredded cheese/D; 1 carton milk/D; 1 pkg butter/D; 1 bag frozen broccoli/F'],
+      ['Loaded baked potatoes', 'low', 'beans', 'kid veg long stretch', '3 lb potatoes/P; 1 bag shredded cheese/D; 1 tub sour cream/D; 1 head broccoli/P'],
+      ['Minestrone', 'low', 'beans', 'veg stretch', '1 can white beans/C; 1 can kidney beans/C; 2 can diced tomatoes/C; 1 box small pasta/A; 2 ct zucchini/P; 1 bag baby carrots/P; 2 carton vegetable broth/A'],
+      ['Spinach stuffed shells', 'med', 'beans', 'veg', '1 box jumbo pasta shells/A; 1 tub ricotta/D; 1 bag spinach/P; 1 jar pasta sauce/A; 1 bag shredded mozzarella/D'],
+      // ---- Core family meals ----
+      ['Beef stew', 'med', 'beef', 'long classic', '2 lb beef stew meat/M; 2 lb potatoes/P; 1 bag baby carrots/P; 1 ct onion/P; 1 carton beef broth/A; flour/S'],
+      ['One-pot chicken and rice', 'low', 'chicken', 'kid classic stretch', '1.5 lb chicken thighs/M; 0.5 bag rice/A; 1 carton chicken broth/A; 1 bag frozen peas/F; 1 ct onion/P'],
+      ['Salisbury steak and mashed potatoes', 'low', 'beef', 'kid classic', '1.5 lb ground beef/M; 1 pkg mushrooms/P; 1 packet brown gravy mix/A; 3 lb potatoes/P; 1 bag frozen green beans/F'],
+      ['Hamburger steak and gravy', 'low', 'beef', 'classic', '1.5 lb ground beef/M; 2 ct onion/P; 1 packet brown gravy mix/A; 0.5 bag rice/A; 1 bag frozen corn/F'],
+      ['Roast chicken and vegetables', 'med', 'chicken', 'kid long classic', '1 ct whole chicken/M; 2 lb potatoes/P; 1 bag baby carrots/P; 1 ct onion/P; olive oil/S'],
+      ['Cheesy chicken and broccoli casserole', 'low', 'chicken', 'kid classic', '1.5 lb chicken breast/M; 0.5 bag rice/A; 1 bag frozen broccoli/F; 1 can cream of chicken soup/C; 1 bag shredded cheese/D'],
+      ['Country fried steak', 'med', 'beef', 'classic', '1.5 lb cube steak/M; 0.5 dozen eggs/D; 1 packet country gravy mix/A; 3 lb potatoes/P; 1 bag frozen corn/F; flour/S'],
+      ['Smothered pork chops', 'med', 'pork', 'classic', '2 lb pork chops/M; 1 can cream of mushroom soup/C; 1 ct onion/P; 0.5 bag rice/A; 1 bag frozen green beans/F'],
+      ['Baked chicken and mashed potatoes', 'low', 'chicken', 'kid classic long', '3 lb chicken drumsticks/M; 3 lb potatoes/P; 1 pkg butter/D; 1 carton milk/D; 1 bag frozen corn/F'],
+      ['Stuffed peppers', 'med', 'beef', 'classic long', '1 lb ground beef/M; 4 ct bell peppers/P; 0.5 bag rice/A; 1 jar pasta sauce/A; 1 bag shredded mozzarella/D'],
+      ['Chicken tenders and fries', 'low', 'chicken', 'kid quick', '1 bag frozen chicken tenders/F; 1 bag frozen fries/F; 1 bag baby carrots/P; 1 bottle ranch dressing/A'],
+      ['Sweet and sour chicken', 'med', 'chicken', 'kid', '1.5 lb chicken breast/M; 1 jar sweet and sour sauce/A; 2 ct bell peppers/P; 1 can pineapple chunks/C; 0.5 bag rice/A'],
+      ['Philly cheesesteak sandwiches', 'med', 'beef', 'quick', '1.5 lb shaved steak/M; 1 pkg hoagie rolls/B; 2 ct bell peppers/P; 1 ct onion/P; 1 pkg sliced provolone/D'],
+      ['Chicken salad sandwiches', 'low', 'chicken', 'quick', '1.5 lb chicken breast/M; 1 jar mayonnaise/A; 1 bunch celery/P; 1 pkg croissants/B; 1 bag grapes/P'],
+      // ---- Mexican inspired ----
+      ['Chicken fajitas', 'med', 'chicken', 'kid quick', '1.5 lb chicken breast/M; 3 ct bell peppers/P; 1 ct onion/P; 1 pkg flour tortillas/B; 1 tub sour cream/D; fajita seasoning/S'],
+      ['Beef fajitas', 'high', 'beef', 'quick', '1.5 lb flank steak/M; 3 ct bell peppers/P; 1 ct onion/P; 1 pkg flour tortillas/B; 1 jar salsa/A; fajita seasoning/S'],
+      ['Beef enchiladas', 'med', 'beef', 'kid', '1 lb ground beef/M; 1 pkg flour tortillas/B; 2 can enchilada sauce/C; 1 bag shredded cheese/D; 1 ct onion/P'],
+      ['Taco soup', 'low', 'beef', 'kid stretch', '1 lb ground beef/M; 1 can pinto beans/C; 1 can black beans/C; 1 can corn/C; 2 can diced tomatoes/C; 1 bag tortilla chips/A; taco seasoning/S'],
+      ['Chicken burrito bowls', 'med', 'chicken', 'kid', '1.5 lb chicken thighs/M; 0.5 bag rice/A; 1 can black beans/C; 1 can corn/C; 1 jar salsa/A; 1 bag shredded cheese/D'],
+      ['Chicken burritos', 'low', 'chicken', 'kid', '1 lb chicken breast/M; 1 pkg large flour tortillas/B; 0.5 bag rice/A; 1 can refried beans/C; 1 bag shredded cheese/D; 1 jar salsa/A'],
+      ['Beef burritos', 'low', 'beef', 'kid', '1 lb ground beef/M; 1 pkg large flour tortillas/B; 1 can refried beans/C; 1 bag shredded cheese/D; 1 jar salsa/A; taco seasoning/S'],
+      ['Cheese quesadillas', 'low', 'beans', 'kid quick veg stretch', '1 pkg flour tortillas/B; 2 bag shredded cheese/D; 1 jar salsa/A; 1 tub sour cream/D'],
+      ['Bean and cheese enchiladas', 'low', 'beans', 'kid veg stretch', '2 can refried beans/C; 1 pkg flour tortillas/B; 2 can enchilada sauce/C; 2 bag shredded cheese/D'],
+      ['Beef and bean nachos', 'low', 'beef', 'kid quick', '1 lb ground beef/M; 1 bag tortilla chips/A; 1 can refried beans/C; 1 bag shredded cheese/D; 1 jar salsa/A; 1 tub sour cream/D'],
+      // ---- Pasta ----
+      ['Lasagna', 'med', 'beef', 'kid long classic', '1 lb ground beef/M; 1 box lasagna noodles/A; 2 jar pasta sauce/A; 1 tub ricotta/D; 2 bag shredded mozzarella/D; 1 ct frozen garlic bread/F'],
+      ['Ravioli bake', 'low', 'beans', 'kid veg', '1 bag frozen cheese ravioli/F; 1 jar pasta sauce/A; 1 bag shredded mozzarella/D; 1 bag salad mix/P'],
+      ['Cheesy beef pasta bake', 'low', 'beef', 'kid stretch', '1 lb ground beef/M; 1 box penne/A; 1 jar pasta sauce/A; 1 bag shredded mozzarella/D'],
+      ['Chicken parmesan', 'med', 'chicken', 'kid classic', '1.5 lb chicken breast/M; 0.5 dozen eggs/D; 1 ct breadcrumbs/A; 1 box spaghetti/A; 1 jar pasta sauce/A; 1 bag shredded mozzarella/D'],
+      ['Goulash', 'low', 'beef', 'kid classic stretch', '1 lb ground beef/M; 1 box elbow macaroni/A; 2 can diced tomatoes/C; 1 can tomato sauce/C; 1 ct onion/P'],
+      ['Cheeseburger macaroni', 'low', 'beef', 'kid quick stretch', '1 lb ground beef/M; 1 box elbow macaroni/A; 1 carton milk/D; 1 bag shredded cheese/D; 1 can tomato sauce/C'],
+      // ---- Budget friendly ----
+      ['Red beans and rice', 'low', 'pork', 'stretch', '1 lb smoked sausage/M; 2 can kidney beans/C; 0.5 bag rice/A; 1 ct onion/P; 1 ct bell peppers/P; 1 bunch celery/P; cajun seasoning/S'],
+      ['Ham and beans with cornbread', 'low', 'pork', 'long classic stretch', '1 ct ham hock/M; 1 bag dried navy beans/A; 1 ct onion/P; 1 box cornbread mix/A; 0.5 dozen eggs/D'],
+      ['Potato soup', 'low', 'pork', 'kid stretch', '3 lb potatoes/P; 1 ct onion/P; 1 carton chicken broth/A; 1 carton milk/D; 1 bag shredded cheese/D; 1 pkg bacon/M'],
+      ['Vegetable soup', 'low', 'beans', 'veg stretch', '1 bag frozen mixed vegetables/F; 2 can diced tomatoes/C; 2 lb potatoes/P; 1 ct onion/P; 2 carton vegetable broth/A; 1 loaf bread/B'],
+      ['Chicken and rice bake', 'low', 'chicken', 'kid stretch', '2 lb chicken thighs/M; 0.5 bag rice/A; 1 can cream of mushroom soup/C; 1 carton chicken broth/A; 1 bag frozen broccoli/F'],
+      ['Split pea soup', 'low', 'pork', 'long stretch', '1 bag split peas/A; 1 ct ham hock/M; 1 bag baby carrots/P; 1 ct onion/P; 1 bunch celery/P'],
+      ['Kielbasa and cabbage', 'low', 'pork', 'stretch', '1.5 lb kielbasa/M; 1 head cabbage/P; 2 lb potatoes/P; 1 ct onion/P'],
+      ['Tuna melts and tomato soup', 'low', 'fish', 'kid quick stretch', '2 can tuna/C; 1 loaf bread/B; 1 pkg sliced cheese/D; 2 can tomato soup/C; 1 jar mayonnaise/A'],
+      ['Salmon patties and corn', 'low', 'fish', 'quick classic stretch', '2 can salmon/C; 0.5 dozen eggs/D; 1 ct breadcrumbs/A; 1 bag frozen corn/F; 1 box mac and cheese/A'],
+      ['Shrimp and sausage jambalaya', 'med', 'shrimp', '', '1 bag frozen shrimp/F; 1 lb smoked sausage/M; 0.5 bag rice/A; 1 can diced tomatoes/C; 1 ct bell peppers/P; 1 ct onion/P; cajun seasoning/S'],
+      // ---- Stretch to payday ----
+      ['Rice and bean bowls', 'low', 'beans', 'quick veg stretch', '0.5 bag rice/A; 2 can black beans/C; 1 can corn/C; 1 jar salsa/A; 1 bag shredded cheese/D'],
+      ['Hot dogs and baked beans', 'low', 'pork', 'kid quick stretch', '1 pkg hot dogs/M; 1 pkg hot dog buns/B; 1 can baked beans/C; 1 bag baby carrots/P'],
+      ['Ramen stir-fry with egg', 'low', 'eggs', 'quick veg stretch', '4 pkg ramen noodles/A; 1 bag frozen stir-fry vegetables/F; 0.5 dozen eggs/D; 1 bottle soy sauce/A'],
+      ['Egg and potato hash', 'low', 'eggs', 'quick veg stretch', '1 bag frozen hash browns/F; 1 dozen eggs/D; 1 ct onion/P; 1 ct bell peppers/P; 1 bag shredded cheese/D'],
+      ['Egg salad sandwiches', 'low', 'eggs', 'quick veg stretch', '1 dozen eggs/D; 1 loaf bread/B; 1 jar mayonnaise/A; 1 bag baby carrots/P'],
+      ['BLT sandwiches', 'low', 'pork', 'quick', '1 pkg bacon/M; 1 loaf bread/B; 1 head lettuce/P; 3 ct tomatoes/P; 1 jar mayonnaise/A'],
+      ['French bread pizza', 'low', 'pork', 'kid quick', '1 loaf French bread/B; 1 jar pizza sauce/A; 1 bag shredded mozzarella/D; 1 pkg pepperoni/M'],
+      // ---- Breakfast for dinner ----
+      ['Pancakes and sausage', 'low', 'pork', 'kid quick', '1 box pancake mix/A; 1 pkg breakfast sausage links/M; 1 bottle syrup/A; 1 carton milk/D'],
+      ['Biscuits and gravy', 'low', 'pork', 'kid classic stretch', '1 lb breakfast sausage/M; 1 can refrigerated biscuits/D; 1 carton milk/D; 1 dozen eggs/D; flour/S'],
+      ['Scrambled eggs and toast', 'low', 'eggs', 'kid quick veg stretch', '1 dozen eggs/D; 1 loaf bread/B; 1 pkg butter/D; 1 bag apples/P'],
+      ['Breakfast casserole', 'low', 'pork', 'kid', '1 dozen eggs/D; 1 lb breakfast sausage/M; 1 bag frozen hash browns/F; 1 bag shredded cheese/D; 1 carton milk/D'],
+      ['French toast and bacon', 'low', 'pork', 'kid quick', '1 loaf bread/B; 1 dozen eggs/D; 1 carton milk/D; 1 pkg bacon/M; 1 bottle syrup/A'],
+      // ---- Sheet pan ----
+      ['Sheet-pan sausage and vegetables', 'low', 'pork', 'stretch', '1.5 lb smoked sausage/M; 2 lb potatoes/P; 2 ct bell peppers/P; 1 head broccoli/P; olive oil/S'],
+      ['Sheet-pan teriyaki chicken', 'med', 'chicken', 'kid', '2 lb chicken thighs/M; 1 bottle teriyaki sauce/A; 2 head broccoli/P; 0.5 bag rice/A'],
+      ['Italian chicken and potatoes', 'low', 'chicken', 'kid', '2 lb chicken thighs/M; 2 lb potatoes/P; 1 bottle Italian dressing/A; 2 ct zucchini/P'],
+      ['Cajun chicken and veggies', 'med', 'chicken', '', '1.5 lb chicken breast/M; 2 ct bell peppers/P; 2 ct zucchini/P; 1 ct onion/P; 0.5 bag rice/A; cajun seasoning/S'],
+      // ---- Slow cooker ----
+      ['Slow cooker chili', 'low', 'beef', 'slow classic stretch', '2 lb ground beef/M; 2 can kidney beans/C; 2 can diced tomatoes/C; 1 can tomato sauce/C; 1 ct onion/P; chili powder/S'],
+      ['Slow cooker BBQ chicken and potatoes', 'low', 'chicken', 'kid slow', '2 lb chicken breast/M; 1 bottle BBQ sauce/A; 3 lb potatoes/P; 1 bag frozen corn/F'],
+      ['Mississippi chicken', 'med', 'chicken', 'kid slow', '2 lb chicken breast/M; 1 packet ranch seasoning/A; 1 packet brown gravy mix/A; 1 jar pepperoncini/A; 1 pkg butter/D; 3 lb potatoes/P'],
+      ['White chicken chili', 'low', 'chicken', 'slow stretch', '1.5 lb chicken breast/M; 2 can white beans/C; 1 can diced green chiles/C; 1 carton chicken broth/A; 1 ct onion/P; 1 tub sour cream/D; cumin/S'],
+      ['Slow cooker chicken tortilla soup', 'low', 'chicken', 'kid slow stretch', '1.5 lb chicken breast/M; 1 can black beans/C; 1 can corn/C; 2 can diced tomatoes/C; 1 carton chicken broth/A; 1 bag tortilla chips/A; taco seasoning/S'],
+      ['Slow cooker beef and noodles', 'med', 'beef', 'kid slow classic', '2 lb beef stew meat/M; 1 bag egg noodles/A; 1 carton beef broth/A; 1 can cream of mushroom soup/C; 1 bag frozen peas/F'],
+      ['Slow cooker chicken and dumplings', 'low', 'chicken', 'kid slow classic', '1.5 lb chicken breast/M; 1 can refrigerated biscuits/D; 1 can cream of chicken soup/C; 1 carton chicken broth/A; 1 bag frozen mixed vegetables/F']
     ];
     // "Foods to leave out" words that stand for a whole group.
     const GROCERY_LEAVE_GROUPS = {
-      meat: { proteins: ['chicken', 'beef', 'pork', 'turkey'], words: ['bacon', 'sausage', 'ham', 'steak'] },
+      meat: { proteins: ['chicken', 'beef', 'pork', 'turkey'], words: ['bacon', 'sausage', 'ham', 'steak', 'kielbasa', 'hot dog', 'pepperoni'] },
       seafood: { proteins: ['fish', 'shrimp'], words: ['tuna', 'salmon', 'tilapia', 'shrimp'] },
-      dairy: { proteins: [], words: ['cheese', 'milk', 'butter', 'sour cream', 'ricotta', 'parmesan', 'mozzarella', 'alfredo', 'cream of', 'pie crust'] }
+      dairy: { proteins: [], words: ['cheese', 'milk', 'butter', 'sour cream', 'ricotta', 'parmesan', 'mozzarella', 'provolone', 'alfredo', 'cream of', 'pie crust'] }
     };
     const GROCERY_UNIT_PLURALS = { box: 'boxes', bunch: 'bunches', loaf: 'loaves', dozen: 'dozen', lb: 'lb' };
 
@@ -14126,6 +14200,18 @@
       return groceryMealCache;
     }
     function groceryMealById(id) { return groceryMeals().find(m => m.id === id) || null; }
+    // What a dinner is like: how long it takes (no difficulty labels) and
+    // what kind of meal it is.
+    const GROCERY_TIME_LABELS = { quick: '⚡ 30 Minutes or Less', mid: '🍽️ 30–60 Minutes', long: '🥘 1–2 Hours', slow: '⏳ Slow Cooker / All Day' };
+    const GROCERY_TAG_LABELS = { budget: '💵 Budget Friendly', classic: '❤️ Family Classic', stretch: '🛒 Stretch To Payday', veg: '🥦 Meatless', kid: '👨‍👩‍👧‍👦 Kid Friendly' };
+    function groceryMealTime(meal) { return meal.tags.includes('slow') ? 'slow' : meal.tags.includes('long') ? 'long' : meal.tags.includes('quick') ? 'quick' : 'mid'; }
+    function groceryMealTagKeys(meal) { return Object.keys(GROCERY_TAG_LABELS).filter(k => k === 'budget' ? meal.cost === 'low' : meal.tags.includes(k)); }
+    function groceryMealLabels(meal) { return [GROCERY_TIME_LABELS[groceryMealTime(meal)], ...groceryMealTagKeys(meal).map(k => GROCERY_TAG_LABELS[k])]; }
+    function groceryMealHasCategory(meal, cat) {
+      if (!cat) return true;
+      const [kind, key] = cat.split(':');
+      return kind === 'time' ? groceryMealTime(meal) === key : groceryMealTagKeys(meal).includes(key);
+    }
 
     // ---- Saved preferences (one entry, shared with the household) ----
     function groceryPrefs() {
@@ -15223,7 +15309,7 @@
         const on = m.keep !== false;
         const week = Math.floor(i / GROCERY_DINNERS_PER_WEEK) + 1;
         const header = i % GROCERY_DINNERS_PER_WEEK === 0 && trip.meals.length > GROCERY_DINNERS_PER_WEEK ? `<li class="pt-2 text-[11px] font-bold uppercase tracking-wider text-slate-500" aria-hidden="true">Week ${week}</li>` : '';
-        const tags = [meal.tags.includes('kid') ? 'kid-friendly' : '', meal.tags.includes('quick') ? 'quick' : '', meal.tags.includes('veg') ? 'meatless' : ''].filter(Boolean).join(' · ');
+        const tags = meal.tags ? groceryMealLabels(meal).slice(0, 3).join(' · ') : '';
         return `${header}<li class="flex items-center gap-2 p-3 rounded-2xl border ${on ? 'border-slate-800 bg-slate-900/80' : 'border-dashed border-slate-800 bg-transparent opacity-60'}">
           <button type="button" id="gr-view-${i}" onclick="openRecipe(${jsArg(m.id)}, 'meals')" aria-label="View recipe for ${escapeHtml(meal.name)}" class="flex-1 min-w-0 min-h-[44px] text-left rounded-xl hover:bg-slate-800/60 px-1"><span class="block text-sm font-semibold text-white">${recipeIsFav(m.id, 'mine') ? '<span class="text-rose-300" aria-hidden="true">♥ </span>' : ''}${escapeHtml(meal.name)}</span><span class="block text-[11px] text-slate-500">${[m.source === 'saved' ? 'from Saved Recipes' : '', tags].filter(Boolean).join(' · ')}${tags || m.source === 'saved' ? ' · ' : ''}<span class="text-brand-400">View recipe ›</span></span></button>
           <button type="button" id="gr-keep-${i}" aria-pressed="${on}" aria-label="Keep ${escapeHtml(meal.name)}" onclick="groceryToggleKeep(${i})" class="min-h-[44px] px-3 rounded-xl text-xs font-bold ${on ? 'bg-brand-500/20 text-brand-300' : 'bg-slate-800 text-slate-400'}">${on ? '✓ Keep' : 'Keep'}</button>
@@ -15724,14 +15810,35 @@
           <p class="text-sm text-slate-300">The run history shows:</p>
           ${bullets(['who started it', 'who edited it', 'who placed the order', 'who recorded the total'])}
         </section>
-        <section class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 space-y-2" aria-labelledby="gh-recipes">
+        <section class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 space-y-3" aria-labelledby="gh-recipes">
           <div class="flex items-center gap-3">
             <span class="shrink-0 w-11 h-11 rounded-2xl bg-slate-800 flex items-center justify-center text-xl" aria-hidden="true">📖</span>
             <h3 id="gh-recipes" class="text-base font-extrabold text-white">Saved Recipes</h3>
           </div>
-          <p class="text-sm text-slate-300">Tap any dinner to open its recipe. From there you can:</p>
-          ${bullets(['Save it (for the Family, or just for you)', '♥ add it to My Favorites — only you see these', '🏠 make it a Family Favorite — everyone sees it', 'Add notes, just for you or for the Family', 'Add it to your Grocery Run', 'Tap "We cooked this" — Times Cooked counts days, so two taps on the same day count once'])}
-          <p class="text-sm text-slate-300">Recipes never affect your money. Notes never change the recipe itself.</p>
+          <p class="text-sm text-slate-300">Tap any dinner to open its recipe. Open 📖 Saved Recipes from the Grocery Run screen to see everything you've kept.</p>
+          <dl class="space-y-2 text-sm">
+            ${[['💾 Save Recipe', 'Keep a dinner you like. Save it for the Family so everyone sees it, or just for you.'],
+               ['♥ My Favorites', 'Your own favorites. Only you see them.'],
+               ['🏠 Family Favorites', 'Dinners your family loves. Anyone in your household can mark one, and everyone sees it.'],
+               ['📝 Recipe Notes', 'Reminders like "use extra cheese". Keep a note just for you or share it with the Family. Notes never change the recipe.'],
+               ['🍳 We Cooked This', 'Tap it after you make the dinner. Made a mistake? Tap Undo.'],
+               ['🔢 Times Cooked', 'How many different days you made it. Two taps on the same day count once.'],
+               ['📅 Last Cooked', 'The most recent day anyone made it.'],
+               ['🛒 Add To Grocery Run', "Puts the dinner and its ingredients on your grocery list. If the list is locked, you'll be asked to unlock it first."]]
+              .map(([t, d]) => `<div class="rounded-xl bg-slate-800/60 p-3"><dt class="font-bold text-white">${t}</dt><dd class="text-slate-300">${escapeHtml(d)}</dd></div>`).join('')}
+          </dl>
+          <p class="text-sm text-slate-300">Recipes never affect your money.</p>
+        </section>
+        <section class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 space-y-2" aria-labelledby="gh-kinds">
+          <div class="flex items-center gap-3">
+            <span class="shrink-0 w-11 h-11 rounded-2xl bg-slate-800 flex items-center justify-center text-xl" aria-hidden="true">🍽️</span>
+            <h3 id="gh-kinds" class="text-base font-extrabold text-white">Kinds of meals</h3>
+          </div>
+          <p class="text-sm text-slate-300">Every dinner shows how long it takes:</p>
+          <div class="flex flex-wrap gap-1.5">${Object.values(GROCERY_TIME_LABELS).map(l => `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-800 text-slate-200">${l}</span>`).join('')}</div>
+          <p class="text-sm text-slate-300">And what kind of meal it is:</p>
+          <div class="flex flex-wrap gap-1.5">${Object.values(GROCERY_TAG_LABELS).map(l => `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-800 text-slate-200">${l}</span>`).join('')}</div>
+          <p class="text-sm text-slate-300">🛒 Stretch To Payday meals use cheap, filling basics like rice, beans, potatoes and eggs. In Saved Recipes, use "Show" to browse any of these.</p>
         </section>
         <p class="text-xs text-slate-400">Changed your mind? You can cancel a run any time before it's completed — nothing is recorded.</p>
         <button type="button" onclick="closeGroceryHelp()" class="w-full min-h-[44px] rounded-xl bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold text-sm">Got it</button>`;
@@ -15877,7 +15984,6 @@
     //                   distinct days, so two people tapping for the same
     //                   dinner count it once.
     // =====================================================================
-    const RECIPE_COST_LABEL = { low: 'Budget-friendly', medium: 'Mid-range', high: 'Splurge' };
     function recipeMe() { return state.user ? state.user.id : null; }
     function recipeActorFields(prefix) {
       return { [prefix + 'At']: new Date().toISOString(), [prefix + 'By']: currentOwnerLabel(), [prefix + 'ById']: recipeMe() };
@@ -16162,8 +16268,8 @@
       if (getCurrentPageId() !== 'groceries') { groceryUI.step = 'recipes'; navigateTo('groceries'); return; }
       groceryGo('recipes');
     }
-    function recipeTagText(meal) {
-      return [meal.tags.includes('kid') ? 'kid-friendly' : '', meal.tags.includes('quick') ? 'quick' : '', meal.tags.includes('veg') ? 'meatless' : ''].filter(Boolean).join(' · ');
+    function recipeLabelChips(meal) {
+      return `<div class="flex flex-wrap gap-1.5">${groceryMealLabels(meal).map(l => `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-800 text-slate-300">${escapeHtml(l)}</span>`).join('')}</div>`;
     }
     function recipeBadges(mealId) {
       const saved = recipeSavedFor(mealId);
@@ -16186,6 +16292,7 @@
     }
     function setRecipeFilter(f) { groceryUI.recipeFilter = f; renderGroceries(); const b = document.getElementById('rc-filter-' + f); if (b) b.focus(); }
     function setRecipeSort(s) { groceryUI.recipeSort = s; renderGroceries(); }
+    function setRecipeCat(c) { groceryUI.recipeCat = c; renderGroceries(); }
     function setRecipeQuery(q) { groceryUI.recipeQuery = String(q || '').slice(0, 60); renderGroceries(); }
     function savedRecipesHtml() {
       const hh = inHouseholdMode();
@@ -16200,6 +16307,8 @@
       if (filter === 'family') rows = rows.filter(r => recipeIsFav(r.meal.id, 'family'));
       if (filter === 'justme') rows = rows.filter(r => r.saved && r.saved.scope !== 'household');
       if (q) rows = rows.filter(r => r.meal.name.toLowerCase().includes(q));
+      const cat = groceryUI.recipeCat || '';
+      if (cat) rows = rows.filter(r => groceryMealHasCategory(r.meal, cat));
       rows.forEach(r => { r.stats = recipeCookStats(r.meal.id); });
       rows.sort((a, b) => sort === 'az' ? a.meal.name.localeCompare(b.meal.name)
         : sort === 'recent' ? String(b.stats.last || '').localeCompare(String(a.stats.last || '')) || a.meal.name.localeCompare(b.meal.name)
@@ -16214,6 +16323,7 @@
           <button type="button" onclick="openRecipe(${jsArg(m.id)}, 'recipes')" class="w-full min-h-[44px] text-left rounded-xl hover:bg-slate-800/60 px-1">
             <span class="block text-sm font-bold text-white">${escapeHtml(m.name)}</span>
             <span class="block text-xs text-slate-400">${escapeHtml(recipeCookedText(m.id))}${browsing && !r.saved ? ' · not saved' : ''}</span>
+            <span class="block text-[11px] text-slate-500">${escapeHtml(groceryMealLabels(m).slice(0, 3).join(' · '))}</span>
           </button>
           ${recipeBadges(m.id)}
           ${latest ? `<p class="text-xs text-slate-300 break-words">“${escapeHtml(latest.text.length > 120 ? latest.text.slice(0, 117) + '…' : latest.text)}” <span class="text-slate-500">— ${escapeHtml(groceryPersonName(latest.byId, latest.by))}</span></p>` : ''}
@@ -16224,6 +16334,7 @@
         </li>`;
       };
       const empty = q ? `No recipes match “${escapeHtml(q)}”.`
+        : cat ? 'Nothing here in that kind of meal. Try All kinds of meals, or browse all the dinners.'
         : filter === 'mine' ? 'No favorites yet. Tap ♥ My Favorite on a recipe you love.'
         : filter === 'family' ? 'No Family Favorites yet.'
         : filter === 'justme' ? 'Nothing saved just for you.'
@@ -16233,6 +16344,12 @@
         <div><label for="rc-search" class="sr-only">Search recipes</label>
           <input id="rc-search" type="search" maxlength="60" autocomplete="off" placeholder="Search recipes" value="${escapeHtml(groceryUI.recipeQuery || '')}" oninput="setRecipeQuery(this.value)" class="w-full min-h-[44px] bg-slate-900 border border-slate-800 rounded-xl px-3 text-sm text-slate-200 outline-none focus:border-brand-500" /></div>
         <div class="flex flex-wrap gap-2" role="group" aria-label="Show">${chipHtml}</div>
+        <div class="flex flex-wrap items-center gap-2"><label for="rc-cat" class="text-xs text-slate-400">Show</label>
+          <select id="rc-cat" onchange="setRecipeCat(this.value)" class="min-h-[44px] min-w-0 max-w-full bg-slate-900 border border-slate-800 rounded-xl px-3 text-sm text-slate-200">
+            <option value="" ${!cat ? 'selected' : ''}>All kinds of meals</option>
+            <optgroup label="Cooking time">${Object.entries(GROCERY_TIME_LABELS).map(([k, l]) => `<option value="time:${k}" ${cat === 'time:' + k ? 'selected' : ''}>${l}</option>`).join('')}</optgroup>
+            <optgroup label="Kind of meal">${Object.entries(GROCERY_TAG_LABELS).map(([k, l]) => `<option value="tag:${k}" ${cat === 'tag:' + k ? 'selected' : ''}>${l}</option>`).join('')}</optgroup>
+          </select></div>
         <div class="flex items-center gap-2"><label for="rc-sort" class="text-xs text-slate-400">Sort</label>
           <select id="rc-sort" onchange="setRecipeSort(this.value)" class="min-h-[44px] bg-slate-900 border border-slate-800 rounded-xl px-3 text-sm text-slate-200">
             ${[['most', 'Most cooked'], ['recent', 'Recently cooked'], ['az', 'A–Z']].map(([k, l]) => `<option value="${k}" ${sort === k ? 'selected' : ''}>${l}</option>`).join('')}
@@ -16248,8 +16365,8 @@
       const mineFav = recipeIsFav(meal.id, 'mine');
       const famFav = recipeIsFav(meal.id, 'family');
       const myCook = recipeMyCook(meal.id, null);
-      const tags = recipeTagText(meal);
-      const facts = [RECIPE_COST_LABEL[meal.cost] || '', meal.protein && meal.protein !== 'none' ? meal.protein.charAt(0).toUpperCase() + meal.protein.slice(1) : '', tags].filter(Boolean).join(' · ');
+      const protein = (GROCERY_PROTEINS.find(p => p[0] === meal.protein) || [])[1] || '';
+      const facts = protein ? `Main ingredient: ${protein}` : '';
       const ings = meal.ingredients.map(i => `<li class="flex justify-between gap-3 py-1 border-b border-slate-800/60 last:border-0">
           <span class="text-sm text-slate-200 min-w-0 break-words">${escapeHtml(groceryItemName(i))}</span>
           <span class="text-xs text-slate-400 shrink-0">${i.staple ? 'pantry' : escapeHtml(groceryQtyText({ qty: i.qty, unit: i.unit }))}</span></li>`).join('');
@@ -16270,6 +16387,7 @@
       const hist = recipeHistory(meal.id);
       const histHtml = hist.length ? `<ol class="space-y-1 text-xs">${hist.slice(0, 25).map(e => `<li class="flex gap-2"><span class="shrink-0 w-20 text-slate-500">${escapeHtml(friendlyDate(e.day || localDateStr(new Date(e.at))))}</span><span class="text-slate-300">${escapeHtml(e.text)}</span></li>`).join('')}</ol>` : '<p class="text-xs text-slate-500">Nothing yet.</p>';
       return groceryStepShell(0, 0, escapeHtml(meal.name), `
+        ${recipeLabelChips(meal)}
         <p class="text-xs text-slate-400">${escapeHtml(facts)}</p>
         ${recipeBadges(meal.id)}
         <p class="text-sm font-semibold text-white" aria-live="polite">${escapeHtml(recipeCookedText(meal.id))}</p>
