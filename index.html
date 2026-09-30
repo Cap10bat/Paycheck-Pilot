@@ -3914,8 +3914,12 @@
         // total does, as an ordinary transaction.
         groceryPrefs: [],
         groceryTrips: [],
-        // Grocery Run activity for household notifications ("Boo started a
-        // Grocery Run"). Informational only.
+        // One record per list item (Needed / Have it / Purchased / Skipped),
+        // so two people ticking at once both keep their ticks.
+        groceryItems: [],
+        // Grocery Run history: every step, send and total ("Boo marked
+        // Grocery Run ready"). Drives the run's state and household
+        // notifications; never touches money.
         groceryEvents: []
       };
     }
@@ -5205,7 +5209,7 @@
     // With no base yet (first sync after this update) nothing is ever
     // dropped, so existing data needs no migration.
     // =====================================================================
-    const SYNCED_COLLECTIONS = ['accounts', 'bills', 'transactions', 'goals', 'householdPaychecks', 'activityLog', 'importHistory', 'groceryPrefs', 'groceryTrips', 'groceryEvents'];
+    const SYNCED_COLLECTIONS = ['accounts', 'bills', 'transactions', 'goals', 'householdPaychecks', 'activityLog', 'importHistory', 'groceryPrefs', 'groceryTrips', 'groceryItems', 'groceryEvents'];
     // Money amounts that combine when two members change them concurrently.
     const ACCUMULATOR_FIELDS = { accounts: ['balance'], goals: ['current'] };
 
@@ -12929,7 +12933,8 @@
           <p><strong class="text-white">New date agreed:</strong> open the bill and tap <strong class="text-white">Biller gave me a new date</strong>. Only that payment moves.</p>
           <p><strong class="text-white">Paid part:</strong> log what you paid as a transaction so your balance is right. Paycheck Pilot can't split one bill payment yet, so it still expects the full amount on the due date — your forecast will look slightly worse than reality by the amount already paid. It errs on the side of caution.</p>` },
         { id: 'grocery-run', q: "How does Grocery Run work?", body: `
-          <p>Open it from the bottom of the <strong class="text-white">Dashboard</strong> or from the <strong class="text-white">Bills</strong> page. Pick who's eating and what your family eats (saved for next time), how many weeks, and Low / Medium / No limit — which only changes the kind of meals suggested. You get 5 dinners a week and one combined list to share, copy or print.</p>
+          <p>Open it from the bottom of the <strong class="text-white">Dashboard</strong> or from the <strong class="text-white">Bills</strong> page. Pick who's eating and what your family eats (saved for next time), how many weeks, and Low / Medium / No limit — which only changes the kind of meals suggested. You get 5 dinners a week and one combined list.</p>
+          <p>A run goes <strong class="text-white">Draft → Ready To Order → Ordered → Completed</strong> (or Cancelled). Ready To Order locks the list (unlock it to change anything) and lets you share, copy or print it. Once the order is placed or you're at the store, mark it Ordered and tick items off as Purchased or Skipped. The run history shows who started it, edited it, placed the order and recorded the total.</p>
           <p><strong class="text-white">It never guesses prices.</strong> The only money it shows is your Safe Spend, and groceries come out of that along with fuel and everything else that isn't a bill.</p>
           <p><strong class="text-white">Nothing touches your balance until you enter the real total.</strong> Then it's recorded once as a Groceries transaction, and Safe Spend and the forecast update. In a household, a run is shared the moment it starts: everyone can edit the list (the latest edit wins), members get a heads-up when a run is started, updated, ready or recorded, and the app checks first so the same shop can't be recorded twice.</p>` },
         { id: 'surprise-expense', q: "I had a surprise expense", body: `
@@ -14078,19 +14083,52 @@
     }
 
     // ---- Runs ----
-    // A run is saved and shared the moment it starts, so everyone in the
-    // household sees and edits the same one (latest edit wins). Status:
-    // planning -> ready (list done, "ready to order") -> recorded | cancelled.
+    // Draft -> Ready To Order -> Ordered -> Completed, or Cancelled.
+    // A run's state is read from its shared history (the event log), which
+    // merges without losing anyone's step; trip.status is only a fallback
+    // for runs whose history has been trimmed. "Waiting For Total" is the
+    // label an Ordered run shows, not a separate state.
+    const GROCERY_STATE_LABEL = { draft: 'Draft', ready: 'Ready To Order', ordered: 'Ordered', completed: 'Completed', cancelled: 'Cancelled' };
+    const GROCERY_TRANSITIONS = { started: 'draft', ready: 'ready', unlocked: 'draft', ordered: 'ordered', cancelled: 'cancelled', recorded: 'completed' };
+    const GROCERY_METHODS = { 'in-store': 'in store', pickup: 'pickup', delivery: 'delivery' };
+    // Future store hand-off (Instacart / Kroger). Nothing is sent to any
+    // store yet. Reserved: trip.external = { provider, listUrl, orderRef,
+    // sentAt } and item.external = { productId, qtyOrdered, qtyDelivered,
+    // replacement } for whatever a store integration can report back.
+    const GROCERY_STORE_TARGETS = { instacart: { name: 'Instacart', available: false }, kroger: { name: 'Kroger', available: false } };
+    const GROCERY_KEEP_CLOSED_RUNS = 10; // older closed runs keep a summary, not every item
+
+    function groceryLegacyStatus(s) {
+      if (s === 'planning') return 'draft';
+      if (s === 'recorded') return 'completed';
+      return ['draft', 'ready', 'ordered', 'completed', 'cancelled'].includes(s) ? s : 'draft';
+    }
     function groceryTripTx(tripId) {
       return (state.transactions || []).filter(t => t && t.source === 'grocery-run' && t.groceryTripId === tripId).sort(compareBillPayments)[0] || null;
     }
+    function groceryEventOrder(a, b) {
+      const x = String(a.at), y = String(b.at);
+      if (x !== y) return x < y ? -1 : 1;
+      return String(a.id) < String(b.id) ? -1 : 1;
+    }
+    function groceryTripEvents(tripId) {
+      return (state.groceryEvents || []).filter(e => e && e.tripId === tripId).sort(groceryEventOrder);
+    }
+    function groceryLastTransition(tripId) {
+      const tr = groceryTripEvents(tripId).filter(e => GROCERY_TRANSITIONS[e.type]);
+      return tr[tr.length - 1] || null;
+    }
     function groceryTripStatus(trip) {
       if (!trip) return null;
-      if (groceryTripTx(trip.id) || trip.status === 'recorded') return 'recorded';
-      if (trip.status === 'cancelled') return 'cancelled';
-      return trip.status === 'ready' ? 'ready' : 'planning';
+      if (groceryTripTx(trip.id) || groceryLegacyStatus(trip.status) === 'completed') return 'completed';
+      const last = groceryLastTransition(trip.id);
+      return last ? GROCERY_TRANSITIONS[last.type] : groceryLegacyStatus(trip.status);
     }
-    function groceryTripIsOpen(trip) { const s = groceryTripStatus(trip); return s === 'planning' || s === 'ready'; }
+    function groceryStateLabel(trip) {
+      const s = groceryTripStatus(trip);
+      return s === 'ordered' ? 'Ordered · Waiting For Total' : GROCERY_STATE_LABEL[s];
+    }
+    function groceryTripIsOpen(trip) { const s = groceryTripStatus(trip); return s === 'draft' || s === 'ready' || s === 'ordered'; }
     // Oldest first: if two people start a run at the same moment, both
     // phones settle on the same (first) one.
     function openGroceryTrips() {
@@ -14110,12 +14148,23 @@
       if (syncDebounceTimer) { clearTimeout(syncDebounceTimer); syncDebounceTimer = null; }
       triggerCloudSync(true);
     }
+    function groceryStamp(obj) {
+      obj.lastModifiedAt = new Date().toISOString();
+      obj.lastModifiedBy = currentOwnerLabel();
+      obj.lastModifiedById = state.user ? state.user.id : null;
+    }
     function touchGroceryTrip(trip, eventType) {
-      trip.lastModifiedAt = new Date().toISOString();
-      trip.lastModifiedBy = currentOwnerLabel();
-      trip.lastModifiedById = state.user ? state.user.id : null;
+      groceryStamp(trip);
       if (eventType) addGroceryEvent(trip, eventType);
       saveStateToStorage();
+    }
+    // Who last changed the run or anything on its list.
+    function groceryLastEdit(trip) {
+      let best = { at: trip.lastModifiedAt || trip.createdAt, byId: trip.lastModifiedById || trip.createdById, by: trip.lastModifiedBy || trip.createdBy };
+      (state.groceryItems || []).forEach(i => {
+        if (i && i.tripId === trip.id && i.lastModifiedAt && String(i.lastModifiedAt) > String(best.at)) best = { at: i.lastModifiedAt, byId: i.lastModifiedById, by: i.lastModifiedBy };
+      });
+      return best;
     }
     // Two people pressed Start at the same moment: keep the first run and
     // fold this device's later one into it.
@@ -14126,13 +14175,12 @@
       const me = state.user ? state.user.id : null;
       let changed = false;
       open.slice(1).forEach(t => {
-        if (!me || t.createdById !== me || groceryTripStatus(t) !== 'planning') return;
+        if (!me || t.createdById !== me || groceryTripStatus(t) !== 'draft') return;
         t.status = 'cancelled';
         t.mergedInto = keep.id;
-        t.closedAt = new Date().toISOString();
-        t.closedBy = currentOwnerLabel();
-        t.lastModifiedAt = t.closedAt; t.lastModifiedBy = t.closedBy; t.lastModifiedById = me;
-        state.groceryEvents = (state.groceryEvents || []).filter(e => !(e && e.tripId === t.id && e.byId === me));
+        groceryStamp(t);
+        state.groceryEvents = (state.groceryEvents || []).filter(e => !(e && e.tripId === t.id));
+        state.groceryItems = (state.groceryItems || []).filter(i => !(i && i.tripId === t.id));
         if (groceryUI.tripId === t.id) groceryUI.tripId = keep.id;
         showToast(`${groceryPersonName(keep.createdById, keep.createdBy)} started a Grocery Run at the same time — you're both on that one now.`, 'info');
         changed = true;
@@ -14141,32 +14189,63 @@
       return changed;
     }
 
-    // ---- Household notifications (informational only; no money) ----
+    // ---- Run history (also drives household notifications) ----
     function addGroceryEvent(trip, type, extra) {
       const me = state.user ? state.user.id : null;
       if (!state.groceryEvents) state.groceryEvents = [];
-      // "Updated the list" at most every 10 minutes per person, so ticking
-      // items off doesn't send a notification per tap.
+      const nowMs = Date.now();
+      // "Edited the list" at most every 10 minutes per person.
       if (type === 'updated' && state.groceryEvents.some(e => e && e.tripId === trip.id && e.byId === me
-          && (e.type === 'updated' || e.type === 'started') && Date.now() - new Date(e.at).getTime() < 10 * 60000)) return;
-      state.groceryEvents.push({
-        id: 'gev_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
-        tripId: trip.id, type, byId: me, by: currentOwnerLabel(), at: new Date().toISOString(),
+          && (e.type === 'updated' || e.type === 'started' || e.type === 'unlocked') && nowMs - new Date(e.at).getTime() < 10 * 60000)) return null;
+      // Never earlier than the run's last step, even if this phone's clock
+      // is behind -- the order of steps is what decides the run's state.
+      const prev = groceryTripEvents(trip.id);
+      const lastAt = prev.length ? new Date(prev[prev.length - 1].at).getTime() : 0;
+      const ev = {
+        id: 'gev_' + nowMs + '_' + Math.random().toString(36).slice(2, 7),
+        tripId: trip.id, type, byId: me, by: currentOwnerLabel(),
+        at: new Date(Math.max(nowMs, lastAt + 1)).toISOString(),
         scope: trip.scope, ownerId: trip.ownerId, ...(extra || {})
-      });
-      if (state.groceryEvents.length > 60) state.groceryEvents.splice(0, state.groceryEvents.length - 60);
+      };
+      state.groceryEvents.push(ev);
+      return ev;
     }
+    function groceryMethodText(e) {
+      const bits = [e.store ? groceryStoreName(e.store).replace('your store', 'Other store') : '', GROCERY_METHODS[e.method] || ''].filter(Boolean);
+      return bits.length ? ` (${bits.join(', ')})` : '';
+    }
+    // Timeline wording, e.g. "Boo marked Grocery Run ready."
+    function groceryHistoryText(e) {
+      const who = groceryPersonName(e.byId, e.by);
+      switch (e.type) {
+        case 'started': return `${who} started Grocery Run.`;
+        case 'updated': return `${who} edited the list.`;
+        case 'ready': return `${who} marked Grocery Run ready.`;
+        case 'unlocked': return `${who} unlocked the list.`;
+        case 'sent': return `${who} sent the list via ${e.via || 'Share'}.`;
+        case 'ordered': return `${who} placed order${groceryMethodText(e)}.`;
+        case 'recorded': return `${who} recorded total: ${formatMoney(e.amount)}.`;
+        case 'cancelled': return `${who} cancelled the run.`;
+      }
+      return '';
+    }
+    // Household notification wording. Sends aren't announced.
     function groceryEventText(e) {
       const who = groceryPersonName(e.byId, e.by);
-      if (e.type === 'started') return `${who} started a Grocery Run.`;
-      if (e.type === 'updated') return `${who} updated the Grocery List.`;
-      if (e.type === 'ready') return 'Grocery Run ready to order.';
-      if (e.type === 'recorded') return `Grocery total recorded: ${formatMoney(e.amount)}`;
+      switch (e.type) {
+        case 'started': return `${who} started a Grocery Run.`;
+        case 'updated': return `${who} updated the Grocery List.`;
+        case 'ready': return 'Grocery Run ready to order.';
+        case 'unlocked': return `${who} unlocked the Grocery List.`;
+        case 'ordered': return `${who} placed the grocery order${groceryMethodText(e)}.`;
+        case 'recorded': return `Grocery total recorded: ${formatMoney(e.amount)}`;
+        case 'cancelled': return `${who} cancelled the Grocery Run.`;
+      }
       return '';
     }
     function groceryLatestEvent(tripId) {
-      return (state.groceryEvents || []).filter(e => e && e.tripId === tripId && isVisibleToCurrentUser(e))
-        .sort((a, b) => String(b.at).localeCompare(String(a.at)))[0] || null;
+      const ev = groceryTripEvents(tripId).filter(e => isVisibleToCurrentUser(e));
+      return ev[ev.length - 1] || null;
     }
     // New events from other members, shown once per device (in-app, and as
     // a phone notification when notifications are on). Events already here
@@ -14179,14 +14258,14 @@
       const mine = state.user.id;
       const events = (state.groceryEvents || []).filter(e => e && e.id && isVisibleToCurrentUser(e));
       if (!Array.isArray(seen)) {
-        try { localStorage.setItem(key, JSON.stringify(events.map(e => e.id).slice(-100))); } catch (e) {}
+        try { localStorage.setItem(key, JSON.stringify(events.map(e => e.id).slice(-200))); } catch (e) {}
         return;
       }
       const seenSet = new Set(seen);
-      const fresh = events.filter(e => !seenSet.has(e.id)).sort((a, b) => String(a.at).localeCompare(String(b.at)));
+      const fresh = events.filter(e => !seenSet.has(e.id)).sort(groceryEventOrder);
       if (!fresh.length) return;
-      try { localStorage.setItem(key, JSON.stringify([...seen, ...fresh.map(e => e.id)].slice(-100))); } catch (e) {}
-      fresh.filter(e => e.byId !== mine).slice(-3).forEach(e => {
+      try { localStorage.setItem(key, JSON.stringify([...seen, ...fresh.map(e => e.id)].slice(-200))); } catch (e) {}
+      fresh.filter(e => e.byId !== mine && e.type !== 'sent').slice(-3).forEach(e => {
         const text = groceryEventText(e);
         if (!text) return;
         showToast(text, 'info');
@@ -14194,6 +14273,108 @@
           try { showNativeNotification('Paycheck Pilot', text, 'groceries', 'grocery-' + e.type); } catch (err) {}
         }
       });
+    }
+
+    // ---- List items: one shared record each ----
+    // Needed / Have it already / Purchased / Skipped. Each item merges on
+    // its own, so two people ticking at the same time both keep their ticks.
+    function groceryItemsFor(tripId) {
+      return (state.groceryItems || []).filter(i => i && i.tripId === tripId && !i.removed);
+    }
+    function groceryNewItem(trip, it, source, status) {
+      const nowIso = new Date().toISOString();
+      const me = state.user ? state.user.id : null;
+      const actor = currentOwnerLabel();
+      return {
+        id: trip.id + '::' + it.key, tripId: trip.id, key: it.key,
+        name: it.name, qty: it.qty || 0, unit: it.unit || '', aisle: it.aisle || 'O',
+        source, status, note: '', removed: false,
+        scope: trip.scope, ownerId: trip.ownerId,
+        createdAt: nowIso, createdBy: actor, createdById: me,
+        statusAt: nowIso, statusBy: actor, statusById: me,
+        lastModifiedAt: nowIso, lastModifiedBy: actor, lastModifiedById: me,
+        external: null
+      };
+    }
+    function grocerySetItemStatus(item, status, note) {
+      item.status = status;
+      if (note !== undefined) item.note = note;
+      item.statusAt = new Date().toISOString();
+      item.statusBy = currentOwnerLabel();
+      item.statusById = state.user ? state.user.id : null;
+      groceryStamp(item);
+    }
+    // Runs saved before items had their own records carried them inside
+    // the run. Converted once, the same way on every phone (same ids).
+    function migrateGroceryRuns() {
+      let changed = false;
+      if (!state.groceryItems) state.groceryItems = [];
+      (state.groceryTrips || []).forEach(t => {
+        if (!t) return;
+        if (Array.isArray(t.items)) {
+          if (!state.groceryItems.some(i => i && i.tripId === t.id)) {
+            t.items.forEach(it => state.groceryItems.push(groceryNewItem(t, it, it.custom ? 'added' : it.staple ? 'staple' : 'meal', it.have ? 'have' : 'needed')));
+          }
+          delete t.items;
+          changed = true;
+        }
+        if (t.status === 'planning' || t.status === 'recorded') { t.status = groceryLegacyStatus(t.status); changed = true; }
+      });
+      if (changed) saveStateToStorage();
+      return changed;
+    }
+    // Keep full detail for the last few closed runs; older ones keep the
+    // run record (date, total, counts) so the shared data stays small.
+    function pruneGroceryHistory() {
+      const closed = (state.groceryTrips || []).filter(t => t && !groceryTripIsOpen(t) && !t.pruned)
+        .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+      closed.slice(GROCERY_KEEP_CLOSED_RUNS).forEach(t => {
+        const items = groceryItemsFor(t.id);
+        t.summary = { items: items.length, purchased: items.filter(i => i.status === 'purchased').length, skipped: items.filter(i => i.status === 'skipped').length };
+        t.status = groceryTripStatus(t);
+        t.pruned = true;
+        groceryStamp(t);
+        state.groceryItems = (state.groceryItems || []).filter(i => !(i && i.tripId === t.id));
+        state.groceryEvents = (state.groceryEvents || []).filter(e => !(e && e.tripId === t.id));
+      });
+    }
+
+    // ---- State changes ----
+    // Every step checks the latest shared copy first (like bill payments and
+    // totals), so a phone that's behind can't undo a step someone already
+    // took. Returns false, with a message, if the run moved on meanwhile.
+    let groceryTransitionBusy = false;
+    async function groceryTransition(tripId, type, allowedFrom, extra, apply) {
+      if (groceryTransitionBusy) return false;
+      groceryTransitionBusy = true;
+      try {
+        if (state.user && !state.isDemo && supabaseClient && getSyncKey()) await pullCloudState();
+        migrateGroceryRuns();
+        const trip = groceryTripById(tripId);
+        if (!trip) { showToast('This grocery run was removed on another device.', 'info'); openGroceryRun('home'); return false; }
+        const now = groceryTripStatus(trip);
+        if (!allowedFrom.includes(now)) {
+          const tx = groceryTripTx(trip.id);
+          const last = groceryLastTransition(trip.id);
+          showToast(tx ? `Groceries were already recorded by ${billPayerName(tx)} (${formatMoney(tx.amount)}).`
+            : last ? `This run changed on another phone: ${groceryHistoryText(last)}` : `This run is ${GROCERY_STATE_LABEL[now]}.`, 'info');
+          renderGroceries();
+          return false;
+        }
+        addGroceryEvent(trip, type, extra);
+        trip.status = GROCERY_TRANSITIONS[type];
+        if (apply) apply(trip);
+        touchGroceryTrip(trip);
+        groceryPushNow();
+        return true;
+      } finally {
+        groceryTransitionBusy = false;
+      }
+    }
+    // What gets sent to a store or shared: the items still needed.
+    function groceryOrderPayload(trip) {
+      return groceryItemsFor(trip.id).filter(i => i.status === 'needed')
+        .map(i => ({ name: groceryItemName(i), qty: i.qty, unit: i.unit, aisle: i.aisle }));
     }
 
     // ---- What Safe Spend says (the only money on these screens) ----
@@ -14286,18 +14467,19 @@
     }
     function groceryItemName(item) { const n = String(item.name || ''); return n.charAt(0).toUpperCase() + n.slice(1); }
     function groceryQtyText(item) {
-      if (item.staple || item.custom) return '';
+      if (item.staple || item.custom || item.source === 'staple' || item.source === 'added' || !item.qty) return '';
       if (item.unit === 'ct') return String(item.qty);
       const unit = item.qty === 1 ? item.unit : (GROCERY_UNIT_PLURALS[item.unit] || item.unit + 's');
       return `${item.qty} ${unit}`;
     }
     function groceryListText(trip) {
+      const items = groceryItemsFor(trip.id).filter(i => i.status === 'needed');
       const lines = [`Grocery list — ${friendlyDate(localDateStr(new Date(trip.createdAt)))}`];
       GROCERY_AISLE_ORDER.forEach(a => {
-        const items = (trip.items || []).filter(i => i.aisle === a && !i.have);
-        if (!items.length) return;
+        const group = items.filter(i => i.aisle === a);
+        if (!group.length) return;
         lines.push('', GROCERY_AISLES[a].toUpperCase());
-        items.forEach(i => lines.push(`- ${groceryItemName(i)}${groceryQtyText(i) ? ' — ' + groceryQtyText(i) : ''}`));
+        group.forEach(i => lines.push(`- ${groceryItemName(i)}${groceryQtyText(i) ? ' — ' + groceryQtyText(i) : ''}`));
       });
       lines.push('', `Dinners: ${(trip.meals || []).filter(m => m.keep !== false).map(m => m.name).join(', ')}`);
       return lines.join('\n');
@@ -14311,18 +14493,20 @@
       return t && groceryTripIsOpen(t) ? t : openGroceryTrip();
     }
     function groceryPrefsCopy() { return JSON.parse(JSON.stringify(groceryPrefs() || GROCERY_DEFAULT_PREFS)); }
-    function openGroceryRun(step) {
-      groceryUI = { step: step || 'home', tripId: null, prefs: null, editingPrefs: false, firstRun: false };
+    function openGroceryRun(step, tripId) {
+      groceryUI = { step: step || 'home', tripId: tripId || null, prefs: null, editingPrefs: false, firstRun: false };
       navigateTo('groceries');
     }
     function groceryGo(step) { groceryUI.step = step; renderGroceries(); }
     function groceryResumeStep(trip) {
       if (!groceryPrefs()) return 'family';
-      return trip.items ? 'list' : trip.meals ? 'meals' : 'weeks';
+      if (groceryItemsFor(trip.id).length || trip.itemsKey) return 'list';
+      return trip.meals ? 'meals' : 'weeks';
     }
     function continueGroceryRun() {
       const trip = openGroceryTrip();
       if (!trip) { openGroceryRun('home'); return; }
+      if (groceryTripStatus(trip) !== 'draft') { groceryUI.tripId = trip.id; groceryGo('home'); return; }
       groceryUI.tripId = trip.id;
       groceryUI.firstRun = !groceryPrefs();
       if (groceryUI.firstRun) groceryUI.prefs = groceryPrefsCopy();
@@ -14337,7 +14521,8 @@
         id: 'gtrip_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
         scope: inHouseholdMode() ? 'household' : 'personal',
         ownerId: me, createdAt: nowIso, createdBy: actor, createdById: me,
-        status: 'planning', weeks: groceryDefaultWeeks(), tier: 'medium', meals: null, items: null,
+        status: 'draft', weeks: groceryDefaultWeeks(), tier: 'medium', meals: null,
+        order: null, external: null,
         lastModifiedAt: nowIso, lastModifiedBy: actor, lastModifiedById: me
       };
       if (!state.groceryTrips) state.groceryTrips = [];
@@ -14361,6 +14546,7 @@
     const GR_BTN = 'min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-bold transition-all';
     const GR_PRIMARY = `${GR_BTN} bg-brand-500 hover:bg-brand-600 text-slate-950`;
     const GR_SECONDARY = `${GR_BTN} bg-slate-800 hover:bg-slate-700 text-slate-200`;
+    const GR_SMALL = 'min-h-[44px] min-w-[44px] px-3 rounded-xl text-xs font-bold';
     function groceryStepShell(n, total, title, body, nav) {
       return `<div class="glass-card rounded-3xl border border-slate-800/80 p-5 sm:p-6 space-y-4">
         ${n ? `<p class="text-[11px] font-bold uppercase tracking-wider text-brand-400">Step ${n} of ${total}</p>` : ''}
@@ -14369,9 +14555,9 @@
         ${nav ? `<div class="flex flex-wrap gap-2 pt-2">${nav}</div>` : ''}
       </div>`;
     }
-    function groceryStepCount() { return groceryUI.editingPrefs ? 3 : (groceryUI.firstRun ? 8 : 5); }
+    function groceryStepCount() { return groceryUI.editingPrefs ? 3 : (groceryUI.firstRun ? 7 : 4); }
     function groceryStepNo(step) {
-      const all = ['family', 'foods', 'store', 'weeks', 'budget', 'meals', 'list', 'send'];
+      const all = ['family', 'foods', 'store', 'weeks', 'budget', 'meals', 'list'];
       const i = all.indexOf(step);
       return !groceryUI.firstRun && !groceryUI.editingPrefs && i >= 3 ? i - 2 : i + 1;
     }
@@ -14380,25 +14566,32 @@
     // touch the page when something changed, keep what's being typed, and
     // move focus only when the step itself changes.
     let groceryLastHtml = '', groceryLastStep = '';
+    const GROCERY_PLANNING_STEPS = ['weeks', 'budget', 'meals', 'list'];
     function renderGroceries() {
       const root = document.getElementById('grocery-root');
       if (!root) return;
       if (!state.groceryTrips) state.groceryTrips = [];
       if (!state.groceryPrefs) state.groceryPrefs = [];
+      if (!state.groceryItems) state.groceryItems = [];
+      migrateGroceryRuns();
       resolveDuplicateGroceryTrips();
       const step = groceryUI.step;
       if (['family', 'foods', 'store'].includes(step) && !groceryUI.prefs) groceryUI.prefs = groceryPrefsCopy();
       const trip = groceryCurrentTrip();
-      if (['weeks', 'budget', 'meals', 'list', 'send', 'total'].includes(step)) {
-        const ok = trip && (step !== 'meals' || trip.meals) && (step !== 'list' || trip.items)
-          && (step !== 'total' || (groceryTripById(groceryUI.tripId) && groceryTripStatus(groceryTripById(groceryUI.tripId)) === 'ready'));
-        if (!ok) groceryUI.step = 'home';
-        else if (step !== 'total') groceryUI.tripId = trip.id;
+      const st = trip ? groceryTripStatus(trip) : null;
+      // Planning screens only while the run is a Draft; a run that moved on
+      // (on this phone or another) goes back to its own screen.
+      if (GROCERY_PLANNING_STEPS.includes(step)) {
+        const ok = trip && st === 'draft' && (step !== 'meals' || trip.meals) && (step !== 'list' || trip.itemsKey);
+        if (!ok) groceryUI.step = 'home'; else groceryUI.tripId = trip.id;
       }
+      if (step === 'order' && !(trip && st === 'ready')) groceryUI.step = 'home';
+      if (step === 'total') { const t = groceryTripById(groceryUI.tripId); if (!t || groceryTripStatus(t) !== 'ordered') groceryUI.step = 'home'; }
+      if (step === 'past' && !groceryTripById(groceryUI.tripId)) groceryUI.step = 'home';
       const render = {
         home: groceryHomeHtml, family: groceryFamilyHtml, foods: groceryFoodsHtml, store: groceryStoreHtml,
         weeks: groceryWeeksHtml, budget: groceryBudgetHtml, meals: groceryMealsHtml, list: groceryListHtml,
-        send: grocerySendHtml, total: groceryTotalHtml
+        order: groceryOrderHtml, total: groceryTotalHtml, past: groceryPastHtml
       }[groceryUI.step] || groceryHomeHtml;
       const html = render();
       if (html === groceryLastHtml && root.innerHTML) return;
@@ -14413,7 +14606,7 @@
       if (window.lucide) lucide.createIcons();
       const stepChanged = groceryUI.step !== groceryLastStep;
       groceryLastStep = groceryUI.step;
-      if (!stepChanged) Object.keys(typed).forEach(id => { const el = document.getElementById(id); if (el && root.contains(el)) el.value = typed[id]; });
+      if (!stepChanged) Object.keys(typed).forEach(id => { const el = document.getElementById(id); if (el && root.contains(el) && !el.dataset.fresh) el.value = typed[id]; });
       if (getCurrentPageId() !== 'groceries') return;
       if (stepChanged) {
         const h = document.getElementById('grocery-step-title');
@@ -14424,54 +14617,135 @@
       }
     }
 
-    function groceryStartedByLine(trip) {
-      const latest = groceryLatestEvent(trip.id);
-      return `<p class="text-sm text-slate-300">Started by: <strong class="text-white">${escapeHtml(groceryPersonName(trip.createdById, trip.createdBy))}</strong> · ${escapeHtml(friendlyDate(localDateStr(new Date(trip.createdAt))))}</p>
-        ${latest && latest.type === 'updated' ? `<p class="text-xs text-slate-400">${escapeHtml(groceryEventText(latest))}</p>` : ''}`;
+    // ---- Run header, history ----
+    function groceryWhoLines(trip) {
+      const edit = groceryLastEdit(trip);
+      const o = trip.order;
+      return `<dl class="grid grid-cols-[auto,1fr] gap-x-3 gap-y-0.5 text-xs">
+        <dt class="text-slate-500">Started by</dt><dd class="text-slate-200">${escapeHtml(groceryPersonName(trip.createdById, trip.createdBy))} · ${escapeHtml(friendlyDate(localDateStr(new Date(trip.createdAt))))}</dd>
+        <dt class="text-slate-500">Last edited by</dt><dd class="text-slate-200">${escapeHtml(groceryPersonName(edit.byId, edit.by))}</dd>
+        ${o ? `<dt class="text-slate-500">Order placed by</dt><dd class="text-slate-200">${escapeHtml(groceryPersonName(o.placedById, o.placedBy))}${escapeHtml(groceryMethodText(o))}</dd>` : ''}
+      </dl>`;
     }
+    function groceryHistoryHtml(trip, open) {
+      const ev = groceryTripEvents(trip.id).filter(e => isVisibleToCurrentUser(e));
+      if (!ev.length) return '';
+      return `<details ${open ? 'open' : ''} class="text-xs text-slate-400"><summary class="min-h-[44px] flex items-center cursor-pointer text-slate-300 font-semibold">Run history (${ev.length})</summary>
+        <ol class="space-y-1 pl-1">${ev.slice().reverse().map(e => `<li class="flex gap-2"><span class="shrink-0 w-24 text-slate-500">${escapeHtml(friendlyDate(localDateStr(new Date(e.at))))} ${escapeHtml(new Date(e.at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }))}</span><span class="text-slate-300">${escapeHtml(groceryHistoryText(e))}</span></li>`).join('')}</ol>
+      </details>`;
+    }
+    function groceryStatusPill(trip) {
+      const s = groceryTripStatus(trip);
+      const cls = { draft: 'bg-slate-800 text-slate-300', ready: 'bg-brand-500/20 text-brand-300', ordered: 'bg-amber-500/20 text-amber-300', completed: 'bg-emerald-500/20 text-emerald-300', cancelled: 'bg-slate-800 text-slate-400' }[s];
+      return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${cls}">${escapeHtml(groceryStateLabel(trip))}</span>`;
+    }
+    function groceryItemCounts(tripId) {
+      const items = groceryItemsFor(tripId);
+      const c = { needed: 0, have: 0, purchased: 0, skipped: 0 };
+      items.forEach(i => { c[i.status] = (c[i.status] || 0) + 1; });
+      c.toBuy = c.needed + c.purchased + c.skipped;
+      return c;
+    }
+
+    // ---- Home: one screen per state ----
     function groceryHomeHtml() {
       const trip = openGroceryTrip();
-      if (trip) return groceryTripStatus(trip) === 'ready' ? groceryReadyTripHtml(trip) : groceryPlanningTripHtml(trip);
+      if (trip) {
+        const s = groceryTripStatus(trip);
+        if (s === 'ready') return groceryReadyHtml(trip);
+        if (s === 'ordered') return groceryOrderedHtml(trip);
+        return groceryDraftHtml(trip);
+      }
       const prefs = groceryPrefs();
       const summary = prefs ? `<p class="text-xs text-slate-400">Planning for ${prefs.adults} adult${prefs.adults === 1 ? '' : 's'}${prefs.kids ? ` and ${prefs.kids} kid${prefs.kids === 1 ? '' : 's'}` : ''}${prefs.leaveOut.length ? ` · leaving out ${escapeHtml(prefs.leaveOut.join(', '))}` : ''}${prefs.picky ? ' · picky eaters' : ''} · shopping at ${escapeHtml(groceryStoreName(prefs.store))}.</p>` : '';
-      const lastTx = groceryLastTotal();
       return groceryStepShell(0, 0, 'Plan a grocery run', `
-        <p class="text-sm text-slate-300">Pick ${GROCERY_DINNERS_PER_WEEK} dinners a week, get one combined shopping list, and share it. When you're back, enter what you spent — that's the only part that touches your balance.</p>
+        <p class="text-sm text-slate-300">Pick ${GROCERY_DINNERS_PER_WEEK} dinners a week, get one combined shopping list, mark it ready, place the order or go shopping, then enter what you spent — that's the only part that touches your balance.</p>
         ${inHouseholdMode() ? `<p class="text-xs text-slate-400">Your household sees the run as soon as you start it, and anyone can edit the list.</p>` : ''}
-        ${summary}
-        ${lastTx ? `<p class="text-xs text-slate-500">Last run: ${formatMoney(lastTx.amount)} on ${escapeHtml(friendlyDate(lastTx.date))}, recorded by ${escapeHtml(billPayerName(lastTx))}.</p>` : ''}`,
+        ${summary}`,
         `<button type="button" onclick="startGroceryRun()" class="${GR_PRIMARY}">Start a grocery run</button>
-         ${prefs ? `<button type="button" onclick="editGroceryPrefs()" class="${GR_SECONDARY}">Edit preferences</button>` : ''}`);
+         ${prefs ? `<button type="button" onclick="editGroceryPrefs()" class="${GR_SECONDARY}">Edit preferences</button>` : ''}`) + groceryPastRunsHtml();
     }
-    function groceryLastTotal() {
-      return (state.transactions || []).filter(t => t && t.source === 'grocery-run' && isVisibleToCurrentUser(t))
-        .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))[0] || null;
-    }
-    function groceryPlanningTripHtml(trip) {
+    function groceryDraftHtml(trip) {
       return groceryStepShell(0, 0, '🛒 Grocery Run In Progress', `
-        ${groceryStartedByLine(trip)}
-        <p class="text-xs text-slate-400">Dinners and the list are still being planned${trip.scope === 'household' ? ' — anyone in your household can pick up where it left off' : ''}. Nothing has been added to your balance or forecast.</p>`,
+        <div>${groceryStatusPill(trip)}</div>
+        ${groceryWhoLines(trip)}
+        <p class="text-xs text-slate-400">The list is still being built${trip.scope === 'household' ? ' — anyone in your household can pick up where it left off' : ''}. Nothing has been added to your balance or forecast.</p>
+        ${groceryHistoryHtml(trip, false)}`,
         `<button type="button" onclick="continueGroceryRun()" class="${GR_PRIMARY}">Continue planning</button>
-         <button type="button" onclick="confirmCancelGroceryTrip(${jsArg(trip.id)})" class="${GR_SECONDARY}">Cancel trip</button>`);
+         <button type="button" onclick="confirmCancelGroceryTrip(${jsArg(trip.id)})" class="${GR_SECONDARY}">Cancel run</button>`);
     }
-    function groceryReadyTripHtml(trip) {
-      const need = (trip.items || []).filter(i => !i.have).length;
-      return groceryStepShell(0, 0, 'How much did groceries come to?', `
-        ${groceryStartedByLine(trip)}
-        <p class="text-sm text-slate-300">${trip.meals.filter(m => m.keep !== false).length} dinners · ${need} item${need === 1 ? '' : 's'} to buy.</p>
-        <p class="text-xs text-slate-400">Nothing has been added to your balance or forecast yet. Enter the exact total from your receipt and it's recorded once, as a Groceries transaction.</p>
-        <div class="flex flex-wrap gap-2">
-          <button type="button" onclick="openGroceryTotal(${jsArg(trip.id)})" class="${GR_PRIMARY}">Enter the total</button>
-          <button type="button" onclick="groceryNotYet()" class="${GR_SECONDARY}">Didn't go yet</button>
-          <button type="button" onclick="confirmCancelGroceryTrip(${jsArg(trip.id)})" class="${GR_SECONDARY}">Cancel trip</button>
-        </div>
-      `) + `<div class="glass-card rounded-3xl border border-slate-800/80 p-5 sm:p-6 space-y-3 mt-4">
-        <h3 class="text-base font-bold text-white">Shopping list</h3>
+    function groceryReadyHtml(trip) {
+      const c = groceryItemCounts(trip.id);
+      const store = groceryPrefs() ? groceryPrefs().store : 'other';
+      const target = GROCERY_STORE_TARGETS[store];
+      return groceryStepShell(0, 0, '🛒 Grocery Run In Progress', `
+        <div>${groceryStatusPill(trip)}</div>
+        ${groceryWhoLines(trip)}
+        <p class="text-sm text-slate-300">${(trip.meals || []).filter(m => m.keep !== false).length} dinners · ${c.needed} item${c.needed === 1 ? '' : 's'} to buy. The list is locked — unlock it to make changes.</p>
+        ${target && !target.available ? `<p class="text-xs text-amber-300">Sending the list straight to ${target.name} isn't available yet. Share, copy or print it for now.</p>` : ''}
         ${groceryShareButtons(trip.id)}
-        ${groceryItemEditor(trip)}
-        <details class="text-xs text-slate-400"><summary class="min-h-[44px] flex items-center cursor-pointer text-slate-300 font-semibold">Dinners (${trip.meals.filter(m => m.keep !== false).length})</summary>
-          <ul class="list-disc pl-5 space-y-0.5">${trip.meals.filter(m => m.keep !== false).map(m => `<li>${escapeHtml(m.name)}</li>`).join('')}</ul></details>
+        <p class="text-xs text-slate-400">Placed the order or done at the store? Mark it so everyone knows. Nothing is recorded until someone enters the total.</p>`,
+        `<button type="button" onclick="groceryGo('order')" class="${GR_PRIMARY}">Order placed</button>
+         <button type="button" onclick="groceryUnlock(${jsArg(trip.id)})" class="${GR_SECONDARY}">Unlock list</button>
+         <button type="button" onclick="confirmCancelGroceryTrip(${jsArg(trip.id)})" class="${GR_SECONDARY}">Cancel run</button>`)
+        + `<div class="glass-card rounded-3xl border border-slate-800/80 p-5 sm:p-6 space-y-3 mt-4">
+          <h3 class="text-base font-bold text-white">Shopping list</h3>
+          ${groceryReadOnlyList(trip)}
+          ${groceryHistoryHtml(trip, false)}
+        </div>`;
+    }
+    function groceryOrderedHtml(trip) {
+      const c = groceryItemCounts(trip.id);
+      return groceryStepShell(0, 0, 'How much did groceries come to?', `
+        <div>${groceryStatusPill(trip)}</div>
+        ${groceryWhoLines(trip)}
+        <p class="text-xs text-slate-400">Nothing has been added to your balance or forecast yet. Enter the exact total from your receipt and it's recorded once, as a Groceries transaction.</p>`,
+        `<button type="button" onclick="openGroceryTotal(${jsArg(trip.id)})" class="${GR_PRIMARY}">Enter the total</button>
+         <button type="button" onclick="groceryNotYet()" class="${GR_SECONDARY}">Not yet</button>
+         <button type="button" onclick="confirmCancelGroceryTrip(${jsArg(trip.id)})" class="${GR_SECONDARY}">Cancel run</button>`)
+        + `<div class="glass-card rounded-3xl border border-slate-800/80 p-5 sm:p-6 space-y-3 mt-4">
+          <h3 class="text-base font-bold text-white">Shopping</h3>
+          <p class="text-sm text-slate-300" aria-live="polite">${c.purchased} of ${c.toBuy} purchased · ${c.skipped} skipped · ${c.needed} still needed</p>
+          ${c.needed ? `<button type="button" onclick="groceryAllPurchased()" class="${GR_SECONDARY}">Mark everything purchased</button>` : ''}
+          ${groceryShoppingList(trip)}
+          ${groceryShareButtons(trip.id)}
+          ${groceryHistoryHtml(trip, false)}
+        </div>`;
+    }
+
+    // ---- Past runs: the household's memory of what was bought ----
+    function groceryPastRunsHtml() {
+      const runs = (state.groceryTrips || []).filter(t => t && isVisibleToCurrentUser(t) && !groceryTripIsOpen(t) && !t.mergedInto)
+        .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt))).slice(0, 5);
+      if (!runs.length) return '';
+      return `<div class="glass-card rounded-3xl border border-slate-800/80 p-5 sm:p-6 space-y-2 mt-4">
+        <h3 class="text-base font-bold text-white">Past runs</h3>
+        <ul class="space-y-1">${runs.map(t => {
+          const tx = groceryTripTx(t.id);
+          return `<li><button type="button" onclick="openGroceryRun('past', ${jsArg(t.id)})" class="w-full min-h-[44px] flex items-center justify-between gap-3 px-3 rounded-xl hover:bg-slate-900 text-left">
+            <span class="text-sm text-slate-200">${escapeHtml(friendlyDate(localDateStr(new Date(t.createdAt))))} · ${escapeHtml(GROCERY_STATE_LABEL[groceryTripStatus(t)])}</span>
+            <span class="text-sm font-semibold ${tx ? 'text-white' : 'text-slate-500'}">${tx ? formatMoney(tx.amount) : '—'}</span>
+          </button></li>`;
+        }).join('')}</ul>
       </div>`;
+    }
+    function groceryPastHtml() {
+      const trip = groceryTripById(groceryUI.tripId);
+      const tx = groceryTripTx(trip.id);
+      const items = groceryItemsFor(trip.id);
+      const group = (status, label) => {
+        const g = items.filter(i => i.status === status);
+        return g.length ? `<div><p class="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">${label} (${g.length})</p>
+          <ul class="text-sm text-slate-300 space-y-0.5">${g.map(i => `<li>${escapeHtml(groceryItemName(i))}${groceryQtyText(i) ? ` <span class="text-slate-500">· ${escapeHtml(groceryQtyText(i))}</span>` : ''}${i.note ? ` <span class="text-slate-500">— ${escapeHtml(i.note)}</span>` : ''}</li>`).join('')}</ul></div>` : '';
+      };
+      return groceryStepShell(0, 0, `Grocery run · ${escapeHtml(friendlyDate(localDateStr(new Date(trip.createdAt))))}`, `
+        <div>${groceryStatusPill(trip)}</div>
+        ${groceryWhoLines(trip)}
+        ${tx ? `<p class="text-sm text-slate-300">Total: <strong class="text-white">${formatMoney(tx.amount)}</strong>, recorded by ${escapeHtml(billPayerName(tx))} on ${escapeHtml(friendlyDate(tx.date))}.</p>` : ''}
+        ${trip.pruned && trip.summary ? `<p class="text-xs text-slate-400">${trip.summary.purchased} purchased, ${trip.summary.skipped} skipped. Item details are kept for the last ${GROCERY_KEEP_CLOSED_RUNS} runs.</p>` : ''}
+        ${group('purchased', 'Purchased')}${group('skipped', 'Skipped')}${group('have', 'Already had')}${group('needed', 'Not bought')}
+        ${groceryHistoryHtml(trip, true)}`,
+        `<button type="button" onclick="openGroceryRun('home')" class="${GR_SECONDARY}">Back</button>`);
     }
 
     // ---- Preferences (saved once, shared with the household) ----
@@ -14552,8 +14826,9 @@
     function grocerySetField(obj, field, value) {
       if (obj === 'prefs') { groceryUI.prefs[field] = value; return; }
       const trip = groceryCurrentTrip();
-      if (!trip) return;
+      if (!trip || groceryTripStatus(trip) !== 'draft') { renderGroceries(); return; }
       trip[field] = value;
+      if (field === 'scope') (state.groceryItems || []).forEach(i => { if (i && i.tripId === trip.id) { i.scope = value; groceryStamp(i); } });
       touchGroceryTrip(trip);
     }
     function groceryRadio(name, obj, field, value, current, title, desc) {
@@ -14616,7 +14891,7 @@
     }
     function groceryToMeals() {
       const trip = groceryCurrentTrip();
-      if (!trip) { groceryGo('home'); return; }
+      if (!trip || groceryTripStatus(trip) !== 'draft') { groceryGo('home'); return; }
       const prefs = groceryPrefs() || groceryUI.prefs || GROCERY_DEFAULT_PREFS;
       const count = trip.weeks * GROCERY_DINNERS_PER_WEEK;
       const key = `${trip.weeks}|${trip.tier}|${JSON.stringify([prefs.proteins, prefs.leaveOut, prefs.picky])}`;
@@ -14633,8 +14908,8 @@
     }
     function groceryToggleKeep(i) {
       const trip = groceryCurrentTrip();
-      const m = trip && trip.meals[Number(i)];
-      if (!m) return;
+      const m = trip && groceryTripStatus(trip) === 'draft' && trip.meals[Number(i)];
+      if (!m) { renderGroceries(); return; }
       m.keep = m.keep === false;
       touchGroceryTrip(trip, 'updated');
       renderGroceries();
@@ -14642,7 +14917,7 @@
     }
     function grocerySwapMeal(i) {
       const trip = groceryCurrentTrip();
-      if (!trip || !trip.meals[Number(i)]) return;
+      if (!trip || groceryTripStatus(trip) !== 'draft' || !trip.meals[Number(i)]) { renderGroceries(); return; }
       const prefs = groceryPrefs() || GROCERY_DEFAULT_PREFS;
       const used = new Set(trip.meals.map(m => m.id));
       const pool = groceryMealPool(prefs, trip.tier).filter(m => !used.has(m.id));
@@ -14678,58 +14953,140 @@
     }
     function groceryToList() {
       const trip = groceryCurrentTrip();
-      if (!trip) { groceryGo('home'); return; }
+      if (!trip || groceryTripStatus(trip) !== 'draft') { groceryGo('home'); return; }
       const prefs = groceryPrefs() || GROCERY_DEFAULT_PREFS;
       const ids = trip.meals.filter(m => m.keep !== false).map(m => m.id);
       const key = ids.join(',') + '|' + groceryServings(prefs);
-      if (!trip.items || trip.itemsKey !== key) {
-        const before = new Map((trip.items || []).map(i => [i.key, i.have]));
-        const built = buildGroceryItems(ids, prefs).map(i => before.has(i.key) ? { ...i, have: !!before.get(i.key) } : i);
-        trip.items = [...built, ...(trip.items || []).filter(i => i.custom)];
+      if (trip.itemsKey !== key) {
+        if (!state.groceryItems) state.groceryItems = [];
+        const built = buildGroceryItems(ids, prefs);
+        const builtKeys = new Set(built.map(b => b.key));
+        const existing = new Map(state.groceryItems.filter(i => i && i.tripId === trip.id).map(i => [i.key, i]));
+        built.forEach(b => {
+          const ex = existing.get(b.key);
+          if (!ex) { state.groceryItems.push(groceryNewItem(trip, b, b.staple ? 'staple' : 'meal', b.staple ? 'have' : 'needed')); return; }
+          // Same item: keep its status. Back on the list if it only left
+          // because its meal was swapped out; not if someone removed it.
+          if (ex.removed && ex.removedReason === 'meals') { ex.removed = false; ex.removedReason = null; ex.qty = b.qty; groceryStamp(ex); }
+          else if (ex.qty !== b.qty && !ex.removed) { ex.qty = b.qty; groceryStamp(ex); }
+        });
+        existing.forEach((ex, k) => {
+          if (ex.source !== 'added' && !builtKeys.has(k) && !ex.removed) { ex.removed = true; ex.removedReason = 'meals'; groceryStamp(ex); }
+        });
         trip.itemsKey = key;
-        trip.adults = prefs.adults; trip.kids = prefs.kids; trip.store = prefs.store;
+        trip.adults = prefs.adults; trip.kids = prefs.kids;
         touchGroceryTrip(trip);
       }
       groceryGo('list');
     }
-
-    // ---- The list: both members can tick, add and remove items ----
-    function groceryItemEditor(trip) {
-      const items = trip.items || [];
-      const rows = GROCERY_AISLE_ORDER.map(a => {
-        const group = items.filter(it => it.aisle === a);
-        if (!group.length) return '';
-        return `<fieldset class="space-y-1"><legend class="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">${GROCERY_AISLES[a]}</legend>
-          ${group.map(it => `<div class="flex items-center gap-1">
-            <label class="flex-1 min-w-0 flex items-center gap-3 min-h-[44px] px-3 rounded-xl hover:bg-slate-900 cursor-pointer">
-              <input type="checkbox" ${it.have ? 'checked' : ''} onchange="groceryItemToggle(${jsArg(it.key)}, this.checked)" class="w-5 h-5 shrink-0 accent-emerald-500" aria-label="Already have ${escapeHtml(groceryItemName(it))}" />
-              <span class="flex-1 min-w-0 text-sm ${it.have ? 'line-through text-slate-500' : 'text-slate-200'}">${escapeHtml(groceryItemName(it))}</span>
-              <span class="text-xs text-slate-400">${escapeHtml(groceryQtyText(it))}</span>
-            </label>
-            <button type="button" onclick="groceryItemRemove(${jsArg(it.key)})" aria-label="Remove ${escapeHtml(groceryItemName(it))} from the list" class="shrink-0 w-11 h-11 rounded-xl text-slate-500 hover:text-white hover:bg-slate-800">×</button>
-          </div>`).join('')}
-        </fieldset>`;
-      }).join('');
-      return `<div class="space-y-3">${rows || '<p class="text-xs text-slate-500">The list is empty.</p>'}</div>
-        <div class="flex gap-2 pt-1">
-          <label for="gr-add-item" class="sr-only">Add an item to the list</label>
-          <input id="gr-add-item" type="text" maxlength="60" autocomplete="off" placeholder="Add an item (e.g. paper towels)" onkeydown="if(event.key==='Enter'){event.preventDefault();groceryItemAdd();}" class="flex-1 min-w-0 min-h-[44px] bg-slate-900 border border-slate-800 rounded-xl px-3 text-sm text-slate-200 outline-none focus:border-brand-500" />
-          <button type="button" onclick="groceryItemAdd()" class="${GR_SECONDARY}">Add</button>
-        </div>`;
+    function groceryItemRow(i, controls, struck) {
+      return `<div class="flex items-center gap-1">
+        ${controls.before || ''}
+        <span class="flex-1 min-w-0 text-sm ${struck ? 'line-through text-slate-500' : 'text-slate-200'}">${escapeHtml(groceryItemName(i))}${i.note ? ` <span class="text-xs text-slate-500 no-underline">— ${escapeHtml(i.note)}</span>` : ''}</span>
+        <span class="text-xs text-slate-400 pr-1">${escapeHtml(groceryQtyText(i))}</span>
+        ${controls.after || ''}
+      </div>`;
     }
-    function groceryItemToggle(key, have) {
-      const trip = groceryCurrentTrip();
-      const it = trip && (trip.items || []).find(i => i.key === key);
-      if (!it) return;
-      it.have = !!have;
-      touchGroceryTrip(trip, 'updated');
+    function groceryByAisle(items, rowFn) {
+      return GROCERY_AISLE_ORDER.map(a => {
+        const g = items.filter(i => i.aisle === a);
+        if (!g.length) return '';
+        return `<fieldset class="space-y-1"><legend class="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">${GROCERY_AISLES[a]}</legend>${g.map(rowFn).join('')}</fieldset>`;
+      }).join('');
+    }
+    function groceryAddItemForm(placeholder) {
+      return `<div class="flex gap-2 pt-1">
+        <label for="gr-add-item" class="sr-only">Add an item to the list</label>
+        <input id="gr-add-item" type="text" maxlength="60" autocomplete="off" placeholder="${escapeHtml(placeholder || 'Add an item (e.g. paper towels)')}" onkeydown="if(event.key==='Enter'){event.preventDefault();groceryItemAdd();}" class="flex-1 min-w-0 min-h-[44px] bg-slate-900 border border-slate-800 rounded-xl px-3 text-sm text-slate-200 outline-none focus:border-brand-500" />
+        <button type="button" onclick="groceryItemAdd()" class="${GR_SECONDARY}">Add</button>
+      </div>`;
+    }
+    // Draft: tick "have it", add, remove.
+    function groceryDraftEditor(trip) {
+      const items = groceryItemsFor(trip.id).filter(i => i.status === 'needed' || i.status === 'have');
+      const rows = groceryByAisle(items, i => `<div class="flex items-center gap-1">
+          <label class="flex-1 min-w-0 flex items-center gap-3 min-h-[44px] px-3 rounded-xl hover:bg-slate-900 cursor-pointer">
+            <input type="checkbox" ${i.status === 'have' ? 'checked' : ''} onchange="groceryItemHave(${jsArg(i.id)}, this.checked)" class="w-5 h-5 shrink-0 accent-emerald-500" aria-label="Already have ${escapeHtml(groceryItemName(i))}" />
+            <span class="flex-1 min-w-0 text-sm ${i.status === 'have' ? 'line-through text-slate-500' : 'text-slate-200'}">${escapeHtml(groceryItemName(i))}</span>
+            <span class="text-xs text-slate-400">${escapeHtml(groceryQtyText(i))}</span>
+          </label>
+          <button type="button" onclick="groceryItemRemove(${jsArg(i.id)})" aria-label="Remove ${escapeHtml(groceryItemName(i))} from the list" class="shrink-0 w-11 h-11 rounded-xl text-slate-500 hover:text-white hover:bg-slate-800">×</button>
+        </div>`);
+      return `<div class="space-y-3">${rows || '<p class="text-xs text-slate-500">The list is empty.</p>'}</div>${groceryAddItemForm()}`;
+    }
+    // Ready To Order: the frozen list.
+    function groceryReadOnlyList(trip) {
+      const items = groceryItemsFor(trip.id);
+      const needed = items.filter(i => i.status === 'needed');
+      const have = items.filter(i => i.status === 'have');
+      return `<div class="space-y-3">${groceryByAisle(needed, i => `<div class="min-h-[36px] flex items-center">${groceryItemRow(i, {}, false)}</div>`) || '<p class="text-xs text-slate-500">Nothing left to buy.</p>'}</div>
+        ${have.length ? `<details class="text-xs text-slate-400"><summary class="min-h-[44px] flex items-center cursor-pointer text-slate-300 font-semibold">Already have (${have.length})</summary>
+          <ul class="list-disc pl-5 space-y-0.5">${have.map(i => `<li>${escapeHtml(groceryItemName(i))}</li>`).join('')}</ul></details>` : ''}`;
+    }
+    // Ordered: Purchased / Skipped per item, in store or after delivery.
+    function groceryShoppingList(trip) {
+      const items = groceryItemsFor(trip.id);
+      const needed = items.filter(i => i.status === 'needed');
+      const done = items.filter(i => i.status === 'purchased' || i.status === 'skipped');
+      const have = items.filter(i => i.status === 'have');
+      const neededRows = groceryByAisle(needed, i => groceryItemRow(i, { after: `
+          <button type="button" onclick="groceryItemStatus(${jsArg(i.id)}, 'purchased')" aria-label="Mark ${escapeHtml(groceryItemName(i))} purchased" class="${GR_SMALL} bg-brand-500/20 text-brand-300 hover:bg-brand-500 hover:text-slate-950">🛒 Got it</button>
+          <button type="button" onclick="groceryItemStatus(${jsArg(i.id)}, 'skipped')" aria-label="Skip ${escapeHtml(groceryItemName(i))}" class="${GR_SMALL} bg-slate-800 text-slate-300 hover:bg-slate-700">Skip</button>` }, false));
+      const doneRows = done.map(i => `<div class="space-y-1">${groceryItemRow(i, {
+          before: `<span class="w-6 text-center" aria-hidden="true">${i.status === 'purchased' ? '🛒' : '⊘'}</span>`,
+          after: `<span class="sr-only">${i.status === 'purchased' ? 'Purchased' : 'Skipped'}</span><button type="button" onclick="groceryItemStatus(${jsArg(i.id)}, 'needed')" aria-label="Undo ${escapeHtml(groceryItemName(i))}" class="${GR_SMALL} bg-slate-800 text-slate-400 hover:bg-slate-700">Undo</button>` }, i.status === 'skipped')}
+          ${i.status === 'skipped' ? `<div class="pl-7"><label for="gr-note-${escapeHtml(i.id)}" class="sr-only">Note for ${escapeHtml(groceryItemName(i))}</label><input id="gr-note-${escapeHtml(i.id)}" type="text" maxlength="80" value="${escapeHtml(i.note || '')}" placeholder="Note (e.g. got oat milk instead)" onchange="groceryItemNote(${jsArg(i.id)}, this.value)" class="w-full min-h-[44px] bg-slate-900 border border-slate-800 rounded-xl px-3 text-xs text-slate-200 outline-none focus:border-brand-500" /></div>` : ''}
+        </div>`).join('');
+      return `<div class="space-y-3">${neededRows || '<p class="text-xs text-slate-500">Nothing left to get.</p>'}</div>
+        ${done.length ? `<div class="space-y-1 pt-2 border-t border-slate-800"><p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Done (${done.length})</p>${doneRows}</div>` : ''}
+        ${have.length ? `<details class="text-xs text-slate-400"><summary class="min-h-[44px] flex items-center cursor-pointer text-slate-300 font-semibold">Already have (${have.length})</summary>
+          <ul class="list-disc pl-5 space-y-0.5">${have.map(i => `<li>${escapeHtml(groceryItemName(i))}</li>`).join('')}</ul></details>` : ''}
+        ${groceryAddItemForm('Add something you also bought')}`;
+    }
+    function groceryEditableItem(id, states) {
+      const item = (state.groceryItems || []).find(i => i && i.id === id && !i.removed);
+      const trip = item && groceryTripById(item.tripId);
+      if (!item || !trip || !states.includes(groceryTripStatus(trip))) { renderGroceries(); return null; }
+      return { item, trip };
+    }
+    function groceryItemHave(id, have) {
+      const x = groceryEditableItem(id, ['draft']);
+      if (!x) return;
+      grocerySetItemStatus(x.item, have ? 'have' : 'needed');
+      saveStateToStorage();
       renderGroceries();
     }
-    function groceryItemRemove(key) {
-      const trip = groceryCurrentTrip();
-      if (!trip || !(trip.items || []).some(i => i.key === key)) return;
-      trip.items = trip.items.filter(i => i.key !== key);
-      touchGroceryTrip(trip, 'updated');
+    function groceryItemStatus(id, status) {
+      const x = groceryEditableItem(id, ['ordered']);
+      if (!x) return;
+      grocerySetItemStatus(x.item, status);
+      saveStateToStorage();
+      renderGroceries();
+      const next = document.querySelector('#grocery-root [aria-label^="Mark "]');
+      if (next) next.focus({ preventScroll: true });
+    }
+    function groceryItemNote(id, note) {
+      const x = groceryEditableItem(id, ['ordered']);
+      if (!x) return;
+      x.item.note = String(note || '').trim().slice(0, 80);
+      groceryStamp(x.item);
+      saveStateToStorage();
+    }
+    function groceryAllPurchased() {
+      const trip = openGroceryTrip();
+      if (!trip || groceryTripStatus(trip) !== 'ordered') { renderGroceries(); return; }
+      groceryItemsFor(trip.id).filter(i => i.status === 'needed').forEach(i => grocerySetItemStatus(i, 'purchased'));
+      saveStateToStorage();
+      renderGroceries();
+    }
+    function groceryItemRemove(id) {
+      const x = groceryEditableItem(id, ['draft']);
+      if (!x) return;
+      x.item.removed = true;
+      x.item.removedReason = 'user';
+      groceryStamp(x.item);
+      addGroceryEvent(x.trip, 'updated');
+      saveStateToStorage();
       renderGroceries();
       const input = document.getElementById('gr-add-item'); if (input) input.focus();
     }
@@ -14739,47 +15096,79 @@
       const name = input ? input.value.trim().slice(0, 60) : '';
       if (input) input.value = '';
       if (!trip || !name) return;
-      if ((trip.items || []).some(i => i.name.toLowerCase() === name.toLowerCase() && !i.have)) { showToast(`${name} is already on the list.`, 'info'); return; }
-      trip.items = [...(trip.items || []), { key: 'custom|' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name, qty: 0, unit: '', aisle: 'O', staple: false, custom: true, have: false }];
-      touchGroceryTrip(trip, 'updated');
+      const st = groceryTripStatus(trip);
+      if (st !== 'draft' && st !== 'ordered') { renderGroceries(); return; }
+      if (groceryItemsFor(trip.id).some(i => i.name.toLowerCase() === name.toLowerCase() && i.status === 'needed')) { showToast(`${name} is already on the list.`, 'info'); return; }
+      if (!state.groceryItems) state.groceryItems = [];
+      const key = 'added|' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+      state.groceryItems.push(groceryNewItem(trip, { key, name, qty: 0, unit: '', aisle: 'O' }, 'added', st === 'ordered' ? 'purchased' : 'needed'));
+      if (st === 'draft') addGroceryEvent(trip, 'updated');
+      saveStateToStorage();
       renderGroceries();
       const again = document.getElementById('gr-add-item'); if (again) again.focus();
     }
     function groceryListHtml() {
       const trip = groceryCurrentTrip();
       const prefs = groceryPrefs() || GROCERY_DEFAULT_PREFS;
-      const need = trip.items.filter(i => !i.have).length;
+      const need = groceryItemsFor(trip.id).filter(i => i.status === 'needed').length;
       const servings = groceryServings(prefs);
       return groceryStepShell(groceryStepNo('list'), groceryStepCount(), 'Already have it?', `
         <p class="text-xs text-slate-400">Tick anything you already have and it's left off the list. Pantry staples start ticked. Amounts are scaled for ${servings % 1 ? servings.toFixed(1) : servings} servings and rounded up to what you can buy. Add or remove anything you like.</p>
         <p class="text-sm font-semibold text-white">${need} item${need === 1 ? '' : 's'} to buy</p>
-        ${groceryItemEditor(trip)}`,
-        groceryNav(`groceryGo('meals')`, `groceryFinishList()`, 'Save list'));
+        ${groceryDraftEditor(trip)}`,
+        groceryNav(`groceryGo('meals')`, `groceryMarkReady()`, 'Mark Ready To Order'));
     }
-    function groceryFinishList() {
+
+    // ---- Steps between states ----
+    async function groceryMarkReady() {
       const trip = groceryCurrentTrip();
       if (!trip) { groceryGo('home'); return; }
-      if (trip.status !== 'ready') {
-        trip.status = 'ready';
-        trip.readyAt = new Date().toISOString();
-        addGroceryEvent(trip, 'ready');
-        logActivity("Grocery List Ready", `${currentOwnerLabel()} finished the grocery list: ${trip.meals.filter(m => m.keep !== false).length} dinners, ${trip.items.filter(i => !i.have).length} items. Nothing was added to balances or the forecast.`);
-      }
-      touchGroceryTrip(trip);
-      groceryPushNow();
-      groceryGo('send');
+      const need = groceryItemsFor(trip.id).filter(i => i.status === 'needed').length;
+      if (!need) { showToast('Nothing on the list to buy yet.', 'info'); return; }
+      const ok = await groceryTransition(trip.id, 'ready', ['draft'], null, t => { t.readyAt = new Date().toISOString(); t.readyBy = currentOwnerLabel(); t.readyById = state.user ? state.user.id : null; });
+      if (ok) logActivity("Grocery Run Ready", `${currentOwnerLabel()} marked the grocery run Ready To Order: ${need} items. Nothing was added to balances or the forecast.`);
+      groceryUI.tripId = trip.id;
+      groceryGo('home');
     }
-    function grocerySendHtml() {
+    async function groceryUnlock(tripId) {
+      const ok = await groceryTransition(tripId, 'unlocked', ['ready'], null, t => { t.readyAt = null; });
+      if (ok) { groceryUI.tripId = tripId; groceryGo('list'); }
+    }
+    function groceryOrderHtml() {
       const trip = groceryCurrentTrip();
-      if (!trip) return groceryHomeHtml();
-      const store = trip.store || 'other';
-      const storeNote = store === 'other' ? '' : `<p class="text-xs text-amber-300">Sending the list straight to ${groceryStoreName(store)} isn't available yet. Share or copy it for now.</p>`;
-      return groceryStepShell(groceryStepNo('send'), groceryStepCount(), 'Your list is ready', `
-        ${storeNote}
-        <p class="text-sm text-slate-300">${(trip.items || []).filter(i => !i.have).length} items for ${trip.meals.filter(m => m.keep !== false).length} dinners. The run stays open until you enter what you spent${trip.scope === 'household' ? ' — anyone in your household can enter it' : ''}.</p>
-        ${groceryShareButtons(trip.id)}`,
-        `<button type="button" onclick="openGroceryRun('home')" class="${GR_PRIMARY}">Done</button>`);
+      const prefs = groceryPrefs() || GROCERY_DEFAULT_PREFS;
+      const store = groceryUI.orderStore || prefs.store || 'other';
+      const method = groceryUI.orderMethod || (store === 'other' ? 'in-store' : 'delivery');
+      const radio = (name, value, current, label) => `<label for="gr-${name}-${value}" class="flex items-center gap-3 min-h-[44px] px-3 rounded-xl border cursor-pointer ${current === value ? 'border-brand-500 bg-brand-500/10' : 'border-slate-800 bg-slate-900/80'}">
+          <input type="radio" id="gr-${name}-${value}" name="gr-${name}" value="${value}" ${current === value ? 'checked' : ''} onchange="groceryUI.${name === 'ostore' ? 'orderStore' : 'orderMethod'} = this.value; renderGroceries(); document.getElementById('gr-${name}-${value}').focus();" class="w-4 h-4 accent-emerald-500" />
+          <span class="text-sm text-white">${label}</span></label>`;
+      return groceryStepShell(0, 0, 'Order placed?', `
+        <p class="text-xs text-slate-400">This tells your household the shopping is done or on its way. Nothing is recorded until someone enters the total.</p>
+        <fieldset class="space-y-2"><legend class="text-sm font-semibold text-slate-200 mb-1">Where</legend>
+          ${radio('ostore', 'instacart', store, 'Instacart')}${radio('ostore', 'kroger', store, 'Kroger')}${radio('ostore', 'other', store, 'Another store')}
+        </fieldset>
+        <fieldset class="space-y-2"><legend class="text-sm font-semibold text-slate-200 mb-1">How</legend>
+          ${radio('omethod', 'in-store', method, 'In store')}${radio('omethod', 'pickup', method, 'Pickup')}${radio('omethod', 'delivery', method, 'Delivery')}
+        </fieldset>`,
+        `<button type="button" onclick="groceryMarkOrdered()" class="${GR_PRIMARY}">The order was placed</button>
+         <button type="button" onclick="groceryGo('home')" class="${GR_SECONDARY}">Back</button>`);
     }
+    async function groceryMarkOrdered() {
+      const trip = groceryCurrentTrip();
+      if (!trip) { groceryGo('home'); return; }
+      const prefs = groceryPrefs() || GROCERY_DEFAULT_PREFS;
+      const store = groceryUI.orderStore || prefs.store || 'other';
+      const method = groceryUI.orderMethod || (store === 'other' ? 'in-store' : 'delivery');
+      const ok = await groceryTransition(trip.id, 'ordered', ['ready'], { store, method }, t => {
+        t.order = { store, method, placedAt: new Date().toISOString(), placedBy: currentOwnerLabel(), placedById: state.user ? state.user.id : null };
+      });
+      if (ok) logActivity("Grocery Order Placed", `${currentOwnerLabel()} placed the grocery order (${groceryStoreName(store)}, ${GROCERY_METHODS[method]}). Nothing was added to balances or the forecast.`);
+      groceryUI.orderStore = null; groceryUI.orderMethod = null;
+      groceryUI.tripId = trip.id;
+      groceryGo('home');
+    }
+
+    // ---- Sharing the list ----
     function groceryShareButtons(tripId) {
       const id = jsArg(tripId);
       return `<div class="flex flex-wrap gap-2">
@@ -14788,11 +15177,20 @@
         <button type="button" onclick="printGroceryList(${id})" class="${GR_SECONDARY}">Print</button>
       </div>`;
     }
+    // Sends are logged in the run history ("Stephen sent the list via
+    // Print"); they don't change the run's state.
+    function groceryLogSent(tripId, via) {
+      const trip = groceryTripById(tripId);
+      if (!trip || !groceryTripIsOpen(trip)) return;
+      addGroceryEvent(trip, 'sent', { via });
+      saveStateToStorage();
+      renderGroceries();
+    }
     function shareGroceryList(tripId) {
       const trip = groceryTripById(tripId);
       if (!trip) return;
       const text = groceryListText(trip);
-      if (navigator.share) navigator.share({ title: 'Grocery list', text }).catch(() => {});
+      if (navigator.share) navigator.share({ title: 'Grocery list', text }).then(() => groceryLogSent(tripId, 'Share'), () => {});
       else copyGroceryList(tripId);
     }
     function copyGroceryList(tripId) {
@@ -14806,8 +15204,9 @@
         let ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
         ta.remove();
         showToast(ok ? 'List copied' : "Couldn't copy — try Share or Print.", ok ? 'success' : 'error');
+        if (ok) groceryLogSent(tripId, 'Copy');
       };
-      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(() => showToast('List copied', 'success'), fallback);
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(() => { showToast('List copied', 'success'); groceryLogSent(tripId, 'Copy'); }, fallback);
       else fallback();
     }
     function printGroceryList(tripId) {
@@ -14816,40 +15215,37 @@
       let el = document.getElementById('grocery-print');
       if (!el) { el = document.createElement('div'); el.id = 'grocery-print'; document.body.appendChild(el); }
       el.innerHTML = `<h1>Grocery list</h1>` + GROCERY_AISLE_ORDER.map(a => {
-        const items = (trip.items || []).filter(i => i.aisle === a && !i.have);
+        const items = groceryItemsFor(trip.id).filter(i => i.aisle === a && i.status === 'needed');
         return items.length ? `<h2>${GROCERY_AISLES[a]}</h2><ul>${items.map(i => `<li>☐ ${escapeHtml(groceryItemName(i))}${groceryQtyText(i) ? ' — ' + escapeHtml(groceryQtyText(i)) : ''}</li>`).join('')}</ul>` : '';
       }).join('') + `<p>Dinners: ${escapeHtml(trip.meals.filter(m => m.keep !== false).map(m => m.name).join(', '))}</p>`;
       document.body.classList.add('print-grocery');
       const done = () => { document.body.classList.remove('print-grocery'); window.removeEventListener('afterprint', done); };
       window.addEventListener('afterprint', done);
       window.print();
+      groceryLogSent(tripId, 'Print');
       setTimeout(done, 1000);
     }
 
 
-    // ---- The open run ----
+    // ---- Ending a run ----
     function groceryNotYet() {
       closeModals();
       showToast("OK — we'll ask again next time you open the app.", 'info');
     }
     function confirmCancelGroceryTrip(tripId) {
-      openCustomModal('Cancel this grocery run?', 'The list is closed and nothing is recorded. Your balance and forecast stay exactly as they are.', [
-        { label: 'Cancel trip', onclick: `cancelGroceryTrip(${jsArg(tripId)})`, primary: true },
+      openCustomModal('Cancel this grocery run?', 'The run is closed and nothing is recorded. Your balance and forecast stay exactly as they are.', [
+        { label: 'Cancel run', onclick: `cancelGroceryTrip(${jsArg(tripId)})`, primary: true },
         { label: 'Keep it', onclick: 'closeModals()' }
       ]);
     }
-    function cancelGroceryTrip(tripId) {
+    async function cancelGroceryTrip(tripId) {
       closeModals();
+      const ok = await groceryTransition(tripId, 'cancelled', ['draft', 'ready', 'ordered'], null, t => { t.closedAt = new Date().toISOString(); t.closedBy = currentOwnerLabel(); });
+      if (!ok) { if (getCurrentPageId() !== 'groceries') navigateTo(getCurrentPageId()); return; }
       const trip = groceryTripById(tripId);
-      if (!trip) return;
-      const tx = groceryTripTx(tripId);
-      if (tx) { showToast(`Groceries were already recorded by ${billPayerName(tx)} (${formatMoney(tx.amount)}).`, 'info'); openGroceryRun('home'); return; }
-      trip.status = 'cancelled';
-      trip.closedAt = new Date().toISOString(); trip.closedBy = currentOwnerLabel();
-      touchGroceryTrip(trip);
       logActivity("Grocery Run Cancelled", `${currentOwnerLabel()} cancelled the grocery run from ${friendlyDate(localDateStr(new Date(trip.createdAt)))}. Nothing was recorded.`);
+      pruneGroceryHistory();
       saveStateToStorage();
-      groceryPushNow();
       showToast('Grocery run cancelled. Nothing was recorded.', 'info');
       if (getCurrentPageId() === 'groceries') openGroceryRun('home'); else navigateTo(getCurrentPageId());
     }
@@ -14862,7 +15258,7 @@
     }
     function groceryTotalHtml() {
       const trip = groceryTripById(groceryUI.tripId);
-      if (!trip || groceryTripStatus(trip) !== 'ready') return groceryHomeHtml();
+      if (!trip || groceryTripStatus(trip) !== 'ordered') return groceryHomeHtml();
       const accts = moneyAccountsForMe();
       const def = defaultPaymentAccount();
       const household = inHouseholdMode();
@@ -14920,8 +15316,12 @@
         const prior = groceryTripTx(tripId);
         if (!trip) { showToast('This grocery run was removed on another device — nothing was recorded.', 'info'); openGroceryRun('home'); return; }
         if (prior) { showToast(`Groceries were already recorded by ${billPayerName(prior)} (${formatMoney(prior.amount)}).`, 'info'); openGroceryRun('home'); return; }
-        if (trip.status === 'cancelled') { showToast(`This grocery run was cancelled${trip.closedBy ? ' by ' + trip.closedBy : ''} — nothing was recorded.`, 'info'); openGroceryRun('home'); return; }
-        if (groceryTripStatus(trip) !== 'ready') { showToast('Finish the list before entering a total.', 'info'); openGroceryRun('home'); return; }
+        const st = groceryTripStatus(trip);
+        if (st !== 'ordered') {
+          const last = groceryLastTransition(trip.id);
+          showToast(st === 'cancelled' && last ? `${groceryHistoryText(last)} Nothing was recorded.` : `This run is ${GROCERY_STATE_LABEL[st]} — nothing was recorded.`, 'info');
+          openGroceryRun('home'); return;
+        }
 
         const actor = currentOwnerLabel();
         const nowIso = new Date().toISOString();
@@ -14940,11 +15340,12 @@
         };
         state.transactions.unshift(tx);
         applyTxToBalance(tx, +1);
-        trip.status = 'recorded';
-        trip.closedAt = nowIso; trip.closedBy = actor;
+        trip.status = 'completed';
+        trip.completedAt = nowIso; trip.completedBy = actor; trip.completedById = tx.createdById;
         trip.lastModifiedAt = nowIso; trip.lastModifiedBy = actor; trip.lastModifiedById = tx.createdById;
         addGroceryEvent(trip, 'recorded', { amount });
         logActivity("Grocery Total Recorded", `${actor} recorded groceries: $${formatCurrency(amount)}${alreadyInBalance ? ' (already reflected in their balance — not subtracted again)' : account ? ` from ${account.name}` : ''}. Source: grocery-run. Transaction: ${tx.id}.`);
+        pruneGroceryHistory();
         saveStateToStorage();
         if (canCheck) {
           if (syncDebounceTimer) { clearTimeout(syncDebounceTimer); syncDebounceTimer = null; }
@@ -14961,14 +15362,16 @@
 
     // Asked once per app open while a run is open (and it wasn't started in
     // this same session): "How much did groceries come to?"
-    // Asked once per app open while a finished list is waiting for its
-    // total (and it wasn't finished in this same session). Never stacked on
-    // another open dialog (e.g. an overdue-bill reminder): it waits.
+    // Asked once per app open while an Ordered run waits for its total (and
+    // it wasn't ordered in this same session). Never stacked on another open
+    // dialog (e.g. an overdue-bill reminder): it waits.
     let groceryPromptShown = false, groceryPromptTimer = null;
     function maybeAskGroceryTotal() {
       if (groceryPromptShown || groceryPromptTimer || state.isDemo) return;
       const trip = openGroceryTrip();
-      if (!trip || groceryTripStatus(trip) !== 'ready' || String(trip.readyAt || trip.createdAt) >= GROCERY_SESSION_START) return;
+      if (!trip || groceryTripStatus(trip) !== 'ordered') return;
+      const orderedAt = (trip.order && trip.order.placedAt) || (groceryLastTransition(trip.id) || {}).at || trip.createdAt;
+      if (String(orderedAt) >= GROCERY_SESSION_START) return;
       let tries = 0;
       const attempt = () => {
         groceryPromptTimer = null;
@@ -14979,13 +15382,13 @@
           return;
         }
         const t = openGroceryTrip();
-        if (!t || groceryTripStatus(t) !== 'ready') return;
+        if (!t || groceryTripStatus(t) !== 'ordered') return;
         groceryPromptShown = true;
         openCustomModal('How much did groceries come to?',
-          `Your grocery run from ${friendlyDate(localDateStr(new Date(t.createdAt)))} is still open. Nothing has been added to your balance yet — enter the exact total and it's recorded once.`, [
+          `Your grocery order from ${friendlyDate(localDateStr(new Date(orderedAt)))} is waiting for its total. Nothing has been added to your balance yet — enter the exact total and it's recorded once.`, [
             { label: 'Enter the total', onclick: `openGroceryTotal(${jsArg(t.id)})`, primary: true },
-            { label: "Didn't go yet", onclick: 'groceryNotYet()' },
-            { label: 'Cancel trip', onclick: `confirmCancelGroceryTrip(${jsArg(t.id)})` }
+            { label: 'Not yet', onclick: 'groceryNotYet()' },
+            { label: 'Cancel run', onclick: `confirmCancelGroceryTrip(${jsArg(t.id)})` }
           ]);
       };
       groceryPromptTimer = setTimeout(attempt, 1200);
@@ -14993,17 +15396,21 @@
 
     // The same card on the Dashboard (bottom) and the Bills page.
     function groceryCardHtml() {
+      if (!state.groceryItems) state.groceryItems = [];
+      migrateGroceryRuns();
       const trip = openGroceryTrip();
       if (trip) {
-        const latest = groceryLatestEvent(trip.id);
-        const status = groceryTripStatus(trip) === 'ready'
-          ? `List ready · ${(trip.items || []).filter(i => !i.have).length} items to buy. Nothing is recorded until someone enters the total.`
-          : 'Dinners and the list are still being planned.';
+        const s = groceryTripStatus(trip);
+        const c = groceryItemCounts(trip.id);
+        const edit = groceryLastEdit(trip);
+        const detail = s === 'ready' ? `Ready To Order · ${c.needed} item${c.needed === 1 ? '' : 's'} to buy.`
+          : s === 'ordered' ? `Ordered · Waiting For Total. Placed by ${groceryPersonName(trip.order && trip.order.placedById, trip.order && trip.order.placedBy)}.`
+          : 'Draft · the list is being built.';
         return `<div class="glass-card rounded-3xl p-5 sm:p-6 border border-brand-500/40 flex flex-col sm:flex-row sm:items-center gap-4">
           <div class="flex-1 min-w-0 space-y-1">
             <h3 class="text-base font-extrabold text-white">🛒 Grocery Run In Progress</h3>
             <p class="text-sm text-slate-300">Started by: <strong class="text-white">${escapeHtml(groceryPersonName(trip.createdById, trip.createdBy))}</strong></p>
-            <p class="text-[11px] text-slate-400">${escapeHtml(status)}${latest && latest.type === 'updated' ? ` ${escapeHtml(groceryEventText(latest))}` : ''}</p>
+            <p class="text-[11px] text-slate-400">${escapeHtml(detail)} Last edited by ${escapeHtml(groceryPersonName(edit.byId, edit.by))}.</p>
           </div>
           <button type="button" onclick="openGroceryRun('home')" class="${GR_PRIMARY} shrink-0">Open Grocery Run</button>
         </div>`;
@@ -15019,6 +15426,10 @@
         </div>
         <button type="button" onclick="openGroceryRun('home')" class="${GR_PRIMARY} shrink-0">Plan groceries</button>
       </div>`;
+    }
+    function groceryLastTotal() {
+      return (state.transactions || []).filter(t => t && t.source === 'grocery-run' && isVisibleToCurrentUser(t))
+        .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))[0] || null;
     }
     function renderGroceryEntry() {
       const el = document.getElementById('coming-up-grocery-entry');
