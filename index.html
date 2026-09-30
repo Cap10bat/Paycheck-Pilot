@@ -5812,6 +5812,7 @@
           // Base = what the cloud held. Anything only on this device still
           // reads as a pending local change, so it can't be dropped later.
           saveSyncBase(cloudPayload);
+          const droppedDuplicate = resolveDuplicateBillPayments();
           stampRecurrenceAnchors();
           deduplicateHouseholdPaychecks();
           advanceStaleHouseholdPaychecks();
@@ -5825,6 +5826,11 @@
           // the noise of logging an unchanged pull is reduced.
           const isGenuinelyNewer = !previousSyncTime || (data.updated_at && new Date(data.updated_at) > new Date(previousSyncTime));
           if (isGenuinelyNewer) logActivity("Cloud Sync Pulled", "Loaded latest data from paycheck_pilot_sync.");
+          if (droppedDuplicate) {
+            // Share the removal right away (queued after this download).
+            triggerCloudSync(true);
+            navigateTo(getCurrentPageId());
+          }
         }
 
         state.lastSyncTime = new Date().toISOString();
@@ -5918,6 +5924,10 @@
           // the next attempt compares against an older base and counts the
           // changes merged here a second time.
           saveSyncBase(cloudRead.data.data);
+          if (resolveDuplicateBillPayments()) {
+            localStorage.setItem('paycheck_pilot_state', JSON.stringify(state));
+            navigateTo(getCurrentPageId());
+          }
         }
 
         // Owner-key this device's own income into the shared payload
@@ -14068,15 +14078,28 @@
 
     function completeBill(id, opts = {}) {
       const bill = state.bills.find(b => b.id === id);
-      if (!bill) return;
-      if (billCompletionPending.has(id)) return;
+      if (!bill) return Promise.resolve();
+      if (billCompletionPending.has(id)) return Promise.resolve();
       billCompletionPending.add(id);
+      let done;
+      const finished = new Promise(r => { done = r; });
 
       const rows = document.querySelectorAll(`[data-bill-row="${CSS.escape(String(id))}"]`);
       rows.forEach(r => r.classList.add('bill-complete-flash'));
 
       const finalize = () => {
         billCompletionPending.delete(id);
+        // A download during the short animation rolled this bill to another
+        // occurrence (someone else paid or changed it): record nothing.
+        if (opts.expectDueDate && bill.dueDate !== opts.expectDueDate) {
+          rows.forEach(r => r.classList.remove('bill-complete-flash'));
+          const prior = findBillPayment(id, opts.expectDueDate);
+          if (prior) showBillAlreadyPaid(bill.title, opts.expectDueDate, prior);
+          else showToast(`${bill.title} was changed on another device — nothing was recorded. Check it and try again.`, 'info');
+          navigateTo(getCurrentPageId());
+          done();
+          return;
+        }
         bill.completed = true;
         const actor = currentOwnerLabel();
         const nowIso = new Date().toISOString();
@@ -14091,7 +14114,10 @@
         const alreadyRecorded = state.transactions.some(t => t.billId === bill.id && t.billDueDate === bill.dueDate && t.source === 'manual-bill-completion');
 
         if (!alreadyRecorded) {
-          const txId = 'tx_' + Date.now();
+          // Random suffix: two phones paying in the same millisecond must not
+          // produce one id (the sync would fold them into one record while
+          // both balances had already been reduced).
+          const txId = 'tx_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
           // Paying a bill spends money, so cash must go down. Previously it
           // only left the reserve, which RAISED safe spend by the bill amount
           // (paying $1,200 rent took safe spend from $800 to $2,000).
@@ -14124,6 +14150,8 @@
             source: 'manual-bill-completion',
             createdAt: nowIso,
             createdBy: actor,
+            createdById: state.user ? state.user.id : null,
+            payDeviceId: state.syncLineage || null, // which device recorded it (see resolveDuplicateBillPayments)
             lastModifiedAt: nowIso,
             lastModifiedBy: actor
           });
@@ -14152,10 +14180,12 @@
         saveStateToStorage();
         showToast(`Completed bill: ${bill.title}`, "success");
         navigateTo(getCurrentPageId());
+        done();
       };
 
       if (rows.length) setTimeout(finalize, 260);
       else finalize();
+      return finished;
     }
 
     function deleteBill(id) {
@@ -14848,8 +14878,8 @@
       wrap.innerHTML = `
         <p class="text-[11px] text-slate-400 mb-1.5">Paid the ${escapeHtml(friendlyDate(bill.dueDate))} payment of $${formatCurrency(bill.amount)}?</p>
         <div class="flex flex-wrap gap-2">
-          ${acct ? `<button type="button" onclick="maydayMarkPaid(${jsArg(billId)}, false)" class="px-2.5 py-1.5 bg-brand-500/15 hover:bg-brand-500 hover:text-slate-950 text-brand-300 rounded-lg text-[11px] font-semibold">Yes — take it out of ${escapeHtml(acct.name)}</button>` : ''}
-          <button type="button" onclick="maydayMarkPaid(${jsArg(billId)}, true)" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-[11px] font-semibold">Yes — my balance already shows it</button>
+          ${acct ? `<button type="button" onclick="maydayMarkPaid(${jsArg(billId)}, false, ${jsArg(bill.dueDate)})" class="px-2.5 py-1.5 bg-brand-500/15 hover:bg-brand-500 hover:text-slate-950 text-brand-300 rounded-lg text-[11px] font-semibold">Yes — take it out of ${escapeHtml(acct.name)}</button>` : ''}
+          <button type="button" onclick="maydayMarkPaid(${jsArg(billId)}, true, ${jsArg(bill.dueDate)})" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-[11px] font-semibold">Yes — my balance already shows it</button>
         </div>`;
     }
     // BILLER-AGREED NEW DATE (replaces "Defer +7 Days", which moved the date
@@ -14921,12 +14951,11 @@
       if (back) openDeficitNavigatorModal();
     }
 
-    function maydayMarkPaid(billId, alreadyInBalance) {
-      completeBill(billId, { alreadyInBalance: !!alreadyInBalance });
-      setTimeout(() => {
+    function maydayMarkPaid(billId, alreadyInBalance, dueDate) {
+      payBillSafely(billId, { alreadyInBalance: !!alreadyInBalance, dueDate }).then(() => setTimeout(() => {
         const modal = document.getElementById('modal-deficit');
         if (modal && !modal.classList.contains('hidden')) openDeficitNavigatorModal();
-      }, 400);
+      }, 140));
     }
 
     // ==========================================
@@ -15104,21 +15133,158 @@
     function askBillPaid(id, returnTo) {
       const bill = state.bills.find(b => b.id === id);
       if (!bill) return;
-      if (bill.completed) { completeBill(id); return; }
+      const prior = findBillPayment(id, bill.dueDate);
+      if (prior) { showBillAlreadyPaid(bill.title, bill.dueDate, prior); return; }
+      if (bill.completed) { payBillSafely(id, { dueDate: bill.dueDate }); return; }
       const acct = (bill.payFromAccountId && (state.accounts || []).find(a => a.id === bill.payFromAccountId)) || defaultPaymentAccount();
       const back = jsArg(returnTo || '');
       const actions = [];
-      if (acct) actions.push({ label: `Yes — take it out of ${acct.name}`, onclick: `finishBillPaid(${jsArg(id)}, false, ${back})`, primary: true });
-      actions.push({ label: acct ? 'Yes — my balance already shows it' : 'Yes, mark it paid', onclick: `finishBillPaid(${jsArg(id)}, true, ${back})`, primary: !acct });
+      // The date shown is the occurrence being paid, even if a refresh rolls
+      // the bill forward while this question is open.
+      const due = jsArg(bill.dueDate);
+      if (acct) actions.push({ label: `Yes — take it out of ${acct.name}`, onclick: `finishBillPaid(${jsArg(id)}, false, ${back}, ${due})`, primary: true });
+      actions.push({ label: acct ? 'Yes — my balance already shows it' : 'Yes, mark it paid', onclick: `finishBillPaid(${jsArg(id)}, true, ${back}, ${due})`, primary: !acct });
       actions.push({ label: 'Cancel', onclick: `closeModals()${returnTo === 'briefing' ? '; openPaydayBriefing()' : ''}` });
       openCustomModal(`Mark ${bill.title} paid?`,
         `Paid the ${friendlyDate(bill.dueDate)} payment of $${formatCurrency(bill.amount)}? If you've already updated your balance to include it, choose "my balance already shows it" so it isn't subtracted twice.`,
         actions);
     }
-    function finishBillPaid(id, alreadyInBalance, returnTo) {
+    function finishBillPaid(id, alreadyInBalance, returnTo, dueDate) {
       closeModals();
-      completeBill(id, { alreadyInBalance: !!alreadyInBalance });
-      if (returnTo === 'briefing') setTimeout(() => { openPaydayBriefing(); renderPaydayBriefingContent(); }, 320);
+      payBillSafely(id, { alreadyInBalance: !!alreadyInBalance, dueDate }).then(() => {
+        if (returnTo === 'briefing') setTimeout(() => { openPaydayBriefing(); renderPaydayBriefingContent(); }, 320);
+      });
+    }
+
+    // ONE PAYMENT PER BILL OCCURRENCE. Every "mark paid" path records the
+    // payment through here: download the latest shared copy first, then
+    // look for a payment of this exact bill AND due date. If a household
+    // member (or another of your devices) already paid it, say who and
+    // record nothing -- the second payment used to be subtracted from the
+    // shared account again.
+    // A payment's occurrence is the date it was originally due: a payment
+    // made after a date arrangement still counts for that original date.
+    function billPaymentOccurrence(t) {
+      return (t.arrangement && t.arrangement.from) || t.billDueDate;
+    }
+    function findBillPayment(billId, dueDate, origDate) {
+      const found = (state.transactions || []).filter(t => t && t.billId === billId && t.source === 'manual-bill-completion'
+        && (t.billDueDate === dueDate || billPaymentOccurrence(t) === (origDate || dueDate)));
+      found.sort(compareBillPayments);
+      return found[0] || null;
+    }
+    // Earliest payment first (ties: smaller id) -- the same order on every
+    // device, so all of them agree which of two simultaneous payments stays.
+    function compareBillPayments(a, b) {
+      const ta = String(a.createdAt || ''), tb = String(b.createdAt || '');
+      if (ta !== tb) return ta < tb ? -1 : 1;
+      return String(a.id) < String(b.id) ? -1 : (String(a.id) > String(b.id) ? 1 : 0);
+    }
+    function billPayerName(tx) {
+      if (state.user && tx.createdById === state.user.id) {
+        return (tx.payDeviceId && tx.payDeviceId !== state.syncLineage) ? 'you on another device' : 'you';
+      }
+      if (tx.createdById) {
+        const n = memberDisplayName(tx.createdById);
+        if (n !== 'Household Member') return n;
+      }
+      const label = String(tx.createdBy || '').trim();
+      return (label && label !== 'User') ? label : 'another household member';
+    }
+    function showBillAlreadyPaid(title, dueDate, tx) {
+      showToast(`${title} (${friendlyDate(dueDate)}) was already marked paid by ${billPayerName(tx)}.`, 'info');
+    }
+    const billPayInFlight = new Set();
+    async function payBillSafely(id, opts = {}) {
+      const bill = state.bills.find(b => b.id === id);
+      if (!bill || billPayInFlight.has(id)) return false;
+      const occurrence = opts.dueDate || bill.dueDate;
+      const origDate = (bill.dueDate === occurrence && bill.arrangement && bill.arrangement.from) || occurrence;
+      const title = bill.title;
+      const wasCompleted = !!bill.completed;
+      const local = findBillPayment(id, occurrence, origDate);
+      if (local) { showBillAlreadyPaid(title, occurrence, local); return false; }
+
+      billPayInFlight.add(id);
+      try {
+        const canCheck = !!(state.user && !state.isDemo && supabaseClient && getSyncKey());
+        let checked = false;
+        if (canCheck) {
+          if (inHouseholdMode()) showToast(`Checking ${title} with your household…`, 'info');
+          checked = await pullCloudState();
+        }
+        const prior = findBillPayment(id, occurrence, origDate);
+        if (prior) {
+          showBillAlreadyPaid(title, occurrence, prior);
+          navigateTo(getCurrentPageId());
+          return false;
+        }
+        const fresh = state.bills.find(b => b.id === id);
+        if (!fresh) {
+          showToast(`${title} was removed on another device — nothing was recorded.`, 'info');
+          navigateTo(getCurrentPageId());
+          return false;
+        }
+        if (fresh.dueDate !== occurrence) {
+          // Skipped or edited elsewhere (no payment for this date exists).
+          showToast(`${title} was changed on another device (now due ${friendlyDate(fresh.dueDate)}) — nothing was recorded. Check it and try again.`, 'info');
+          navigateTo(getCurrentPageId());
+          return false;
+        }
+        if (fresh.completed && !wasCompleted) {
+          const by = String(fresh.lastModifiedBy || '').trim();
+          showToast(`${title} (${friendlyDate(occurrence)}) was already marked paid${by && by !== 'User' ? ' by ' + by : ' on another device'}.`, 'info');
+          navigateTo(getCurrentPageId());
+          return false;
+        }
+        await completeBill(id, { alreadyInBalance: !!opts.alreadyInBalance, expectDueDate: occurrence });
+        if (canCheck) {
+          // Upload now rather than after the usual 0.7s pause: the sooner
+          // the household sees this payment, the smaller the window for a
+          // second one.
+          if (syncDebounceTimer) { clearTimeout(syncDebounceTimer); syncDebounceTimer = null; }
+          triggerCloudSync(true);
+          if (!checked) showToast(`Recorded on this device only — couldn't reach your household to check ${title} first. It will be checked when it syncs.`, 'info');
+        }
+        return true;
+      } finally {
+        billPayInFlight.delete(id);
+      }
+    }
+
+    // Two members paid the same occurrence at the same moment (neither could
+    // see the other's yet). Every device keeps the earliest payment; the
+    // device that recorded a later one removes its own and gives the money
+    // back to the account. Only payments this device recorded are ever
+    // touched, so older records are left exactly as they are.
+    function resolveDuplicateBillPayments() {
+      const groups = new Map();
+      (state.transactions || []).forEach(t => {
+        if (!t || t.source !== 'manual-bill-completion' || !t.billId || !t.billDueDate) return;
+        const k = t.billId + '|' + billPaymentOccurrence(t);
+        if (!groups.has(k)) groups.set(k, []);
+        groups.get(k).push(t);
+      });
+      const removed = [];
+      groups.forEach(list => {
+        if (list.length < 2) return;
+        list.sort(compareBillPayments);
+        const keeper = list[0];
+        list.slice(1).forEach(t => {
+          if (!t.payDeviceId || t.payDeviceId !== state.syncLineage) return;
+          const refunded = t.balanceApplied ? applyTxToBalance(t, -1) : false;
+          state.transactions = state.transactions.filter(x => x !== t);
+          removed.push({ t, keeper, refunded });
+        });
+      });
+      removed.forEach(({ t, keeper, refunded }) => {
+        const title = String(t.title || '').replace(/^Bill Payment: /, '').replace(/ \(already in balance\)$/, '');
+        const acct = refunded ? accountForTx(t) : null;
+        const msg = `${billPayerName(keeper)} marked ${title} (${friendlyDate(billPaymentOccurrence(t))}) paid first — only one payment is kept, so yours was removed${acct ? ` and $${formatCurrency(t.amount)} returned to ${acct.name}` : ''}.`;
+        logActivity("Duplicate Bill Payment Removed", `${msg} Kept: ${keeper.id}. Removed: ${t.id}.`);
+        showToast(msg, 'info');
+      });
+      return removed.length > 0;
     }
 
     function renderPaydayBriefingContent() {
