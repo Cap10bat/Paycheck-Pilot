@@ -1321,6 +1321,15 @@
     .fd-launch-bar { height: 2px; background: rgba(148,163,184,.15); margin-top: 20px; border-radius: 2px; overflow: hidden; }
     .fd-launch-bar-fill { height: 100%; width: 0; background: linear-gradient(90deg, #38bdf8, #34d399); }
     .fd-launch-skip { margin-top: 14px; font-size: 10px; letter-spacing: .1em; color: #475569; text-transform: uppercase; }
+    /* Grocery Run: Print shows only the shopping list. */
+    #grocery-print { display: none; }
+    @media print {
+      body.print-grocery > *:not(#grocery-print) { display: none !important; }
+      body.print-grocery #grocery-print { display: block !important; color: #000; background: #fff; font: 14px/1.5 system-ui, sans-serif; padding: 16px; }
+      body.print-grocery #grocery-print h1 { font-size: 20px; margin: 0 0 8px; }
+      body.print-grocery #grocery-print h2 { font-size: 14px; margin: 14px 0 4px; text-transform: uppercase; }
+      body.print-grocery #grocery-print ul { list-style: none; padding: 0; margin: 0; }
+    }
     @media (prefers-reduced-motion: reduce) {
       #fd-launch-overlay, .fd-launch-lines li, .fd-launch-dot { transition: none; }
     }
@@ -1340,311 +1349,6 @@
     }
 </style>
 
-  <style id="weather-world-styles">
-    /* ============================================================
-       FINANCIAL WEATHER WORLD — approved implementation, migrated
-       from the standalone demo. Balloon and firefly CSS below is
-       verbatim from the approved source (only the demo-only body/
-       controls/button UI chrome was excluded, since that was never
-       part of the approved visual system).
-       ============================================================ */
-    /* --- APPROVED ASSET: CLASSIC ORANGE & BLUE STRIPED HOT AIR BALLOON --- */
-    .balloon-wrapper {
-      position: absolute;
-      bottom: 350px;
-      left: 50%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      user-select: none;
-      z-index: 25;
-      filter: drop-shadow(0 15px 25px rgba(0,0,0,0.5));
-      pointer-events: none;
-      opacity: 1;
-      transition: opacity 1.2s ease-in-out, bottom 1.5s ease-in-out;
-    }
-
-    .balloon-wrapper.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .envelope {
-      position: relative;
-      width: 190px;
-      height: 240px;
-      background: repeating-conic-gradient(
-        from 0deg,
-        #1e3a8a 0deg 18deg,
-        #38bdf8 18deg 36deg,
-        #f97316 36deg 54deg,
-        #ea580c 54deg 72deg
-      );
-      border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
-      overflow: hidden;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      box-shadow: inset -18px -12px 35px rgba(0,0,0,0.55), inset 12px 6px 22px rgba(255,255,255,0.3);
-    }
-
-    .envelope-collar {
-      position: absolute;
-      bottom: 0;
-      width: 44px;
-      height: 12px;
-      background: #1e3a8a;
-      border-radius: 3px 3px 0 0;
-    }
-
-    /* REFINED SUBTLE GREEN GLOW SYMBOL */
-    .balloon-dollar {
-      font-size: 80px;
-      font-weight: 900;
-      font-family: 'Courier New', Courier, monospace;
-      color: rgba(74, 222, 128, 0);
-      text-shadow: 0 0 0px rgba(74, 222, 128, 0);
-      transition: color 1s ease, text-shadow 1s ease;
-      z-index: 2;
-    }
-
-    .ropes {
-      width: 48px;
-      height: 26px;
-      display: flex;
-      justify-content: space-between;
-      position: relative;
-    }
-
-    .rope {
-      width: 1.5px;
-      height: 100%;
-      background: #475569;
-    }
-
-    .burner {
-      position: absolute;
-      top: -2px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 20px;
-      height: 8px;
-      background: #334155;
-      border-radius: 2px;
-    }
-
-    .flame-container {
-      position: absolute;
-      top: 8px;
-      left: 50%;
-      transform: translateX(-50%) scale(0);
-      width: 18px;
-      height: 28px;
-      opacity: 0;
-      transition: transform 0.3s ease, opacity 0.3s ease;
-      transform-origin: top center;
-    }
-
-    .flame-outer {
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(circle at 50% 10%, #3b82f6 0%, #f97316 40%, #dc2626 100%);
-      border-radius: 50% 50% 20% 20%;
-      filter: blur(2px);
-    }
-
-    .flame-inner {
-      position: absolute;
-      top: 2px;
-      left: 3px;
-      width: 12px;
-      height: 20px;
-      background: radial-gradient(circle at 50% 10%, #ffffff 0%, #fef08a 60%, #f59e0b 100%);
-      border-radius: 50% 50% 20% 20%;
-    }
-
-    .basket {
-      width: 46px;
-      height: 36px;
-      background: #d97706;
-      background-image: linear-gradient(90deg, rgba(120,53,15,0.3) 50%, transparent 50%),
-                        linear-gradient(rgba(120,53,15,0.3) 50%, transparent 50%);
-      background-size: 8px 8px;
-      border-radius: 3px 3px 8px 8px;
-      box-shadow: inset 0 4px 8px rgba(0,0,0,0.5), 0 5px 10px rgba(0,0,0,0.4);
-      border: 1px solid #78350f;
-    }
-
-    .balloon-wrapper.ignited .flame-container {
-      opacity: 1;
-      transform: translateX(-50%) scale(1.1);
-      animation: flameFlicker 0.12s infinite alternate;
-    }
-
-    /* SLIGHTLY STRONGER DOLLAR SIGN GLOW IN CLEAR STATE */
-    .balloon-wrapper.ignited.glow-clear .balloon-dollar {
-      color: rgba(134, 239, 172, 0.65);
-      text-shadow: 0 0 18px rgba(74, 222, 128, 0.55), 0 0 30px rgba(74, 222, 128, 0.3);
-    }
-
-    /* ADDED — Partly Cloudy: genuinely intermediate between Clear
-       (0.65) and Headwinds (0.35), not equal to either, so the
-       three-tier balloon progression is real rather than a relabeled
-       Headwinds glow. */
-    .balloon-wrapper.ignited.glow-partly-cloudy .balloon-dollar {
-      color: rgba(134, 239, 172, 0.50);
-      text-shadow: 0 0 15px rgba(74, 222, 128, 0.40), 0 0 22px rgba(74, 222, 128, 0.18);
-    }
-
-    /* HEADWINDS DOLLAR SIGN GLOW (UNCHANGED) */
-    .balloon-wrapper.ignited.glow-headwinds .balloon-dollar {
-      color: rgba(134, 239, 172, 0.35);
-      text-shadow: 0 0 12px rgba(74, 222, 128, 0.25);
-    }
-
-    @keyframes flameFlicker {
-      0% { transform: translateX(-50%) scale(1.05) rotate(-1deg); }
-      100% { transform: translateX(-50%) scale(1.2) rotate(1deg); }
-    }
-
-    /* --- APPROVED ILLUSTRATED FIREFLIES LAYER --- */
-    .firefly-layer {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      z-index: 30;
-    }
-
-    .firefly {
-      position: absolute;
-      width: 32px;
-      height: 32px;
-      pointer-events: none;
-      will-change: transform;
-      transition: opacity 1.2s ease-in-out;
-    }
-
-    .firefly-svg {
-      width: 100%;
-      height: 100%;
-      overflow: visible;
-    }
-
-    .ff-abdomen-bg {
-      fill: #18181b;
-      stroke: #18181b;
-      stroke-width: 1.2;
-      transition: fill 0.3s ease, filter 0.3s ease;
-      animation: organicPulse 3.8s infinite ease-in-out;
-    }
-
-    .ff-dollar-text {
-      font-size: 9.5px;
-      font-weight: 900;
-      font-family: 'Courier New', Courier, monospace;
-      fill: rgba(34, 197, 94, 0);
-      text-anchor: middle;
-      dominant-baseline: central;
-      transition: fill 0.3s ease;
-      animation: symbolPeakReveal 3.8s infinite ease-in-out;
-    }
-
-    .ff-wing-left {
-      transform-origin: 20px 18px;
-      animation: continuousFlapLeft 0.08s infinite alternate ease-in-out;
-    }
-
-    .ff-wing-right {
-      transform-origin: 20px 18px;
-      animation: continuousFlapRight 0.08s infinite alternate ease-in-out;
-    }
-
-    @keyframes continuousFlapLeft {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(-32deg) scaleX(0.75); }
-    }
-
-    @keyframes continuousFlapRight {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(32deg) scaleX(0.75); }
-    }
-
-    @keyframes organicPulse {
-      0%, 15%, 85%, 100% {
-        fill: #18181b;
-        filter: drop-shadow(0 0 0px rgba(0,0,0,0));
-      }
-      45%, 55% {
-        fill: #facc15;
-        filter: drop-shadow(0 0 5px #facc15) drop-shadow(0 0 10px rgba(74, 222, 128, 0.65));
-      }
-    }
-
-    @keyframes symbolPeakReveal {
-      0%, 25%, 75%, 100% {
-        fill: rgba(22, 101, 52, 0);
-      }
-      48%, 52% {
-        fill: #15803d;
-      }
-    }    #billRevealLayer { position: absolute; inset: 0; pointer-events: none; z-index: 40; overflow: hidden; }
-    .bill-tag {
-      position: absolute; transform: translate(-50%, -100%) rotate(0deg);
-      background: rgba(15, 23, 42, 0.88); border: 1px solid rgba(255,255,255,0.18);
-      color: #e2e8f0; font-family: ui-monospace, monospace; font-size: 11px; font-weight: 700;
-      padding: 4px 10px; border-radius: 6px; white-space: nowrap;
-      opacity: 0; transition: opacity 0.6s ease;
-    }
-    .bill-tag.bt-visible { opacity: 1; }
-    .bill-tag.bt-flash { transition: opacity 0.15s ease; }
-    .bill-tag.bt-flood {
-      background: rgba(15, 40, 80, 0.75); border-color: rgba(150,190,230,0.35);
-      color: rgba(220, 235, 255, 0.92);
-      animation: fwFloodPulse 3.6s ease-in-out infinite;
-    }
-    @keyframes fwFloodPulse {
-      0%, 100% { box-shadow: 0 0 0 rgba(176, 58, 58, 0); }
-      50%      { box-shadow: 0 0 10px rgba(176, 58, 58, 0.45); }
-    }
-    .fw-impact-pop {
-      position: absolute; width: 10px; height: 10px; margin: -5px 0 0 -5px;
-      border-radius: 50%; pointer-events: none;
-      background: radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(180,220,255,0.7) 35%, rgba(120,190,255,0) 70%);
-      animation: fwImpactPop 0.5s ease-out forwards;
-    }
-    @keyframes fwImpactPop {
-      0%   { transform: scale(0.3); opacity: 1; }
-      40%  { transform: scale(2.2); opacity: 0.9; }
-      100% { transform: scale(4.5); opacity: 0; }
-    }
-    /* ============================================================
-       Overlay shell — matches the app's existing full-screen
-       overlay convention for open/close.
-       ============================================================ */
-    .ww-overlay { position: fixed; inset: 0; z-index: 300; background: #020617; overflow: hidden; }
-    .ww-overlay.hidden { display: none; }
-    #ww-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-    .ww-close-btn {
-      position: absolute; top: 16px; right: 16px; z-index: 120;
-      display: flex; align-items: center; gap: 6px;
-      background: rgba(15,23,42,0.75); backdrop-filter: blur(12px);
-      border: 1px solid rgba(255,255,255,0.15); border-radius: 999px;
-      padding: 8px 16px; color: #e2e8f0; font-size: 12px; font-weight: 700;
-      cursor: pointer;
-    }
-
-    /* ============================================================
-       AIRPLANE SPONSOR SYSTEM — exact extracted mechanics, not
-       redesigned. Flight path, propeller, tow cable, banner.
-       ============================================================ */
-    #airplaneSponsorLayer { position: absolute; inset: 0; pointer-events: none; z-index: 35; overflow: hidden; }
-
-    /* Airplane sponsor visuals reuse Flight Deck's existing approved
-       .fd-sponsor-plane / .fd-plane-icon / .fd-tow-rope / .fd-plane-banner-link
-       / .fd-banner-img CSS verbatim — no new airplane or banner design here. */
-
-
-  </style>
   <!-- Tailwind utilities, built from this file (npm run build:css after
        changing classes). Last in <head>, where the former runtime CDN
        placed its styles, so utilities keep the same precedence. -->
@@ -2184,7 +1888,7 @@
               </div>
 
               <!-- Financial Weather -->
-              <div id="fin-weather-card" class="glass-card rounded-3xl p-5 sm:p-6 border border-slate-800/80 flex flex-col justify-between space-y-3 relative overflow-hidden transition-colors cursor-pointer hover:border-slate-700 transition-all" onclick="openWeatherWorld()" role="button" tabindex="0" aria-label="Open Financial Weather World">
+              <div id="fin-weather-card" class="glass-card rounded-3xl p-5 sm:p-6 border border-slate-800/80 flex flex-col justify-between space-y-3 relative overflow-hidden transition-colors" role="region" aria-label="Financial Weather">
                 <!-- Ambient effect layers — exactly one visible at a time, driven by computeFinancialWeather() -->
                 <div class="absolute inset-0 pointer-events-none overflow-hidden rounded-3xl">
                   <div id="weather-fx-clear" class="hidden absolute inset-0">
@@ -2242,10 +1946,14 @@
                   <div id="fin-weather-icon" class="text-4xl">☀</div>
                   <h3 id="fin-weather-title" class="text-lg font-extrabold text-white">Clear Skies</h3>
                   <p id="fin-weather-reason" class="text-[11px] text-slate-400 font-medium">--</p>
-                  <p id="fin-weather-desc" class="text-xs text-slate-400">Stable cash reserves and healthy safe spend buffer.</p>
-                  <p id="fin-weather-predictive" class="text-[11px] text-slate-500 italic pt-0.5">Clear for now.</p>
+                  <p id="fin-weather-desc" class="hidden sm:block text-xs text-slate-400">Stable cash reserves and healthy safe spend buffer.</p>
+                  <p id="fin-weather-predictive" class="hidden sm:block text-[11px] text-slate-500 italic pt-0.5">Clear for now.</p>
                 </div>
-                <div class="text-left z-10 space-y-1">
+                <!-- Phones show the compact card: icon, verdict, reason, next step
+                     and Why?. Top factors, the longer description and Risk
+                     Status repeat Safe Spend and the verdict, so they show
+                     from tablet width up. -->
+                <div class="hidden sm:block text-left z-10 space-y-1">
                   <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Top Factors</p>
                   <ul id="fin-weather-factors" class="text-[11px] text-slate-400 space-y-0.5 list-disc list-inside"></ul>
                 </div>
@@ -2253,7 +1961,7 @@
                   <p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Next Step</p>
                   <p id="fin-weather-next-action" class="text-[11px] text-slate-300">Nothing needed right now.</p>
                 </div>
-                <div class="pt-3 border-t border-slate-800 flex justify-between text-[11px] text-slate-400 z-10">
+                <div class="hidden sm:flex pt-3 border-t border-slate-800 justify-between text-[11px] text-slate-400 z-10">
                   <span>Risk Status:</span>
                   <strong id="fin-weather-risk" class="text-brand-400">Healthy</strong>
                 </div>
@@ -2324,6 +2032,10 @@
               </div>
             </div>
 
+            <!-- GROCERY RUN: useful but not a daily check, so it sits below
+                 the everyday numbers. -->
+            <div id="dash-grocery-card"></div>
+
           </div>
 
           <!-- ================= PAGE: ACCOUNTS & CASH ================= -->
@@ -2386,6 +2098,7 @@
                 <i data-lucide="info" class="w-5 h-5 text-brand-400 shrink-0"></i>
                 <span>Marking a bill as <strong>Complete</strong> logs it into your ledger, advances the due date, and records activity. <strong>Delete</strong> is recoverable for 5 seconds.</span>
               </div>
+              <div id="coming-up-grocery-entry" class="mb-3"></div>
               <div class="space-y-3" id="coming-up-timeline-list"></div>
             </div>
 
@@ -2438,6 +2151,18 @@
 
               <div id="paydays-timeline-list" class="space-y-2"></div>
             </div>
+          </div>
+
+          <!-- ================= PAGE: GROCERY RUN ================= -->
+          <div id="page-groceries" class="page-view space-y-5 hidden">
+            <div class="flex justify-between items-center gap-3 border-b border-slate-800/80 pb-4">
+              <div>
+                <h2 class="text-2xl font-extrabold text-white tracking-tight">Grocery Run</h2>
+                <p class="text-xs text-slate-400">Plan dinners and build a shopping list. Nothing touches your balance until you enter what you actually spent.</p>
+              </div>
+              <button type="button" onclick="navigateTo('coming-up')" class="min-h-[44px] px-2 shrink-0 text-xs text-brand-400 hover:underline">Back to Bills</button>
+            </div>
+            <div id="grocery-root" class="max-w-2xl"></div>
           </div>
 
           <!-- ================= PAGE: TRANSACTIONS / LEDGER ================= -->
@@ -3920,6 +3645,7 @@
             <label class="block text-xs font-semibold text-slate-400 mb-1">Category</label>
             <select id="tx-category" class="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-200 outline-none">
               <option value="Food & Dining">Food & Dining</option>
+              <option value="Groceries">Groceries</option>
               <option value="Housing">Housing</option>
               <option value="Utilities">Utilities</option>
               <option value="Subscriptions">Subscriptions</option>
@@ -4182,7 +3908,15 @@
         householdPaychecks: [],
         // One entry per statement-import session, enabling Settings → Data
         // Management → Import History → Undo Import.
-        importHistory: []
+        importHistory: [],
+        // Grocery Run: saved meal-planning preferences (one shared entry)
+        // and grocery runs. Planning never touches money; only an entered
+        // total does, as an ordinary transaction.
+        groceryPrefs: [],
+        groceryTrips: [],
+        // Grocery Run activity for household notifications ("Boo started a
+        // Grocery Run"). Informational only.
+        groceryEvents: []
       };
     }
 
@@ -4265,7 +3999,7 @@
       // handler below, so they can't drift out of sync with each other.
       // Does not touch navigateTo() itself, or add any new pages/nav items.
       function resolveNotificationScreen(requested) {
-        const KNOWN_PAGES = ['dashboard', 'accounts', 'coming-up', 'ledger', 'goals', 'forecast', 'activity', 'reconcile', 'settings'];
+        const KNOWN_PAGES = ['dashboard', 'accounts', 'coming-up', 'groceries', 'ledger', 'goals', 'forecast', 'activity', 'reconcile', 'settings'];
         const ALIASES = { bills: 'coming-up', income: 'reconcile' };
 
         const normalized = String(requested || '').trim().toLowerCase();
@@ -5471,7 +5205,7 @@
     // With no base yet (first sync after this update) nothing is ever
     // dropped, so existing data needs no migration.
     // =====================================================================
-    const SYNCED_COLLECTIONS = ['accounts', 'bills', 'transactions', 'goals', 'householdPaychecks', 'activityLog', 'importHistory'];
+    const SYNCED_COLLECTIONS = ['accounts', 'bills', 'transactions', 'goals', 'householdPaychecks', 'activityLog', 'importHistory', 'groceryPrefs', 'groceryTrips', 'groceryEvents'];
     // Money amounts that combine when two members change them concurrently.
     const ACCUMULATOR_FIELDS = { accounts: ['balance'], goals: ['current'] };
 
@@ -6243,7 +5977,7 @@
     });
 
     function getCurrentPageId() {
-      const pages = ['dashboard', 'flightdeck', 'accounts', 'coming-up', 'ledger', 'goals', 'forecast', 'activity', 'reconcile', 'devtools', 'settings'];
+      const pages = ['dashboard', 'flightdeck', 'accounts', 'coming-up', 'groceries', 'ledger', 'goals', 'forecast', 'activity', 'reconcile', 'devtools', 'settings'];
       for (let p of pages) {
         const el = document.getElementById(`page-${p}`);
         if (el && !el.classList.contains('hidden')) return p;
@@ -6307,6 +6041,7 @@
       if (pageId === 'dashboard') renderDashboard();
       if (pageId === 'accounts') renderAccounts();
       if (pageId === 'coming-up') renderComingUp();
+      if (pageId === 'groceries') renderGroceries();
       if (pageId === 'ledger') renderLedger();
       if (pageId === 'goals') renderGoals();
       if (pageId === 'forecast') renderForecastActive();
@@ -6315,6 +6050,7 @@
       if (pageId === 'reconcile') renderReconcilePage();
       if (pageId === 'devtools') renderDevToolsPage();
       if (pageId === 'settings') renderSettingsPage();
+      deliverGroceryNotifications();
     }
 
     // ==========================================
@@ -7140,7 +6876,9 @@
         }
       }
 
+      renderDashboardGroceryCard();
       lucide.createIcons();
+      maybeAskGroceryTotal();
     }
 
     // ==========================================
@@ -7384,6 +7122,7 @@
     function renderComingUp() {
       const container = document.getElementById('coming-up-timeline-list');
       if (!container) return;
+      renderGroceryEntry();
 
       // If the Paydays sub-tab is the one currently visible, refresh it
       // too — renderComingUp() only touches the bills list below, so
@@ -9303,7 +9042,7 @@
 
 
 
-      // Weather World drawFog()
+      // drawFog()
       function drawFog(horizonY) {
         if (current.fogDensity <= 0.005) return;
         ctx.save();
@@ -13189,6 +12928,10 @@
         { id: 'partial-arrangement', q: "I paid part of a bill, or made an arrangement", body: `
           <p><strong class="text-white">New date agreed:</strong> open the bill and tap <strong class="text-white">Biller gave me a new date</strong>. Only that payment moves.</p>
           <p><strong class="text-white">Paid part:</strong> log what you paid as a transaction so your balance is right. Paycheck Pilot can't split one bill payment yet, so it still expects the full amount on the due date — your forecast will look slightly worse than reality by the amount already paid. It errs on the side of caution.</p>` },
+        { id: 'grocery-run', q: "How does Grocery Run work?", body: `
+          <p>Open it from the bottom of the <strong class="text-white">Dashboard</strong> or from the <strong class="text-white">Bills</strong> page. Pick who's eating and what your family eats (saved for next time), how many weeks, and Low / Medium / No limit — which only changes the kind of meals suggested. You get 5 dinners a week and one combined list to share, copy or print.</p>
+          <p><strong class="text-white">It never guesses prices.</strong> The only money it shows is your Safe Spend, and groceries come out of that along with fuel and everything else that isn't a bill.</p>
+          <p><strong class="text-white">Nothing touches your balance until you enter the real total.</strong> Then it's recorded once as a Groceries transaction, and Safe Spend and the forecast update. In a household, a run is shared the moment it starts: everyone can edit the list (the latest edit wins), members get a heads-up when a run is started, updated, ready or recorded, and the app checks first so the same shop can't be recorded twice.</p>` },
         { id: 'surprise-expense', q: "I had a surprise expense", body: `
           <p>Log it with <strong class="text-white">Log Transaction</strong> (Dashboard or Transactions). It comes out of your account right away and Safe Spend, Weather and Money Mayday update immediately — so you'll see if it creates a shortfall before payday.</p>` }
       ]},
@@ -14200,6 +13943,1093 @@
         if (!state.onboardingCompleted) renderOnboardingStep();
         else navigateTo(getCurrentPageId());
       }
+    }
+
+    // ==========================================
+    // GROCERY RUN -- plan dinners, build a shopping list, share it, then
+    // record what the shop actually cost.
+    //  - No prices anywhere. A meal's cost tier only picks the kind of meal.
+    //  - The only money shown is Safe Spend, read from the forecast.
+    //  - Planning never touches balances or the forecast. Only an entered
+    //    total does, as ONE ordinary Groceries transaction.
+    // ==========================================
+    const GROCERY_AISLES = { P: 'Produce', M: 'Meat & Seafood', D: 'Dairy & Eggs', B: 'Bakery & Bread', A: 'Pantry', C: 'Canned Goods', F: 'Frozen', S: 'Spices & Oils', O: 'Other' };
+    const GROCERY_AISLE_ORDER = ['P', 'M', 'D', 'B', 'A', 'C', 'F', 'S', 'O'];
+    const GROCERY_PROTEINS = [['chicken', 'Chicken'], ['beef', 'Beef'], ['pork', 'Pork'], ['turkey', 'Turkey'], ['fish', 'Fish'], ['shrimp', 'Shrimp'], ['eggs', 'Eggs'], ['beans', 'Beans & meatless']];
+    const GROCERY_DINNERS_PER_WEEK = 5; // leaves room for leftovers and nights out
+    const GROCERY_BASE_SERVINGS = 4;
+    const GROCERY_KID_PORTION = 0.6;
+    const GROCERY_SESSION_START = new Date().toISOString();
+    // Each meal: name | cost tier | main protein | tags | ingredients for 4
+    // ("qty unit name/aisle"; a pantry staple with no amount is "name/S").
+    const GROCERY_MEAL_DATA = [
+      ['Chicken tacos', 'low', 'chicken', 'kid quick', '1.5 lb chicken thighs/M; 1 pkg flour tortillas/B; 1 head lettuce/P; 2 ct tomatoes/P; 1 bag shredded cheese/D; 1 jar salsa/A; taco seasoning/S'],
+      ['Sheet-pan chicken and potatoes', 'low', 'chicken', 'kid', '2 lb chicken thighs/M; 2 lb potatoes/P; 1 bag baby carrots/P; olive oil/S; garlic powder/S'],
+      ['Chicken fried rice', 'low', 'chicken', 'quick', '1 lb chicken thighs/M; 0.5 bag rice/A; 1 bag frozen peas and carrots/F; 0.5 dozen eggs/D; 1 bottle soy sauce/A; vegetable oil/S'],
+      ['Chicken Alfredo', 'med', 'chicken', 'kid', '1.5 lb chicken breast/M; 1 box fettuccine/A; 1 jar Alfredo sauce/A; 1 head broccoli/P'],
+      ['BBQ chicken sandwiches', 'low', 'chicken', 'kid quick', '1.5 lb chicken breast/M; 1 bottle BBQ sauce/A; 1 pkg hamburger buns/B; 1 bag coleslaw mix/P'],
+      ['Chicken noodle soup', 'low', 'chicken', 'kid', '1 lb chicken breast/M; 1 bag egg noodles/A; 2 carton chicken broth/A; 1 bag baby carrots/P; 1 bunch celery/P; 1 ct onion/P'],
+      ['Chicken stir-fry', 'med', 'chicken', 'quick', '1.5 lb chicken breast/M; 1 bag frozen stir-fry vegetables/F; 0.5 bag rice/A; 1 bottle teriyaki sauce/A'],
+      ['Chicken quesadillas', 'low', 'chicken', 'kid quick', '1 lb chicken breast/M; 1 pkg flour tortillas/B; 1 bag shredded cheese/D; 1 jar salsa/A; 1 tub sour cream/D'],
+      ['Chicken enchiladas', 'med', 'chicken', 'kid', '1.5 lb chicken breast/M; 1 pkg flour tortillas/B; 2 can enchilada sauce/C; 1 bag shredded cheese/D; 1 can black beans/C'],
+      ['Honey garlic drumsticks', 'low', 'chicken', 'kid', '3 lb chicken drumsticks/M; 0.5 bag rice/A; 1 bag frozen green beans/F; 1 bottle honey/A; garlic powder/S'],
+      ['Chicken Caesar wraps', 'med', 'chicken', 'quick', '1 lb chicken breast/M; 1 pkg flour tortillas/B; 1 head romaine lettuce/P; 1 bottle Caesar dressing/A; 1 bag shredded parmesan/D'],
+      ['Chicken pot pie', 'med', 'chicken', 'kid', '1 lb chicken breast/M; 1 bag frozen mixed vegetables/F; 1 can cream of chicken soup/C; 1 pkg refrigerated pie crust/D'],
+      ['Spaghetti and meat sauce', 'low', 'beef', 'kid', '1 lb ground beef/M; 1 box spaghetti/A; 1 jar pasta sauce/A; 1 ct frozen garlic bread/F'],
+      ['Cheeseburgers and fries', 'med', 'beef', 'kid quick', '1.5 lb ground beef/M; 1 pkg hamburger buns/B; 1 pkg sliced cheese/D; 1 head lettuce/P; 2 ct tomatoes/P; 1 bag frozen fries/F'],
+      ['Beef tacos', 'low', 'beef', 'kid quick', '1 lb ground beef/M; 1 box taco shells/A; 1 head lettuce/P; 1 bag shredded cheese/D; 1 jar salsa/A; taco seasoning/S'],
+      ['Beef chili', 'low', 'beef', '', '1 lb ground beef/M; 2 can kidney beans/C; 2 can diced tomatoes/C; 1 ct onion/P; chili powder/S'],
+      ['Beef and broccoli', 'med', 'beef', 'quick', '1.5 lb flank steak/M; 2 head broccoli/P; 0.5 bag rice/A; 1 bottle soy sauce/A'],
+      ['Sloppy joes', 'low', 'beef', 'kid quick', '1 lb ground beef/M; 1 can sloppy joe sauce/C; 1 pkg hamburger buns/B; 1 bag baby carrots/P'],
+      ["Shepherd's pie", 'med', 'beef', 'kid', '1.5 lb ground beef/M; 3 lb potatoes/P; 1 bag frozen peas and carrots/F; 1 pkg butter/D; 1 carton milk/D'],
+      ['Pot roast', 'high', 'beef', '', '3 lb chuck roast/M; 2 lb potatoes/P; 1 bag baby carrots/P; 1 ct onion/P; 1 carton beef broth/A'],
+      ['Steak and baked potatoes', 'high', 'beef', '', '2 lb sirloin steak/M; 2 lb potatoes/P; 1 bag salad mix/P; 1 tub sour cream/D'],
+      ['Beef stroganoff', 'med', 'beef', 'kid', '1 lb ground beef/M; 1 bag egg noodles/A; 1 pkg mushrooms/P; 1 tub sour cream/D; 1 carton beef broth/A'],
+      ['Meatloaf and green beans', 'med', 'beef', 'kid', '2 lb ground beef/M; 0.5 dozen eggs/D; 1 ct breadcrumbs/A; 1 bottle ketchup/A; 2 lb potatoes/P; 1 bag frozen green beans/F'],
+      ['Baked ziti', 'low', 'beef', 'kid', '1 lb ground beef/M; 1 box ziti/A; 1 jar pasta sauce/A; 1 tub ricotta/D; 1 bag shredded mozzarella/D'],
+      ['Pork chops and applesauce', 'med', 'pork', 'kid', '2 lb pork chops/M; 1 jar applesauce/A; 2 lb potatoes/P; 1 bag frozen green beans/F'],
+      ['Pulled pork sandwiches', 'med', 'pork', 'kid', '3 lb pork shoulder/M; 1 bottle BBQ sauce/A; 1 pkg hamburger buns/B; 1 bag coleslaw mix/P'],
+      ['Sausage and peppers', 'low', 'pork', 'quick', '1.5 lb Italian sausage/M; 3 ct bell peppers/P; 1 ct onion/P; 1 pkg hoagie rolls/B'],
+      ['Pancakes and bacon', 'low', 'pork', 'kid quick', '1 box pancake mix/A; 1 pkg bacon/M; 1 dozen eggs/D; 1 bottle syrup/A'],
+      ['Ham and cheese sliders', 'low', 'pork', 'kid quick', '1 lb deli ham/M; 1 pkg slider rolls/B; 1 pkg sliced cheese/D; 1 bag baby carrots/P'],
+      ['Pork carnitas bowls', 'med', 'pork', '', '2 lb pork shoulder/M; 0.5 bag rice/A; 1 can black beans/C; 1 jar salsa/A; 3 ct limes/P'],
+      ['Sausage and white bean soup', 'low', 'pork', '', '1 lb smoked sausage/M; 2 can white beans/C; 1 carton chicken broth/A; 1 bag spinach/P; 1 ct onion/P'],
+      ['Teriyaki pork tenderloin', 'high', 'pork', '', '2 lb pork tenderloin/M; 1 bottle teriyaki sauce/A; 0.5 bag rice/A; 2 head broccoli/P'],
+      ['Turkey chili', 'low', 'turkey', '', '1 lb ground turkey/M; 2 can kidney beans/C; 2 can diced tomatoes/C; 1 ct onion/P; chili powder/S'],
+      ['Turkey burgers', 'med', 'turkey', 'quick', '1.5 lb ground turkey/M; 1 pkg hamburger buns/B; 1 head lettuce/P; 2 ct tomatoes/P; 1 bag frozen sweet potato fries/F'],
+      ['Turkey meatballs and pasta', 'med', 'turkey', 'kid', '1 lb ground turkey/M; 0.5 dozen eggs/D; 1 ct breadcrumbs/A; 1 box spaghetti/A; 1 jar pasta sauce/A'],
+      ['Turkey taco lettuce wraps', 'med', 'turkey', 'quick', '1 lb ground turkey/M; 1 head romaine lettuce/P; 1 jar salsa/A; 1 bag shredded cheese/D; taco seasoning/S'],
+      ['Fish tacos', 'med', 'fish', 'quick', '1 box frozen breaded fish/F; 1 pkg flour tortillas/B; 1 bag coleslaw mix/P; 3 ct limes/P; 1 tub sour cream/D'],
+      ['Baked salmon and rice', 'high', 'fish', '', '1.5 lb salmon/M; 0.5 bag rice/A; 1 bunch asparagus/P; 2 ct lemons/P'],
+      ['Tuna noodle casserole', 'low', 'fish', 'kid', '3 can tuna/C; 1 bag egg noodles/A; 1 can cream of mushroom soup/C; 1 bag frozen peas/F; 1 bag shredded cheese/D'],
+      ['Fish sticks and mac and cheese', 'low', 'fish', 'kid quick', '1 box frozen fish sticks/F; 2 box mac and cheese/A; 1 bag frozen broccoli/F'],
+      ['Lemon tilapia and green beans', 'med', 'fish', 'quick', '1 bag frozen tilapia/F; 2 ct lemons/P; 1 bag frozen green beans/F; 0.5 bag rice/A'],
+      ['Shrimp stir-fry', 'high', 'shrimp', 'quick', '1 bag frozen shrimp/F; 1 bag frozen stir-fry vegetables/F; 0.5 bag rice/A; 1 bottle soy sauce/A'],
+      ['Shrimp scampi', 'high', 'shrimp', 'quick', '1 bag frozen shrimp/F; 1 box linguine/A; 1 pkg butter/D; 2 ct lemons/P; 1 head garlic/P'],
+      ['Shrimp tacos', 'high', 'shrimp', 'quick', '1 bag frozen shrimp/F; 1 pkg flour tortillas/B; 1 bag coleslaw mix/P; 3 ct limes/P'],
+      ['Veggie omelets and toast', 'low', 'eggs', 'quick veg', '1 dozen eggs/D; 2 ct bell peppers/P; 1 bag spinach/P; 1 bag shredded cheese/D; 1 loaf bread/B'],
+      ['Breakfast burritos', 'low', 'eggs', 'kid quick veg', '1 dozen eggs/D; 1 pkg flour tortillas/B; 1 bag frozen hash browns/F; 1 bag shredded cheese/D; 1 jar salsa/A'],
+      ['Egg fried rice', 'low', 'eggs', 'quick veg', '1 dozen eggs/D; 0.5 bag rice/A; 1 bag frozen peas and carrots/F; 1 bottle soy sauce/A; vegetable oil/S'],
+      ['Spinach quiche and salad', 'med', 'eggs', 'veg', '1 dozen eggs/D; 1 pkg refrigerated pie crust/D; 1 bag shredded cheese/D; 1 bag spinach/P; 1 bag salad mix/P'],
+      ['Black bean quesadillas', 'low', 'beans', 'kid quick veg', '2 can black beans/C; 1 pkg flour tortillas/B; 1 bag shredded cheese/D; 1 jar salsa/A'],
+      ['Vegetarian chili', 'low', 'beans', 'veg', '2 can kidney beans/C; 1 can black beans/C; 2 can diced tomatoes/C; 1 ct onion/P; 2 ct bell peppers/P; chili powder/S'],
+      ['Bean and rice burritos', 'low', 'beans', 'veg', '2 can pinto beans/C; 0.5 bag rice/A; 1 pkg flour tortillas/B; 1 bag shredded cheese/D; 1 jar salsa/A'],
+      ['Pasta primavera', 'med', 'beans', 'quick veg', '1 box penne/A; 2 ct zucchini/P; 2 ct bell peppers/P; 1 pint cherry tomatoes/P; 1 bag shredded parmesan/D; olive oil/S'],
+      ['Homemade cheese pizza', 'low', 'beans', 'kid veg', '2 ct pizza crusts/B; 1 jar pizza sauce/A; 1 bag shredded mozzarella/D; 1 bag salad mix/P'],
+      ['Grilled cheese and tomato soup', 'low', 'beans', 'kid quick veg', '1 loaf bread/B; 1 pkg sliced cheese/D; 2 can tomato soup/C; 1 pkg butter/D'],
+      ['Lentil soup', 'low', 'beans', 'veg', '1 bag lentils/A; 1 bag baby carrots/P; 1 bunch celery/P; 1 ct onion/P; 2 carton vegetable broth/A'],
+      ['Chickpea curry', 'low', 'beans', 'veg', '2 can chickpeas/C; 1 can coconut milk/C; 1 can diced tomatoes/C; 0.5 bag rice/A; curry powder/S'],
+      ['Tofu veggie stir-fry', 'med', 'beans', 'quick veg', '2 pkg firm tofu/P; 1 bag frozen stir-fry vegetables/F; 0.5 bag rice/A; 1 bottle soy sauce/A'],
+      ['Baked mac and cheese', 'low', 'beans', 'kid veg', '2 box elbow macaroni/A; 2 bag shredded cheese/D; 1 carton milk/D; 1 pkg butter/D; 1 bag frozen broccoli/F'],
+      ['Loaded baked potatoes', 'low', 'beans', 'kid veg', '3 lb potatoes/P; 1 bag shredded cheese/D; 1 tub sour cream/D; 1 head broccoli/P'],
+      ['Minestrone', 'low', 'beans', 'veg', '1 can white beans/C; 1 can kidney beans/C; 2 can diced tomatoes/C; 1 box small pasta/A; 2 ct zucchini/P; 1 bag baby carrots/P; 2 carton vegetable broth/A'],
+      ['Spinach stuffed shells', 'med', 'beans', 'veg', '1 box jumbo pasta shells/A; 1 tub ricotta/D; 1 bag spinach/P; 1 jar pasta sauce/A; 1 bag shredded mozzarella/D']
+    ];
+    // "Foods to leave out" words that stand for a whole group.
+    const GROCERY_LEAVE_GROUPS = {
+      meat: { proteins: ['chicken', 'beef', 'pork', 'turkey'], words: ['bacon', 'sausage', 'ham', 'steak'] },
+      seafood: { proteins: ['fish', 'shrimp'], words: ['tuna', 'salmon', 'tilapia', 'shrimp'] },
+      dairy: { proteins: [], words: ['cheese', 'milk', 'butter', 'sour cream', 'ricotta', 'parmesan', 'mozzarella', 'alfredo', 'cream of', 'pie crust'] }
+    };
+    const GROCERY_UNIT_PLURALS = { box: 'boxes', bunch: 'bunches', loaf: 'loaves', dozen: 'dozen', lb: 'lb' };
+
+    let groceryMealCache = null;
+    function groceryMeals() {
+      if (groceryMealCache) return groceryMealCache;
+      groceryMealCache = GROCERY_MEAL_DATA.map(([name, cost, protein, tags, ing]) => ({
+        id: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+        name, cost, protein, tags: tags ? tags.split(' ') : [],
+        ingredients: ing.split(';').map(x => x.trim()).filter(Boolean).map(x => {
+          const slash = x.lastIndexOf('/');
+          const aisle = x.slice(slash + 1).trim();
+          const body = x.slice(0, slash).trim();
+          const m = /^([\d.]+)\s+(\S+)\s+(.+)$/.exec(body);
+          return m ? { name: m[3], qty: Number(m[1]), unit: m[2], aisle, staple: false }
+                   : { name: body, qty: 0, unit: '', aisle, staple: true };
+        })
+      }));
+      return groceryMealCache;
+    }
+    function groceryMealById(id) { return groceryMeals().find(m => m.id === id) || null; }
+
+    // ---- Saved preferences (one entry, shared with the household) ----
+    function groceryPrefs() {
+      return (state.groceryPrefs || []).find(p => p && p.id === 'grocery_prefs' && isVisibleToCurrentUser(p)) || null;
+    }
+    function saveGroceryPrefs(p) {
+      const nowIso = new Date().toISOString();
+      const entry = {
+        id: 'grocery_prefs',
+        scope: inHouseholdMode() ? 'household' : 'personal',
+        ownerId: state.user ? state.user.id : null,
+        adults: Math.min(10, Math.max(1, Math.round(Number(p.adults) || 1))),
+        kids: Math.min(10, Math.max(0, Math.round(Number(p.kids) || 0))),
+        proteins: (p.proteins || []).filter(x => GROCERY_PROTEINS.some(([k]) => k === x)),
+        leaveOut: (p.leaveOut || []).map(x => String(x).trim().slice(0, 40)).filter(Boolean).slice(0, 30),
+        picky: !!p.picky,
+        store: ['instacart', 'kroger', 'other'].includes(p.store) ? p.store : 'other',
+        lastModifiedAt: nowIso,
+        lastModifiedBy: currentOwnerLabel()
+      };
+      state.groceryPrefs = (state.groceryPrefs || []).filter(x => !(x && x.id === 'grocery_prefs'));
+      state.groceryPrefs.push(entry);
+      saveStateToStorage();
+      return entry;
+    }
+
+    // ---- Runs ----
+    // A run is saved and shared the moment it starts, so everyone in the
+    // household sees and edits the same one (latest edit wins). Status:
+    // planning -> ready (list done, "ready to order") -> recorded | cancelled.
+    function groceryTripTx(tripId) {
+      return (state.transactions || []).filter(t => t && t.source === 'grocery-run' && t.groceryTripId === tripId).sort(compareBillPayments)[0] || null;
+    }
+    function groceryTripStatus(trip) {
+      if (!trip) return null;
+      if (groceryTripTx(trip.id) || trip.status === 'recorded') return 'recorded';
+      if (trip.status === 'cancelled') return 'cancelled';
+      return trip.status === 'ready' ? 'ready' : 'planning';
+    }
+    function groceryTripIsOpen(trip) { const s = groceryTripStatus(trip); return s === 'planning' || s === 'ready'; }
+    // Oldest first: if two people start a run at the same moment, both
+    // phones settle on the same (first) one.
+    function openGroceryTrips() {
+      return (state.groceryTrips || []).filter(t => t && isVisibleToCurrentUser(t) && groceryTripIsOpen(t)).sort(compareBillPayments);
+    }
+    function openGroceryTrip() { return openGroceryTrips()[0] || null; }
+    function groceryTripById(id) { return (state.groceryTrips || []).find(t => t && t.id === id) || null; }
+    function groceryStoreName(store) { return store === 'instacart' ? 'Instacart' : store === 'kroger' ? 'Kroger' : 'your store'; }
+    function groceryPersonName(byId, byLabel) {
+      if (state.user && byId && byId === state.user.id) return 'You';
+      if (byId) { const n = memberDisplayName(byId); if (n !== 'Household Member') return n; }
+      const l = String(byLabel || '').trim();
+      return l && l !== 'User' ? l : 'A household member';
+    }
+    function groceryPushNow() {
+      if (!(state.user && !state.isDemo && supabaseClient && getSyncKey())) return;
+      if (syncDebounceTimer) { clearTimeout(syncDebounceTimer); syncDebounceTimer = null; }
+      triggerCloudSync(true);
+    }
+    function touchGroceryTrip(trip, eventType) {
+      trip.lastModifiedAt = new Date().toISOString();
+      trip.lastModifiedBy = currentOwnerLabel();
+      trip.lastModifiedById = state.user ? state.user.id : null;
+      if (eventType) addGroceryEvent(trip, eventType);
+      saveStateToStorage();
+    }
+    // Two people pressed Start at the same moment: keep the first run and
+    // fold this device's later one into it.
+    function resolveDuplicateGroceryTrips() {
+      const open = openGroceryTrips();
+      if (open.length < 2) return false;
+      const keep = open[0];
+      const me = state.user ? state.user.id : null;
+      let changed = false;
+      open.slice(1).forEach(t => {
+        if (!me || t.createdById !== me || groceryTripStatus(t) !== 'planning') return;
+        t.status = 'cancelled';
+        t.mergedInto = keep.id;
+        t.closedAt = new Date().toISOString();
+        t.closedBy = currentOwnerLabel();
+        t.lastModifiedAt = t.closedAt; t.lastModifiedBy = t.closedBy; t.lastModifiedById = me;
+        state.groceryEvents = (state.groceryEvents || []).filter(e => !(e && e.tripId === t.id && e.byId === me));
+        if (groceryUI.tripId === t.id) groceryUI.tripId = keep.id;
+        showToast(`${groceryPersonName(keep.createdById, keep.createdBy)} started a Grocery Run at the same time — you're both on that one now.`, 'info');
+        changed = true;
+      });
+      if (changed) saveStateToStorage();
+      return changed;
+    }
+
+    // ---- Household notifications (informational only; no money) ----
+    function addGroceryEvent(trip, type, extra) {
+      const me = state.user ? state.user.id : null;
+      if (!state.groceryEvents) state.groceryEvents = [];
+      // "Updated the list" at most every 10 minutes per person, so ticking
+      // items off doesn't send a notification per tap.
+      if (type === 'updated' && state.groceryEvents.some(e => e && e.tripId === trip.id && e.byId === me
+          && (e.type === 'updated' || e.type === 'started') && Date.now() - new Date(e.at).getTime() < 10 * 60000)) return;
+      state.groceryEvents.push({
+        id: 'gev_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+        tripId: trip.id, type, byId: me, by: currentOwnerLabel(), at: new Date().toISOString(),
+        scope: trip.scope, ownerId: trip.ownerId, ...(extra || {})
+      });
+      if (state.groceryEvents.length > 60) state.groceryEvents.splice(0, state.groceryEvents.length - 60);
+    }
+    function groceryEventText(e) {
+      const who = groceryPersonName(e.byId, e.by);
+      if (e.type === 'started') return `${who} started a Grocery Run.`;
+      if (e.type === 'updated') return `${who} updated the Grocery List.`;
+      if (e.type === 'ready') return 'Grocery Run ready to order.';
+      if (e.type === 'recorded') return `Grocery total recorded: ${formatMoney(e.amount)}`;
+      return '';
+    }
+    function groceryLatestEvent(tripId) {
+      return (state.groceryEvents || []).filter(e => e && e.tripId === tripId && isVisibleToCurrentUser(e))
+        .sort((a, b) => String(b.at).localeCompare(String(a.at)))[0] || null;
+    }
+    // New events from other members, shown once per device (in-app, and as
+    // a phone notification when notifications are on). Events already here
+    // the first time this device looks are marked seen, never replayed.
+    function deliverGroceryNotifications() {
+      if (!state.user || state.isDemo) return;
+      const key = 'pp_grocery_seen_' + state.user.id;
+      let seen = null;
+      try { seen = JSON.parse(localStorage.getItem(key)); } catch (e) {}
+      const mine = state.user.id;
+      const events = (state.groceryEvents || []).filter(e => e && e.id && isVisibleToCurrentUser(e));
+      if (!Array.isArray(seen)) {
+        try { localStorage.setItem(key, JSON.stringify(events.map(e => e.id).slice(-100))); } catch (e) {}
+        return;
+      }
+      const seenSet = new Set(seen);
+      const fresh = events.filter(e => !seenSet.has(e.id)).sort((a, b) => String(a.at).localeCompare(String(b.at)));
+      if (!fresh.length) return;
+      try { localStorage.setItem(key, JSON.stringify([...seen, ...fresh.map(e => e.id)].slice(-100))); } catch (e) {}
+      fresh.filter(e => e.byId !== mine).slice(-3).forEach(e => {
+        const text = groceryEventText(e);
+        if (!text) return;
+        showToast(text, 'info');
+        if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+          try { showNativeNotification('Paycheck Pilot', text, 'groceries', 'grocery-' + e.type); } catch (err) {}
+        }
+      });
+    }
+
+    // ---- What Safe Spend says (the only money on these screens) ----
+    function groceryMoneyContextHtml() {
+      const v = getActiveViewData();
+      const accts = visibleAccounts().filter(isSpendableAccount);
+      if (!accts.length) return `<p>Add your checking balance on <button type="button" onclick="navigateTo('accounts')" class="hit-44 underline text-brand-400">Accounts</button> to see how much room you have before payday.</p>`;
+      const fresh = balanceFreshness();
+      if (fresh) return `<p>${escapeHtml(balanceFreshnessText(fresh))} Until it's updated, Paycheck Pilot can't say how much room you have before payday.</p><button type="button" onclick="navigateTo('accounts')" class="min-h-[44px] mt-2 px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-sm">Update balances</button>`;
+      if (!v.nextIncome) return `<p>Set your payday to see your Safe Spend before payday.</p>`;
+      const when = `Before payday on ${escapeHtml(friendlyDate(v.nextIncome.date))}`;
+      if (v.safeSpend <= 0) {
+        return `<p><strong class="text-white">${when} there's no Safe Spend left.</strong> Groceries would come out of money reserved for bills.</p>`
+          + (v.mayday.active ? `<button type="button" onclick="openDeficitNavigatorModal()" class="min-h-[44px] mt-2 px-4 py-2 bg-rose-500 hover:bg-rose-400 text-white font-bold rounded-xl text-sm">Open Money Mayday</button>` : '');
+      }
+      const perDay = v.daysUntilIncome > 0 ? ` (about ${formatMoney(Math.floor(v.dailyAvailable))}/day)` : '';
+      return `<p><strong class="text-white">${when} you have ${formatMoney(v.safeSpend)} of Safe Spend${perDay}.</strong></p>
+        <p class="mt-1">Groceries come out of this, along with fuel, household purchases, and anything that isn't reserved for bills.</p>`;
+    }
+    function groceryDefaultWeeks() {
+      const v = getActiveViewData();
+      if (!v.nextIncome) return 1;
+      return Math.min(4, Math.max(1, Math.ceil(v.daysUntilIncome / 7)));
+    }
+
+    // ---- Meal choice ----
+    function groceryNormTerm(s) {
+      let t = String(s || '').toLowerCase().trim().replace(/\s+/g, ' ');
+      if (t.length > 3 && t.endsWith('s') && !t.endsWith('ss')) t = t.slice(0, -1);
+      return t;
+    }
+    function groceryMealHas(meal, term) {
+      if (!term) return false;
+      const hay = [meal.name, ...meal.ingredients.map(i => i.name)].join(' | ').toLowerCase();
+      const group = GROCERY_LEAVE_GROUPS[term];
+      if (group) return group.proteins.includes(meal.protein) || group.words.some(w => hay.includes(w));
+      return hay.includes(term) || meal.protein === term || meal.protein === term + 's';
+    }
+    function groceryMealPool(prefs, tier) {
+      const leave = ((prefs && prefs.leaveOut) || []).map(groceryNormTerm).filter(Boolean);
+      return groceryMeals().filter(m => {
+        if (tier === 'low' && m.cost !== 'low') return false;
+        if (tier === 'medium' && m.cost === 'high') return false;
+        return !leave.some(term => groceryMealHas(m, term));
+      });
+    }
+    function groceryPreferred(meal, prefs) {
+      const favs = (prefs && prefs.proteins) || [];
+      return (!favs.length || favs.includes(meal.protein)) && (!(prefs && prefs.picky) || meal.tags.includes('kid'));
+    }
+    function groceryShuffle(arr) {
+      const a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+      return a;
+    }
+    function pickGroceryMeals(count, prefs, tier) {
+      const pool = groceryMealPool(prefs, tier);
+      const pref = groceryShuffle(pool.filter(m => groceryPreferred(m, prefs)));
+      const rest = groceryShuffle(pool.filter(m => !groceryPreferred(m, prefs)));
+      const order = [...pref, ...rest];
+      const ids = [];
+      for (let i = 0; order.length && i < count; i++) ids.push(order[i % order.length].id);
+      return { ids, preferred: pref.length, pool: pool.length };
+    }
+
+    // ---- Building the list ----
+    function groceryServings(prefs) {
+      return Math.max(1, (Number(prefs && prefs.adults) || 1) + GROCERY_KID_PORTION * (Number(prefs && prefs.kids) || 0));
+    }
+    function groceryRoundQty(q, unit) {
+      if (unit === 'lb') return Math.max(0.5, Math.ceil(q * 2 - 1e-9) / 2);
+      return Math.max(1, Math.ceil(q - 1e-9));
+    }
+    function buildGroceryItems(mealIds, prefs) {
+      const factor = groceryServings(prefs) / GROCERY_BASE_SERVINGS;
+      const map = new Map();
+      mealIds.forEach(id => {
+        const meal = groceryMealById(id);
+        if (!meal) return;
+        meal.ingredients.forEach(ing => {
+          const key = ing.name.toLowerCase() + '|' + ing.unit;
+          const e = map.get(key) || { key, name: ing.name, unit: ing.unit, aisle: ing.aisle, staple: ing.staple, raw: 0 };
+          e.raw += ing.qty * factor;
+          map.set(key, e);
+        });
+      });
+      return [...map.values()]
+        .map(e => ({ key: e.key, name: e.name, unit: e.unit, aisle: e.aisle, staple: e.staple, qty: e.staple ? 0 : groceryRoundQty(e.raw, e.unit), have: e.staple }))
+        .sort((a, b) => GROCERY_AISLE_ORDER.indexOf(a.aisle) - GROCERY_AISLE_ORDER.indexOf(b.aisle) || a.name.localeCompare(b.name));
+    }
+    function groceryItemName(item) { const n = String(item.name || ''); return n.charAt(0).toUpperCase() + n.slice(1); }
+    function groceryQtyText(item) {
+      if (item.staple || item.custom) return '';
+      if (item.unit === 'ct') return String(item.qty);
+      const unit = item.qty === 1 ? item.unit : (GROCERY_UNIT_PLURALS[item.unit] || item.unit + 's');
+      return `${item.qty} ${unit}`;
+    }
+    function groceryListText(trip) {
+      const lines = [`Grocery list — ${friendlyDate(localDateStr(new Date(trip.createdAt)))}`];
+      GROCERY_AISLE_ORDER.forEach(a => {
+        const items = (trip.items || []).filter(i => i.aisle === a && !i.have);
+        if (!items.length) return;
+        lines.push('', GROCERY_AISLES[a].toUpperCase());
+        items.forEach(i => lines.push(`- ${groceryItemName(i)}${groceryQtyText(i) ? ' — ' + groceryQtyText(i) : ''}`));
+      });
+      lines.push('', `Dinners: ${(trip.meals || []).filter(m => m.keep !== false).map(m => m.name).join(', ')}`);
+      return lines.join('\n');
+    }
+
+    // ---- Screen state (this device only; the run itself is shared) ----
+    const GROCERY_DEFAULT_PREFS = { adults: 2, kids: 0, proteins: [], leaveOut: [], picky: false, store: 'other' };
+    let groceryUI = { step: 'home', tripId: null, prefs: null, editingPrefs: false, firstRun: false };
+    function groceryCurrentTrip() {
+      const t = groceryUI.tripId ? groceryTripById(groceryUI.tripId) : null;
+      return t && groceryTripIsOpen(t) ? t : openGroceryTrip();
+    }
+    function groceryPrefsCopy() { return JSON.parse(JSON.stringify(groceryPrefs() || GROCERY_DEFAULT_PREFS)); }
+    function openGroceryRun(step) {
+      groceryUI = { step: step || 'home', tripId: null, prefs: null, editingPrefs: false, firstRun: false };
+      navigateTo('groceries');
+    }
+    function groceryGo(step) { groceryUI.step = step; renderGroceries(); }
+    function groceryResumeStep(trip) {
+      if (!groceryPrefs()) return 'family';
+      return trip.items ? 'list' : trip.meals ? 'meals' : 'weeks';
+    }
+    function continueGroceryRun() {
+      const trip = openGroceryTrip();
+      if (!trip) { openGroceryRun('home'); return; }
+      groceryUI.tripId = trip.id;
+      groceryUI.firstRun = !groceryPrefs();
+      if (groceryUI.firstRun) groceryUI.prefs = groceryPrefsCopy();
+      groceryGo(groceryResumeStep(trip));
+    }
+    function startGroceryRun() {
+      if (openGroceryTrip()) { continueGroceryRun(); return; }
+      const nowIso = new Date().toISOString();
+      const actor = currentOwnerLabel();
+      const me = state.user ? state.user.id : null;
+      const trip = {
+        id: 'gtrip_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+        scope: inHouseholdMode() ? 'household' : 'personal',
+        ownerId: me, createdAt: nowIso, createdBy: actor, createdById: me,
+        status: 'planning', weeks: groceryDefaultWeeks(), tier: 'medium', meals: null, items: null,
+        lastModifiedAt: nowIso, lastModifiedBy: actor, lastModifiedById: me
+      };
+      if (!state.groceryTrips) state.groceryTrips = [];
+      state.groceryTrips.push(trip);
+      addGroceryEvent(trip, 'started');
+      logActivity("Grocery Run Started", `${actor} started a grocery run. Nothing was added to balances or the forecast.`);
+      saveStateToStorage();
+      groceryPushNow();
+      groceryUI.tripId = trip.id;
+      groceryUI.editingPrefs = false;
+      groceryUI.firstRun = !groceryPrefs();
+      groceryUI.prefs = groceryPrefsCopy();
+      groceryGo(groceryUI.firstRun ? 'family' : 'weeks');
+    }
+    function editGroceryPrefs() {
+      groceryUI.prefs = groceryPrefsCopy();
+      groceryUI.editingPrefs = true;
+      groceryGo('family');
+    }
+
+    const GR_BTN = 'min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-bold transition-all';
+    const GR_PRIMARY = `${GR_BTN} bg-brand-500 hover:bg-brand-600 text-slate-950`;
+    const GR_SECONDARY = `${GR_BTN} bg-slate-800 hover:bg-slate-700 text-slate-200`;
+    function groceryStepShell(n, total, title, body, nav) {
+      return `<div class="glass-card rounded-3xl border border-slate-800/80 p-5 sm:p-6 space-y-4">
+        ${n ? `<p class="text-[11px] font-bold uppercase tracking-wider text-brand-400">Step ${n} of ${total}</p>` : ''}
+        <h3 id="grocery-step-title" tabindex="-1" class="text-lg font-extrabold text-white outline-none">${title}</h3>
+        ${body}
+        ${nav ? `<div class="flex flex-wrap gap-2 pt-2">${nav}</div>` : ''}
+      </div>`;
+    }
+    function groceryStepCount() { return groceryUI.editingPrefs ? 3 : (groceryUI.firstRun ? 8 : 5); }
+    function groceryStepNo(step) {
+      const all = ['family', 'foods', 'store', 'weeks', 'budget', 'meals', 'list', 'send'];
+      const i = all.indexOf(step);
+      return !groceryUI.firstRun && !groceryUI.editingPrefs && i >= 3 ? i - 2 : i + 1;
+    }
+
+    // Re-rendered by the household sync every 10 seconds too, so: only
+    // touch the page when something changed, keep what's being typed, and
+    // move focus only when the step itself changes.
+    let groceryLastHtml = '', groceryLastStep = '';
+    function renderGroceries() {
+      const root = document.getElementById('grocery-root');
+      if (!root) return;
+      if (!state.groceryTrips) state.groceryTrips = [];
+      if (!state.groceryPrefs) state.groceryPrefs = [];
+      resolveDuplicateGroceryTrips();
+      const step = groceryUI.step;
+      if (['family', 'foods', 'store'].includes(step) && !groceryUI.prefs) groceryUI.prefs = groceryPrefsCopy();
+      const trip = groceryCurrentTrip();
+      if (['weeks', 'budget', 'meals', 'list', 'send', 'total'].includes(step)) {
+        const ok = trip && (step !== 'meals' || trip.meals) && (step !== 'list' || trip.items)
+          && (step !== 'total' || (groceryTripById(groceryUI.tripId) && groceryTripStatus(groceryTripById(groceryUI.tripId)) === 'ready'));
+        if (!ok) groceryUI.step = 'home';
+        else if (step !== 'total') groceryUI.tripId = trip.id;
+      }
+      const render = {
+        home: groceryHomeHtml, family: groceryFamilyHtml, foods: groceryFoodsHtml, store: groceryStoreHtml,
+        weeks: groceryWeeksHtml, budget: groceryBudgetHtml, meals: groceryMealsHtml, list: groceryListHtml,
+        send: grocerySendHtml, total: groceryTotalHtml
+      }[groceryUI.step] || groceryHomeHtml;
+      const html = render();
+      if (html === groceryLastHtml && root.innerHTML) return;
+      const active = document.activeElement;
+      const activeId = active && root.contains(active) && active.id ? active.id : null;
+      const typed = {};
+      root.querySelectorAll('input[id]:not([type=checkbox]):not([type=radio]), select[id]').forEach(el => { typed[el.id] = el.value; });
+      let sel = null;
+      try { if (active && activeId && typeof active.selectionStart === 'number') sel = [active.selectionStart, active.selectionEnd]; } catch (e) {}
+      root.innerHTML = html;
+      groceryLastHtml = html;
+      if (window.lucide) lucide.createIcons();
+      const stepChanged = groceryUI.step !== groceryLastStep;
+      groceryLastStep = groceryUI.step;
+      if (!stepChanged) Object.keys(typed).forEach(id => { const el = document.getElementById(id); if (el && root.contains(el)) el.value = typed[id]; });
+      if (getCurrentPageId() !== 'groceries') return;
+      if (stepChanged) {
+        const h = document.getElementById('grocery-step-title');
+        if (h) h.focus({ preventScroll: true });
+      } else if (activeId) {
+        const el = document.getElementById(activeId);
+        if (el) { el.focus({ preventScroll: true }); if (sel) try { el.setSelectionRange(sel[0], sel[1]); } catch (e) {} }
+      }
+    }
+
+    function groceryStartedByLine(trip) {
+      const latest = groceryLatestEvent(trip.id);
+      return `<p class="text-sm text-slate-300">Started by: <strong class="text-white">${escapeHtml(groceryPersonName(trip.createdById, trip.createdBy))}</strong> · ${escapeHtml(friendlyDate(localDateStr(new Date(trip.createdAt))))}</p>
+        ${latest && latest.type === 'updated' ? `<p class="text-xs text-slate-400">${escapeHtml(groceryEventText(latest))}</p>` : ''}`;
+    }
+    function groceryHomeHtml() {
+      const trip = openGroceryTrip();
+      if (trip) return groceryTripStatus(trip) === 'ready' ? groceryReadyTripHtml(trip) : groceryPlanningTripHtml(trip);
+      const prefs = groceryPrefs();
+      const summary = prefs ? `<p class="text-xs text-slate-400">Planning for ${prefs.adults} adult${prefs.adults === 1 ? '' : 's'}${prefs.kids ? ` and ${prefs.kids} kid${prefs.kids === 1 ? '' : 's'}` : ''}${prefs.leaveOut.length ? ` · leaving out ${escapeHtml(prefs.leaveOut.join(', '))}` : ''}${prefs.picky ? ' · picky eaters' : ''} · shopping at ${escapeHtml(groceryStoreName(prefs.store))}.</p>` : '';
+      const lastTx = groceryLastTotal();
+      return groceryStepShell(0, 0, 'Plan a grocery run', `
+        <p class="text-sm text-slate-300">Pick ${GROCERY_DINNERS_PER_WEEK} dinners a week, get one combined shopping list, and share it. When you're back, enter what you spent — that's the only part that touches your balance.</p>
+        ${inHouseholdMode() ? `<p class="text-xs text-slate-400">Your household sees the run as soon as you start it, and anyone can edit the list.</p>` : ''}
+        ${summary}
+        ${lastTx ? `<p class="text-xs text-slate-500">Last run: ${formatMoney(lastTx.amount)} on ${escapeHtml(friendlyDate(lastTx.date))}, recorded by ${escapeHtml(billPayerName(lastTx))}.</p>` : ''}`,
+        `<button type="button" onclick="startGroceryRun()" class="${GR_PRIMARY}">Start a grocery run</button>
+         ${prefs ? `<button type="button" onclick="editGroceryPrefs()" class="${GR_SECONDARY}">Edit preferences</button>` : ''}`);
+    }
+    function groceryLastTotal() {
+      return (state.transactions || []).filter(t => t && t.source === 'grocery-run' && isVisibleToCurrentUser(t))
+        .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)))[0] || null;
+    }
+    function groceryPlanningTripHtml(trip) {
+      return groceryStepShell(0, 0, '🛒 Grocery Run In Progress', `
+        ${groceryStartedByLine(trip)}
+        <p class="text-xs text-slate-400">Dinners and the list are still being planned${trip.scope === 'household' ? ' — anyone in your household can pick up where it left off' : ''}. Nothing has been added to your balance or forecast.</p>`,
+        `<button type="button" onclick="continueGroceryRun()" class="${GR_PRIMARY}">Continue planning</button>
+         <button type="button" onclick="confirmCancelGroceryTrip(${jsArg(trip.id)})" class="${GR_SECONDARY}">Cancel trip</button>`);
+    }
+    function groceryReadyTripHtml(trip) {
+      const need = (trip.items || []).filter(i => !i.have).length;
+      return groceryStepShell(0, 0, 'How much did groceries come to?', `
+        ${groceryStartedByLine(trip)}
+        <p class="text-sm text-slate-300">${trip.meals.filter(m => m.keep !== false).length} dinners · ${need} item${need === 1 ? '' : 's'} to buy.</p>
+        <p class="text-xs text-slate-400">Nothing has been added to your balance or forecast yet. Enter the exact total from your receipt and it's recorded once, as a Groceries transaction.</p>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" onclick="openGroceryTotal(${jsArg(trip.id)})" class="${GR_PRIMARY}">Enter the total</button>
+          <button type="button" onclick="groceryNotYet()" class="${GR_SECONDARY}">Didn't go yet</button>
+          <button type="button" onclick="confirmCancelGroceryTrip(${jsArg(trip.id)})" class="${GR_SECONDARY}">Cancel trip</button>
+        </div>
+      `) + `<div class="glass-card rounded-3xl border border-slate-800/80 p-5 sm:p-6 space-y-3 mt-4">
+        <h3 class="text-base font-bold text-white">Shopping list</h3>
+        ${groceryShareButtons(trip.id)}
+        ${groceryItemEditor(trip)}
+        <details class="text-xs text-slate-400"><summary class="min-h-[44px] flex items-center cursor-pointer text-slate-300 font-semibold">Dinners (${trip.meals.filter(m => m.keep !== false).length})</summary>
+          <ul class="list-disc pl-5 space-y-0.5">${trip.meals.filter(m => m.keep !== false).map(m => `<li>${escapeHtml(m.name)}</li>`).join('')}</ul></details>
+      </div>`;
+    }
+
+    // ---- Preferences (saved once, shared with the household) ----
+    function groceryStepper(label, field, value, min, max) {
+      return `<div class="flex items-center justify-between gap-3 p-3 bg-slate-900/80 rounded-2xl border border-slate-800">
+        <span id="gr-${field}-label" class="text-sm font-semibold text-slate-200">${label}</span>
+        <div class="flex items-center gap-2" role="group" aria-labelledby="gr-${field}-label">
+          <button type="button" id="gr-${field}-less" onclick="groceryStep(${jsArg(field)}, -1)" ${value <= min ? 'disabled' : ''} aria-label="Fewer ${label.toLowerCase()}" class="w-11 h-11 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-lg font-bold disabled:opacity-40">−</button>
+          <output id="gr-${field}" aria-live="polite" class="w-8 text-center text-lg font-black text-white">${value}</output>
+          <button type="button" id="gr-${field}-more" onclick="groceryStep(${jsArg(field)}, 1)" ${value >= max ? 'disabled' : ''} aria-label="More ${label.toLowerCase()}" class="w-11 h-11 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-lg font-bold disabled:opacity-40">+</button>
+        </div>
+      </div>`;
+    }
+    function groceryStep(field, delta) {
+      const p = groceryUI.prefs;
+      const [min, max] = field === 'adults' ? [1, 10] : [0, 10];
+      p[field] = Math.min(max, Math.max(min, (Number(p[field]) || 0) + delta));
+      renderGroceries();
+      const btn = document.getElementById(`gr-${field}-${delta < 0 ? 'less' : 'more'}`);
+      if (btn && !btn.disabled) btn.focus();
+    }
+    function groceryNav(back, next, nextLabel) {
+      return `${back ? `<button type="button" onclick="${back}" class="${GR_SECONDARY}">Back</button>` : ''}
+        <button type="button" onclick="${next}" class="${GR_PRIMARY}">${nextLabel || 'Continue'}</button>`;
+    }
+    function groceryFamilyHtml() {
+      const p = groceryUI.prefs;
+      return groceryStepShell(groceryStepNo('family'), groceryStepCount(), "Who's eating?", `
+        ${groceryStepper('Adults', 'adults', p.adults, 1, 10)}
+        ${groceryStepper('Kids', 'kids', p.kids, 0, 10)}
+        <p class="text-xs text-slate-400">Kids count as about ${GROCERY_KID_PORTION} of an adult portion. This is saved, so you won't be asked every time.</p>`,
+        groceryNav(`groceryGo('home')`, `groceryGo('foods')`));
+    }
+    function groceryToggleProtein(key) {
+      const p = groceryUI.prefs;
+      p.proteins = p.proteins.includes(key) ? p.proteins.filter(x => x !== key) : [...p.proteins, key];
+      renderGroceries();
+      const b = document.getElementById('gr-protein-' + key); if (b) b.focus();
+    }
+    function groceryAddLeaveOut() {
+      const input = document.getElementById('gr-leave-input');
+      const v = input ? input.value.trim().slice(0, 40) : '';
+      if (input) input.value = '';
+      const p = groceryUI.prefs;
+      if (v && !p.leaveOut.some(x => x.toLowerCase() === v.toLowerCase()) && p.leaveOut.length < 30) p.leaveOut.push(v);
+      renderGroceries();
+      const again = document.getElementById('gr-leave-input'); if (again) again.focus();
+    }
+    function groceryRemoveLeaveOut(i) {
+      groceryUI.prefs.leaveOut.splice(Number(i), 1);
+      renderGroceries();
+      const again = document.getElementById('gr-leave-input'); if (again) again.focus();
+    }
+    function groceryTogglePicky() { groceryUI.prefs.picky = !groceryUI.prefs.picky; renderGroceries(); const b = document.getElementById('gr-picky'); if (b) b.focus(); }
+    function groceryFoodsHtml() {
+      const p = groceryUI.prefs;
+      const chip = (on) => `min-h-[44px] px-3 py-2 rounded-xl text-sm font-semibold border ${on ? 'bg-brand-500 text-slate-950 border-brand-500' : 'bg-slate-900 text-slate-300 border-slate-700 hover:border-slate-500'}`;
+      return groceryStepShell(groceryStepNo('foods'), groceryStepCount(), 'What does your family eat?', `
+        <fieldset class="space-y-2"><legend class="text-sm font-semibold text-slate-200 mb-2">Favorite proteins <span class="text-slate-500 font-normal">(optional)</span></legend>
+          <div class="flex flex-wrap gap-2">${GROCERY_PROTEINS.map(([k, label]) => `<button type="button" id="gr-protein-${k}" aria-pressed="${p.proteins.includes(k)}" onclick="groceryToggleProtein(${jsArg(k)})" class="${chip(p.proteins.includes(k))}">${escapeHtml(label)}</button>`).join('')}</div>
+        </fieldset>
+        <div class="space-y-2">
+          <label for="gr-leave-input" class="block text-sm font-semibold text-slate-200">Foods to leave out</label>
+          <p class="text-xs text-slate-400">Anything you never want on the list — no need to say why.</p>
+          <div class="flex gap-2">
+            <input id="gr-leave-input" type="text" maxlength="40" autocomplete="off" placeholder="e.g. mushrooms" onkeydown="if(event.key==='Enter'){event.preventDefault();groceryAddLeaveOut();}" class="flex-1 min-w-0 min-h-[44px] bg-slate-900 border border-slate-800 rounded-xl px-3 text-sm text-slate-200 outline-none focus:border-brand-500" />
+            <button type="button" onclick="groceryAddLeaveOut()" class="${GR_SECONDARY}">Add</button>
+          </div>
+          <ul class="flex flex-wrap gap-2" aria-label="Foods left out">${p.leaveOut.map((x, i) => `<li class="flex items-center gap-1 pl-3 bg-slate-800 rounded-xl text-sm text-slate-200">${escapeHtml(x)}<button type="button" onclick="groceryRemoveLeaveOut(${i})" aria-label="Remove ${escapeHtml(x)}" class="w-11 h-11 text-slate-400 hover:text-white">×</button></li>`).join('')}</ul>
+          <p class="text-[11px] text-slate-500">Meals are left out by the names of their ingredients. Always check labels — Paycheck Pilot can't guarantee what's in a product.</p>
+        </div>
+        <button type="button" id="gr-picky" role="switch" aria-checked="${!!p.picky}" onclick="groceryTogglePicky()" class="w-full min-h-[44px] flex items-center justify-between gap-3 p-3 bg-slate-900/80 rounded-2xl border border-slate-800 text-left">
+          <span><span class="block text-sm font-semibold text-slate-200">Picky eaters</span><span class="block text-xs text-slate-400">Favor kid-friendly dinners</span></span>
+          <span aria-hidden="true" class="shrink-0 w-11 h-6 rounded-full ${p.picky ? 'bg-brand-500' : 'bg-slate-700'} relative"><span class="absolute top-0.5 ${p.picky ? 'left-5' : 'left-0.5'} w-5 h-5 rounded-full bg-white"></span></span>
+        </button>`,
+        groceryNav(`groceryGo('family')`, `groceryGo('store')`));
+    }
+    function grocerySetField(obj, field, value) {
+      if (obj === 'prefs') { groceryUI.prefs[field] = value; return; }
+      const trip = groceryCurrentTrip();
+      if (!trip) return;
+      trip[field] = value;
+      touchGroceryTrip(trip);
+    }
+    function groceryRadio(name, obj, field, value, current, title, desc) {
+      const id = `gr-${name}-${value}`;
+      return `<label for="${id}" class="flex items-start gap-3 min-h-[44px] p-3 rounded-2xl border cursor-pointer ${current === value ? 'border-brand-500 bg-brand-500/10' : 'border-slate-800 bg-slate-900/80 hover:border-slate-600'}">
+        <input type="radio" id="${id}" name="gr-${name}" value="${escapeHtml(String(value))}" ${current === value ? 'checked' : ''} onchange="grocerySetField(${jsArg(obj)}, ${jsArg(field)}, ${typeof value === 'number' ? value : jsArg(value)}); renderGroceries(); document.getElementById(${jsArg(id)}).focus();" class="mt-1 w-4 h-4 accent-emerald-500" />
+        <span><span class="block text-sm font-semibold text-white">${title}</span>${desc ? `<span class="block text-xs text-slate-400">${desc}</span>` : ''}</span>
+      </label>`;
+    }
+    function groceryStoreHtml() {
+      const p = groceryUI.prefs;
+      const next = groceryUI.editingPrefs ? 'finishGroceryPrefs()' : 'groceryPrefsDone()';
+      return groceryStepShell(groceryStepNo('store'), groceryStepCount(), 'Where do you shop?', `
+        <fieldset class="space-y-2"><legend class="sr-only">Store</legend>
+          ${groceryRadio('store', 'prefs', 'store', 'instacart', p.store, 'Instacart', 'Sending the list straight to Instacart is coming later. For now you can share it.')}
+          ${groceryRadio('store', 'prefs', 'store', 'kroger', p.store, 'Kroger', 'Adding to a Kroger cart is coming later. For now you can share it.')}
+          ${groceryRadio('store', 'prefs', 'store', 'other', p.store, 'Somewhere else', 'Share, copy or print the list.')}
+        </fieldset>`,
+        groceryNav(`groceryGo('foods')`, next, groceryUI.editingPrefs ? 'Save preferences' : 'Continue'));
+    }
+    function groceryPrefsDone() {
+      saveGroceryPrefs(groceryUI.prefs);
+      groceryGo('weeks');
+    }
+    function finishGroceryPrefs() {
+      saveGroceryPrefs(groceryUI.prefs);
+      showToast('Grocery preferences saved', 'success');
+      groceryUI.editingPrefs = false;
+      groceryGo('home');
+    }
+
+    // ---- Planning the run (edits the shared run) ----
+    function groceryWeeksHtml() {
+      const trip = groceryCurrentTrip();
+      const def = groceryDefaultWeeks();
+      const v = getActiveViewData();
+      const hint = v.nextIncome ? `Your next payday is ${escapeHtml(friendlyDate(v.nextIncome.date))}, so ${def} week${def === 1 ? '' : 's'} covers you until then.` : 'Set your payday and this will default to the weeks until then.';
+      return groceryStepShell(groceryStepNo('weeks'), groceryStepCount(), 'How many weeks is this shop for?', `
+        <p class="text-xs text-slate-400">${hint} That's ${GROCERY_DINNERS_PER_WEEK} dinners a week — leaving room for leftovers and flexible nights.</p>
+        <fieldset class="grid grid-cols-2 sm:grid-cols-4 gap-2"><legend class="sr-only">Weeks</legend>
+          ${[1, 2, 3, 4].map(w => groceryRadio('weeks', 'trip', 'weeks', w, trip.weeks, `${w} week${w === 1 ? '' : 's'}`, `${w * GROCERY_DINNERS_PER_WEEK} dinners`)).join('')}
+        </fieldset>
+        ${inHouseholdMode() ? `<fieldset class="space-y-2"><legend class="text-sm font-semibold text-slate-200 mb-2">Who is this run for?</legend>
+          ${groceryRadio('scope', 'trip', 'scope', 'household', trip.scope, 'Household', 'Everyone in your household sees the list, can edit it and can enter the total.')}
+          ${groceryRadio('scope', 'trip', 'scope', 'personal', trip.scope, 'Just me', 'Only you see this run.')}
+        </fieldset>` : ''}`,
+        groceryNav(groceryUI.firstRun ? `groceryGo('store')` : `groceryGo('home')`, `groceryGo('budget')`));
+    }
+    function groceryBudgetHtml() {
+      const trip = groceryCurrentTrip();
+      return groceryStepShell(groceryStepNo('budget'), groceryStepCount(), 'What kind of meals?', `
+        <div class="p-3 rounded-2xl border border-slate-800 bg-slate-900/80 text-sm text-slate-300">${groceryMoneyContextHtml()}</div>
+        <fieldset class="space-y-2"><legend class="sr-only">Meal budget</legend>
+          ${groceryRadio('tier', 'trip', 'tier', 'low', trip.tier, 'Low', 'Budget-friendly meals only — beans, eggs, pasta, chicken thighs.')}
+          ${groceryRadio('tier', 'trip', 'tier', 'medium', trip.tier, 'Medium', 'Adds mid-range meals.')}
+          ${groceryRadio('tier', 'trip', 'tier', 'none', trip.tier, 'No limit', 'Any meal in the library.')}
+        </fieldset>
+        <p class="text-xs text-slate-400">This only changes which meals are suggested. Paycheck Pilot doesn't know grocery prices, so it won't guess what the list will cost.</p>`,
+        groceryNav(`groceryGo('weeks')`, `groceryToMeals()`));
+    }
+    function groceryToMeals() {
+      const trip = groceryCurrentTrip();
+      if (!trip) { groceryGo('home'); return; }
+      const prefs = groceryPrefs() || groceryUI.prefs || GROCERY_DEFAULT_PREFS;
+      const count = trip.weeks * GROCERY_DINNERS_PER_WEEK;
+      const key = `${trip.weeks}|${trip.tier}|${JSON.stringify([prefs.proteins, prefs.leaveOut, prefs.picky])}`;
+      if (!trip.meals || trip.mealsKey !== key) {
+        const pick = pickGroceryMeals(count, prefs, trip.tier);
+        trip.meals = pick.ids.map(id => ({ id, name: (groceryMealById(id) || {}).name || id, keep: true }));
+        trip.mealsKey = key;
+        trip.note = !pick.pool ? 'No meals match your foods to leave out at this budget. Try a higher budget or edit your preferences.'
+          : pick.pool < count ? `Only ${pick.pool} meals fit your choices, so some repeat.`
+          : pick.preferred < count ? `Only ${pick.preferred} meals match your favorites${prefs.picky ? ' and picky eaters' : ''}, so we added others that fit.` : '';
+        touchGroceryTrip(trip);
+      }
+      groceryGo('meals');
+    }
+    function groceryToggleKeep(i) {
+      const trip = groceryCurrentTrip();
+      const m = trip && trip.meals[Number(i)];
+      if (!m) return;
+      m.keep = m.keep === false;
+      touchGroceryTrip(trip, 'updated');
+      renderGroceries();
+      const b = document.getElementById('gr-keep-' + i); if (b) b.focus();
+    }
+    function grocerySwapMeal(i) {
+      const trip = groceryCurrentTrip();
+      if (!trip || !trip.meals[Number(i)]) return;
+      const prefs = groceryPrefs() || GROCERY_DEFAULT_PREFS;
+      const used = new Set(trip.meals.map(m => m.id));
+      const pool = groceryMealPool(prefs, trip.tier).filter(m => !used.has(m.id));
+      const pref = pool.filter(m => groceryPreferred(m, prefs));
+      const choices = pref.length ? pref : pool;
+      if (!choices.length) { showToast('No other meals match your choices.', 'info'); return; }
+      const meal = choices[Math.floor(Math.random() * choices.length)];
+      trip.meals[Number(i)] = { id: meal.id, name: meal.name, keep: true };
+      touchGroceryTrip(trip, 'updated');
+      renderGroceries();
+      const b = document.getElementById('gr-swap-' + i); if (b) b.focus();
+    }
+    function groceryMealsHtml() {
+      const trip = groceryCurrentTrip();
+      const kept = trip.meals.filter(m => m.keep !== false).length;
+      const rows = trip.meals.map((m, i) => {
+        const meal = groceryMealById(m.id) || { name: m.name, tags: [] };
+        const on = m.keep !== false;
+        const week = Math.floor(i / GROCERY_DINNERS_PER_WEEK) + 1;
+        const header = i % GROCERY_DINNERS_PER_WEEK === 0 && trip.meals.length > GROCERY_DINNERS_PER_WEEK ? `<li class="pt-2 text-[11px] font-bold uppercase tracking-wider text-slate-500" aria-hidden="true">Week ${week}</li>` : '';
+        const tags = [meal.tags.includes('kid') ? 'kid-friendly' : '', meal.tags.includes('quick') ? 'quick' : '', meal.tags.includes('veg') ? 'meatless' : ''].filter(Boolean).join(' · ');
+        return `${header}<li class="flex items-center gap-2 p-3 rounded-2xl border ${on ? 'border-slate-800 bg-slate-900/80' : 'border-dashed border-slate-800 bg-transparent opacity-60'}">
+          <div class="flex-1 min-w-0"><p class="text-sm font-semibold text-white">${escapeHtml(meal.name)}</p>${tags ? `<p class="text-[11px] text-slate-500">${tags}</p>` : ''}</div>
+          <button type="button" id="gr-keep-${i}" aria-pressed="${on}" aria-label="Keep ${escapeHtml(meal.name)}" onclick="groceryToggleKeep(${i})" class="min-h-[44px] px-3 rounded-xl text-xs font-bold ${on ? 'bg-brand-500/20 text-brand-300' : 'bg-slate-800 text-slate-400'}">${on ? '✓ Keep' : 'Keep'}</button>
+          <button type="button" id="gr-swap-${i}" aria-label="Swap ${escapeHtml(meal.name)} for another meal" onclick="grocerySwapMeal(${i})" class="min-h-[44px] px-3 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200">Swap</button>
+        </li>`;
+      }).join('');
+      return groceryStepShell(groceryStepNo('meals'), groceryStepCount(), 'Suggested dinners', `
+        ${trip.note ? `<p class="text-xs text-amber-300">${escapeHtml(trip.note)}</p>` : ''}
+        <p class="text-xs text-slate-400">${kept} of ${trip.meals.length} dinners kept. Swap any you don't want; untick Keep to leave one off.</p>
+        <ul class="space-y-2">${rows}</ul>`,
+        groceryNav(`groceryGo('budget')`, kept ? `groceryToList()` : `showToast('Keep at least one dinner.', 'info')`, 'Build my list'));
+    }
+    function groceryToList() {
+      const trip = groceryCurrentTrip();
+      if (!trip) { groceryGo('home'); return; }
+      const prefs = groceryPrefs() || GROCERY_DEFAULT_PREFS;
+      const ids = trip.meals.filter(m => m.keep !== false).map(m => m.id);
+      const key = ids.join(',') + '|' + groceryServings(prefs);
+      if (!trip.items || trip.itemsKey !== key) {
+        const before = new Map((trip.items || []).map(i => [i.key, i.have]));
+        const built = buildGroceryItems(ids, prefs).map(i => before.has(i.key) ? { ...i, have: !!before.get(i.key) } : i);
+        trip.items = [...built, ...(trip.items || []).filter(i => i.custom)];
+        trip.itemsKey = key;
+        trip.adults = prefs.adults; trip.kids = prefs.kids; trip.store = prefs.store;
+        touchGroceryTrip(trip);
+      }
+      groceryGo('list');
+    }
+
+    // ---- The list: both members can tick, add and remove items ----
+    function groceryItemEditor(trip) {
+      const items = trip.items || [];
+      const rows = GROCERY_AISLE_ORDER.map(a => {
+        const group = items.filter(it => it.aisle === a);
+        if (!group.length) return '';
+        return `<fieldset class="space-y-1"><legend class="text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1">${GROCERY_AISLES[a]}</legend>
+          ${group.map(it => `<div class="flex items-center gap-1">
+            <label class="flex-1 min-w-0 flex items-center gap-3 min-h-[44px] px-3 rounded-xl hover:bg-slate-900 cursor-pointer">
+              <input type="checkbox" ${it.have ? 'checked' : ''} onchange="groceryItemToggle(${jsArg(it.key)}, this.checked)" class="w-5 h-5 shrink-0 accent-emerald-500" aria-label="Already have ${escapeHtml(groceryItemName(it))}" />
+              <span class="flex-1 min-w-0 text-sm ${it.have ? 'line-through text-slate-500' : 'text-slate-200'}">${escapeHtml(groceryItemName(it))}</span>
+              <span class="text-xs text-slate-400">${escapeHtml(groceryQtyText(it))}</span>
+            </label>
+            <button type="button" onclick="groceryItemRemove(${jsArg(it.key)})" aria-label="Remove ${escapeHtml(groceryItemName(it))} from the list" class="shrink-0 w-11 h-11 rounded-xl text-slate-500 hover:text-white hover:bg-slate-800">×</button>
+          </div>`).join('')}
+        </fieldset>`;
+      }).join('');
+      return `<div class="space-y-3">${rows || '<p class="text-xs text-slate-500">The list is empty.</p>'}</div>
+        <div class="flex gap-2 pt-1">
+          <label for="gr-add-item" class="sr-only">Add an item to the list</label>
+          <input id="gr-add-item" type="text" maxlength="60" autocomplete="off" placeholder="Add an item (e.g. paper towels)" onkeydown="if(event.key==='Enter'){event.preventDefault();groceryItemAdd();}" class="flex-1 min-w-0 min-h-[44px] bg-slate-900 border border-slate-800 rounded-xl px-3 text-sm text-slate-200 outline-none focus:border-brand-500" />
+          <button type="button" onclick="groceryItemAdd()" class="${GR_SECONDARY}">Add</button>
+        </div>`;
+    }
+    function groceryItemToggle(key, have) {
+      const trip = groceryCurrentTrip();
+      const it = trip && (trip.items || []).find(i => i.key === key);
+      if (!it) return;
+      it.have = !!have;
+      touchGroceryTrip(trip, 'updated');
+      renderGroceries();
+    }
+    function groceryItemRemove(key) {
+      const trip = groceryCurrentTrip();
+      if (!trip || !(trip.items || []).some(i => i.key === key)) return;
+      trip.items = trip.items.filter(i => i.key !== key);
+      touchGroceryTrip(trip, 'updated');
+      renderGroceries();
+      const input = document.getElementById('gr-add-item'); if (input) input.focus();
+    }
+    function groceryItemAdd() {
+      const trip = groceryCurrentTrip();
+      const input = document.getElementById('gr-add-item');
+      const name = input ? input.value.trim().slice(0, 60) : '';
+      if (input) input.value = '';
+      if (!trip || !name) return;
+      if ((trip.items || []).some(i => i.name.toLowerCase() === name.toLowerCase() && !i.have)) { showToast(`${name} is already on the list.`, 'info'); return; }
+      trip.items = [...(trip.items || []), { key: 'custom|' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name, qty: 0, unit: '', aisle: 'O', staple: false, custom: true, have: false }];
+      touchGroceryTrip(trip, 'updated');
+      renderGroceries();
+      const again = document.getElementById('gr-add-item'); if (again) again.focus();
+    }
+    function groceryListHtml() {
+      const trip = groceryCurrentTrip();
+      const prefs = groceryPrefs() || GROCERY_DEFAULT_PREFS;
+      const need = trip.items.filter(i => !i.have).length;
+      const servings = groceryServings(prefs);
+      return groceryStepShell(groceryStepNo('list'), groceryStepCount(), 'Already have it?', `
+        <p class="text-xs text-slate-400">Tick anything you already have and it's left off the list. Pantry staples start ticked. Amounts are scaled for ${servings % 1 ? servings.toFixed(1) : servings} servings and rounded up to what you can buy. Add or remove anything you like.</p>
+        <p class="text-sm font-semibold text-white">${need} item${need === 1 ? '' : 's'} to buy</p>
+        ${groceryItemEditor(trip)}`,
+        groceryNav(`groceryGo('meals')`, `groceryFinishList()`, 'Save list'));
+    }
+    function groceryFinishList() {
+      const trip = groceryCurrentTrip();
+      if (!trip) { groceryGo('home'); return; }
+      if (trip.status !== 'ready') {
+        trip.status = 'ready';
+        trip.readyAt = new Date().toISOString();
+        addGroceryEvent(trip, 'ready');
+        logActivity("Grocery List Ready", `${currentOwnerLabel()} finished the grocery list: ${trip.meals.filter(m => m.keep !== false).length} dinners, ${trip.items.filter(i => !i.have).length} items. Nothing was added to balances or the forecast.`);
+      }
+      touchGroceryTrip(trip);
+      groceryPushNow();
+      groceryGo('send');
+    }
+    function grocerySendHtml() {
+      const trip = groceryCurrentTrip();
+      if (!trip) return groceryHomeHtml();
+      const store = trip.store || 'other';
+      const storeNote = store === 'other' ? '' : `<p class="text-xs text-amber-300">Sending the list straight to ${groceryStoreName(store)} isn't available yet. Share or copy it for now.</p>`;
+      return groceryStepShell(groceryStepNo('send'), groceryStepCount(), 'Your list is ready', `
+        ${storeNote}
+        <p class="text-sm text-slate-300">${(trip.items || []).filter(i => !i.have).length} items for ${trip.meals.filter(m => m.keep !== false).length} dinners. The run stays open until you enter what you spent${trip.scope === 'household' ? ' — anyone in your household can enter it' : ''}.</p>
+        ${groceryShareButtons(trip.id)}`,
+        `<button type="button" onclick="openGroceryRun('home')" class="${GR_PRIMARY}">Done</button>`);
+    }
+    function groceryShareButtons(tripId) {
+      const id = jsArg(tripId);
+      return `<div class="flex flex-wrap gap-2">
+        ${navigator.share ? `<button type="button" onclick="shareGroceryList(${id})" class="${GR_SECONDARY}">Share</button>` : ''}
+        <button type="button" onclick="copyGroceryList(${id})" class="${GR_SECONDARY}">Copy</button>
+        <button type="button" onclick="printGroceryList(${id})" class="${GR_SECONDARY}">Print</button>
+      </div>`;
+    }
+    function shareGroceryList(tripId) {
+      const trip = groceryTripById(tripId);
+      if (!trip) return;
+      const text = groceryListText(trip);
+      if (navigator.share) navigator.share({ title: 'Grocery list', text }).catch(() => {});
+      else copyGroceryList(tripId);
+    }
+    function copyGroceryList(tripId) {
+      const trip = groceryTripById(tripId);
+      if (!trip) return;
+      const text = groceryListText(trip);
+      const fallback = () => {
+        const ta = document.createElement('textarea');
+        ta.value = text; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select();
+        let ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+        ta.remove();
+        showToast(ok ? 'List copied' : "Couldn't copy — try Share or Print.", ok ? 'success' : 'error');
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(() => showToast('List copied', 'success'), fallback);
+      else fallback();
+    }
+    function printGroceryList(tripId) {
+      const trip = groceryTripById(tripId);
+      if (!trip) return;
+      let el = document.getElementById('grocery-print');
+      if (!el) { el = document.createElement('div'); el.id = 'grocery-print'; document.body.appendChild(el); }
+      el.innerHTML = `<h1>Grocery list</h1>` + GROCERY_AISLE_ORDER.map(a => {
+        const items = (trip.items || []).filter(i => i.aisle === a && !i.have);
+        return items.length ? `<h2>${GROCERY_AISLES[a]}</h2><ul>${items.map(i => `<li>☐ ${escapeHtml(groceryItemName(i))}${groceryQtyText(i) ? ' — ' + escapeHtml(groceryQtyText(i)) : ''}</li>`).join('')}</ul>` : '';
+      }).join('') + `<p>Dinners: ${escapeHtml(trip.meals.filter(m => m.keep !== false).map(m => m.name).join(', '))}</p>`;
+      document.body.classList.add('print-grocery');
+      const done = () => { document.body.classList.remove('print-grocery'); window.removeEventListener('afterprint', done); };
+      window.addEventListener('afterprint', done);
+      window.print();
+      setTimeout(done, 1000);
+    }
+
+
+    // ---- The open run ----
+    function groceryNotYet() {
+      closeModals();
+      showToast("OK — we'll ask again next time you open the app.", 'info');
+    }
+    function confirmCancelGroceryTrip(tripId) {
+      openCustomModal('Cancel this grocery run?', 'The list is closed and nothing is recorded. Your balance and forecast stay exactly as they are.', [
+        { label: 'Cancel trip', onclick: `cancelGroceryTrip(${jsArg(tripId)})`, primary: true },
+        { label: 'Keep it', onclick: 'closeModals()' }
+      ]);
+    }
+    function cancelGroceryTrip(tripId) {
+      closeModals();
+      const trip = groceryTripById(tripId);
+      if (!trip) return;
+      const tx = groceryTripTx(tripId);
+      if (tx) { showToast(`Groceries were already recorded by ${billPayerName(tx)} (${formatMoney(tx.amount)}).`, 'info'); openGroceryRun('home'); return; }
+      trip.status = 'cancelled';
+      trip.closedAt = new Date().toISOString(); trip.closedBy = currentOwnerLabel();
+      touchGroceryTrip(trip);
+      logActivity("Grocery Run Cancelled", `${currentOwnerLabel()} cancelled the grocery run from ${friendlyDate(localDateStr(new Date(trip.createdAt)))}. Nothing was recorded.`);
+      saveStateToStorage();
+      groceryPushNow();
+      showToast('Grocery run cancelled. Nothing was recorded.', 'info');
+      if (getCurrentPageId() === 'groceries') openGroceryRun('home'); else navigateTo(getCurrentPageId());
+    }
+
+    // ---- Entering the real total: the only step that touches money ----
+    function openGroceryTotal(tripId) {
+      closeModals();
+      groceryUI = { step: 'total', tripId, prefs: null, editingPrefs: false, firstRun: false };
+      navigateTo('groceries');
+    }
+    function groceryTotalHtml() {
+      const trip = groceryTripById(groceryUI.tripId);
+      if (!trip || groceryTripStatus(trip) !== 'ready') return groceryHomeHtml();
+      const accts = moneyAccountsForMe();
+      const def = defaultPaymentAccount();
+      const household = inHouseholdMode();
+      return groceryStepShell(0, 0, 'How much did groceries come to?', `
+        <div class="space-y-3">
+          <div><label for="gr-total" class="block text-sm font-semibold text-slate-200 mb-1">Exact total</label>
+            <div class="flex items-center gap-2"><span class="text-lg text-slate-400" aria-hidden="true">$</span>
+            <input id="gr-total" type="number" inputmode="decimal" min="0.01" max="100000" step="0.01" placeholder="0.00" class="flex-1 min-h-[44px] bg-slate-900 border border-slate-800 rounded-xl px-3 text-lg text-white outline-none focus:border-brand-500" /></div></div>
+          <div><label for="gr-total-date" class="block text-sm font-semibold text-slate-200 mb-1">Date</label>
+            <input id="gr-total-date" type="date" value="${localDateStr(new Date())}" class="w-full min-h-[44px] bg-slate-900 border border-slate-800 rounded-xl px-3 text-sm text-slate-200 outline-none focus:border-brand-500" /></div>
+          ${accts.length ? `<div><label for="gr-total-account" class="block text-sm font-semibold text-slate-200 mb-1">Paid from</label>
+            <select id="gr-total-account" onchange="groceryAccountLabel()" class="w-full min-h-[44px] bg-slate-900 border border-slate-800 rounded-xl px-3 text-sm text-slate-200 outline-none">
+              ${accts.map(a => `<option value="${escapeHtml(a.id)}" ${def && a.id === def.id ? 'selected' : ''}>${escapeHtml(a.name)}</option>`).join('')}
+            </select></div>` : ''}
+          ${household ? `<fieldset class="space-y-2"><legend class="text-sm font-semibold text-slate-200 mb-1">Who can see this transaction?</legend>
+            <label class="flex items-center gap-3 min-h-[44px] px-3 rounded-xl bg-slate-900/80 border border-slate-800"><input type="radio" name="gr-total-scope" value="household" ${trip.scope !== 'personal' ? 'checked' : ''} class="w-4 h-4 accent-emerald-500" /><span class="text-sm text-slate-200">Household</span></label>
+            <label class="flex items-center gap-3 min-h-[44px] px-3 rounded-xl bg-slate-900/80 border border-slate-800"><input type="radio" name="gr-total-scope" value="personal" ${trip.scope === 'personal' ? 'checked' : ''} class="w-4 h-4 accent-emerald-500" /><span class="text-sm text-slate-200">Just me</span></label>
+          </fieldset>` : ''}
+          <p class="text-xs text-slate-400">If you've already updated your balance to include this shop, choose "my balance already shows it" so it isn't subtracted twice.</p>
+        </div>`,
+        `${accts.length ? `<button type="button" id="gr-take-out" onclick="recordGroceryTotal(false)" class="${GR_PRIMARY}">Take it out of ${escapeHtml(def ? def.name : accts[0].name)}</button>` : ''}
+         <button type="button" onclick="recordGroceryTotal(true)" class="${accts.length ? GR_SECONDARY : GR_PRIMARY}">${accts.length ? 'My balance already shows it' : 'Record it'}</button>
+         <button type="button" onclick="openGroceryRun('home')" class="${GR_SECONDARY}">Back</button>`);
+    }
+    function groceryAccountLabel() {
+      const sel = document.getElementById('gr-total-account');
+      const btn = document.getElementById('gr-take-out');
+      const acct = sel ? moneyAccountsForMe().find(a => a.id === sel.value) : null;
+      if (btn && acct) btn.textContent = `Take it out of ${acct.name}`;
+    }
+    const groceryRecordInFlight = new Set();
+    async function recordGroceryTotal(alreadyInBalance) {
+      const tripId = groceryUI.tripId;
+      const amountEl = document.getElementById('gr-total');
+      const amount = roundCents(parseFloat(amountEl ? amountEl.value : '') || 0);
+      if (!(amount > 0) || amount > 100000) { showToast('Enter the total from your receipt (more than $0).', 'error'); if (amountEl) amountEl.focus(); return; }
+      const dateEl = document.getElementById('gr-total-date');
+      const date = dateEl && /^\d{4}-\d{2}-\d{2}$/.test(dateEl.value) ? dateEl.value : localDateStr(new Date());
+      const sel = document.getElementById('gr-total-account');
+      const account = (sel && moneyAccountsForMe().find(a => a.id === sel.value)) || defaultPaymentAccount();
+      const scopeEl = document.querySelector('input[name="gr-total-scope"]:checked');
+      const scope = inHouseholdMode() && scopeEl && scopeEl.value === 'household' ? 'household' : 'personal';
+      if (!tripId || groceryRecordInFlight.has(tripId)) return;
+      groceryRecordInFlight.add(tripId);
+      try {
+        // Same rule as bill payments: check the latest shared copy first so
+        // two people can't both record the same shop.
+        const canCheck = !!(state.user && !state.isDemo && supabaseClient && getSyncKey());
+        let checked = false;
+        if (canCheck) {
+          if (inHouseholdMode()) showToast('Checking with your household…', 'info');
+          checked = await pullCloudState();
+        }
+        const trip = groceryTripById(tripId);
+        const prior = groceryTripTx(tripId);
+        if (!trip) { showToast('This grocery run was removed on another device — nothing was recorded.', 'info'); openGroceryRun('home'); return; }
+        if (prior) { showToast(`Groceries were already recorded by ${billPayerName(prior)} (${formatMoney(prior.amount)}).`, 'info'); openGroceryRun('home'); return; }
+        if (trip.status === 'cancelled') { showToast(`This grocery run was cancelled${trip.closedBy ? ' by ' + trip.closedBy : ''} — nothing was recorded.`, 'info'); openGroceryRun('home'); return; }
+        if (groceryTripStatus(trip) !== 'ready') { showToast('Finish the list before entering a total.', 'info'); openGroceryRun('home'); return; }
+
+        const actor = currentOwnerLabel();
+        const nowIso = new Date().toISOString();
+        const deduct = !!account && !alreadyInBalance;
+        const tx = {
+          id: 'tx_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+          title: `Groceries${alreadyInBalance ? ' (already in balance)' : ''}`,
+          amount, type: 'expense', category: 'Groceries', date,
+          accountId: account ? account.id : null,
+          balanceApplied: deduct,
+          scope, ownerId: state.user ? state.user.id : null, ownerLabel: actor,
+          source: 'grocery-run', groceryTripId: tripId,
+          createdAt: nowIso, createdBy: actor, createdById: state.user ? state.user.id : null,
+          payDeviceId: state.syncLineage || null,
+          lastModifiedAt: nowIso, lastModifiedBy: actor
+        };
+        state.transactions.unshift(tx);
+        applyTxToBalance(tx, +1);
+        trip.status = 'recorded';
+        trip.closedAt = nowIso; trip.closedBy = actor;
+        trip.lastModifiedAt = nowIso; trip.lastModifiedBy = actor; trip.lastModifiedById = tx.createdById;
+        addGroceryEvent(trip, 'recorded', { amount });
+        logActivity("Grocery Total Recorded", `${actor} recorded groceries: $${formatCurrency(amount)}${alreadyInBalance ? ' (already reflected in their balance — not subtracted again)' : account ? ` from ${account.name}` : ''}. Source: grocery-run. Transaction: ${tx.id}.`);
+        saveStateToStorage();
+        if (canCheck) {
+          if (syncDebounceTimer) { clearTimeout(syncDebounceTimer); syncDebounceTimer = null; }
+          triggerCloudSync(true);
+        }
+        const v = getActiveViewData();
+        showToast(`Recorded ${formatMoney(amount)} for groceries. Safe Spend is now ${formatMoney(v.safeSpend)}.`, 'success');
+        if (canCheck && !checked) showToast("Recorded on this device only — couldn't reach your household to check first. It will be checked when it syncs.", 'info');
+        openGroceryRun('home');
+      } finally {
+        groceryRecordInFlight.delete(tripId);
+      }
+    }
+
+    // Asked once per app open while a run is open (and it wasn't started in
+    // this same session): "How much did groceries come to?"
+    // Asked once per app open while a finished list is waiting for its
+    // total (and it wasn't finished in this same session). Never stacked on
+    // another open dialog (e.g. an overdue-bill reminder): it waits.
+    let groceryPromptShown = false, groceryPromptTimer = null;
+    function maybeAskGroceryTotal() {
+      if (groceryPromptShown || groceryPromptTimer || state.isDemo) return;
+      const trip = openGroceryTrip();
+      if (!trip || groceryTripStatus(trip) !== 'ready' || String(trip.readyAt || trip.createdAt) >= GROCERY_SESSION_START) return;
+      let tries = 0;
+      const attempt = () => {
+        groceryPromptTimer = null;
+        const backdrop = document.getElementById('modal-backdrop');
+        if (groceryPromptShown || getCurrentPageId() !== 'dashboard') return;
+        if (backdrop && !backdrop.classList.contains('hidden')) {
+          if (++tries < 60) groceryPromptTimer = setTimeout(attempt, 2000);
+          return;
+        }
+        const t = openGroceryTrip();
+        if (!t || groceryTripStatus(t) !== 'ready') return;
+        groceryPromptShown = true;
+        openCustomModal('How much did groceries come to?',
+          `Your grocery run from ${friendlyDate(localDateStr(new Date(t.createdAt)))} is still open. Nothing has been added to your balance yet — enter the exact total and it's recorded once.`, [
+            { label: 'Enter the total', onclick: `openGroceryTotal(${jsArg(t.id)})`, primary: true },
+            { label: "Didn't go yet", onclick: 'groceryNotYet()' },
+            { label: 'Cancel trip', onclick: `confirmCancelGroceryTrip(${jsArg(t.id)})` }
+          ]);
+      };
+      groceryPromptTimer = setTimeout(attempt, 1200);
+    }
+
+    // The same card on the Dashboard (bottom) and the Bills page.
+    function groceryCardHtml() {
+      const trip = openGroceryTrip();
+      if (trip) {
+        const latest = groceryLatestEvent(trip.id);
+        const status = groceryTripStatus(trip) === 'ready'
+          ? `List ready · ${(trip.items || []).filter(i => !i.have).length} items to buy. Nothing is recorded until someone enters the total.`
+          : 'Dinners and the list are still being planned.';
+        return `<div class="glass-card rounded-3xl p-5 sm:p-6 border border-brand-500/40 flex flex-col sm:flex-row sm:items-center gap-4">
+          <div class="flex-1 min-w-0 space-y-1">
+            <h3 class="text-base font-extrabold text-white">🛒 Grocery Run In Progress</h3>
+            <p class="text-sm text-slate-300">Started by: <strong class="text-white">${escapeHtml(groceryPersonName(trip.createdById, trip.createdBy))}</strong></p>
+            <p class="text-[11px] text-slate-400">${escapeHtml(status)}${latest && latest.type === 'updated' ? ` ${escapeHtml(groceryEventText(latest))}` : ''}</p>
+          </div>
+          <button type="button" onclick="openGroceryRun('home')" class="${GR_PRIMARY} shrink-0">Open Grocery Run</button>
+        </div>`;
+      }
+      const last = groceryLastTotal();
+      return `<div class="glass-card rounded-3xl p-5 sm:p-6 border border-slate-800/80 flex flex-col sm:flex-row sm:items-center gap-4">
+        <div class="flex items-start gap-3 flex-1 min-w-0">
+          <div class="shrink-0 w-11 h-11 rounded-2xl bg-brand-500/15 flex items-center justify-center text-xl" aria-hidden="true">🛒</div>
+          <div class="min-w-0">
+            <h3 class="text-base font-extrabold text-white">Grocery Run</h3>
+            <p class="text-[11px] text-slate-400">Plan ${GROCERY_DINNERS_PER_WEEK} dinners a week and one shopping list until payday.${last ? ` Last run: ${formatMoney(last.amount)} on ${escapeHtml(friendlyDate(last.date))}.` : ''}</p>
+          </div>
+        </div>
+        <button type="button" onclick="openGroceryRun('home')" class="${GR_PRIMARY} shrink-0">Plan groceries</button>
+      </div>`;
+    }
+    function renderGroceryEntry() {
+      const el = document.getElementById('coming-up-grocery-entry');
+      if (!el) return;
+      el.innerHTML = groceryCardHtml();
+    }
+    function renderDashboardGroceryCard() {
+      const el = document.getElementById('dash-grocery-card');
+      if (!el) return;
+      resolveDuplicateGroceryTrips(); // settles a simultaneous start before showing it
+      el.innerHTML = groceryCardHtml();
     }
 
     // TRANSACTIONS MODAL & LOGIC
@@ -15260,8 +16090,11 @@
     function resolveDuplicateBillPayments() {
       const groups = new Map();
       (state.transactions || []).forEach(t => {
-        if (!t || t.source !== 'manual-bill-completion' || !t.billId || !t.billDueDate) return;
-        const k = t.billId + '|' + billPaymentOccurrence(t);
+        // A grocery run's total is recorded once, the same way.
+        let k = null;
+        if (t && t.source === 'manual-bill-completion' && t.billId && t.billDueDate) k = 'bill|' + t.billId + '|' + billPaymentOccurrence(t);
+        else if (t && t.source === 'grocery-run' && t.groceryTripId) k = 'grocery|' + t.groceryTripId;
+        if (!k) return;
         if (!groups.has(k)) groups.set(k, []);
         groups.get(k).push(t);
       });
@@ -15274,14 +16107,21 @@
           if (!t.payDeviceId || t.payDeviceId !== state.syncLineage) return;
           const refunded = t.balanceApplied ? applyTxToBalance(t, -1) : false;
           state.transactions = state.transactions.filter(x => x !== t);
+          if (t.source === 'grocery-run') state.groceryEvents = (state.groceryEvents || []).filter(e => !(e && e.tripId === t.groceryTripId && e.type === 'recorded' && e.byId === t.createdById && Number(e.amount) === Number(t.amount)));
           removed.push({ t, keeper, refunded });
         });
       });
       removed.forEach(({ t, keeper, refunded }) => {
-        const title = String(t.title || '').replace(/^Bill Payment: /, '').replace(/ \(already in balance\)$/, '');
         const acct = refunded ? accountForTx(t) : null;
-        const msg = `${billPayerName(keeper)} marked ${title} (${friendlyDate(billPaymentOccurrence(t))}) paid first — only one payment is kept, so yours was removed${acct ? ` and $${formatCurrency(t.amount)} returned to ${acct.name}` : ''}.`;
-        logActivity("Duplicate Bill Payment Removed", `${msg} Kept: ${keeper.id}. Removed: ${t.id}.`);
+        const back = acct ? ` and $${formatCurrency(t.amount)} returned to ${acct.name}` : '';
+        let msg;
+        if (t.source === 'grocery-run') {
+          msg = `Groceries were already recorded by ${billPayerName(keeper)} (${formatMoney(keeper.amount)}). Only one total is kept, so yours was removed${back}.`;
+        } else {
+          const title = String(t.title || '').replace(/^Bill Payment: /, '').replace(/ \(already in balance\)$/, '');
+          msg = `${billPayerName(keeper)} marked ${title} (${friendlyDate(billPaymentOccurrence(t))}) paid first — only one payment is kept, so yours was removed${back}.`;
+        }
+        logActivity(t.source === 'grocery-run' ? "Duplicate Grocery Total Removed" : "Duplicate Bill Payment Removed", `${msg} Kept: ${keeper.id}. Removed: ${t.id}.`);
         showToast(msg, 'info');
       });
       return removed.length > 0;
@@ -17675,1537 +18515,6 @@
       }
     }
 
-  </script>
-  <!-- ============================================================
-       FINANCIAL WEATHER WORLD — approved implementation, migrated
-       from the standalone demo. Balloon and firefly markup below is
-       verbatim from the approved source. Entry point unchanged: the
-       Financial Weather card's onclick="openWeatherWorld()" already
-       points here. Script block placed AFTER this markup (matching
-       the approved demo's own structure) so its top-level DOM
-       queries (canvas, balloon, firefly layer) find real elements
-       instead of running before they exist.
-       ============================================================ -->
-  <div id="weather-world-overlay" class="ww-overlay hidden">
-    <button class="ww-close-btn" onclick="closeWeatherWorld()" aria-label="Close Financial Weather World">
-      <i data-lucide="x" class="w-4 h-4"></i> Exit
-    </button>
-
-    <!-- Environmental Canvas Stage -->
-    <canvas id="ww-canvas"></canvas>
-
-    <!-- Hot Air Balloon (Present in CLEAR and HEADWINDS) -->
-    <div class="balloon-wrapper glow-clear" id="balloon">
-      <div class="envelope">
-        <div class="balloon-dollar">$</div>
-        <div class="envelope-collar"></div>
-      </div>
-      <div class="ropes">
-        <div class="rope"></div>
-        <div class="burner">
-          <div class="flame-container">
-            <div class="flame-outer"></div>
-            <div class="flame-inner"></div>
-          </div>
-        </div>
-        <div class="rope"></div>
-      </div>
-      <div class="basket"></div>
-    </div>
-
-    <!-- Fireflies Overlay -->
-    <div class="firefly-layer" id="fireflyLayer"></div>
-
-    <!-- Financial Bill Reveal layer (approved) -->
-    <div id="billRevealLayer"></div>
-
-    <!-- Airplane Sponsor layer (new) -->
-    <div id="airplaneSponsorLayer"></div>
-  </div>
-
-  <script>
-    // ============================================================
-    // FINANCIAL WEATHER WORLD — wrapped in its own scope to avoid
-    // colliding with Flight Deck's existing canvas/ctx/resize/drawSky
-    // etc. in the shared global script (this app is one large script,
-    // not modules). Only the two entry points the rest of the app
-    // needs to call are exposed globally; everything else stays
-    // private to this feature, exactly as it should be.
-    (function() {
-    // ============================================================
-    // FINANCIAL WEATHER WORLD — approved implementation, migrated
-    // from the standalone demo. Canvas engine, tree, hills, clouds,
-    // birds, rain, lightning, flooding, fog, balloon, and firefly
-    // mechanics below are the approved source, adapted only for
-    // lazy start/stop (open/close) instead of running from page
-    // load, which the standalone demo didn't need to do.
-    // ============================================================
-    let wwCanvasHandle = null, wwBalloonHandle = null, wwFireflyHandle = null;
-
-    // --- CANVAS ENGINE ---
-    const canvas = document.getElementById('ww-canvas');
-    const ctx = canvas.getContext('2d');
-
-    let width, height;
-    // Mobile-only zoom-out: increases the canvas's internal drawing
-    // space beyond the viewport on narrow screens (canvas CSS is
-    // width:100%/height:100%, so it still visually fills the screen).
-    // Every draw function positions/sizes things relative to width/
-    // height using its existing unmodified formulas — a larger
-    // logical canvas simply means the same fixed-pixel tree and
-    // terrain occupy a smaller fraction of the visible screen,
-    // showing more landscape. Desktop (>=768px) is untouched: zoom
-    // factor is exactly 1, identical to prior behavior.
-    const WW_MOBILE_BREAKPOINT = 768;
-    const WW_MOBILE_ZOOM = 1.6;
-    function resize() {
-      const isMobileViewport = window.innerWidth < WW_MOBILE_BREAKPOINT;
-      const zoom = isMobileViewport ? WW_MOBILE_ZOOM : 1;
-      width = canvas.width = window.innerWidth * zoom;
-      height = canvas.height = window.innerHeight * zoom;
-    }
-    // Debounced: mobile browsers fire 'resize' repeatedly while the
-    // address bar shows/hides during ordinary scrolling. Each call to
-    // resize() reallocates the entire canvas bitmap buffer (expensive),
-    // and this listener is active for the whole page lifetime, not just
-    // while Weather World is open. Un-debounced, rapid-fire resize
-    // events on mobile were triggering repeated full-canvas
-    // reallocation, which is the mobile crash root cause.
-    let wwResizeDebounce = null;
-    window.addEventListener('resize', () => {
-      if (wwResizeDebounce) clearTimeout(wwResizeDebounce);
-      wwResizeDebounce = setTimeout(resize, 200);
-    });
-    resize();
-
-    // --- STATE CONTROLLER & INTERPOLATION TARGETS ---
-    let currentWeather = 'CLEAR';
-
-    const targets = {
-      // CLEAR = Sunset / Golden Hour Purple Tone
-      skyTop: [58, 28, 86],       // Deep Velvet Purple
-      skyMid: [147, 51, 234],     // Purple-Pink Accent
-      skyBottom: [251, 146, 60],  // Warm Sunset Orange Horizon
-      sunOpacity: 0.95,
-      windSpeed: 0.6,
-      cloudOpacity: 0.25,
-      cloudSpeed: 0.3,
-      birdCount: 8,               // CLEAR: Most birds
-      leafFrequency: 0,
-      fogDensity: 0,
-      rainCount: 0,
-      lightningFreq: 0,
-      floodLevel: 0,
-      treeBendMax: 0.02
-    };
-
-    const current = { 
-      ...targets, 
-      skyTop: [...targets.skyTop], 
-      skyMid: [...targets.skyMid], 
-      skyBottom: [...targets.skyBottom] 
-    };
-
-    const WEATHER_PRESETS = {
-      CLEAR: {
-        skyTop: [58, 28, 86],
-        skyMid: [147, 51, 234],
-        skyBottom: [251, 146, 60],
-        sunOpacity: 0.95,
-        windSpeed: 0.6,
-        cloudOpacity: 0.25,
-        cloudSpeed: 0.35,
-        birdCount: 8,             // Most birds
-        leafFrequency: 0,
-        fogDensity: 0,
-        rainCount: 0,
-        lightningFreq: 0,
-        floodLevel: 0,
-        treeBendMax: 0.02
-      },
-      HEADWINDS: {
-        skyTop: [45, 55, 72],
-        skyMid: [100, 116, 139],
-        skyBottom: [194, 205, 218],
-        sunOpacity: 0.4,
-        windSpeed: 3.2,
-        cloudOpacity: 0.55,
-        cloudSpeed: 2.0,
-        birdCount: 4,             // Fewer birds
-        leafFrequency: 0.015,
-        fogDensity: 0.05,
-        rainCount: 0,
-        lightningFreq: 0,
-        floodLevel: 0,
-        treeBendMax: 0.14
-      },
-      // ---- ADDED (Financial Weather demo): PARTLY_CLOUDY ----
-      // Every value below is a 35% interpolation from CLEAR toward
-      // HEADWINDS' existing numbers — not a new palette, not new
-      // artwork, just a point between two approved presets.
-      PARTLY_CLOUDY: {
-        skyTop: [53, 37, 81],
-        skyMid: [131, 74, 201],
-        skyBottom: [231, 167, 115],
-        sunOpacity: 0.76,
-        windSpeed: 1.5,
-        cloudOpacity: 0.36,
-        cloudSpeed: 0.93,
-        birdCount: 7,
-        leafFrequency: 0.005,
-        fogDensity: 0.02,
-        rainCount: 0,
-        lightningFreq: 0,
-        floodLevel: 0,
-        treeBendMax: 0.06
-      },
-      TURBULENCE: {
-        skyTop: [30, 41, 59],
-        skyMid: [71, 85, 105],
-        skyBottom: [148, 163, 184],
-        sunOpacity: 0.15,
-        windSpeed: 2.5,
-        cloudOpacity: 0.75,
-        cloudSpeed: 1.2,
-        birdCount: 1,             // Very few birds
-        leafFrequency: 0.045,
-        fogDensity: 0.5,
-        rainCount: 0,
-        lightningFreq: 0,
-        floodLevel: 0,
-        treeBendMax: 0.10
-      },
-      STORM: {
-        skyTop: [15, 23, 42],
-        skyMid: [30, 41, 59],
-        skyBottom: [51, 65, 85],
-        sunOpacity: 0,
-        windSpeed: 5.5,
-        cloudOpacity: 0.95,
-        cloudSpeed: 3.5,
-        birdCount: 0,             // No birds
-        leafFrequency: 0.07,
-        fogDensity: 0.25,
-        rainCount: 400,
-        lightningFreq: 0.009,
-        floodLevel: 0,
-        treeBendMax: 0.28
-      },
-      SEVERE: {
-        skyTop: [3, 7, 18],
-        skyMid: [15, 23, 42],
-        skyBottom: [30, 41, 59],
-        sunOpacity: 0,
-        windSpeed: 8.5,
-        cloudOpacity: 1.0,
-        cloudSpeed: 5.8,
-        birdCount: 0,             // No birds
-        leafFrequency: 0.14,
-        fogDensity: 0.45,
-        rainCount: 850,
-        lightningFreq: 0.024,
-        floodLevel: 1.0,
-        treeBendMax: 0.58          // Slightly stronger bend (stressed, not broken)
-      }
-    };
-
-    const balloonEl = document.getElementById('balloon');
-
-    // Wildlife Firefly Counts by Weather State
-    const FIREFLY_TARGET_COUNTS = {
-      CLEAR: 7,
-      PARTLY_CLOUDY: 6,  // ADDED — same 35%-toward-HEADWINDS interpolation
-      HEADWINDS: 4,
-      TURBULENCE: 1,
-      STORM: 0,
-      SEVERE: 0
-    };
-
-    function setWeather(mode) {
-      currentWeather = mode;
-      document.querySelectorAll('.btn').forEach(btn => {
-        btn.classList.toggle('active', btn.innerText.replace(/\s+/g, '_') === mode);
-      });
-
-      const p = WEATHER_PRESETS[mode];
-      Object.keys(p).forEach(k => {
-        if (Array.isArray(p[k])) {
-          targets[k] = [...p[k]];
-        } else {
-          targets[k] = p[k];
-        }
-      });
-
-      // 1. Balloon Altitude Progression & Visibility Rules
-      if (mode === 'CLEAR') {
-        balloonEl.classList.remove('hidden');
-        balloonEl.classList.add('glow-clear');
-        balloonEl.classList.remove('glow-partly-cloudy');
-        balloonEl.classList.remove('glow-headwinds');
-        balloonY = 350; // Higher altitude than Headwinds
-      } else if (mode === 'PARTLY_CLOUDY') {
-        // Balloon progression: altitude and glow both sit strictly
-        // between CLEAR and HEADWINDS' existing values — genuinely
-        // reduced from Clear, not equal to Headwinds.
-        balloonEl.classList.remove('hidden');
-        balloonEl.classList.add('glow-partly-cloudy');
-        balloonEl.classList.remove('glow-clear');
-        balloonEl.classList.remove('glow-headwinds');
-        balloonY = 305;
-      } else if (mode === 'HEADWINDS') {
-        balloonEl.classList.remove('hidden');
-        balloonEl.classList.remove('glow-partly-cloudy');
-        balloonEl.classList.add('glow-headwinds');
-        balloonEl.classList.remove('glow-clear');
-        balloonY = 260; // Left exactly at its original baseline position
-      } else {
-        balloonEl.classList.add('hidden'); // No balloon in TURBULENCE, STORM, SEVERE
-      }
-
-      // 2. Wildlife Reduction (Fireflies)
-      updateFireflyPopulation(FIREFLY_TARGET_COUNTS[mode]);
-    }
-
-    // --- LANDSCAPE TERRAIN PROFILE GENERATOR ---
-    function getTerrainY(x, layer = 3) {
-      const normX = x / width;
-      if (layer === 1) { // Distant Background Hills
-        return height - 220 + Math.sin(normX * Math.PI * 2.2) * 50 + Math.cos(normX * Math.PI * 1.1) * 30;
-      } else if (layer === 2) { // Midground Hills
-        return height - 160 + Math.sin(normX * Math.PI * 1.8 + 1.2) * 45 + Math.cos(normX * Math.PI * 3) * 20;
-      } else { // Foreground Dominant Valley Terrain
-        return height - 110 + Math.sin(normX * Math.PI * 1.4 - 0.4) * 65 + Math.cos(normX * Math.PI * 2.8) * 25;
-      }
-    }
-
-    // --- ASSETS & PARTICLES ---
-
-    // 1. Cloud Families
-    const cloudClusters = [
-      { x: 100, y: 80, scale: 1.4, opacityMult: 0.8 },
-      { x: 260, y: 100, scale: 0.8, opacityMult: 0.5 },
-      { x: 600, y: 140, scale: 1.9, opacityMult: 0.9 },
-      { x: 800, y: 110, scale: 1.1, opacityMult: 0.6 },
-      { x: 1200, y: 70, scale: 2.2, opacityMult: 0.85 },
-      { x: 1450, y: 130, scale: 0.9, opacityMult: 0.5 },
-      { x: 1750, y: 90, scale: 1.5, opacityMult: 0.75 }
-    ];
-
-    // 2. Birds (Flapping, Gliding, Altitude variations)
-    const birds = Array.from({ length: 10 }, () => ({
-      x: Math.random() * window.innerWidth,
-      y: Math.random() * 180 + 80,
-      baseY: Math.random() * 180 + 80,
-      speed: Math.random() * 1.2 + 1.8,
-      wingPhase: Math.random() * Math.PI * 2,
-      gliding: false,
-      glideTimer: Math.random() * 100,
-      size: Math.random() * 3 + 7
-    }));
-
-    // 3. Falling Leaves
-    let leaves = [];
-    function spawnLeaf(treeX, treeY) {
-      leaves.push({
-        x: treeX + (Math.random() - 0.2) * 140,
-        y: treeY + (Math.random() - 0.5) * 120,
-        vx: current.windSpeed * (Math.random() * 0.7 + 0.8),
-        vy: Math.random() * 1.2 + 0.6,
-        rot: Math.random() * Math.PI * 2,
-        vRot: (Math.random() - 0.5) * 0.12,
-        size: Math.random() * 3 + 4,
-        color: Math.random() > 0.35 ? '#115e59' : '#0f766e'
-      });
-    }
-
-    // 4. Rain & Terrain Splashes
-    let rainDrops = [];
-    let splashes = [];
-    function initRain() {
-      rainDrops = Array.from({ length: 1000 }, () => ({
-        x: Math.random() * (width + 500) - 250,
-        y: Math.random() * height,
-        length: Math.random() * 22 + 18,
-        speed: Math.random() * 12 + 20,
-        alpha: Math.random() * 0.4 + 0.3
-      }));
-    }
-    initRain();
-
-    // 5. Lightning Engine
-    let activeLightning = null;
-    let flashIntensity = 0;
-
-    function triggerLightning() {
-      const startX = Math.random() * (width - 300) + 150;
-      const startY = 0;
-      const segments = [];
-      let curX = startX;
-      let curY = startY;
-
-      const targetY = getTerrainY(startX, 3);
-
-      while (curY < targetY) {
-        let nextX = curX + (Math.random() - 0.5) * 75;
-        let nextY = curY + Math.random() * 45 + 20;
-
-        segments.push({ x1: curX, y1: curY, x2: nextX, y2: nextY });
-
-        if (Math.random() < 0.4) {
-          let bX = nextX + (Math.random() - 0.5) * 90;
-          let bY = nextY + Math.random() * 35 + 10;
-          segments.push({ x1: nextX, y1: nextY, x2: bX, y2: bY, isBranch: true });
-        }
-
-        curX = nextX;
-        curY = nextY;
-      }
-
-      activeLightning = {
-        segments,
-        life: 1.0,
-        secondary: Math.random() < 0.45
-      };
-
-      flashIntensity = 1.0;
-    }
-
-    // --- RENDER PASSES ---
-
-    let frame = 0;
-
-    function lerp(start, end, amt) {
-      return start + (end - start) * amt;
-    }
-
-    function updateState() {
-      frame++;
-
-      for (let i = 0; i < 3; i++) {
-        current.skyTop[i] = lerp(current.skyTop[i], targets.skyTop[i], 0.025);
-        current.skyMid[i] = lerp(current.skyMid[i], targets.skyMid[i], 0.025);
-        current.skyBottom[i] = lerp(current.skyBottom[i], targets.skyBottom[i], 0.025);
-      }
-
-      current.sunOpacity = lerp(current.sunOpacity, targets.sunOpacity, 0.025);
-      current.windSpeed = lerp(current.windSpeed, targets.windSpeed, 0.025);
-      current.cloudOpacity = lerp(current.cloudOpacity, targets.cloudOpacity, 0.025);
-      current.cloudSpeed = lerp(current.cloudSpeed, targets.cloudSpeed, 0.025);
-      current.birdCount = lerp(current.birdCount, targets.birdCount, 0.025);
-      current.leafFrequency = lerp(current.leafFrequency, targets.leafFrequency, 0.025);
-      current.fogDensity = lerp(current.fogDensity, targets.fogDensity, 0.025);
-      current.rainCount = lerp(current.rainCount, targets.rainCount, 0.025);
-      current.lightningFreq = lerp(current.lightningFreq, targets.lightningFreq, 0.025);
-      current.floodLevel = lerp(current.floodLevel, targets.floodLevel, 0.008);
-      current.treeBendMax = lerp(current.treeBendMax, targets.treeBendMax, 0.025);
-
-      if (current.lightningFreq > 0 && Math.random() < current.lightningFreq) {
-        triggerLightning();
-      }
-    }
-
-    function drawSky() {
-      const rTop = Math.min(255, Math.round(current.skyTop[0] + flashIntensity * 120));
-      const gTop = Math.min(255, Math.round(current.skyTop[1] + flashIntensity * 130));
-      const bTop = Math.min(255, Math.round(current.skyTop[2] + flashIntensity * 150));
-
-      const rMid = Math.min(255, Math.round(current.skyMid[0] + flashIntensity * 110));
-      const gMid = Math.min(255, Math.round(current.skyMid[1] + flashIntensity * 120));
-      const bMid = Math.min(255, Math.round(current.skyMid[2] + flashIntensity * 140));
-
-      const rBot = Math.min(255, Math.round(current.skyBottom[0] + flashIntensity * 90));
-      const gBot = Math.min(255, Math.round(current.skyBottom[1] + flashIntensity * 100));
-      const bBot = Math.min(255, Math.round(current.skyBottom[2] + flashIntensity * 120));
-
-      const grad = ctx.createLinearGradient(0, 0, 0, height);
-      grad.addColorStop(0, `rgb(${rTop}, ${gTop}, ${bTop})`);
-      grad.addColorStop(0.55, `rgb(${rMid}, ${gMid}, ${bMid})`);
-      grad.addColorStop(1, `rgb(${rBot}, ${gBot}, ${bBot})`);
-
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, width, height);
-
-      if (current.sunOpacity > 0.01) {
-        ctx.save();
-        ctx.globalAlpha = current.sunOpacity;
-        const sunGrad = ctx.createRadialGradient(width * 0.7, height * 0.65, 20, width * 0.7, height * 0.65, 380);
-        sunGrad.addColorStop(0, 'rgba(253, 224, 71, 0.85)');
-        sunGrad.addColorStop(0.35, 'rgba(251, 146, 60, 0.45)');
-        sunGrad.addColorStop(0.7, 'rgba(217, 70, 239, 0.15)');
-        sunGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-        ctx.fillStyle = sunGrad;
-        ctx.beginPath();
-        ctx.arc(width * 0.7, height * 0.65, 380, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
-    }
-
-    function drawClouds() {
-      ctx.save();
-      cloudClusters.forEach(c => {
-        c.x += current.cloudSpeed * c.scale;
-        if (c.x > width + 350) c.x = -350;
-
-        ctx.globalAlpha = Math.min(1, current.cloudOpacity * c.opacityMult + flashIntensity * 0.35);
-
-        const darkRatio = 1 - current.sunOpacity;
-        const baseVal = Math.round(250 - darkRatio * 190 + flashIntensity * 90);
-        ctx.fillStyle = `rgb(${baseVal}, ${Math.max(0, baseVal - 10)}, ${Math.max(0, baseVal + 15)})`;
-
-        const cx = c.x;
-        const cy = c.y;
-        const s = c.scale;
-
-        ctx.beginPath();
-        ctx.arc(cx, cy, 42 * s, 0, Math.PI * 2);
-        ctx.arc(cx + 32 * s, cy - 18 * s, 52 * s, 0, Math.PI * 2);
-        ctx.arc(cx + 80 * s, cy - 14 * s, 42 * s, 0, Math.PI * 2);
-        ctx.arc(cx + 115 * s, cy, 32 * s, 0, Math.PI * 2);
-        ctx.closePath();
-        ctx.fill();
-      });
-      ctx.restore();
-    }
-
-    function drawLandscapeDepth() {
-      ctx.save();
-
-      const darkRatio = 1 - current.sunOpacity;
-
-      // Distant Background Hills
-      const bgR = Math.round(109 - darkRatio * 85 + flashIntensity * 60);
-      const bgG = Math.round(40 + current.sunOpacity * 40 - darkRatio * 25 + flashIntensity * 60);
-      const bgB = Math.round(140 - darkRatio * 100 + flashIntensity * 80);
-      ctx.fillStyle = `rgb(${bgR}, ${bgG}, ${bgB})`;
-
-      ctx.beginPath();
-      ctx.moveTo(0, height);
-      for (let x = 0; x <= width; x += 15) {
-        ctx.lineTo(x, getTerrainY(x, 1));
-      }
-      ctx.lineTo(width, height);
-      ctx.closePath();
-      ctx.fill();
-
-      // Atmospheric Haze Layer
-      const hazeGrad = ctx.createLinearGradient(0, height - 250, 0, height - 120);
-      hazeGrad.addColorStop(0, 'rgba(251, 146, 60, 0)');
-      hazeGrad.addColorStop(1, `rgba(147, 51, 234, ${0.25 * current.sunOpacity})`);
-      ctx.fillStyle = hazeGrad;
-      ctx.fillRect(0, height - 250, width, 130);
-
-      // Midground Hills
-      const mgR = Math.round(75 - darkRatio * 60 + flashIntensity * 50);
-      const mgG = Math.round(85 - darkRatio * 65 + flashIntensity * 50);
-      const mgB = Math.round(148 - darkRatio * 70 + flashIntensity * 60);
-      ctx.fillStyle = `rgb(${mgR}, ${mgG}, ${mgB})`;
-
-      ctx.beginPath();
-      ctx.moveTo(0, height);
-      for (let x = 0; x <= width; x += 15) {
-        ctx.lineTo(x, getTerrainY(x, 2));
-      }
-      ctx.lineTo(width, height);
-      ctx.closePath();
-      ctx.fill();
-
-      // Foreground Hills
-      const fgR = Math.round(20 - darkRatio * 15 + flashIntensity * 40);
-      const fgG = Math.round(45 - darkRatio * 35 + flashIntensity * 45);
-      const fgB = Math.round(40 - darkRatio * 30 + flashIntensity * 40);
-      ctx.fillStyle = `rgb(${fgR}, ${fgG}, ${fgB})`;
-
-      ctx.beginPath();
-      ctx.moveTo(0, height);
-      for (let x = 0; x <= width; x += 15) {
-        ctx.lineTo(x, getTerrainY(x, 3));
-      }
-      ctx.lineTo(width, height);
-      ctx.closePath();
-      ctx.fill();
-
-      ctx.restore();
-    }
-
-    // --- APPROVED TREE IMPLEMENTATION ---
-    function drawSignatureTree() {
-      ctx.save();
-      const treeX = width * 0.24;
-      const treeBaseY = getTerrainY(treeX, 3);
-
-      const gust = Math.sin(frame * 0.04) * 0.35 + 0.65;
-      const bendAngle = current.treeBendMax * gust;
-      const sway = bendAngle * 100;
-
-      ctx.translate(treeX, treeBaseY);
-
-      // TRUNK
-      ctx.fillStyle = '#140c07';
-
-      ctx.beginPath();
-      ctx.moveTo(-35, 5);
-
-      ctx.quadraticCurveTo(
-        -15,
-        -60,
-        -18 + sway * 0.3,
-        -150
-      );
-
-      ctx.lineTo(
-        18 + sway * 0.3,
-        -150
-      );
-
-      ctx.quadraticCurveTo(
-        20,
-        -60,
-        45,
-        5
-      );
-
-      ctx.closePath();
-      ctx.fill();
-
-      // STRUCTURAL BRANCHES
-      ctx.strokeStyle = '#140c07';
-      ctx.lineWidth = 18;
-      ctx.lineCap = 'round';
-
-      ctx.beginPath();
-
-      ctx.moveTo(
-        0 + sway * 0.3,
-        -140
-      );
-
-      ctx.quadraticCurveTo(
-        -40 + sway * 0.5,
-        -200,
-        -90 + sway * 0.6,
-        -220
-      );
-
-      ctx.moveTo(
-        0 + sway * 0.3,
-        -140
-      );
-
-      ctx.quadraticCurveTo(
-        50 + sway * 0.5,
-        -210,
-        110 + sway * 0.6,
-        -230
-      );
-
-      ctx.stroke();
-
-      // LOWER CANOPY MASS
-      ctx.fillStyle = '#08170d';
-
-      ctx.beginPath();
-
-      ctx.ellipse(
-        -80 + sway * 0.7,
-        -240,
-        130,
-        85,
-        -0.1,
-        0,
-        Math.PI * 2
-      );
-
-      ctx.ellipse(
-        70 + sway * 0.7,
-        -250,
-        140,
-        95,
-        0.15,
-        0,
-        Math.PI * 2
-      );
-
-      ctx.ellipse(
-        0 + sway * 0.7,
-        -290,
-        175,
-        110,
-        0,
-        0,
-        Math.PI * 2
-      );
-
-      ctx.fill();
-
-      // MID CANOPY
-      ctx.fillStyle = '#0e2a18';
-
-      ctx.beginPath();
-
-      ctx.ellipse(
-        -95 + sway * 0.8,
-        -260,
-        110,
-        70,
-        -0.15,
-        0,
-        Math.PI * 2
-      );
-
-      ctx.ellipse(
-        85 + sway * 0.8,
-        -270,
-        115,
-        75,
-        0.1,
-        0,
-        Math.PI * 2
-      );
-
-      ctx.ellipse(
-        -15 + sway * 0.8,
-        -310,
-        150,
-        90,
-        -0.05,
-        0,
-        Math.PI * 2
-      );
-
-      ctx.fill();
-
-      // UPPER HIGHLIGHTS
-      let highlightGrad = ctx.createLinearGradient(
-        -100,
-        -400,
-        100,
-        -200
-      );
-
-      highlightGrad.addColorStop(
-        0,
-        '#1c4528'
-      );
-
-      highlightGrad.addColorStop(
-        1,
-        '#0e2a18'
-      );
-
-      ctx.fillStyle = highlightGrad;
-
-      ctx.beginPath();
-
-      ctx.ellipse(
-        -60 + sway,
-        -310,
-        85,
-        55,
-        -0.1,
-        0,
-        Math.PI * 2
-      );
-
-      ctx.ellipse(
-        50 + sway,
-        -320,
-        95,
-        60,
-        0.1,
-        0,
-        Math.PI * 2
-      );
-
-      ctx.ellipse(
-        110 + sway,
-        -280,
-        65,
-        45,
-        0.2,
-        0,
-        Math.PI * 2
-      );
-
-      ctx.ellipse(
-        -120 + sway,
-        -270,
-        75,
-        50,
-        -0.2,
-        0,
-        Math.PI * 2
-      );
-
-      ctx.ellipse(
-        -10 + sway,
-        -350,
-        120,
-        70,
-        0,
-        0,
-        Math.PI * 2
-      );
-
-      ctx.fill();
-
-      ctx.restore();
-
-      if (Math.random() < current.leafFrequency) {
-        const topY = treeBaseY - 240;
-        spawnLeaf(treeX + sway, topY);
-      }
-    }
-
-    function drawBirds() {
-      const activeCount = Math.round(current.birdCount);
-      if (activeCount <= 0) return;
-
-      ctx.save();
-      ctx.strokeStyle = '#0f172a';
-      ctx.lineWidth = 2.2;
-      ctx.lineCap = 'round';
-
-      for (let i = 0; i < activeCount; i++) {
-        const b = birds[i];
-
-        const headwindPenalty = (current.windSpeed * 0.3);
-        b.x += b.speed - headwindPenalty;
-
-        if (b.x > width + 60) b.x = -60;
-        if (b.x < -60) b.x = width + 60;
-
-        b.y = b.baseY + Math.sin(frame * 0.02 + i) * 20;
-
-        b.glideTimer--;
-        if (b.glideTimer <= 0) {
-          b.gliding = !b.gliding;
-          b.glideTimer = b.gliding ? Math.random() * 80 + 40 : Math.random() * 120 + 60;
-        }
-
-        if (!b.gliding) {
-          b.wingPhase += (current.windSpeed > 3 ? 0.22 : 0.12);
-        }
-
-        const flap = b.gliding ? 0 : Math.sin(b.wingPhase) * b.size;
-
-        ctx.beginPath();
-        ctx.moveTo(b.x - b.size, b.y + flap);
-        ctx.quadraticCurveTo(b.x - b.size / 2, b.y - flap * 0.5, b.x, b.y);
-        ctx.quadraticCurveTo(b.x + b.size / 2, b.y - flap * 0.5, b.x + b.size, b.y + flap);
-        ctx.stroke();
-      }
-      ctx.restore();
-    }
-
-    function drawLeaves() {
-      ctx.save();
-      for (let i = leaves.length - 1; i >= 0; i--) {
-        const l = leaves[i];
-
-        l.vx = lerp(l.vx, current.windSpeed * 1.6, 0.04);
-        l.x += l.vx;
-        l.y += l.vy + Math.sin(frame * 0.1 + l.rot) * 0.6;
-        l.rot += l.vRot;
-
-        ctx.save();
-        ctx.translate(l.x, l.y);
-        ctx.rotate(l.rot);
-        ctx.fillStyle = l.color;
-        ctx.beginPath();
-        ctx.ellipse(0, 0, l.size * 1.8, l.size * 0.85, 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-
-        if (l.x > width + 60 || l.y > height) {
-          leaves.splice(i, 1);
-        }
-      }
-      ctx.restore();
-    }
-
-    function drawFog() {
-      if (current.fogDensity < 0.01) return;
-
-      ctx.save();
-
-      for (let i = 0; i < 3; i++) {
-        const fogY = height - 190 + i * 45;
-
-        const grad = ctx.createLinearGradient(0, fogY, 0, fogY + 90);
-        grad.addColorStop(0, 'rgba(226, 232, 240, 0)');
-        grad.addColorStop(0.5, `rgba(203, 213, 225, ${current.fogDensity * 0.45})`);
-        grad.addColorStop(1, 'rgba(226, 232, 240, 0)');
-
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, fogY - 20, width, 110);
-      }
-      ctx.restore();
-    }
-
-    function drawRainAndTerrainSplashes() {
-      const activeCount = Math.round(current.rainCount);
-      if (activeCount <= 0) return;
-
-      ctx.save();
-      ctx.strokeStyle = 'rgba(186, 230, 253, 0.6)';
-      ctx.lineWidth = 1.2;
-
-      const angle = current.windSpeed * 0.07;
-
-      for (let i = 0; i < activeCount; i++) {
-        const r = rainDrops[i];
-        r.x += current.windSpeed * 0.75;
-        r.y += r.speed;
-
-        const terrainImpactY = getTerrainY(r.x, 3);
-
-        if (r.y >= terrainImpactY) {
-          if (Math.random() < 0.25) {
-            splashes.push({ x: r.x, y: terrainImpactY, r: 1, alpha: 0.85 });
-          }
-          r.y = -20;
-          r.x = Math.random() * (width + 500) - 250;
-        }
-
-        ctx.beginPath();
-        ctx.moveTo(r.x, r.y);
-        ctx.lineTo(r.x - Math.sin(angle) * r.length, r.y + Math.cos(angle) * r.length);
-        ctx.stroke();
-      }
-
-      ctx.strokeStyle = 'rgba(224, 242, 254, 0.75)';
-      ctx.lineWidth = 1;
-      for (let i = splashes.length - 1; i >= 0; i--) {
-        const s = splashes[i];
-        s.r += 0.45;
-        s.alpha -= 0.09;
-
-        if (s.alpha <= 0) {
-          splashes.splice(i, 1);
-          continue;
-        }
-
-        ctx.globalAlpha = s.alpha;
-        ctx.beginPath();
-        ctx.arc(s.x, s.y, s.r, Math.PI, 0);
-        ctx.stroke();
-      }
-
-      ctx.restore();
-    }
-
-    function drawLightning() {
-      if (!activeLightning) return;
-
-      ctx.save();
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.98)';
-      ctx.shadowColor = '#38bdf8';
-      ctx.shadowBlur = 18;
-      ctx.lineWidth = 2.5;
-
-      ctx.beginPath();
-      activeLightning.segments.forEach(s => {
-        ctx.moveTo(s.x1, s.y1);
-        ctx.lineTo(s.x2, s.y2);
-      });
-      ctx.stroke();
-      ctx.restore();
-
-      flashIntensity *= 0.76;
-      activeLightning.life -= 0.16;
-
-      if (activeLightning.life <= 0) {
-        if (activeLightning.secondary) {
-          flashIntensity = 0.75;
-          activeLightning.secondary = false;
-          activeLightning.life = 0.35;
-        } else {
-          activeLightning = null;
-        }
-      }
-    }
-
-    function drawFlooding() {
-      if (current.floodLevel < 0.01) return;
-
-      ctx.save();
-      const floodHeight = current.floodLevel * 50;
-      const floodY = height - floodHeight;
-
-      const grad = ctx.createLinearGradient(0, floodY, 0, height);
-      grad.addColorStop(0, 'rgba(15, 23, 42, 0.75)');
-      grad.addColorStop(0.5, 'rgba(30, 58, 138, 0.85)');
-      grad.addColorStop(1, 'rgba(2, 6, 23, 0.95)');
-
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, floodY, width, floodHeight);
-
-      const rippleAlpha = 0.2 + flashIntensity * 0.5;
-      ctx.strokeStyle = `rgba(191, 219, 254, ${rippleAlpha})`;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      for (let x = 0; x < width; x += 25) {
-        const waveY = floodY + Math.sin(frame * 0.06 + x * 0.03) * 2.5;
-        if (x === 0) ctx.moveTo(x, waveY);
-        else ctx.lineTo(x, waveY);
-      }
-      ctx.stroke();
-
-      ctx.restore();
-    }
-
-    // --- ANIMATION ENGINE LOOP ---
-    function render() {
-      updateState();
-
-      ctx.clearRect(0, 0, width, height);
-
-      drawSky();
-      drawClouds();
-      drawLandscapeDepth();
-      drawSignatureTree();
-      drawBirds();
-      drawLeaves();
-      drawFog();
-      drawRainAndTerrainSplashes();
-      drawLightning();
-      drawFlooding();
-
-      wwCanvasHandle = requestAnimationFrame(render);
-    }
-
-    // --- NATURAL AIR-CURRENT BALLOON MOTION ---
-    let balloonY = 350; // Initial Clear Altitude (Higher than Headwinds)
-    let isIgnited = false;
-
-    function cycleIgnition() {
-      if (currentWeather !== 'CLEAR' && currentWeather !== 'PARTLY_CLOUDY' && currentWeather !== 'HEADWINDS') return;
-      isIgnited = true;
-      balloonEl.classList.add('ignited');
-
-      setTimeout(() => {
-        isIgnited = false;
-        balloonEl.classList.remove('ignited');
-      }, 2500);
-    }
-
-    // ADDED: stored so the interval can be restarted with a different
-    // duration (Golden Hour demo below) — cycleIgnition() itself and
-    // everything it does is unchanged.
-    let ignitionIntervalId = null;
-    function fwRestartIgnitionTimer(newIntervalMs) {
-      clearInterval(ignitionIntervalId);
-      ignitionIntervalId = setInterval(cycleIgnition, newIntervalMs);
-    }
-
-    function animateBalloon() {
-      if (currentWeather === 'CLEAR' || currentWeather === 'PARTLY_CLOUDY' || currentWeather === 'HEADWINDS') {
-        const time = frame * 0.015;
-        const buoyancy = Math.sin(time) * 18 + Math.cos(time * 0.7) * 8;
-        const horizontalDrift = Math.sin(time * 0.5) * 25 + (current.windSpeed * 4);
-
-        const currentY = balloonY + buoyancy;
-
-        balloonEl.style.bottom = `${currentY}px`;
-        balloonEl.style.transform = `translateX(calc(-50% + ${horizontalDrift}px)) rotate(${current.windSpeed * 0.6}deg)`;
-      }
-
-      wwBalloonHandle = requestAnimationFrame(animateBalloon);
-    }
-
-
-    // --- APPROVED ILLUSTRATED FIREFLIES ---
-    const fireflyLayer = document.getElementById('fireflyLayer');
-    const fireflies = [];
-    const maxPopulation = 7;
-
-    let wwFirefliesCreated = false;
-    function wwCreateFireflyElements() {
-      if (wwFirefliesCreated) return;
-      wwFirefliesCreated = true;
-    for (let i = 0; i < maxPopulation; i++) {
-      const el = document.createElement('div');
-      el.className = 'firefly';
-
-      el.innerHTML = `
-        <svg class="firefly-svg" viewBox="0 0 40 50">
-          <path d="M 18 10 Q 14 3 10 2"
-                stroke="#18181b"
-                stroke-width="2"
-                fill="none"
-                stroke-linecap="round"/>
-
-          <path d="M 22 10 Q 26 3 30 2"
-                stroke="#18181b"
-                stroke-width="2"
-                fill="none"
-                stroke-linecap="round"/>
-
-          <circle cx="20" cy="12" r="4" fill="#18181b" />
-
-          <path d="M 16 20 L 8 28 M 16 24 L 6 36"
-                stroke="#18181b"
-                stroke-width="2"
-                stroke-linecap="round"/>
-
-          <path d="M 24 20 L 32 28 M 24 24 L 34 36"
-                stroke="#18181b"
-                stroke-width="2"
-                stroke-linecap="round"/>
-
-          <circle class="ff-abdomen-bg"
-                  cx="20"
-                  cy="38"
-                  r="9" />
-
-          <text class="ff-dollar-text"
-                x="20"
-                y="38">$</text>
-
-          <path d="M 16 20 C 16 16, 24 16, 24 20
-                   L 23 30 C 23 32, 17 32, 17 30 Z"
-                fill="#ffffff"
-                stroke="#18181b"
-                stroke-width="2"/>
-
-          <line x1="16.5" y1="23"
-                x2="23.5" y2="23"
-                stroke="#18181b"
-                stroke-width="2"/>
-
-          <line x1="17" y1="27"
-                x2="23" y2="27"
-                stroke="#18181b"
-                stroke-width="2"/>
-
-          <g class="ff-wing-left">
-            <path d="M 18 18 C 5 12, 2 28, 17 26 Z"
-                  fill="#ffffff"
-                  stroke="#18181b"
-                  stroke-width="2"
-                  stroke-linejoin="round"/>
-          </g>
-
-          <g class="ff-wing-right">
-            <path d="M 22 18 C 35 12, 38 28, 23 26 Z"
-                  fill="#ffffff"
-                  stroke="#18181b"
-                  stroke-width="2"
-                  stroke-linejoin="round"/>
-          </g>
-        </svg>
-      `;
-
-      const delay = Math.random() * 3.8;
-      const duration = 3.2 + Math.random() * 1.6;
-      const flapSpeed = 0.06 + Math.random() * 0.025;
-
-      const abdomen = el.querySelector('.ff-abdomen-bg');
-      const dollarText = el.querySelector('.ff-dollar-text');
-      const leftWing = el.querySelector('.ff-wing-left');
-      const rightWing = el.querySelector('.ff-wing-right');
-
-      abdomen.style.animationDelay = `${delay}s`;
-      abdomen.style.animationDuration = `${duration}s`;
-      dollarText.style.animationDelay = `${delay}s`;
-      dollarText.style.animationDuration = `${duration}s`;
-
-      leftWing.style.animationDuration = `${flapSpeed}s`;
-      rightWing.style.animationDuration = `${flapSpeed}s`;
-
-      // Spawn positions biased toward the tree's canopy rather than
-      // uniformly random across the whole viewport — "more activity
-      // around the tree, lower overall elevation." Movement physics
-      // below (vx/vy random walk, bounce boundaries) is untouched, so
-      // fireflies still wander naturally from this new starting region.
-      const fwTreeAnchorX = window.innerWidth * 0.24;
-      const fwTreeAnchorY = window.innerHeight - 370;
-      const fireflyObj = {
-        element: el,
-        x: Math.max(20, Math.min(window.innerWidth - 60, fwTreeAnchorX + (Math.random() - 0.5) * 480)),
-        y: Math.max(60, Math.min(window.innerHeight - 180, fwTreeAnchorY + (Math.random() - 0.5) * 320)),
-        vx: (Math.random() - 0.5) * 0.5,
-        vy: (Math.random() - 0.5) * 0.5
-      };
-
-      fireflyLayer.appendChild(el);
-      fireflies.push(fireflyObj);
-    }
-    }
-
-
-    function updateFireflyPopulation(targetCount) {
-      fireflies.forEach((f, index) => {
-        if (index < targetCount) {
-          f.element.style.opacity = '1';
-        } else {
-          f.element.style.opacity = '0';
-        }
-      });
-    }
-
-    function animateFireflies() {
-      fireflies.forEach(f => {
-        f.x += f.vx + (current.windSpeed * 0.3);
-        f.y += f.vy;
-
-        f.vx += (Math.random() - 0.5) * 0.05;
-        f.vy += (Math.random() - 0.5) * 0.05;
-
-        f.vx = Math.max(-0.55, Math.min(0.55, f.vx));
-        f.vy = Math.max(-0.55, Math.min(0.55, f.vy));
-
-        if (f.x < -25) f.x = window.innerWidth + 25;
-        if (f.x > window.innerWidth + 25) f.x = -25;
-        if (f.y < 30 || f.y > window.innerHeight - 150) f.vy *= -1;
-
-        f.element.style.transform = `translate(${f.x}px, ${f.y}px)`;
-      });
-
-      wwFireflyHandle = requestAnimationFrame(animateFireflies);
-    }
-
-
-    // ---- Bill reveal system (approved, wired to real bill data) ----
-    // Real bill data — pulled from the app's own forecast/bill state,
-    // not mock data. Shared pool across all reveal mechanisms since the
-    // app doesn't categorize bills by weather-state the way the demo's
-    // placeholder arrays did.
-    let wwBillPool = [];
-    function wwRefreshBillPool() {
-      const vd = getActiveViewData();
-      const source = (vd.upcomingBills && vd.upcomingBills.length) ? vd.upcomingBills : vd.allBills;
-      wwBillPool = (source || [])
-        .map(b => ({ title: b.title, amount: Number(b.amount) || 0 }))
-        .filter(b => b.amount > 0);
-    }
-    function wwRandomBill() {
-      if (!wwBillPool.length) wwRefreshBillPool();
-      if (!wwBillPool.length) return { title: 'Upcoming Bill', amount: 0 };
-      return wwBillPool[Math.floor(Math.random() * wwBillPool.length)];
-    }
-    function wwBillLabel(bill) {
-      return bill.amount > 0 ? `${bill.title} -$${formatCurrency(bill.amount)}` : bill.title;
-    }
-
-    const billLayer = document.getElementById('billRevealLayer');
-    let fwTaggedLeafCount = 0;
-    let fwLastLightningRef = null;
-    let fwTaggedSplashSet = new WeakSet();
-    let fwFloodTags = [];
-    let fwFloodInitialized = false;
-
-    function fwSpawnFadeTag(x, y, text, extraClass, holdMs) {
-      const el = document.createElement('div');
-      el.className = 'bill-tag' + (extraClass ? ' ' + extraClass : '');
-      el.style.left = x + 'px';
-      el.style.top = y + 'px';
-      el.innerText = text;
-      billLayer.appendChild(el);
-      requestAnimationFrame(() => el.classList.add('bt-visible'));
-      setTimeout(() => {
-        el.classList.remove('bt-visible');
-        setTimeout(() => el.remove(), 700);
-      }, holdMs);
-      return el;
-    }
-
-    // HEADWINDS — a falling leaf quietly gains a bill tag partway down,
-    // drifts with it briefly, then both fade. Reads the existing
-    // `leaves` array position each frame; never alters spawnLeaf() or
-    // drawLeaves() themselves.
-    let fwHeadwindsActiveTag = null;
-    let fwHeadwindsLeafRef = null;
-    function fwTickHeadwinds() {
-      if (fwHeadwindsLeafRef && leaves.includes(fwHeadwindsLeafRef)) {
-        if (fwHeadwindsActiveTag) {
-          fwHeadwindsActiveTag.style.left = fwHeadwindsLeafRef.x + 'px';
-          fwHeadwindsActiveTag.style.top = fwHeadwindsLeafRef.y + 'px';
-          // Wind-driven flutter: gentle rotation, amplitude tied to the
-          // existing (read-only) current.windSpeed — genuinely reacts
-          // to the wind rather than an arbitrary fixed wobble. Capped
-          // low so it reads as flutter, not a shake.
-          const flutterAmp = Math.min(4, current.windSpeed * 0.9);
-          const flutterDeg = Math.sin(frame * 0.05) * flutterAmp;
-          fwHeadwindsActiveTag.style.transform = `translate(-50%, -100%) rotate(${flutterDeg.toFixed(2)}deg)`;
-        }
-        return; // still tracking the current leaf
-      }
-      // Previous tracked leaf landed/left — pick a new one, subtly, not every leaf.
-      fwHeadwindsLeafRef = null;
-      if (fwHeadwindsActiveTag) { fwHeadwindsActiveTag.remove(); fwHeadwindsActiveTag = null; }
-      if (leaves.length > 0 && Math.random() < 0.05) {
-        const leaf = leaves[Math.floor(Math.random() * leaves.length)];
-        fwHeadwindsLeafRef = leaf;
-        const bill = wwRandomBill();
-        fwHeadwindsActiveTag = fwSpawnFadeTag(leaf.x, leaf.y, wwBillLabel(bill), '', 2600);
-      }
-    }
-
-    // TURBULENCE / STORM — a new lightning strike reveals a bill at
-    // the ground-impact point, timed to the existing flash. Detects a
-    // "new" strike by reference change on the existing activeLightning
-    // variable; never modifies triggerLightning() or drawLightning().
-    function fwSpawnImpactPop(x, y) {
-      const el = document.createElement('div');
-      el.className = 'fw-impact-pop';
-      el.style.left = x + 'px';
-      el.style.top = y + 'px';
-      billLayer.appendChild(el);
-      setTimeout(() => el.remove(), 500);
-    }
-
-    function fwTickLightningReveal() {
-      if (activeLightning && activeLightning !== fwLastLightningRef) {
-        fwLastLightningRef = activeLightning;
-        const last = activeLightning.segments[activeLightning.segments.length - 1];
-        const bill = wwRandomBill();
-        // Sequence: impact flash at the strike point first, bill name
-        // follows a beat later, held long enough to actually read.
-        fwSpawnImpactPop(last.x2, last.y2);
-        setTimeout(() => fwSpawnFadeTag(last.x2, last.y2, wwBillLabel(bill), 'bt-flash', 2400), 100);
-      }
-      if (!activeLightning) fwLastLightningRef = null;
-    }
-
-    // STORM — occasionally a rain splash also reveals a bill. Reads
-    // the existing `splashes` array; never modifies
-    // drawRainAndTerrainSplashes().
-    let fwSplashRevealCooldownUntil = 0;
-    function fwTickSplashReveal() {
-      if (currentWeather !== 'STORM') return;
-      const now = performance.now();
-      for (let i = 0; i < splashes.length; i++) {
-        const s = splashes[i];
-        if (fwTaggedSplashSet.has(s)) continue;
-        fwTaggedSplashSet.add(s);
-        if (now < fwSplashRevealCooldownUntil) continue; // rate-limited regardless of splash volume
-        if (Math.random() < 0.15) {
-          const bill = wwRandomBill();
-          fwSpawnFadeTag(s.x, s.y - 6, wwBillLabel(bill), 'bt-flash', 2400);
-          fwSplashRevealCooldownUntil = now + 2500 + Math.random() * 1500;
-        }
-      }
-    }
-
-    // SEVERE — bills float partially-submerged in the existing flood
-    // band, gathering in low points along the foreground terrain.
-    // Reads current.floodLevel and getTerrainY(); never modifies
-    // drawFlooding() or the flood level itself.
-    function fwTickFlood() {
-      if (currentWeather !== 'SEVERE') {
-        if (fwFloodInitialized) {
-          fwFloodTags.forEach(t => t.el.remove());
-          fwFloodTags = [];
-          fwFloodInitialized = false;
-        }
-        return;
-      }
-      if (current.floodLevel < 0.25) return;
-      if (!fwFloodInitialized) {
-        fwFloodInitialized = true;
-        if (!wwBillPool.length) wwRefreshBillPool();
-        const count = Math.min(wwBillPool.length, 4); // deliberately not a wall of bills
-        for (let i = 0; i < count; i++) {
-          const fx = width * (0.35 + i * 0.13) + (Math.random() - 0.5) * 40;
-          const el = fwSpawnFadeTag(fx, height - 20, wwBillLabel(wwBillPool[i]), 'bt-flood', 999999);
-          el.style.animationDelay = (-Math.random() * 3.6).toFixed(2) + 's';
-          fwFloodTags.push({ el, x: fx, phase: Math.random() * 10 });
-        }
-      }
-      const floodHeight = current.floodLevel * 50;
-      const floodY = height - floodHeight;
-      fwFloodTags.forEach(t => {
-        const bob = Math.sin(frame * 0.05 + t.phase) * 3;
-        t.el.style.left = t.x + 'px';
-        t.el.style.top = (floodY + floodHeight * 0.4 + bob) + 'px';
-        t.el.style.opacity = Math.min(1, current.floodLevel * 1.3); // partially submerged as level rises
-      });
-    }
-
-    function fwBillRevealLoop() {
-      if (currentWeather === 'HEADWINDS') fwTickHeadwinds();
-      if (currentWeather === 'TURBULENCE' || currentWeather === 'STORM') fwTickLightningReveal();
-      if (currentWeather === 'STORM') fwTickSplashReveal();
-      fwTickFlood();
-      requestAnimationFrame(fwBillRevealLoop);
-    }
-    fwBillRevealLoop();
-
-
-    // ============================================================
-    // FINANCIAL STATE ROUTING — connects the app's own, unmodified
-    // computeFinancialWeather()/getActiveViewData() to the migrated
-    // Weather World's six states. Golden Hour is an intensity variant
-    // inside CLEAR (not a seventh state), per the approved mapping.
-    // ============================================================
-    function wwResolveFinancialState(weather) {
-      if (weather.key === 'emergency') return 'SEVERE';
-      if (weather.key === 'storm') {
-        const days = weather.daysUntilCrossing;
-        const depth = weather.deficitDepth || 0;
-        return ((days !== null && days !== undefined && days <= 6) || depth >= 500) ? 'STORM' : 'TURBULENCE';
-      }
-      if (weather.key === 'cloudy' || weather.key === 'rain') return 'HEADWINDS';
-      if (weather.key === 'fair') return 'PARTLY_CLOUDY';
-      return 'CLEAR';
-    }
-    function wwApplyGoldenHourIntensity(viewData) {
-      const safeSpend = Math.max(0, viewData.safeSpend || 0);
-      const t = Math.max(0, Math.min(1, safeSpend / 2000));
-      const fireflyCount = Math.round(4 + t * 3); // 4..7, existing population ceiling is 7
-      const intervalMs = Math.round(10000 - t * 6000); // 10s thin .. 4s excellent
-      updateFireflyPopulation(fireflyCount);
-      if (ignitionIntervalId) clearInterval(ignitionIntervalId);
-      ignitionIntervalId = setInterval(cycleIgnition, intervalMs);
-    }
-
-    // ============================================================
-    // AIRPLANE SPONSOR SYSTEM — reuses the approved Flight Deck
-    // sponsor aircraft exactly (FD_PLANE_SVG, .fd-sponsor-plane,
-    // .fd-tow-rope, .fd-plane-banner-link, .fd-banner-img — all
-    // verbatim, no new plane/banner design). Only the target
-    // container, appearance frequency, and vertical band differ,
-    // since Flight Deck's own 10-22s gaps and lower sky band would
-    // make this a frequent distraction rather than a rare event here.
-    // ============================================================
-    let wwPlaneOrder = [];
-    let wwAirplaneTimer = null;
-    let wwAirplaneRunning = false;
-
-    // Minimum gap (ms) before the next pass, by Weather World state.
-    // Turbulence/Storm/Severe are absent entirely (not listed = hidden).
-    const WW_AIRPLANE_GAP_MS = {
-      CLEAR: [60000, 120000],          // 60-120s, randomized
-      PARTLY_CLOUDY: [100000, 160000], // less frequent than Clear
-      HEADWINDS: [70000, 130000],      // occasional; duration shortened below to feel wind-pushed
-    };
-
-    function wwAirplaneAllowedNow() {
-      return Object.prototype.hasOwnProperty.call(WW_AIRPLANE_GAP_MS, currentWeather);
-    }
-
-    function wwSpawnSponsorPlane() {
-      wwAirplaneRunning = true;
-      const layer = document.getElementById('airplaneSponsorLayer');
-      if (!layer || !wwAirplaneAllowedNow()) { wwAirplaneRunning = false; return; }
-
-      if (wwPlaneOrder.length === 0) wwPlaneOrder = [...FD_SPONSOR_CONFIG].sort(() => Math.random() - 0.5);
-      const sponsor = wwPlaneOrder.shift();
-
-      const dirLTR = Math.random() < 0.5;
-      // High sky band only — clear of the balloon, tree canopy,
-      // fireflies, and bill reveals, per the positioning requirement.
-      const topPct = (3 + Math.random() * 10).toFixed(1);
-      // Headwinds: same approved animation, just a faster pass —
-      // reads as wind-pushed without touching the keyframes themselves.
-      const baseDuration = currentWeather === 'HEADWINDS' ? (8 + Math.random() * 5) : (13 + Math.random() * 8);
-      const distanceRoll = Math.random();
-      let distanceScale;
-      if (distanceRoll < 0.4) distanceScale = (1.3 + Math.random() * 0.2).toFixed(2);
-      else if (distanceRoll < 0.8) distanceScale = (1.0 + Math.random() * 0.2).toFixed(2);
-      else distanceScale = (0.7 + Math.random() * 0.15).toFixed(2);
-
-      const el = document.createElement('div');
-      el.className = 'fd-sponsor-plane' + (dirLTR ? '' : ' fd-dir-rtl');
-      el.style.top = topPct + '%';
-      el.style.animationName = dirLTR ? 'fdPlaneLTR' : 'fdPlaneRTL';
-      el.style.animationDuration = baseDuration.toFixed(1) + 's';
-      el.style.setProperty('--fd-plane-scale', distanceScale);
-
-      const planeHtml = `<span class="fd-plane-icon-wrap"><span class="fd-plane-icon">${FD_PLANE_SVG}</span></span>`;
-      const ropeHtml = `<svg class="fd-tow-rope" viewBox="0 0 34 10" preserveAspectRatio="none"><path d="M0,2 Q17,10 34,2" stroke="rgba(210,205,190,0.55)" stroke-width="1" fill="none"/></svg>`;
-      const bannerInner = sponsor.flightDeckImage
-        ? `<span class="fd-banner-img-wrap"><img src="${sponsor.flightDeckImage}" alt="${escapeHtml(sponsor.name)}" class="fd-banner-img" onerror="fdBannerImgError(this, ${jsArg(sponsor.name)})" /><span class="fd-banner-img-tag">SPONSORED</span></span>`
-        : `<span class="fd-plane-banner"><span class="fd-plane-banner-tag">SPONSORED</span><span class="fd-plane-banner-text">${escapeHtml(sponsor.name)}</span></span>`;
-      const bannerHtml = `<a class="fd-plane-banner-link" href="${sponsor.flightDeckUrl}" target="_blank" rel="sponsored noopener noreferrer" aria-label="Sponsored Partner: ${escapeHtml(sponsor.name)}">${bannerInner}</a>`;
-
-      el.innerHTML = dirLTR
-        ? (bannerHtml + ropeHtml + planeHtml)
-        : (planeHtml + ropeHtml + bannerHtml);
-
-      layer.appendChild(el);
-
-      const durationMs = baseDuration * 1000;
-      setTimeout(() => { el.remove(); }, durationMs + 200);
-
-      wwScheduleNextSponsorPlane(durationMs);
-    }
-
-    function wwScheduleNextSponsorPlane(justFlewMs) {
-      if (!wwAirplaneAllowedNow()) { wwAirplaneRunning = false; wwAirplaneTimer = null; return; }
-      const range = WW_AIRPLANE_GAP_MS[currentWeather];
-      const gapMs = range[0] + Math.random() * (range[1] - range[0]);
-      wwAirplaneTimer = setTimeout(wwSpawnSponsorPlane, (justFlewMs || 0) + gapMs);
-    }
-
-    function wwStartAirplaneSystem() {
-      wwStopAirplaneSystem();
-      if (!wwAirplaneAllowedNow()) return;
-      // First pass after a real initial delay too — not an immediate
-      // appearance the moment the world opens.
-      const range = WW_AIRPLANE_GAP_MS[currentWeather];
-      wwAirplaneTimer = setTimeout(wwSpawnSponsorPlane, 8000 + Math.random() * (range[0] * 0.4));
-    }
-    function wwStopAirplaneSystem() {
-      if (wwAirplaneTimer) { clearTimeout(wwAirplaneTimer); wwAirplaneTimer = null; }
-      wwAirplaneRunning = false;
-      const layer = document.getElementById('airplaneSponsorLayer');
-      if (layer) layer.innerHTML = '';
-    }
-
-
-    // OPEN / CLOSE — the single entry point the existing Financial
-    // Weather card already calls (onclick="openWeatherWorld()" is
-    // unchanged in the card's markup).
-    // ============================================================
-    function openWeatherWorld() {
-      const overlay = document.getElementById('weather-world-overlay');
-      if (!overlay) return;
-      overlay.classList.remove('hidden');
-
-      const viewData = getActiveViewData();
-      const weather = computeFinancialWeather(viewData.safeSpend, viewData.cash);
-      const stateKey = wwResolveFinancialState(weather);
-
-      resize();
-      wwCreateFireflyElements();
-      wwRefreshBillPool();
-      setWeather(stateKey);
-      if (stateKey === 'CLEAR') wwApplyGoldenHourIntensity(viewData);
-
-      wwCanvasHandle = requestAnimationFrame(render);
-      wwBalloonHandle = requestAnimationFrame(animateBalloon);
-      wwFireflyHandle = requestAnimationFrame(animateFireflies);
-      if (ignitionIntervalId) clearInterval(ignitionIntervalId);
-      ignitionIntervalId = setInterval(cycleIgnition, 7000);
-
-      wwStartAirplaneSystem();
-    }
-
-    function closeWeatherWorld() {
-      const overlay = document.getElementById('weather-world-overlay');
-      if (overlay) overlay.classList.add('hidden');
-
-      if (wwCanvasHandle) { cancelAnimationFrame(wwCanvasHandle); wwCanvasHandle = null; }
-      if (wwBalloonHandle) { cancelAnimationFrame(wwBalloonHandle); wwBalloonHandle = null; }
-      if (wwFireflyHandle) { cancelAnimationFrame(wwFireflyHandle); wwFireflyHandle = null; }
-      if (ignitionIntervalId) { clearInterval(ignitionIntervalId); ignitionIntervalId = null; }
-      wwStopAirplaneSystem();
-
-      const billLayerEl = document.getElementById('billRevealLayer');
-      if (billLayerEl) billLayerEl.innerHTML = '';
-      fwFloodTags = [];
-      fwFloodInitialized = false;
-      fwHeadwindsLeafRef = null;
-      fwHeadwindsActiveTag = null;
-      fwLastLightningRef = null;
-    }
-
-      window.openWeatherWorld = openWeatherWorld;
-      window.closeWeatherWorld = closeWeatherWorld;
-    })();
   </script>
 
   <!-- FLIGHT DECK LAUNCH SEQUENCE (Dashboard -> Flight Deck) -->
