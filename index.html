@@ -3976,7 +3976,13 @@
         // Grocery Run history: every step, send and total ("Boo marked
         // Grocery Run ready"). Drives the run's state and household
         // notifications; never touches money.
-        groceryEvents: []
+        groceryEvents: [],
+        // Saved Recipes: saved copies, favorites (My / Family), notes, and
+        // an append-only cooking log ("We cooked this"). Never touch money.
+        savedRecipes: [],
+        recipeFavorites: [],
+        recipeNotes: [],
+        cookLog: []
       };
     }
 
@@ -5265,7 +5271,7 @@
     // With no base yet (first sync after this update) nothing is ever
     // dropped, so existing data needs no migration.
     // =====================================================================
-    const SYNCED_COLLECTIONS = ['accounts', 'bills', 'transactions', 'goals', 'householdPaychecks', 'activityLog', 'importHistory', 'groceryPrefs', 'groceryTrips', 'groceryItems', 'groceryEvents'];
+    const SYNCED_COLLECTIONS = ['accounts', 'bills', 'transactions', 'goals', 'householdPaychecks', 'activityLog', 'importHistory', 'groceryPrefs', 'groceryTrips', 'groceryItems', 'groceryEvents', 'savedRecipes', 'recipeFavorites', 'recipeNotes', 'cookLog'];
     // Money amounts that combine when two members change them concurrently.
     const ACCUMULATOR_FIELDS = { accounts: ['balance'], goals: ['current'] };
 
@@ -14494,8 +14500,8 @@
       for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
       return a;
     }
-    function pickGroceryMeals(count, prefs, tier) {
-      const pool = groceryMealPool(prefs, tier);
+    function pickGroceryMeals(count, prefs, tier, exclude) {
+      const pool = groceryMealPool(prefs, tier).filter(m => !(exclude && exclude.has(m.id)));
       const pref = groceryShuffle(pool.filter(m => groceryPreferred(m, prefs)));
       const rest = groceryShuffle(pool.filter(m => !groceryPreferred(m, prefs)));
       const order = [...pref, ...rest];
@@ -14590,6 +14596,7 @@
         order: null, external: null,
         lastModifiedAt: nowIso, lastModifiedBy: actor, lastModifiedById: me
       };
+      if (groceryUI.pendingMeals) { trip.meals = groceryUI.pendingMeals; groceryUI.pendingMeals = null; }
       if (!state.groceryTrips) state.groceryTrips = [];
       state.groceryTrips.push(trip);
       addGroceryEvent(trip, 'started');
@@ -14641,7 +14648,7 @@
     const GROCERY_HEROES = { 'mission-begins': 'Mission Begins', 'war-room': 'War Room', 'the-run': 'The Run', 'record-reality': 'Record Reality' };
     function groceryHeroKey() {
       const step = groceryUI.step;
-      if (step === 'past') return null;
+      if (step === 'past' || step === 'recipes' || step === 'recipe') return null;
       if (step === 'total') return 'record-reality';
       const trip = groceryCurrentTrip();
       const st = trip ? groceryTripStatus(trip) : null;
@@ -14852,17 +14859,19 @@
       if (step === 'order' && !(trip && st === 'ready')) groceryUI.step = 'home';
       if (step === 'total') { const t = groceryTripById(groceryUI.tripId); if (!t || groceryTripStatus(t) !== 'ordered') groceryUI.step = 'home'; }
       if (step === 'past' && !groceryTripById(groceryUI.tripId)) groceryUI.step = 'home';
+      if (step === 'recipe' && !groceryMealById(groceryUI.recipeId)) groceryUI.step = 'recipes';
       const render = {
         home: groceryHomeHtml, family: groceryFamilyHtml, foods: groceryFoodsHtml, store: groceryStoreHtml,
         weeks: groceryWeeksHtml, budget: groceryBudgetHtml, meals: groceryMealsHtml, list: groceryListHtml,
-        order: groceryOrderHtml, total: groceryTotalHtml, past: groceryPastHtml
+        order: groceryOrderHtml, total: groceryTotalHtml, past: groceryPastHtml,
+        recipes: savedRecipesHtml, recipe: recipeHtml
       }[groceryUI.step] || groceryHomeHtml;
       const html = render();
       if (html === groceryLastHtml && root.innerHTML) { renderGroceryHero(); return; }
       const active = document.activeElement;
       const activeId = active && root.contains(active) && active.id ? active.id : null;
       const typed = {};
-      root.querySelectorAll('input[id]:not([type=checkbox]):not([type=radio]), select[id]').forEach(el => { typed[el.id] = el.value; });
+      root.querySelectorAll('input[id]:not([type=checkbox]):not([type=radio]), select[id], textarea[id]').forEach(el => { typed[el.id] = el.value; });
       let sel = null;
       try { if (active && activeId && typeof active.selectionStart === 'number') sel = [active.selectionStart, active.selectionEnd]; } catch (e) {}
       root.innerHTML = html;
@@ -14913,7 +14922,8 @@
     }
 
     // ---- Home: one screen per state ----
-    function groceryHomeHtml() {
+    function groceryHomeHtml() { return groceryHomeMainHtml() + groceryRecipesEntryHtml(); }
+    function groceryHomeMainHtml() {
       const trip = openGroceryTrip();
       if (trip) {
         const s = groceryTripStatus(trip);
@@ -14936,6 +14946,7 @@
         <div>${groceryStatusPill(trip)}</div>
         ${groceryWhoLines(trip)}
         <p class="text-xs text-slate-400">The list is still being built${trip.scope === 'household' ? ' — anyone in your household can pick up where it left off' : ''}. Nothing has been added to your balance or forecast.</p>
+        ${groceryDinnersHtml(trip, false)}
         ${groceryHistoryHtml(trip, false)}`,
         `<button type="button" onclick="continueGroceryRun()" class="${GR_PRIMARY}">Continue planning</button>
          <button type="button" onclick="confirmCancelGroceryTrip(${jsArg(trip.id)})" class="${GR_SECONDARY}">Cancel run</button>`);
@@ -14956,6 +14967,7 @@
          <button type="button" onclick="confirmCancelGroceryTrip(${jsArg(trip.id)})" class="${GR_SECONDARY}">Cancel run</button>`)
         + `<div class="glass-card rounded-3xl border border-slate-800/80 p-5 sm:p-6 space-y-3 mt-4">
           <h3 class="text-base font-bold text-white">Shopping list</h3>
+          ${groceryDinnersHtml(trip, false)}
           ${groceryReadOnlyList(trip)}
           ${groceryHistoryHtml(trip, false)}
         </div>`;
@@ -14974,6 +14986,7 @@
           <p class="text-sm text-slate-300" aria-live="polite">${c.purchased} of ${c.toBuy} purchased · ${c.skipped} skipped · ${c.needed} still needed</p>
           ${c.needed ? `<button type="button" onclick="groceryAllPurchased()" class="${GR_SECONDARY}">Mark everything purchased</button>` : ''}
           ${groceryShoppingList(trip)}
+          ${groceryDinnersHtml(trip, false)}
           ${groceryShareButtons(trip.id)}
           ${groceryHistoryHtml(trip, false)}
         </div>`;
@@ -15009,6 +15022,8 @@
         ${groceryWhoLines(trip)}
         ${tx ? `<p class="text-sm text-slate-300">Total: <strong class="text-white">${formatMoney(tx.amount)}</strong>, recorded by ${escapeHtml(billPayerName(tx))} on ${escapeHtml(friendlyDate(tx.date))}.</p>` : ''}
         ${trip.pruned && trip.summary ? `<p class="text-xs text-slate-400">${trip.summary.purchased} purchased, ${trip.summary.skipped} skipped. Item details are kept for the last ${GROCERY_KEEP_CLOSED_RUNS} runs.</p>` : ''}
+        ${groceryTripStatus(trip) === 'completed' ? `<p class="text-xs text-slate-400">Made one of these? Tap We cooked this — cooking is only logged when you say so.</p>` : ''}
+        ${groceryDinnersHtml(trip, groceryTripStatus(trip) === 'completed')}
         ${group('purchased', 'Purchased')}${group('skipped', 'Skipped')}${group('have', 'Already had')}${group('needed', 'Not bought')}
         ${groceryHistoryHtml(trip, true)}`,
         `<button type="button" onclick="openGroceryRun('home')" class="${GR_SECONDARY}">Back</button>`);
@@ -15162,12 +15177,16 @@
       const count = trip.weeks * GROCERY_DINNERS_PER_WEEK;
       const key = `${trip.weeks}|${trip.tier}|${JSON.stringify([prefs.proteins, prefs.leaveOut, prefs.picky])}`;
       if (!trip.meals || trip.mealsKey !== key) {
-        const pick = pickGroceryMeals(count, prefs, trip.tier);
-        trip.meals = pick.ids.map(id => ({ id, name: (groceryMealById(id) || {}).name || id, keep: true }));
+        // Dinners added from Saved Recipes stay; suggestions fill the rest.
+        const saved = (trip.meals || []).filter(m => m.source === 'saved' && m.keep !== false);
+        const need = Math.max(0, count - saved.length);
+        const pick = pickGroceryMeals(need, prefs, trip.tier, new Set(saved.map(m => m.id)));
+        trip.meals = [...saved, ...pick.ids.map(id => ({ id, name: (groceryMealById(id) || {}).name || id, keep: true }))];
         trip.mealsKey = key;
-        trip.note = !pick.pool ? 'No meals match your foods to leave out at this budget. Try a higher budget or edit your preferences.'
-          : pick.pool < count ? `Only ${pick.pool} meals fit your choices, so some repeat.`
-          : pick.preferred < count ? `Only ${pick.preferred} meals match your favorites${prefs.picky ? ' and picky eaters' : ''}, so we added others that fit.` : '';
+        trip.note = !need ? ''
+          : !pick.pool ? (saved.length ? 'No other meals match your foods to leave out at this budget.' : 'No meals match your foods to leave out at this budget. Try a higher budget or edit your preferences.')
+          : pick.pool < need ? `Only ${pick.pool} meals fit your choices, so some repeat.`
+          : pick.preferred < need ? `Only ${pick.preferred} meals match your favorites${prefs.picky ? ' and picky eaters' : ''}, so we added others that fit.` : '';
         touchGroceryTrip(trip);
       }
       groceryGo('meals');
@@ -15206,7 +15225,7 @@
         const header = i % GROCERY_DINNERS_PER_WEEK === 0 && trip.meals.length > GROCERY_DINNERS_PER_WEEK ? `<li class="pt-2 text-[11px] font-bold uppercase tracking-wider text-slate-500" aria-hidden="true">Week ${week}</li>` : '';
         const tags = [meal.tags.includes('kid') ? 'kid-friendly' : '', meal.tags.includes('quick') ? 'quick' : '', meal.tags.includes('veg') ? 'meatless' : ''].filter(Boolean).join(' · ');
         return `${header}<li class="flex items-center gap-2 p-3 rounded-2xl border ${on ? 'border-slate-800 bg-slate-900/80' : 'border-dashed border-slate-800 bg-transparent opacity-60'}">
-          <div class="flex-1 min-w-0"><p class="text-sm font-semibold text-white">${escapeHtml(meal.name)}</p>${tags ? `<p class="text-[11px] text-slate-500">${tags}</p>` : ''}</div>
+          <button type="button" id="gr-view-${i}" onclick="openRecipe(${jsArg(m.id)}, 'meals')" aria-label="View recipe for ${escapeHtml(meal.name)}" class="flex-1 min-w-0 min-h-[44px] text-left rounded-xl hover:bg-slate-800/60 px-1"><span class="block text-sm font-semibold text-white">${recipeIsFav(m.id, 'mine') ? '<span class="text-rose-300" aria-hidden="true">♥ </span>' : ''}${escapeHtml(meal.name)}</span><span class="block text-[11px] text-slate-500">${[m.source === 'saved' ? 'from Saved Recipes' : '', tags].filter(Boolean).join(' · ')}${tags || m.source === 'saved' ? ' · ' : ''}<span class="text-brand-400">View recipe ›</span></span></button>
           <button type="button" id="gr-keep-${i}" aria-pressed="${on}" aria-label="Keep ${escapeHtml(meal.name)}" onclick="groceryToggleKeep(${i})" class="min-h-[44px] px-3 rounded-xl text-xs font-bold ${on ? 'bg-brand-500/20 text-brand-300' : 'bg-slate-800 text-slate-400'}">${on ? '✓ Keep' : 'Keep'}</button>
           <button type="button" id="gr-swap-${i}" aria-label="Swap ${escapeHtml(meal.name)} for another meal" onclick="grocerySwapMeal(${i})" class="min-h-[44px] px-3 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200">Swap</button>
         </li>`;
@@ -15220,6 +15239,12 @@
     function groceryToList() {
       const trip = groceryCurrentTrip();
       if (!trip || groceryTripStatus(trip) !== 'draft') { groceryGo('home'); return; }
+      groceryRebuildItems(trip);
+      groceryGo('list');
+    }
+    // Brings the run's list in line with its kept dinners (also used when a
+    // dinner is added from Saved Recipes after the list was built).
+    function groceryRebuildItems(trip) {
       const prefs = groceryPrefs() || GROCERY_DEFAULT_PREFS;
       const ids = trip.meals.filter(m => m.keep !== false).map(m => m.id);
       const key = ids.join(',') + '|' + groceryServings(prefs);
@@ -15243,7 +15268,6 @@
         trip.adults = prefs.adults; trip.kids = prefs.kids;
         touchGroceryTrip(trip);
       }
-      groceryGo('list');
     }
     function groceryItemRow(i, controls, struck) {
       return `<div class="flex items-center gap-1">
@@ -15700,6 +15724,15 @@
           <p class="text-sm text-slate-300">The run history shows:</p>
           ${bullets(['who started it', 'who edited it', 'who placed the order', 'who recorded the total'])}
         </section>
+        <section class="rounded-2xl border border-slate-800 bg-slate-900/70 p-4 space-y-2" aria-labelledby="gh-recipes">
+          <div class="flex items-center gap-3">
+            <span class="shrink-0 w-11 h-11 rounded-2xl bg-slate-800 flex items-center justify-center text-xl" aria-hidden="true">📖</span>
+            <h3 id="gh-recipes" class="text-base font-extrabold text-white">Saved Recipes</h3>
+          </div>
+          <p class="text-sm text-slate-300">Tap any dinner to open its recipe. From there you can:</p>
+          ${bullets(['Save it (for the Family, or just for you)', '♥ add it to My Favorites — only you see these', '🏠 make it a Family Favorite — everyone sees it', 'Add notes, just for you or for the Family', 'Add it to your Grocery Run', 'Tap "We cooked this" — Times Cooked counts days, so two taps on the same day count once'])}
+          <p class="text-sm text-slate-300">Recipes never affect your money. Notes never change the recipe itself.</p>
+        </section>
         <p class="text-xs text-slate-400">Changed your mind? You can cancel a run any time before it's completed — nothing is recorded.</p>
         <button type="button" onclick="closeGroceryHelp()" class="w-full min-h-[44px] rounded-xl bg-brand-500 hover:bg-brand-600 text-slate-950 font-bold text-sm">Got it</button>`;
     }
@@ -15827,6 +15860,473 @@
       if (!el) return;
       resolveDuplicateGroceryTrips(); // settles a simultaneous start before showing it
       el.innerHTML = groceryCardHtml();
+    }
+
+    // =====================================================================
+    // SAVED RECIPES -- the dinners your household likes, what you think of
+    // them, and when you last made them. Built on the Grocery Run meal
+    // library (same meal ids and names). Never touches money.
+    //   savedRecipes    one copy per recipe: Family (shared, fixed id, so
+    //                   two people saving at once still make one) or Just me
+    //   recipeFavorites My Favorite (one per person) and Family Favorite
+    //                   (one shared), each its own record
+    //   recipeNotes     one record per note; never changes the recipe itself
+    //   cookLog         append-only: one entry per "We cooked this". Undo
+    //                   marks it voided instead of deleting it, so a phone
+    //                   that's behind can't bring it back. Times Cooked counts
+    //                   distinct days, so two people tapping for the same
+    //                   dinner count it once.
+    // =====================================================================
+    const RECIPE_COST_LABEL = { low: 'Budget-friendly', medium: 'Mid-range', high: 'Splurge' };
+    function recipeMe() { return state.user ? state.user.id : null; }
+    function recipeActorFields(prefix) {
+      return { [prefix + 'At']: new Date().toISOString(), [prefix + 'By']: currentOwnerLabel(), [prefix + 'ById']: recipeMe() };
+    }
+    function recipeColl(name) { if (!state[name]) state[name] = []; return state[name]; }
+    function recipeDefaultScope() { return inHouseholdMode() ? 'household' : 'personal'; }
+    function recipeScopeLabel(scope) { return scope === 'household' ? 'Family' : 'Just me'; }
+
+    // ---- Saved copies ----
+    function recipeSavedId(mealId, scope) { return scope === 'household' ? `sr_${mealId}_household` : `sr_${mealId}_${recipeMe() || 'me'}`; }
+    // The copy you see: the Family one if there is one, otherwise yours.
+    function recipeSavedFor(mealId) {
+      const all = recipeColl('savedRecipes').filter(r => r && !r.removed && r.sourceRecipeId === mealId && isVisibleToCurrentUser(r));
+      return all.find(r => r.scope === 'household') || all[0] || null;
+    }
+    function savedRecipesVisible() {
+      const seen = new Set();
+      return recipeColl('savedRecipes').filter(r => r && !r.removed && isVisibleToCurrentUser(r) && groceryMealById(r.sourceRecipeId))
+        .sort((a, b) => (a.scope === 'household' ? 0 : 1) - (b.scope === 'household' ? 0 : 1))
+        .filter(r => { if (seen.has(r.sourceRecipeId)) return false; seen.add(r.sourceRecipeId); return true; });
+    }
+    function recipeSave(mealId, scope, quiet) {
+      const meal = groceryMealById(mealId);
+      if (!meal) return null;
+      if (scope === 'household' && !inHouseholdMode()) scope = 'personal';
+      const existing = recipeSavedFor(mealId);
+      if (existing && existing.scope === scope) return existing;
+      if (existing && existing.scope === 'household') return existing; // already shared with everyone
+      const id = recipeSavedId(mealId, scope);
+      const list = recipeColl('savedRecipes');
+      let rec = list.find(r => r && r.id === id);
+      if (rec) {
+        Object.assign(rec, { removed: false, name: meal.name }, recipeActorFields('saved'));
+      } else {
+        const now = recipeActorFields('created');
+        rec = {
+          id, kind: 'library', sourceRecipeId: meal.id, sourceVersion: 1, name: meal.name,
+          servings: GROCERY_BASE_SERVINGS,
+          ingredients: meal.ingredients.map(i => ({ name: i.name, qty: i.qty, unit: i.unit, aisle: i.aisle, staple: i.staple })),
+          scope, ownerId: recipeMe(), ...now,
+          savedAt: now.createdAt, savedBy: now.createdBy, savedById: now.createdById, removed: false
+        };
+        list.push(rec);
+      }
+      groceryStamp(rec);
+      // Sharing a Just-me copy with the family: the Family copy replaces it.
+      if (existing && existing.scope !== 'household' && scope === 'household') { existing.removed = true; groceryStamp(existing); }
+      saveStateToStorage();
+      groceryPushNow();
+      if (!quiet) showToast(scope === 'household' ? `Saved ${meal.name} for the family.` : `Saved ${meal.name}.`, 'success');
+      return rec;
+    }
+    function recipeUnsave(mealId) {
+      const rec = recipeSavedFor(mealId);
+      if (!rec) return;
+      rec.removed = true;
+      groceryStamp(rec);
+      // Favorites go with it; notes and cooking history stay.
+      [recipeFavRecord(mealId, 'mine'), rec.scope === 'household' ? recipeFavRecord(mealId, 'family') : null].forEach(f => { if (f && f.on) recipeSetFav(f, false); });
+      saveStateToStorage();
+      groceryPushNow();
+      showToast(`${rec.name} removed from Saved Recipes. Notes and cooking history are kept.`, 'info');
+      renderGroceries();
+      const b = document.getElementById('rc-save'); if (b) b.focus();
+    }
+    function confirmRecipeUnsave(mealId) {
+      const rec = recipeSavedFor(mealId);
+      if (!rec) return;
+      if (rec.scope !== 'household') { recipeUnsave(mealId); return; }
+      openCustomModal('Remove from Family recipes?', `${rec.name} will be removed from Saved Recipes for everyone in your household. Notes and cooking history are kept.`, [
+        { label: 'Remove', onclick: `closeModals(); recipeUnsave(${jsArg(mealId)})`, primary: true },
+        { label: 'Keep it', onclick: 'closeModals()' }
+      ]);
+    }
+
+    // ---- Favorites ----
+    function recipeFavId(mealId, which) { return `rf_${mealId}::${which === 'family' ? 'family' : (recipeMe() || 'me')}`; }
+    function recipeFavRecord(mealId, which) {
+      const id = recipeFavId(mealId, which);
+      return recipeColl('recipeFavorites').find(f => f && f.id === id && isVisibleToCurrentUser(f)) || null;
+    }
+    function recipeIsFav(mealId, which) {
+      if (which === 'family' && !inHouseholdMode()) return false;
+      const f = recipeFavRecord(mealId, which);
+      return !!(f && f.on);
+    }
+    function recipeSetFav(f, on) {
+      const nowIso = new Date().toISOString();
+      Object.assign(f, { on, at: nowIso, by: currentOwnerLabel(), byId: recipeMe(), lastModifiedAt: nowIso });
+    }
+    function toggleRecipeFav(mealId, which) {
+      if (which === 'family' && !inHouseholdMode()) return;
+      const meal = groceryMealById(mealId);
+      if (!meal) return;
+      const turnOn = !recipeIsFav(mealId, which);
+      if (turnOn) recipeSave(mealId, which === 'family' ? 'household' : recipeDefaultScope(), true);
+      const saved = recipeSavedFor(mealId);
+      let f = recipeFavRecord(mealId, which);
+      if (!f) {
+        f = { id: recipeFavId(mealId, which), recipeKey: mealId, scope: which === 'family' ? 'household' : 'personal', ownerId: recipeMe(), createdAt: new Date().toISOString() };
+        recipeColl('recipeFavorites').push(f);
+      }
+      f.savedRecipeId = saved ? saved.id : null;
+      recipeSetFav(f, turnOn);
+      saveStateToStorage();
+      groceryPushNow();
+      showToast(turnOn ? (which === 'family' ? `${meal.name} is a Family Favorite.` : `${meal.name} added to My Favorites.`)
+        : (which === 'family' ? `${meal.name} is no longer a Family Favorite.` : `${meal.name} removed from My Favorites.`), 'success');
+      renderGroceries();
+    }
+
+    // ---- Notes ----
+    function recipeNotesFor(mealId) {
+      return recipeColl('recipeNotes').filter(n => n && !n.removed && n.recipeKey === mealId && isVisibleToCurrentUser(n))
+        .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+    }
+    function addRecipeNote(mealId) {
+      const input = document.getElementById('rc-note-text');
+      const text = input ? input.value.trim().slice(0, 500) : '';
+      if (!text) { showToast('Type a note first.', 'info'); if (input) input.focus(); return; }
+      const famEl = document.getElementById('rc-note-family');
+      const scope = inHouseholdMode() && famEl && famEl.checked ? 'household' : 'personal';
+      // A note belongs to your saved copy (saving it if needed); the recipe
+      // itself never changes.
+      const saved = recipeSave(mealId, scope === 'household' ? 'household' : recipeDefaultScope(), true);
+      const who = recipeActorFields('created');
+      recipeColl('recipeNotes').push({
+        id: 'rn_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+        recipeKey: mealId, savedRecipeId: saved ? saved.id : null, text, scope, ownerId: recipeMe(),
+        by: who.createdBy, byId: who.createdById, createdAt: who.createdAt, editedAt: null,
+        lastModifiedAt: who.createdAt, removed: false
+      });
+      if (input) input.value = '';
+      saveStateToStorage();
+      groceryPushNow();
+      showToast(scope === 'household' ? 'Note added for the family.' : 'Note added. Only you can see it.', 'success');
+      renderGroceries();
+      const again = document.getElementById('rc-note-text'); if (again) again.focus();
+    }
+    function removeRecipeNote(noteId) {
+      const n = recipeColl('recipeNotes').find(x => x && x.id === noteId);
+      if (!n || n.byId !== recipeMe()) return;
+      n.removed = true;
+      n.lastModifiedAt = new Date().toISOString();
+      saveStateToStorage();
+      groceryPushNow();
+      showToast('Note deleted.', 'info');
+      renderGroceries();
+      const h = document.getElementById('rc-notes-title'); if (h) h.focus();
+    }
+
+    // ---- Cooking log (append-only) ----
+    function recipeCookEntries(mealId) {
+      return recipeColl('cookLog').filter(c => c && c.recipeKey === mealId && !c.voided && isVisibleToCurrentUser(c));
+    }
+    function recipeCookStats(mealId) {
+      const entries = recipeCookEntries(mealId);
+      const days = [...new Set(entries.map(c => c.cookedOn))].sort();
+      return { times: days.length, last: days.length ? days[days.length - 1] : null, entries: entries.length };
+    }
+    function recipeCookedText(mealId) {
+      const s = recipeCookStats(mealId);
+      if (!s.times) return 'Not cooked yet';
+      return `Cooked ${s.times} time${s.times === 1 ? '' : 's'} · last ${friendlyDate(s.last)}`;
+    }
+    // Yours, not undone: today's (or this run's) entry.
+    function recipeMyCook(mealId, runId) {
+      const me = recipeMe(), today = localDateStr(new Date());
+      return recipeCookEntries(mealId).filter(c => c.byId === me && (runId ? c.runId === runId : c.cookedOn === today))
+        .sort((a, b) => String(b.loggedAt).localeCompare(String(a.loggedAt)))[0] || null;
+    }
+    function logRecipeCooked(mealId, runId) {
+      const meal = groceryMealById(mealId);
+      if (!meal) return;
+      if (recipeMyCook(mealId, runId || null)) { renderGroceries(); return; }
+      const trip = runId ? groceryTripById(runId) : null;
+      const saved = recipeSavedFor(mealId);
+      const nowMs = Date.now();
+      const scope = trip ? trip.scope : (saved ? saved.scope : recipeDefaultScope());
+      recipeColl('cookLog').push({
+        id: 'ck_' + nowMs + '_' + Math.random().toString(36).slice(2, 8),
+        recipeKey: mealId, savedRecipeId: saved ? saved.id : null, runId: runId || null,
+        cookedOn: localDateStr(new Date(nowMs)), loggedAt: new Date(nowMs).toISOString(),
+        byId: recipeMe(), by: currentOwnerLabel(), deviceId: state.syncLineage || null,
+        voided: false, scope: scope === 'household' && inHouseholdMode() ? 'household' : 'personal', ownerId: recipeMe(),
+        lastModifiedAt: new Date(nowMs).toISOString()
+      });
+      saveStateToStorage();
+      groceryPushNow();
+      showToast(`Logged: you cooked ${meal.name} today.`, 'success');
+      renderGroceries();
+      const u = document.getElementById(runId ? `rc-undo-${mealId}` : 'rc-undo'); if (u) u.focus();
+    }
+    function undoRecipeCooked(mealId, runId) {
+      const c = recipeMyCook(mealId, runId || null);
+      if (!c) { renderGroceries(); return; }
+      c.voided = true;
+      c.voidedAt = new Date().toISOString();
+      c.lastModifiedAt = c.voidedAt;
+      saveStateToStorage();
+      groceryPushNow();
+      showToast('Undone — that cooking entry no longer counts.', 'info');
+      renderGroceries();
+      const b = document.getElementById(runId ? `rc-cook-${mealId}` : 'rc-cook'); if (b) b.focus();
+    }
+
+    // ---- History: saves, favorites, notes and cooking, with who and when ----
+    function recipeHistory(mealId) {
+      const ev = [];
+      recipeColl('savedRecipes').forEach(r => {
+        if (!r || r.removed || r.sourceRecipeId !== mealId || !isVisibleToCurrentUser(r)) return;
+        ev.push({ at: r.savedAt || r.createdAt, text: `${groceryPersonName(r.savedById || r.createdById, r.savedBy || r.createdBy)} saved this${r.scope === 'household' ? ' for the family' : ''}.` });
+      });
+      recipeColl('recipeFavorites').forEach(f => {
+        if (!f || !f.on || f.recipeKey !== mealId || !isVisibleToCurrentUser(f)) return;
+        if (f.scope === 'household' && !inHouseholdMode()) return;
+        ev.push({ at: f.at, text: f.scope === 'household' ? `${groceryPersonName(f.byId, f.by)} made this a Family Favorite.` : `${groceryPersonName(f.byId, f.by)} added this to My Favorites.` });
+      });
+      recipeNotesFor(mealId).forEach(n => ev.push({ at: n.createdAt, text: `${groceryPersonName(n.byId, n.by)} added a note${n.scope === 'household' ? '' : ' (just for them)'}.` }));
+      recipeCookEntries(mealId).forEach(c => ev.push({ at: c.loggedAt, day: c.cookedOn, text: `${groceryPersonName(c.byId, c.by)} cooked this${c.runId ? ' (from a grocery run)' : ''}.` }));
+      return ev.filter(e => e.at).sort((a, b) => String(b.at).localeCompare(String(a.at)));
+    }
+
+    // ---- Add To Grocery Run ----
+    function addRecipeToGroceryRun(mealId) {
+      const meal = groceryMealById(mealId);
+      if (!meal) return;
+      const saved = recipeSavedFor(mealId);
+      const entry = { id: meal.id, name: meal.name, keep: true, source: 'saved', savedRecipeId: saved ? saved.id : null };
+      const trip = openGroceryTrip();
+      if (!trip) {
+        groceryUI.pendingMeals = [entry];
+        startGroceryRun();
+        showToast(`Started a grocery run with ${meal.name}.`, 'success');
+        return;
+      }
+      const st = groceryTripStatus(trip);
+      if (st === 'ready') {
+        openCustomModal('The list is locked', `This grocery run is Ready To Order, so its list is locked. Unlock it to add ${meal.name}.`, [
+          { label: 'Unlock and add', onclick: `recipeUnlockAndAdd(${jsArg(mealId)}, ${jsArg(trip.id)})`, primary: true },
+          { label: 'Not now', onclick: 'closeModals()' }
+        ]);
+        return;
+      }
+      if (st === 'ordered') {
+        showToast(`This grocery run was already ordered. Add ${meal.name} to your next run once this one's total is entered.`, 'info');
+        return;
+      }
+      const meals = trip.meals || [];
+      const kept = meals.find(m => m.id === meal.id && m.keep !== false);
+      if (kept) { showToast(`${meal.name} is already in this grocery run.`, 'info'); return; }
+      const off = meals.find(m => m.id === meal.id);
+      if (off) Object.assign(off, entry); else meals.push(entry);
+      trip.meals = meals;
+      touchGroceryTrip(trip, 'updated');
+      if (trip.itemsKey) groceryRebuildItems(trip);
+      groceryPushNow();
+      showToast(`Added ${meal.name} to the grocery run.`, 'success');
+      renderGroceries();
+    }
+
+    async function recipeUnlockAndAdd(mealId, tripId) {
+      closeModals();
+      const ok = await groceryTransition(tripId, 'unlocked', ['ready'], null, t => { t.readyAt = null; });
+      if (ok) addRecipeToGroceryRun(mealId);
+    }
+
+    // ---- Screens ----
+    function openRecipe(mealId, fromStep) {
+      if (!groceryMealById(mealId)) return;
+      groceryUI.recipeFrom = { step: fromStep || groceryUI.step, tripId: groceryUI.tripId };
+      groceryUI.recipeId = mealId;
+      if (getCurrentPageId() !== 'groceries') { groceryUI.step = 'recipe'; navigateTo('groceries'); return; }
+      groceryGo('recipe');
+    }
+    function closeRecipe() {
+      const from = groceryUI.recipeFrom || { step: 'recipes' };
+      groceryUI.tripId = from.tripId || groceryUI.tripId;
+      groceryGo(from.step === 'recipe' ? 'recipes' : from.step);
+    }
+    function openSavedRecipes() {
+      if (getCurrentPageId() !== 'groceries') { groceryUI.step = 'recipes'; navigateTo('groceries'); return; }
+      groceryGo('recipes');
+    }
+    function recipeTagText(meal) {
+      return [meal.tags.includes('kid') ? 'kid-friendly' : '', meal.tags.includes('quick') ? 'quick' : '', meal.tags.includes('veg') ? 'meatless' : ''].filter(Boolean).join(' · ');
+    }
+    function recipeBadges(mealId) {
+      const saved = recipeSavedFor(mealId);
+      const b = [];
+      if (recipeIsFav(mealId, 'mine')) b.push('<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-500/15 text-rose-300">♥ My Favorite</span>');
+      if (recipeIsFav(mealId, 'family')) b.push('<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-300">🏠 Family Favorite</span>');
+      if (saved && inHouseholdMode()) b.push(`<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-800 text-slate-300">${recipeScopeLabel(saved.scope)}</span>`);
+      return b.length ? `<div class="flex flex-wrap gap-1.5">${b.join('')}</div>` : '';
+    }
+    function groceryRecipesEntryHtml() {
+      const saved = savedRecipesVisible();
+      const fam = inHouseholdMode() ? saved.filter(r => recipeIsFav(r.sourceRecipeId, 'family')).length : 0;
+      return `<div class="glass-card rounded-3xl border border-slate-800/80 p-5 sm:p-6 mt-4 flex flex-col sm:flex-row sm:items-center gap-3">
+        <div class="flex-1 min-w-0">
+          <h3 class="text-base font-bold text-white">📖 Saved Recipes</h3>
+          <p class="text-xs text-slate-400">${saved.length ? `${saved.length} saved${fam ? ` · ${fam} Family Favorite${fam === 1 ? '' : 's'}` : ''}.` : 'Save the dinners you like, add notes, and keep track of what you cooked.'}</p>
+        </div>
+        <button type="button" onclick="openSavedRecipes()" class="${GR_SECONDARY} shrink-0">Open Saved Recipes</button>
+      </div>`;
+    }
+    function setRecipeFilter(f) { groceryUI.recipeFilter = f; renderGroceries(); const b = document.getElementById('rc-filter-' + f); if (b) b.focus(); }
+    function setRecipeSort(s) { groceryUI.recipeSort = s; renderGroceries(); }
+    function setRecipeQuery(q) { groceryUI.recipeQuery = String(q || '').slice(0, 60); renderGroceries(); }
+    function savedRecipesHtml() {
+      const hh = inHouseholdMode();
+      let filter = groceryUI.recipeFilter || 'all';
+      if (!hh && (filter === 'family' || filter === 'justme')) filter = 'all';
+      const sort = groceryUI.recipeSort || 'most';
+      const q = (groceryUI.recipeQuery || '').trim().toLowerCase();
+      const browsing = filter === 'library';
+      let rows = browsing ? groceryMeals().map(m => ({ meal: m, saved: recipeSavedFor(m.id) }))
+        : savedRecipesVisible().map(r => ({ meal: groceryMealById(r.sourceRecipeId), saved: r }));
+      if (filter === 'mine') rows = rows.filter(r => recipeIsFav(r.meal.id, 'mine'));
+      if (filter === 'family') rows = rows.filter(r => recipeIsFav(r.meal.id, 'family'));
+      if (filter === 'justme') rows = rows.filter(r => r.saved && r.saved.scope !== 'household');
+      if (q) rows = rows.filter(r => r.meal.name.toLowerCase().includes(q));
+      rows.forEach(r => { r.stats = recipeCookStats(r.meal.id); });
+      rows.sort((a, b) => sort === 'az' ? a.meal.name.localeCompare(b.meal.name)
+        : sort === 'recent' ? String(b.stats.last || '').localeCompare(String(a.stats.last || '')) || a.meal.name.localeCompare(b.meal.name)
+        : b.stats.times - a.stats.times || a.meal.name.localeCompare(b.meal.name));
+      const chips = [['all', 'All'], ['mine', '♥ My Favorites'], ...(hh ? [['family', '🏠 Family Favorites'], ['justme', 'Just me']] : []), ['library', `All ${groceryMeals().length} dinners`]];
+      const chipHtml = chips.map(([k, l]) => `<button type="button" id="rc-filter-${k}" aria-pressed="${filter === k}" onclick="setRecipeFilter(${jsArg(k)})" class="min-h-[44px] px-3 rounded-xl text-xs font-bold ${filter === k ? 'bg-brand-500 text-slate-950' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}">${l}</button>`).join('');
+      const card = r => {
+        const m = r.meal;
+        const notes = recipeNotesFor(m.id);
+        const latest = notes[0];
+        return `<li class="p-3 rounded-2xl border border-slate-800 bg-slate-900/80 space-y-2">
+          <button type="button" onclick="openRecipe(${jsArg(m.id)}, 'recipes')" class="w-full min-h-[44px] text-left rounded-xl hover:bg-slate-800/60 px-1">
+            <span class="block text-sm font-bold text-white">${escapeHtml(m.name)}</span>
+            <span class="block text-xs text-slate-400">${escapeHtml(recipeCookedText(m.id))}${browsing && !r.saved ? ' · not saved' : ''}</span>
+          </button>
+          ${recipeBadges(m.id)}
+          ${latest ? `<p class="text-xs text-slate-300 break-words">“${escapeHtml(latest.text.length > 120 ? latest.text.slice(0, 117) + '…' : latest.text)}” <span class="text-slate-500">— ${escapeHtml(groceryPersonName(latest.byId, latest.by))}</span></p>` : ''}
+          <div class="flex flex-wrap gap-2">
+            <button type="button" onclick="addRecipeToGroceryRun(${jsArg(m.id)})" aria-label="Add ${escapeHtml(m.name)} to Grocery Run" class="${GR_SMALL} bg-brand-500/20 text-brand-300 hover:bg-brand-500 hover:text-slate-950">🛒 Add to Grocery Run</button>
+            <button type="button" onclick="openRecipe(${jsArg(m.id)}, 'recipes')" aria-label="View recipe for ${escapeHtml(m.name)}" class="${GR_SMALL} bg-slate-800 text-slate-200 hover:bg-slate-700">View recipe</button>
+          </div>
+        </li>`;
+      };
+      const empty = q ? `No recipes match “${escapeHtml(q)}”.`
+        : filter === 'mine' ? 'No favorites yet. Tap ♥ My Favorite on a recipe you love.'
+        : filter === 'family' ? 'No Family Favorites yet.'
+        : filter === 'justme' ? 'Nothing saved just for you.'
+        : 'Nothing saved yet. Open a dinner from a grocery run, or browse all the dinners, and tap Save.';
+      return groceryStepShell(0, 0, '📖 Saved Recipes', `
+        <p class="text-xs text-slate-400">Your saved dinners, favorites, notes and cooking history${hh ? ' — shared with your family unless you choose Just me' : ''}. Nothing here touches your money.</p>
+        <div><label for="rc-search" class="sr-only">Search recipes</label>
+          <input id="rc-search" type="search" maxlength="60" autocomplete="off" placeholder="Search recipes" value="${escapeHtml(groceryUI.recipeQuery || '')}" oninput="setRecipeQuery(this.value)" class="w-full min-h-[44px] bg-slate-900 border border-slate-800 rounded-xl px-3 text-sm text-slate-200 outline-none focus:border-brand-500" /></div>
+        <div class="flex flex-wrap gap-2" role="group" aria-label="Show">${chipHtml}</div>
+        <div class="flex items-center gap-2"><label for="rc-sort" class="text-xs text-slate-400">Sort</label>
+          <select id="rc-sort" onchange="setRecipeSort(this.value)" class="min-h-[44px] bg-slate-900 border border-slate-800 rounded-xl px-3 text-sm text-slate-200">
+            ${[['most', 'Most cooked'], ['recent', 'Recently cooked'], ['az', 'A–Z']].map(([k, l]) => `<option value="${k}" ${sort === k ? 'selected' : ''}>${l}</option>`).join('')}
+          </select></div>
+        <p class="text-xs text-slate-400" aria-live="polite">${rows.length} recipe${rows.length === 1 ? '' : 's'}</p>
+        ${rows.length ? `<ul class="space-y-2">${rows.map(card).join('')}</ul>` : `<p class="text-sm text-slate-400">${empty}</p>`}`,
+        `<button type="button" onclick="groceryGo('home')" class="${GR_SECONDARY}">Back to Grocery Run</button>`);
+    }
+    function recipeHtml() {
+      const meal = groceryMealById(groceryUI.recipeId);
+      const hh = inHouseholdMode();
+      const saved = recipeSavedFor(meal.id);
+      const mineFav = recipeIsFav(meal.id, 'mine');
+      const famFav = recipeIsFav(meal.id, 'family');
+      const myCook = recipeMyCook(meal.id, null);
+      const tags = recipeTagText(meal);
+      const facts = [RECIPE_COST_LABEL[meal.cost] || '', meal.protein && meal.protein !== 'none' ? meal.protein.charAt(0).toUpperCase() + meal.protein.slice(1) : '', tags].filter(Boolean).join(' · ');
+      const ings = meal.ingredients.map(i => `<li class="flex justify-between gap-3 py-1 border-b border-slate-800/60 last:border-0">
+          <span class="text-sm text-slate-200 min-w-0 break-words">${escapeHtml(groceryItemName(i))}</span>
+          <span class="text-xs text-slate-400 shrink-0">${i.staple ? 'pantry' : escapeHtml(groceryQtyText({ qty: i.qty, unit: i.unit }))}</span></li>`).join('');
+      const saveBtns = saved
+        ? `<span class="inline-flex items-center min-h-[44px] px-3 rounded-xl text-xs font-bold bg-brand-500/15 text-brand-300">✓ Saved${hh ? ` · ${recipeScopeLabel(saved.scope)}` : ''}</span>
+           ${hh && saved.scope !== 'household' ? `<button type="button" onclick="recipeSave(${jsArg(meal.id)}, 'household'); renderGroceries();" class="${GR_SMALL} bg-slate-800 text-slate-200 hover:bg-slate-700">Share with Family</button>` : ''}
+           <button type="button" id="rc-save" onclick="confirmRecipeUnsave(${jsArg(meal.id)})" class="${GR_SMALL} bg-slate-800 text-slate-300 hover:bg-slate-700">Remove from saved</button>`
+        : hh ? `<button type="button" id="rc-save" onclick="recipeSave(${jsArg(meal.id)}, 'household'); renderGroceries();" class="${GR_SECONDARY}">Save for Family</button>
+           <button type="button" onclick="recipeSave(${jsArg(meal.id)}, 'personal'); renderGroceries();" class="${GR_SMALL} bg-slate-800 text-slate-300 hover:bg-slate-700">Save just for me</button>`
+        : `<button type="button" id="rc-save" onclick="recipeSave(${jsArg(meal.id)}, 'personal'); renderGroceries();" class="${GR_SECONDARY}">Save recipe</button>`;
+      const notes = recipeNotesFor(meal.id);
+      const noteList = notes.length ? `<ul class="space-y-2">${notes.map(n => `<li class="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
+          <p class="text-sm text-slate-200 whitespace-pre-wrap break-words">${escapeHtml(n.text)}</p>
+          <div class="flex items-center justify-between gap-2 mt-1">
+            <p class="text-[11px] text-slate-500">${escapeHtml(groceryPersonName(n.byId, n.by))} · ${escapeHtml(friendlyDate(localDateStr(new Date(n.createdAt))))}${hh ? ` · ${n.scope === 'household' ? 'Family' : 'Just me'}` : ''}</p>
+            ${n.byId === recipeMe() ? `<button type="button" onclick="removeRecipeNote(${jsArg(n.id)})" aria-label="Delete note" class="min-h-[44px] px-2 text-xs text-slate-400 hover:text-white">Delete</button>` : ''}
+          </div></li>`).join('')}</ul>` : '<p class="text-xs text-slate-500">No notes yet.</p>';
+      const hist = recipeHistory(meal.id);
+      const histHtml = hist.length ? `<ol class="space-y-1 text-xs">${hist.slice(0, 25).map(e => `<li class="flex gap-2"><span class="shrink-0 w-20 text-slate-500">${escapeHtml(friendlyDate(e.day || localDateStr(new Date(e.at))))}</span><span class="text-slate-300">${escapeHtml(e.text)}</span></li>`).join('')}</ol>` : '<p class="text-xs text-slate-500">Nothing yet.</p>';
+      return groceryStepShell(0, 0, escapeHtml(meal.name), `
+        <p class="text-xs text-slate-400">${escapeHtml(facts)}</p>
+        ${recipeBadges(meal.id)}
+        <p class="text-sm font-semibold text-white" aria-live="polite">${escapeHtml(recipeCookedText(meal.id))}</p>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" id="rc-fav-mine" aria-pressed="${mineFav}" onclick="toggleRecipeFav(${jsArg(meal.id)}, 'mine')" class="${GR_SMALL} ${mineFav ? 'bg-rose-500/25 text-rose-200' : 'bg-slate-800 text-slate-200 hover:bg-slate-700'}">${mineFav ? '♥' : '♡'} My Favorite</button>
+          ${hh ? `<button type="button" id="rc-fav-family" aria-pressed="${famFav}" onclick="toggleRecipeFav(${jsArg(meal.id)}, 'family')" class="${GR_SMALL} ${famFav ? 'bg-amber-500/25 text-amber-200' : 'bg-slate-800 text-slate-200 hover:bg-slate-700'}">🏠 Family Favorite</button>` : ''}
+          ${saveBtns}
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button type="button" id="rc-add" onclick="addRecipeToGroceryRun(${jsArg(meal.id)})" class="${GR_PRIMARY}">🛒 Add to Grocery Run</button>
+          ${myCook ? `<span class="inline-flex items-center min-h-[44px] px-3 rounded-xl text-xs font-bold bg-emerald-500/15 text-emerald-300">✓ You cooked this today</span>
+            <button type="button" id="rc-undo" onclick="undoRecipeCooked(${jsArg(meal.id)})" class="${GR_SMALL} bg-slate-800 text-slate-200 hover:bg-slate-700">Undo</button>`
+            : `<button type="button" id="rc-cook" onclick="logRecipeCooked(${jsArg(meal.id)})" class="${GR_SECONDARY}">🍳 We cooked this</button>`}
+        </div>
+        <section class="space-y-2" aria-labelledby="rc-ing-title">
+          <h4 id="rc-ing-title" class="text-sm font-bold text-white">Ingredients</h4>
+          <p class="text-[11px] text-slate-500">Shopping amounts for ${GROCERY_BASE_SERVINGS} servings. Grocery Run scales them to your household.</p>
+          <ul>${ings}</ul>
+          <p class="text-xs text-slate-400">Step-by-step instructions, prep and cook times, and cooking amounts are coming in a later update.</p>
+        </section>
+        <section class="space-y-2" aria-labelledby="rc-notes-title">
+          <h4 id="rc-notes-title" tabindex="-1" class="text-sm font-bold text-white outline-none">Notes</h4>
+          <p class="text-[11px] text-slate-500">Notes stay with your saved recipe and never change the recipe itself.</p>
+          ${noteList}
+          <div class="space-y-2">
+            <label for="rc-note-text" class="sr-only">Add a note</label>
+            <textarea id="rc-note-text" rows="2" maxlength="500" placeholder="Add a note (e.g. use extra cheese)" class="w-full min-h-[44px] bg-slate-900 border border-slate-800 rounded-xl p-3 text-sm text-slate-200 outline-none focus:border-brand-500"></textarea>
+            <div class="flex flex-wrap items-center gap-2">
+              ${hh ? `<fieldset class="flex flex-wrap gap-2"><legend class="sr-only">Who can see this note</legend>
+                <label class="min-h-[44px] inline-flex items-center gap-2 px-2 text-xs text-slate-300 cursor-pointer"><input type="radio" id="rc-note-me" name="rc-note-scope" value="personal" ${groceryUI.noteScope !== 'household' ? 'checked' : ''} onchange="groceryUI.noteScope = this.value" class="w-4 h-4 accent-emerald-500" />Just me</label>
+                <label class="min-h-[44px] inline-flex items-center gap-2 px-2 text-xs text-slate-300 cursor-pointer"><input type="radio" id="rc-note-family" name="rc-note-scope" value="household" ${groceryUI.noteScope === 'household' ? 'checked' : ''} onchange="groceryUI.noteScope = this.value" class="w-4 h-4 accent-emerald-500" />Family</label>
+              </fieldset>` : ''}
+              <button type="button" onclick="addRecipeNote(${jsArg(meal.id)})" class="${GR_SECONDARY}">Add note</button>
+            </div>
+          </div>
+        </section>
+        <details class="text-xs text-slate-400"><summary class="min-h-[44px] flex items-center cursor-pointer text-slate-300 font-semibold">Recipe history (${hist.length})</summary>${histHtml}</details>`,
+        `<button type="button" onclick="closeRecipe()" class="${GR_SECONDARY}">Back</button>
+         ${groceryUI.recipeFrom && groceryUI.recipeFrom.step !== 'recipes' ? `<button type="button" onclick="openSavedRecipes()" class="${GR_SECONDARY}">Saved Recipes</button>` : ''}`);
+    }
+    // Dinners in a run, each opening its recipe; a completed run can log
+    // "We cooked this" per dinner (never guessed from what was bought).
+    function groceryDinnersHtml(trip, canCook) {
+      const meals = (trip.meals || []).filter(m => m.keep !== false && groceryMealById(m.id));
+      const seen = new Set();
+      const uniq = meals.filter(m => { if (seen.has(m.id)) return false; seen.add(m.id); return true; });
+      if (!uniq.length) return '';
+      return `<div class="space-y-1"><p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Dinners (${meals.length})</p>
+        <ul class="space-y-1">${uniq.map(m => {
+          const meal = groceryMealById(m.id);
+          const mine = canCook ? recipeMyCook(m.id, trip.id) : null;
+          return `<li class="flex flex-wrap items-center gap-1">
+            <button type="button" onclick="openRecipe(${jsArg(m.id)})" aria-label="View recipe for ${escapeHtml(meal.name)}" class="flex-1 min-w-0 min-h-[44px] px-3 rounded-xl text-left text-sm text-slate-200 hover:bg-slate-900">${recipeIsFav(m.id, 'mine') ? '<span class="text-rose-300" aria-hidden="true">♥ </span>' : ''}${escapeHtml(meal.name)} <span class="text-xs text-brand-400">View recipe ›</span></button>
+            ${canCook ? (mine ? `<span class="text-xs text-emerald-300 px-1">✓ Cooked</span><button type="button" id="rc-undo-${m.id}" onclick="undoRecipeCooked(${jsArg(m.id)}, ${jsArg(trip.id)})" aria-label="Undo cooked ${escapeHtml(meal.name)}" class="${GR_SMALL} bg-slate-800 text-slate-300">Undo</button>`
+              : `<button type="button" id="rc-cook-${m.id}" onclick="logRecipeCooked(${jsArg(m.id)}, ${jsArg(trip.id)})" aria-label="We cooked ${escapeHtml(meal.name)}" class="${GR_SMALL} bg-slate-800 text-slate-200 hover:bg-slate-700">🍳 We cooked this</button>`) : ''}
+          </li>`;
+        }).join('')}</ul></div>`;
     }
 
     // TRANSACTIONS MODAL & LOGIC
