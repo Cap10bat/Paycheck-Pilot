@@ -15205,7 +15205,7 @@
         ${groceryStepper('Adults', 'adults', p.adults, 1, 10)}
         ${groceryStepper('Kids', 'kids', p.kids, 0, 10)}
         <p class="text-xs text-slate-400">Kids count as about ${GROCERY_KID_PORTION} of an adult portion. This is saved, so you won't be asked every time.</p>`,
-        groceryNav(`groceryGo('home')`, `groceryGo('foods')`));
+        groceryNav(groceryUI.prefsReturn ? `leaveGroceryPrefs()` : `groceryGo('home')`, `groceryGo('foods')`));
     }
     function groceryToggleProtein(key) {
       const p = groceryUI.prefs;
@@ -15281,10 +15281,22 @@
       saveGroceryPrefs(groceryUI.prefs);
       groceryGo('weeks');
     }
+    // Back out of preferences opened from a recipe, without saving.
+    function leaveGroceryPrefs() {
+      const back = groceryUI.prefsReturn;
+      groceryUI.prefsReturn = null;
+      groceryUI.editingPrefs = false;
+      if (back && groceryMealById(back.recipeId)) { groceryUI.recipeId = back.recipeId; groceryGo('recipe'); return; }
+      groceryGo('home');
+    }
     function finishGroceryPrefs() {
       saveGroceryPrefs(groceryUI.prefs);
       showToast('Grocery preferences saved', 'success');
       groceryUI.editingPrefs = false;
+      // Came from a recipe ("Set your household size"): go back to it.
+      const back = groceryUI.prefsReturn;
+      groceryUI.prefsReturn = null;
+      if (back && back.step === 'recipe' && groceryMealById(back.recipeId)) { groceryUI.recipeId = back.recipeId; groceryGo('recipe'); return; }
       groceryGo('home');
     }
 
@@ -15880,7 +15892,7 @@
             <span class="shrink-0 w-11 h-11 rounded-2xl bg-slate-800 flex items-center justify-center text-xl" aria-hidden="true">📖</span>
             <h3 id="gh-recipes" class="text-base font-extrabold text-white">Saved Recipes</h3>
           </div>
-          <p class="text-sm text-slate-300">Tap any dinner to open its recipe. Open 📖 Saved Recipes from the Grocery Run screen to see everything you've kept.</p>
+          <p class="text-sm text-slate-300">Tap any dinner to open its recipe: step-by-step instructions, prep and cook times, and ingredient amounts that adjust to how many you're feeding. Open 📖 Saved Recipes from the Grocery Run screen to see everything you've kept.</p>
           <dl class="space-y-2 text-sm">
             ${[['💾 Save Recipe', 'Keep a dinner you like. Save it for the Family so everyone sees it, or just for you.'],
                ['♥ My Favorites', 'Your own favorites. Only you see them.'],
@@ -16423,8 +16435,137 @@
         ${rows.length ? `<ul class="space-y-2">${rows.map(card).join('')}</ul>` : `<p class="text-sm text-slate-400">${empty}</p>`}`,
         `<button type="button" onclick="groceryGo('home')" class="${GR_SECONDARY}">Back to Grocery Run</button>`);
     }
+    // ---- Recipe content: recipes/library-v1.js, loaded the first time a
+    // recipe is opened (the service worker keeps it for offline use). It
+    // never changes shopping lists -- those still come from the meal data.
+    let recipeLibState = 'idle'; // idle | loading | ready | failed
+    function recipeLibrary() { return (window.PP_RECIPES && window.PP_RECIPES.recipes) || null; }
+    function recipeFor(mealId) { const lib = recipeLibrary(); return lib ? lib[mealId] || null : null; }
+    function loadRecipeLibrary() {
+      if (recipeLibrary()) { recipeLibState = 'ready'; return; }
+      // After a failure, wait for "Try again" (no retry loop on re-renders).
+      if (recipeLibState === 'loading' || recipeLibState === 'failed') return;
+      recipeLibState = 'loading';
+      const sc = document.createElement('script');
+      sc.src = 'recipes/library-v1.js';
+      const done = ok => {
+        recipeLibState = ok && recipeLibrary() ? 'ready' : 'failed';
+        if (!ok) sc.remove();
+        if (getCurrentPageId() === 'groceries' && groceryUI.step === 'recipe') renderGroceries();
+      };
+      sc.onload = () => done(true);
+      sc.onerror = () => done(false);
+      document.head.appendChild(sc);
+    }
+    function retryRecipeLibrary() { recipeLibState = 'idle'; loadRecipeLibrary(); renderGroceries(); }
+    // Scaling: amounts are written for 4 servings. Counts round up (you can't
+    // use 2.4 eggs), pounds to the nearest quarter, spoons and cups to a
+    // kitchen fraction. A "!" amount (oil for the pan) doesn't scale.
+    const RECIPE_FRACTIONS = [[0, ''], [0.25, '¼'], [1 / 3, '⅓'], [0.5, '½'], [2 / 3, '⅔'], [0.75, '¾'], [1, '']];
+    const RECIPE_UNITS = { lb: ['lb', 'lb'], oz: ['oz', 'oz'], cup: ['cup', 'cups'], tbsp: ['tbsp', 'tbsp'], tsp: ['tsp', 'tsp'], can: ['can', 'cans'], jar: ['jar', 'jars'],
+      pkg: ['package', 'packages'], box: ['box', 'boxes'], bag: ['bag', 'bags'], bottle: ['bottle', 'bottles'], packet: ['packet', 'packets'], head: ['head', 'heads'],
+      bunch: ['bunch', 'bunches'], clove: ['clove', 'cloves'], slice: ['slice', 'slices'], stick: ['stick', 'sticks'], pint: ['pint', 'pints'], dozen: ['dozen', 'dozen'] };
+    function recipeParseQty(q) {
+      return String(q).trim().split(/\s+/).reduce((n, part) => { const f = part.split('/'); return n + (f.length === 2 ? Number(f[0]) / Number(f[1]) : Number(part)); }, 0);
+    }
+    function recipeFraction(x) {
+      let whole = Math.floor(x + 1e-9), best = RECIPE_FRACTIONS[0];
+      const rest = x - whole;
+      RECIPE_FRACTIONS.forEach(f => { if (Math.abs(rest - f[0]) < Math.abs(rest - best[0])) best = f; });
+      if (best[0] === 1) { whole += 1; best = RECIPE_FRACTIONS[0]; }
+      if (!whole && !best[1]) return { value: 0.25, text: '¼' };
+      return { value: whole + best[0], text: (whole ? String(whole) : '') + best[1] };
+    }
+    function recipeScaleAmount(qty, unit) {
+      if (unit === 'lb') { const v = Math.max(0.25, Math.ceil(qty * 4 - 1e-9) / 4); return recipeFraction(v); }
+      if (unit === 'oz') { const v = Math.max(1, Math.round(qty)); return { value: v, text: String(v) }; }
+      if (unit === 'cup' || unit === 'tbsp' || unit === 'tsp') return recipeFraction(qty);
+      const v = Math.max(1, Math.ceil(qty - 1e-9));
+      return { value: v, text: String(v) };
+    }
+    // 'qty|unit|name|note' -> { amount, name, note }
+    function recipeIngredient(line, factor) {
+      const [rawQty, unit, rawName, note] = String(line).split('|');
+      const fixed = rawQty.startsWith('!');
+      const q = rawQty.replace('!', '').trim();
+      const [one, many] = rawName.includes('/') ? rawName.split('/') : [rawName, rawName];
+      if (!q) return { amount: '', name: one, note: note || '' };
+      const base = recipeParseQty(q);
+      const amt = fixed ? recipeFraction(base) : recipeScaleAmount(base * factor, unit);
+      if (fixed && !['cup', 'tbsp', 'tsp', 'lb'].includes(unit)) { amt.value = base; amt.text = String(base); }
+      const plural = amt.value > 1;
+      const u = RECIPE_UNITS[unit];
+      return { amount: amt.text + (u ? ' ' + u[plural ? 1 : 0] : ''), name: u ? one : (plural ? many : one), note: note || '' };
+    }
+    function recipeMinutes(m) {
+      if (typeof m === 'string') return m;
+      if (!m) return '';
+      const h = Math.floor(m / 60), r = m % 60;
+      return h ? `${h} hr${r ? ` ${r} min` : ''}` : `${r} min`;
+    }
+    function recipeTimesText(r) {
+      const prep = `Prep ${recipeMinutes(r.prepMin)}`;
+      if (!r.cookMin) return `${prep} · No cooking`;
+      if (typeof r.cookMin === 'string') return `${prep} · Cook ${r.cookMin}`;
+      return `${prep} · Cook ${recipeMinutes(r.cookMin)} · Ready in ${recipeMinutes(r.prepMin + r.cookMin)}`;
+    }
+    // Your household's size once you've told Grocery Run "Who's eating?";
+    // until then, the recipe as written (4 servings).
+    function recipeDefaultServings() {
+      const prefs = groceryPrefs();
+      return prefs ? Math.min(16, Math.max(1, Math.round(groceryServings(prefs)))) : 4;
+    }
+    function recipeSetHousehold() {
+      groceryUI.prefsReturn = { step: 'recipe', recipeId: groceryUI.recipeId };
+      editGroceryPrefs();
+    }
+    function recipeServingsFor(mealId) {
+      const m = groceryUI.recipeServings || {};
+      return m[mealId] || recipeDefaultServings();
+    }
+    function setRecipeServings(mealId, delta) {
+      if (!groceryUI.recipeServings) groceryUI.recipeServings = {};
+      groceryUI.recipeServings[mealId] = Math.min(16, Math.max(1, recipeServingsFor(mealId) + delta));
+      renderGroceries();
+      const b = document.getElementById(delta < 0 ? 'rc-serv-less' : 'rc-serv-more');
+      if (b && !b.disabled) b.focus(); else { const o = document.getElementById('rc-serv'); if (o) o.focus(); }
+    }
+    function recipeCookingHtml(meal) {
+      const r = recipeFor(meal.id);
+      if (!r) {
+        if (recipeLibState === 'loading' || recipeLibState === 'idle') return '<p class="text-sm text-slate-400" aria-live="polite">Loading the recipe…</p>';
+        if (recipeLibState === 'failed') return `<div class="space-y-2" aria-live="polite"><p class="text-sm text-slate-300">Couldn't load the recipe. Check your connection and try again.</p>
+          <button type="button" onclick="retryRecipeLibrary()" class="${GR_SECONDARY}">Try again</button></div>`;
+        return '<p class="text-sm text-slate-400">Step-by-step instructions for this dinner are coming soon.</p>';
+      }
+      const serv = recipeServingsFor(meal.id);
+      const factor = serv / r.servings;
+      const ings = r.ingredients.map(l => recipeIngredient(l, factor)).map(i => `<li class="flex gap-3 py-1.5 border-b border-slate-800/60 last:border-0">
+          <span class="shrink-0 w-24 text-sm font-semibold text-white tabular-nums">${escapeHtml(i.amount)}</span>
+          <span class="min-w-0 text-sm text-slate-200 break-words">${escapeHtml(i.name)}${i.note ? `<span class="text-slate-500">, ${escapeHtml(i.note)}</span>` : ''}</span></li>`).join('');
+      return `<p class="text-sm text-slate-300">⏱️ ${escapeHtml(recipeTimesText(r))}</p>
+        <section class="space-y-2" aria-labelledby="rc-ing-title">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <h4 id="rc-ing-title" class="text-sm font-bold text-white">Ingredients</h4>
+            <div class="flex items-center gap-2" role="group" aria-label="Servings">
+              <button type="button" id="rc-serv-less" onclick="setRecipeServings(${jsArg(meal.id)}, -1)" ${serv <= 1 ? 'disabled' : ''} aria-label="Fewer servings" class="w-11 h-11 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-lg font-bold disabled:opacity-40">−</button>
+              <output id="rc-serv" tabindex="-1" aria-live="polite" class="min-w-[88px] text-center text-sm font-bold text-white">${serv} serving${serv === 1 ? '' : 's'}</output>
+              <button type="button" id="rc-serv-more" onclick="setRecipeServings(${jsArg(meal.id)}, 1)" ${serv >= 16 ? 'disabled' : ''} aria-label="More servings" class="w-11 h-11 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-lg font-bold disabled:opacity-40">+</button>
+            </div>
+          </div>
+          ${groceryPrefs() ? '' : `<p class="text-xs text-slate-400">Showing the recipe as written, for 4. <button type="button" id="rc-set-household" onclick="recipeSetHousehold()" class="min-h-[44px] px-1 font-semibold text-brand-400 underline underline-offset-2">Set your household size</button> and recipes and grocery lists will use it.</p>`}
+          <ul>${ings}</ul>
+        </section>
+        <section class="space-y-2" aria-labelledby="rc-steps-title">
+          <h4 id="rc-steps-title" class="text-sm font-bold text-white">Steps</h4>
+          ${serv !== r.servings ? `<p class="text-[11px] text-slate-400">The ingredients above are for ${serv}; amounts mentioned in the steps are for ${r.servings}.</p>` : ''}
+          <ol class="space-y-2">${r.steps.map((st, i) => `<li class="flex gap-3"><span class="shrink-0 w-7 h-7 rounded-full bg-brand-500/20 text-brand-300 text-xs font-bold flex items-center justify-center" aria-hidden="true">${i + 1}</span><span class="min-w-0 text-sm text-slate-200 leading-relaxed"><span class="sr-only">Step ${i + 1}: </span>${escapeHtml(st)}</span></li>`).join('')}</ol>
+          ${r.tip ? `<p class="text-xs text-slate-300 rounded-xl bg-slate-800/60 p-3"><span aria-hidden="true">💡 </span>${escapeHtml(r.tip)}</p>` : ''}
+        </section>`;
+    }
     function recipeHtml() {
       const meal = groceryMealById(groceryUI.recipeId);
+      if (!recipeFor(meal.id)) loadRecipeLibrary();
       const hh = inHouseholdMode();
       const saved = recipeSavedFor(meal.id);
       const mineFav = recipeIsFav(meal.id, 'mine');
@@ -16467,12 +16608,11 @@
             <button type="button" id="rc-undo" onclick="undoRecipeCooked(${jsArg(meal.id)})" class="${GR_SMALL} bg-slate-800 text-slate-200 hover:bg-slate-700">Undo</button>`
             : `<button type="button" id="rc-cook" onclick="logRecipeCooked(${jsArg(meal.id)})" class="${GR_SECONDARY}">🍳 We cooked this</button>`}
         </div>
-        <section class="space-y-2" aria-labelledby="rc-ing-title">
-          <h4 id="rc-ing-title" class="text-sm font-bold text-white">Ingredients</h4>
-          <p class="text-[11px] text-slate-500">Shopping amounts for ${GROCERY_BASE_SERVINGS} servings. Grocery Run scales them to your household.</p>
+        ${recipeCookingHtml(meal)}
+        <details class="text-xs text-slate-400"><summary class="min-h-[44px] flex items-center cursor-pointer text-slate-300 font-semibold">What goes on the grocery list</summary>
+          <p class="text-[11px] text-slate-500 mb-1">Shopping amounts for ${GROCERY_BASE_SERVINGS} servings. Grocery Run scales them to your household.</p>
           <ul>${ings}</ul>
-          <p class="text-xs text-slate-400">Step-by-step instructions, prep and cook times, and cooking amounts are coming in a later update.</p>
-        </section>
+        </details>
         <section class="space-y-2" aria-labelledby="rc-notes-title">
           <h4 id="rc-notes-title" tabindex="-1" class="text-sm font-bold text-white outline-none">Notes</h4>
           <p class="text-[11px] text-slate-500">Notes stay with your saved recipe and never change the recipe itself.</p>

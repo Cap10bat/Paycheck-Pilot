@@ -20,7 +20,9 @@ const APP_SHELL = [
     "./icons/icon-192.png", "./icons/icon-512.png",
     // Grocery Run state images (the mid size; others cache on first view)
     "./images/grocery/mission-begins-800.webp", "./images/grocery/war-room-800.webp",
-    "./images/grocery/the-run-800.webp", "./images/grocery/record-reality-800.webp"
+    "./images/grocery/the-run-800.webp", "./images/grocery/record-reality-800.webp",
+    // Recipes (steps, times, cooking amounts) for every Grocery Run dinner
+    "./recipes/library-v1.js"
 ];
 
 // ---------------------------------------------------------------------
