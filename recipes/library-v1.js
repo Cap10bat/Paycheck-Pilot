@@ -90,7 +90,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1 1/2|lb|boneless skinless chicken breasts|cut into bite-size pieces', '1|bag|frozen stir-fry vegetables|about 16 oz', '1/2|cup|teriyaki sauce',
     '1|cup|rice|uncooked', '2|cup|water|for the rice', '2|tbsp|vegetable oil'
   ], [
-    'Cook the rice: bring rice and water to a boil, cover, turn to low and cook 18 minutes. Rest 5 minutes.',
+    'Cook the rice in a pot: bring the rice and water to a boil, cover, turn to low and cook 18 minutes. Rest 5 minutes.',
     'Heat 1 tablespoon of oil in a large skillet over high heat. Cook the chicken 5–6 minutes until browned and 165°F (74°C). Move to a plate.',
     'Add the rest of the oil and the frozen vegetables. Cook 4–5 minutes until hot and crisp-tender.',
     'Return the chicken, add the teriyaki sauce and toss 1–2 minutes until glossy.',
@@ -169,7 +169,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
   ], [
     'Bake the fries as the bag directs (usually 20–25 minutes at 425°F / 220°C).',
     'Shape the beef into 4 patties a little wider than the buns, with a slight dip in the middle. Season both sides.',
-    'Cook in a hot skillet or on the grill 4–5 minutes per side, until 160°F (71°C) in the middle.',
+    'Cook in a skillet over medium-high heat (or on the grill) 4–5 minutes per side, until 160°F (71°C) in the middle.',
     'Add the cheese for the last minute and cover to melt.',
     'Serve on buns with lettuce, tomato and your favorite toppings.'
   ], 'Ground beef is only safe cooked through — check the middle of the thickest patty.');
@@ -198,7 +198,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1 1/2|lb|flank steak|sliced thin against the grain', '4|cup|broccoli florets', '1/3|cup|soy sauce', '2|tbsp|brown sugar', '1|tbsp|cornstarch',
     '1/2|cup|water', '2|tbsp|vegetable oil', '1|cup|rice|uncooked', '2|cup|water|for the rice'
   ], [
-    'Cook the rice (boil, cover, low 18 minutes, rest 5).',
+    'Cook the rice in a pot (boil, cover, low 18 minutes, rest 5).',
     'Whisk the soy sauce, brown sugar, cornstarch and ½ cup water.',
     'Heat 1 tablespoon of oil in a large skillet over high heat. Sear the beef in two batches, 1–2 minutes per side, until browned with no red left on the outside (145°F / 63°C). Move to a plate.',
     'Add the rest of the oil and the broccoli with 2 tablespoons of water. Cover and cook 3 minutes.',
@@ -251,7 +251,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '8|oz|egg noodles', '1/2|tsp|salt', '1/4|tsp|black pepper'
   ], [
     'Cook the noodles as the bag directs and drain.',
-    'Cook the beef and onion in a large skillet 7–9 minutes until no pink remains (160°F / 71°C). Spoon off the fat.',
+    'Cook the beef and onion in a large skillet over medium-high heat 7–9 minutes until no pink remains (160°F / 71°C). Spoon off the fat.',
     'Add the mushrooms and cook 5 minutes until soft. Sprinkle in the flour and stir 1 minute.',
     'Stir in the broth and simmer 3–4 minutes until thickened. Turn off the heat and stir in the sour cream, salt and pepper.',
     'Serve over the noodles.'
@@ -272,7 +272,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1|lb|ground beef', '1|lb|ziti', '24|oz|pasta sauce', '15|oz|ricotta cheese', '2|cup|shredded mozzarella', '1|tsp|Italian seasoning|optional'
   ], [
     'Heat the oven to 375°F (190°C). Cook the ziti 2 minutes less than the box says and drain.',
-    'Cook the beef 7–9 minutes until no pink remains (160°F / 71°C). Spoon off the fat and stir in the sauce and seasoning.',
+    'Cook the beef in a large skillet over medium-high heat 7–9 minutes, breaking it up, until no pink remains (160°F / 71°C). Spoon off the fat and stir in the sauce and seasoning.',
     'Toss the pasta with the meat sauce. Spread half in a 9×13 dish, dot with the ricotta, then add the rest.',
     'Top with the mozzarella. Bake 20–25 minutes until bubbling and melted.'
   ]);
@@ -284,7 +284,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
   ], [
     'Boil the potatoes 15–18 minutes until tender, then mash with the butter.',
     'Pat the chops dry and season with salt, pepper and garlic powder.',
-    'Cook in the oil in a hot skillet 4–5 minutes per side, until 145°F (63°C) inside. Rest 3 minutes.',
+    'Cook in the oil in a skillet over medium-high heat 4–5 minutes per side, until 145°F (63°C) inside. Rest 3 minutes.',
     'Heat the green beans.',
     'Serve the chops with applesauce, potatoes and green beans.'
   ], 'Pork is safe and juiciest at 145°F with a 3-minute rest — a little pink is fine.');
@@ -315,7 +315,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     'Lay the bacon on a foil-lined baking sheet and bake at 400°F (200°C) for 15–20 minutes until crisp.',
     'Stir the pancake mix and liquid just until combined; small lumps are fine.',
     'Heat a skillet over medium heat with a little butter. Pour ¼ cup batter per pancake. Flip when bubbles form on top, about 2 minutes, and cook 1 minute more.',
-    'Fry or scramble the eggs if using.',
+    'If you like, fry or scramble the eggs in a skillet over medium heat until set.',
     'Serve with syrup.'
   ]);
 
@@ -343,7 +343,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
   add('sausage-and-white-bean-soup', 10, 25, [
     '1|lb|smoked sausage|sliced', '2|can|white beans|drained', '4|cup|chicken broth', '4|cup|fresh spinach', '1||onion/onions|diced', '2|clove|garlic|minced', '!1|tbsp|olive oil'
   ], [
-    'Brown the sausage in the oil in a large pot, 5 minutes.',
+    'Brown the sausage in the oil in a large pot over medium-high heat, 5 minutes.',
     'Add the onion and cook 4 minutes, then the garlic for 30 seconds.',
     'Add the broth and beans. Simmer 10–15 minutes.',
     'Stir in the spinach until it wilts, about 1 minute.',
@@ -365,7 +365,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1|lb|ground turkey', '1||onion/onions|diced', '2|can|kidney beans|15 oz each, drained', '2|can|diced tomatoes|14.5 oz each',
     '2|tbsp|chili powder', '1|tsp|ground cumin', '1|tsp|salt', '1|cup|water', '!1|tbsp|vegetable oil'
   ], [
-    'Heat the oil in a large pot. Cook the turkey and onion 8–10 minutes, breaking it up, until no pink remains (165°F / 74°C).',
+    'Heat the oil in a large pot over medium-high heat. Cook the turkey and onion 8–10 minutes, breaking it up, until no pink remains (165°F / 74°C).',
     'Stir in the chili powder, cumin and salt for 1 minute.',
     'Add the beans, tomatoes and water and bring to a boil.',
     'Simmer on low 20–25 minutes, stirring now and then, until thick.'
@@ -377,7 +377,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
   ], [
     'Bake the sweet potato fries as the bag directs.',
     'Gently mix the turkey with the salt, garlic powder and pepper. Shape 4 patties.',
-    'Cook in the oil over medium heat 5–6 minutes per side, until 165°F (74°C) in the middle.',
+    'Cook in the oil in a large skillet over medium heat 5–6 minutes per side, until 165°F (74°C) in the middle.',
     'Serve on buns with lettuce and tomato.'
   ], 'Turkey burgers must reach 165°F — higher than beef.');
 
@@ -395,7 +395,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1|lb|ground turkey', '2|tbsp|taco seasoning', '1/2|cup|water', '1||head romaine lettuce/heads romaine lettuce|leaves separated',
     '1|cup|shredded cheese', '1/2|cup|salsa', '!1|tbsp|vegetable oil'
   ], [
-    'Cook the turkey in the oil 8–10 minutes, breaking it up, until no pink remains (165°F / 74°C).',
+    'Cook the turkey in the oil in a large skillet over medium-high heat 8–10 minutes, breaking it up, until no pink remains (165°F / 74°C).',
     'Stir in the taco seasoning and water and simmer 3–5 minutes.',
     'Spoon into lettuce leaves and top with cheese and salsa.'
   ]);
@@ -455,7 +455,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '2|tbsp|vegetable oil', '1|cup|rice|uncooked', '2|cup|water|for the rice'
   ], [
     'Cook the rice in a pot: bring the rice and water to a boil, cover, turn to low and cook 18 minutes, then rest 5 minutes off the heat. Whisk the soy sauce, sugar, cornstarch and 2 tablespoons water.',
-    'Heat 1 tablespoon oil over high heat. Cook the vegetables 4–5 minutes. Move them aside.',
+    'Heat 1 tablespoon oil in a large skillet over high heat. Cook the vegetables 4–5 minutes. Move them aside.',
     'Add the rest of the oil and the shrimp. Cook 2–3 minutes, turning, until pink and opaque.',
     'Pour in the sauce and toss 1 minute until glossy. Serve over rice.'
   ], 'Shrimp go rubbery fast — pull them as soon as they turn pink.');
@@ -465,7 +465,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1/2|tsp|red pepper flakes|optional', '1/2|tsp|salt'
   ], [
     'Cook the linguine as the box directs. Save ½ cup of the water, then drain.',
-    'Heat the oil and 2 tablespoons butter in a large skillet. Add the shrimp and cook 1–2 minutes per side until pink. Move to a plate.',
+    'Heat the oil and 2 tablespoons butter in a large skillet over medium heat. Add the shrimp and cook 1–2 minutes per side until pink. Move to a plate.',
     'Add the rest of the butter, the garlic and pepper flakes. Cook 1 minute.',
     'Add the juice of 1 lemon, the pasta water, pasta and shrimp. Toss to coat.',
     'Season and serve with lemon wedges.'
@@ -476,7 +476,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '8||small flour tortilla/small flour tortillas', '2|cup|coleslaw mix', '3||lime/limes'
   ], [
     'Toss the shrimp with the chili powder, garlic powder and salt.',
-    'Cook in the oil over high heat 2–3 minutes until pink and opaque.',
+    'Cook in the oil in a large skillet over high heat 2–3 minutes until pink and opaque.',
     'Toss the slaw with the juice of 1 lime.',
     'Warm the tortillas and fill with shrimp and slaw. Serve with lime wedges.'
   ]);
@@ -485,7 +485,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
   add('veggie-omelets-and-toast', 10, 15, [
     '8||egg/eggs', '2||bell pepper/bell peppers|diced', '2|cup|fresh spinach', '1|cup|shredded cheese', '4|tbsp|butter|divided', '8|slice|bread', '1/2|tsp|salt'
   ], [
-    'Soften the peppers in 1 tablespoon butter, 4 minutes. Add the spinach until wilted. Set aside.',
+    'Soften the peppers in 1 tablespoon butter in a skillet over medium heat, 4 minutes. Add the spinach until wilted. Set aside.',
     'Beat 2 eggs with a pinch of salt for each omelet.',
     'Melt a little butter in a small nonstick skillet over medium heat. Pour in the eggs and cook, lifting the edges, until almost set.',
     'Add some vegetables and cheese to half, fold and slide onto a plate. Repeat.',
@@ -495,7 +495,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
   add('breakfast-burritos', 10, 20, [
     '8||egg/eggs', '2|cup|frozen hash browns', '4||large flour tortilla/large flour tortillas', '1|cup|shredded cheese', '1/2|cup|salsa', '2|tbsp|butter', '1/2|tsp|salt'
   ], [
-    'Cook the hash browns in 1 tablespoon butter in a large skillet until crisp, 8–10 minutes.',
+    'Cook the hash browns in 1 tablespoon butter in a large skillet over medium-high heat until crisp, 8–10 minutes.',
     'Beat the eggs with the salt. Scramble in the rest of the butter over medium-low heat until just set.',
     'Warm the tortillas. Fill with potatoes, eggs, cheese and salsa.',
     'Fold in the sides and roll up.'
@@ -536,7 +536,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '2|can|kidney beans|drained', '1|can|black beans|drained', '2|can|diced tomatoes', '1||onion/onions|diced', '2||bell pepper/bell peppers|diced',
     '2|tbsp|chili powder', '1|tsp|ground cumin', '1|tsp|salt', '1|cup|water', '!1|tbsp|vegetable oil'
   ], [
-    'Cook the onion and peppers in the oil in a large pot 6–8 minutes until soft.',
+    'Cook the onion and peppers in the oil in a large pot over medium heat 6–8 minutes until soft.',
     'Stir in the chili powder, cumin and salt for 1 minute.',
     'Add the beans, tomatoes and water. Simmer 20–25 minutes until thick.'
   ]);
@@ -556,7 +556,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '3|tbsp|olive oil', '1/2|cup|shredded parmesan', '1/2|tsp|salt'
   ], [
     'Cook the penne as the box directs. Save ½ cup of the water and drain.',
-    'Heat the oil in a large skillet. Cook the zucchini and peppers 5–6 minutes until just tender.',
+    'Heat the oil in a large skillet over medium heat. Cook the zucchini and peppers 5–6 minutes until just tender.',
     'Add the tomatoes and garlic for 2 minutes.',
     'Toss in the pasta, a splash of pasta water, the parmesan and salt.'
   ]);
@@ -584,7 +584,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1 1/2|cup|dried lentils|rinsed', '1|cup|baby carrots|chopped', '2||celery stalk/celery stalks|chopped', '1||onion/onions|diced', '8|cup|vegetable broth',
     '1|tsp|ground cumin', '1|tsp|salt', '!1|tbsp|olive oil'
   ], [
-    'Cook the onion, carrots and celery in the oil in a large pot 6 minutes.',
+    'Cook the onion, carrots and celery in the oil in a large pot over medium heat 6 minutes.',
     'Add the cumin for 30 seconds, then the lentils and broth.',
     'Bring to a boil, then simmer partly covered 30–35 minutes until the lentils are soft.',
     'Season with salt and serve.'
@@ -595,7 +595,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '!1|tbsp|vegetable oil', '1|cup|rice|uncooked', '2|cup|water|for the rice'
   ], [
     'Cook the rice in a pot: bring the rice and water to a boil, cover, turn to low and cook 18 minutes, then rest 5 minutes off the heat.',
-    'Cook the onion in the oil 5 minutes. Add the curry powder for 1 minute.',
+    'Cook the onion in the oil in a large skillet over medium heat 5 minutes. Add the curry powder for 1 minute.',
     'Add the chickpeas, tomatoes, coconut milk and salt. Simmer 15–20 minutes until thick.',
     'Serve over rice.'
   ]);
@@ -605,8 +605,8 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '3|tbsp|vegetable oil', '1|cup|rice|uncooked', '2|cup|water|for the rice'
   ], [
     'Cook the rice in a pot: bring the rice and water to a boil, cover, turn to low and cook 18 minutes, then rest 5 minutes off the heat. Press the tofu between towels for 10 minutes, then cube and toss with the cornstarch.',
-    'Fry the tofu in 2 tablespoons oil over medium-high heat 8–10 minutes, turning, until golden. Move to a plate.',
-    'Cook the vegetables in the rest of the oil 4–5 minutes.',
+    'Fry the tofu in 2 tablespoons oil in a large skillet over medium-high heat 8–10 minutes, turning, until golden. Move to a plate.',
+    'In the same skillet, cook the frozen vegetables in the rest of the oil over high heat 4–5 minutes.',
     'Add the tofu, soy sauce and sugar and toss 1 minute. Serve over rice.'
   ]);
 
@@ -633,7 +633,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1|can|white beans|drained', '1|can|kidney beans|drained', '2|can|diced tomatoes', '1|cup|small pasta', '2||zucchini/zucchini|diced',
     '1|cup|baby carrots|chopped', '1||onion/onions|diced', '8|cup|vegetable broth', '1|tsp|Italian seasoning', '!1|tbsp|olive oil'
   ], [
-    'Cook the onion and carrots in the oil in a large pot 6 minutes.',
+    'Cook the onion and carrots in the oil in a large pot over medium heat 6 minutes.',
     'Add the broth, tomatoes, beans and seasoning. Bring to a boil and simmer 10 minutes.',
     'Add the pasta and zucchini and simmer 10 minutes more, until the pasta is tender.',
     'Season with salt and pepper.'
@@ -656,7 +656,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
   ], [
     'Toss the beef with the flour, salt and pepper.',
     'Brown the beef in the oil in a large pot over medium-high heat, in two batches, 4–5 minutes each. Move to a plate.',
-    'Cook the onion 3 minutes. Add the broth and tomato paste, scraping up the browned bits. Return the beef.',
+    'In the same pot, cook the onion over medium heat 3 minutes. Add the broth and tomato paste, scraping up the browned bits. Return the beef.',
     'Cover and simmer on low 1 hour.',
     'Add the potatoes and carrots and simmer 45–60 minutes more, until the beef is fork-tender (well past the safe 145°F / 63°C).'
   ], 'Slow cooker: brown the beef, then everything in on Low for 8 hours.');
@@ -677,8 +677,8 @@ window.PP_RECIPES = { version: 1, recipes: {} };
   ], [
     'Boil the potatoes 15–18 minutes until tender, then mash with the butter and milk.',
     'Mix the beef, breadcrumbs, egg and salt. Shape into 4 oval patties.',
-    'Brown the patties in a large skillet 4 minutes per side. Move to a plate and pour off the fat.',
-    'Cook the mushrooms 4 minutes. Whisk in the gravy mix and water and bring to a simmer.',
+    'Brown the patties in a large skillet over medium-high heat, 4 minutes per side. Move to a plate and pour off the fat.',
+    'In the same skillet, cook the mushrooms over medium heat 4 minutes. Whisk in the gravy mix and water and bring to a simmer.',
     'Return the patties, cover and simmer 10 minutes until they reach 160°F (71°C). Serve with potatoes and green beans.'
   ]);
 
@@ -688,7 +688,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
   ], [
     'Cook the rice in a pot: bring the rice and water to a boil, cover, turn to low and cook 18 minutes, then rest 5 minutes off the heat.',
     'Season the beef and shape into 4 patties. Brown in a skillet 4 minutes per side; move to a plate.',
-    'Cook the onions in the drippings 6–8 minutes until soft.',
+    'In the same skillet, cook the onions in the drippings over medium heat 6–8 minutes until soft.',
     'Whisk in the gravy mix and water. Return the patties, cover and simmer 8–10 minutes to 160°F (71°C).',
     'Heat the corn. Serve the patties and gravy over rice.'
   ]);
@@ -720,7 +720,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     'Boil the potatoes until tender and mash with the butter. Heat the corn.',
     'Season the flour with salt and pepper. Beat the eggs with the milk.',
     'Dredge each steak in flour, dip in egg, then flour again.',
-    'Fry in the hot oil over medium-high heat 3–4 minutes per side until golden and 160°F (71°C) inside (cube steak is tenderized, so cook it through).',
+    'Heat the oil in a large heavy skillet over medium-high heat until it shimmers. Fry the steaks 3–4 minutes per side until golden and 160°F (71°C) inside (cube steak is tenderized, so cook it through).',
     'Make the gravy as the packet directs and spoon over the steaks.'
   ]);
 
@@ -730,7 +730,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
   ], [
     'Cook the rice in a pot: bring the rice and water to a boil, cover, turn to low and cook 18 minutes, then rest 5 minutes off the heat.',
     'Season the chops and brown them in the oil 3 minutes per side. Move to a plate.',
-    'Cook the onion 5 minutes. Stir in the soup and milk.',
+    'In the same skillet, cook the onion over medium heat 5 minutes. Stir in the soup and milk.',
     'Return the chops, cover and simmer 10–12 minutes until 145°F (63°C). Rest 3 minutes.',
     'Heat the green beans. Serve the chops and gravy over rice.'
   ]);
@@ -750,7 +750,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
   ], [
     'Heat the oven to 375°F (190°C). Cook ⅓ cup rice in ⅔ cup water (boil, cover, low 18 minutes) to get about 1 cup cooked, or use leftover rice.',
     'Cut the tops off the peppers and remove the seeds.',
-    'Cook the beef 7–9 minutes until no pink remains (160°F / 71°C). Drain, then stir in the rice, salt and 1 cup of sauce.',
+    'Cook the beef in a large skillet over medium-high heat 7–9 minutes, breaking it up, until no pink remains (160°F / 71°C). Drain, then stir in the rice, salt and 1 cup of sauce.',
     'Stand the peppers in a baking dish, fill them and pour the rest of the sauce around them.',
     'Cover with foil and bake 35 minutes. Uncover, top with cheese and bake 10–15 minutes more until the peppers are tender.'
   ]);
@@ -777,7 +777,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1 1/2|lb|shaved steak', '2||bell pepper/bell peppers|sliced', '1||onion/onions|sliced', '2|tbsp|vegetable oil', '8|slice|provolone cheese',
     '4||hoagie roll/hoagie rolls', '1/2|tsp|salt'
   ], [
-    'Cook the peppers and onion in 1 tablespoon oil 6–8 minutes until soft. Move to a plate.',
+    'Cook the peppers and onion in 1 tablespoon oil in a large skillet over medium-high heat 6–8 minutes until soft. Move to a plate.',
     'Add the rest of the oil and the steak. Cook 3–4 minutes, breaking it up, until no pink remains (145°F / 63°C — thin steak gets there fast). Season.',
     'Mix in the vegetables and divide into 4 piles. Lay 2 slices of cheese on each and cover 1 minute to melt.',
     'Scoop each pile into a roll.'
@@ -798,7 +798,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '2|tbsp|vegetable oil', '8||small flour tortilla/small flour tortillas', '1/2|cup|sour cream'
   ], [
     'Toss the chicken with the seasoning.',
-    'Cook the peppers and onion in 1 tablespoon oil over high heat 5–6 minutes. Move to a plate.',
+    'Cook the peppers and onion in 1 tablespoon oil in a large skillet over high heat 5–6 minutes. Move to a plate.',
     'Add the rest of the oil and the chicken. Cook 6–7 minutes until 165°F (74°C).',
     'Return the vegetables and toss. Serve in warm tortillas with sour cream.'
   ]);
@@ -808,8 +808,8 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '2|tbsp|vegetable oil', '8||small flour tortilla/small flour tortillas', '1/2|cup|salsa'
   ], [
     'Toss the steak with the seasoning.',
-    'Cook the peppers and onion in 1 tablespoon oil over high heat 5–6 minutes. Move to a plate.',
-    'Sear the steak in the rest of the oil in two batches, 2–3 minutes, until browned (145°F / 63°C).',
+    'Cook the peppers and onion in 1 tablespoon oil in a large skillet over high heat 5–6 minutes. Move to a plate.',
+    'In the same skillet over high heat, sear the steak in the rest of the oil in two batches, 2–3 minutes, until browned (145°F / 63°C).',
     'Toss with the vegetables and serve in warm tortillas with salsa.'
   ]);
 
@@ -817,7 +817,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1|lb|ground beef', '1||onion/onions|diced', '8||flour tortilla/flour tortillas|8-inch', '2|can|enchilada sauce|10 oz each', '2|cup|shredded cheese'
   ], [
     'Heat the oven to 375°F (190°C).',
-    'Cook the beef and onion 8–10 minutes until no pink remains (160°F / 71°C). Drain and stir in ½ cup sauce and 1 cup cheese.',
+    'Cook the beef and onion in a large skillet over medium-high heat 8–10 minutes, breaking it up, until no pink remains (160°F / 71°C). Drain and stir in ½ cup sauce and 1 cup cheese.',
     'Spread ½ cup sauce in a 9×13 dish. Roll the filling in the tortillas and lay them seam-side down.',
     'Top with the rest of the sauce and cheese. Bake 20–25 minutes until bubbling.'
   ]);
@@ -826,7 +826,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1|lb|ground beef', '1|can|pinto beans|undrained', '1|can|black beans|undrained', '1|can|corn|undrained', '2|can|diced tomatoes',
     '2|tbsp|taco seasoning', '1|cup|water', '2|cup|tortilla chips|for serving'
   ], [
-    'Cook the beef in a large pot 7–9 minutes until no pink remains (160°F / 71°C). Drain.',
+    'Cook the beef in a large pot over medium-high heat 7–9 minutes until no pink remains (160°F / 71°C). Drain.',
     'Add the taco seasoning, beans, corn, tomatoes and water.',
     'Bring to a boil and simmer 20 minutes.',
     'Serve with crushed tortilla chips, and cheese or sour cream if you have them.'
@@ -856,7 +856,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1|lb|ground beef', '2|tbsp|taco seasoning', '1/2|cup|water', '1|can|refried beans', '4||large flour tortilla/large flour tortillas',
     '1|cup|shredded cheese', '1/2|cup|salsa'
   ], [
-    'Cook the beef 7–9 minutes until no pink remains (160°F / 71°C). Drain.',
+    'Cook the beef in a large skillet over medium-high heat 7–9 minutes, breaking it up, until no pink remains (160°F / 71°C). Drain.',
     'Stir in the seasoning and water and simmer 5 minutes. Warm the beans.',
     'Spread beans on each tortilla, add beef, cheese and salsa.',
     'Roll up and toast seam-side down in a dry skillet 2 minutes.'
@@ -884,7 +884,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1/2|cup|salsa', '1/2|cup|sour cream'
   ], [
     'Heat the oven to 400°F (200°C).',
-    'Cook the beef 7–9 minutes until no pink remains (160°F / 71°C). Drain, add the seasoning and water and simmer 3 minutes.',
+    'Cook the beef in a large skillet over medium-high heat 7–9 minutes, breaking it up, until no pink remains (160°F / 71°C). Drain, add the seasoning and water and simmer 3 minutes.',
     'Spread the chips on a large sheet pan. Dot with spoonfuls of beans and beef, then cover with cheese.',
     'Bake 6–8 minutes until melted. Top with salsa and sour cream.'
   ]);
@@ -895,7 +895,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1|tsp|Italian seasoning', '1||frozen garlic bread loaf/frozen garlic bread loaves'
   ], [
     'Heat the oven to 375°F (190°C). Cook the noodles as the box directs and lay them flat on foil.',
-    'Cook the beef 7–9 minutes until no pink remains (160°F / 71°C). Drain and stir in the sauce.',
+    'Cook the beef in a large skillet over medium-high heat 7–9 minutes, breaking it up, until no pink remains (160°F / 71°C). Drain and stir in the sauce.',
     'Mix the ricotta, egg, seasoning and 1 cup mozzarella.',
     'In a 9×13 dish layer: 1 cup sauce, 4 noodles, half the ricotta, 1 cup mozzarella, sauce. Repeat, then finish with noodles, sauce and the rest of the cheese.',
     'Cover with foil and bake 45 minutes; uncover for 15 more. Rest 15 minutes before cutting. Bake the garlic bread meanwhile.'
@@ -914,7 +914,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1|lb|ground beef', '1|lb|penne', '24|oz|pasta sauce', '2|cup|shredded mozzarella'
   ], [
     'Heat the oven to 375°F (190°C). Cook the penne 2 minutes less than the box says; drain.',
-    'Cook the beef 7–9 minutes until no pink remains (160°F / 71°C). Drain and stir in the sauce.',
+    'Cook the beef in a large skillet over medium-high heat 7–9 minutes, breaking it up, until no pink remains (160°F / 71°C). Drain and stir in the sauce.',
     'Mix with the pasta, spread in a baking dish and top with cheese.',
     'Bake 20 minutes until melted and bubbling.'
   ]);
@@ -934,7 +934,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1|lb|ground beef', '1||onion/onions|diced', '2|cup|elbow macaroni|uncooked', '2|can|diced tomatoes', '1|can|tomato sauce|15 oz', '2|cup|water',
     '1|tbsp|Italian seasoning', '1|tsp|salt'
   ], [
-    'Cook the beef and onion in a large pot 8–10 minutes until no pink remains (160°F / 71°C). Drain.',
+    'Cook the beef and onion in a large pot over medium-high heat 8–10 minutes until no pink remains (160°F / 71°C). Drain.',
     'Add the tomatoes, tomato sauce, water and seasoning. Bring to a boil.',
     'Stir in the macaroni, cover and simmer 15–18 minutes, stirring now and then, until tender.',
     'Rest 5 minutes to thicken.'
@@ -943,7 +943,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
   add('cheeseburger-macaroni', 5, 25, [
     '1|lb|ground beef', '2|cup|elbow macaroni|uncooked', '1|can|tomato sauce|8 oz', '2|cup|milk', '1 1/2|cup|water', '2|cup|shredded cheese', '1|tsp|salt', '1/2|tsp|onion powder'
   ], [
-    'Cook the beef in a large skillet 7–9 minutes until no pink remains (160°F / 71°C). Drain.',
+    'Cook the beef in a large skillet over medium-high heat 7–9 minutes until no pink remains (160°F / 71°C). Drain.',
     'Stir in the macaroni, tomato sauce, milk, water, salt and onion powder. Bring to a boil.',
     'Cover and simmer on low 12–15 minutes, stirring often, until the pasta is tender.',
     'Stir in the cheese until melted.'
@@ -955,7 +955,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '2|tsp|Cajun seasoning', '1|cup|water', '1|cup|rice|uncooked', '2|cup|water|for the rice'
   ], [
     'Cook the rice in a pot: bring the rice and water to a boil, cover, turn to low and cook 18 minutes, then rest 5 minutes off the heat.',
-    'Brown the sausage in a large pot 5 minutes.',
+    'Brown the sausage in a large pot over medium-high heat, 5 minutes.',
     'Add the onion, pepper and celery and cook 6–8 minutes until soft.',
     'Add the beans, seasoning and water. Simmer 20–25 minutes, mashing some beans to thicken.',
     'Serve over rice.'
@@ -976,7 +976,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '3|lb|potatoes|peeled and diced', '1||onion/onions|diced', '4|cup|chicken broth', '2|cup|milk', '1 1/2|cup|shredded cheese', '6|slice|bacon',
     '2|tbsp|butter', '1|tsp|salt'
   ], [
-    'Cook the bacon in a large pot until crisp. Crumble and set aside; pour off all but 1 tablespoon fat.',
+    'Cook the bacon in a large pot over medium heat until crisp. Crumble and set aside; pour off all but 1 tablespoon fat.',
     'Add the butter and onion and cook 5 minutes.',
     'Add the potatoes and broth. Simmer 15–18 minutes until very soft.',
     'Mash some potatoes right in the pot to thicken. Stir in the milk and salt and heat through (don\'t boil).',
@@ -987,7 +987,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1|bag|frozen mixed vegetables', '2|can|diced tomatoes', '2|lb|potatoes|diced', '1||onion/onions|diced', '8|cup|vegetable broth',
     '1|tsp|Italian seasoning', '1|tsp|salt', '!1|tbsp|olive oil', '8|slice|bread|for serving'
   ], [
-    'Cook the onion in the oil in a large pot 5 minutes.',
+    'Cook the onion in the oil in a large pot over medium heat 5 minutes.',
     'Add the potatoes, broth, tomatoes and seasoning. Simmer 15 minutes.',
     'Add the frozen vegetables and simmer 10 minutes more until the potatoes are tender.',
     'Season with salt and serve with bread.'
@@ -1016,7 +1016,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
   add('kielbasa-and-cabbage', 10, 30, [
     '1 1/2|lb|kielbasa|sliced', '1||head cabbage/heads cabbage|chopped', '2|lb|potatoes|diced', '1||onion/onions|sliced', '2|tbsp|butter', '1/2|cup|water', '1/2|tsp|salt'
   ], [
-    'Brown the kielbasa in a large pot 5 minutes. Move to a plate.',
+    'Brown the kielbasa in a large pot over medium-high heat, 5 minutes. Move to a plate.',
     'Add the butter, onion and potatoes and cook 5 minutes.',
     'Add the cabbage, water and salt. Cover and cook 15–20 minutes, stirring now and then, until tender.',
     'Return the kielbasa and heat through.'
@@ -1028,7 +1028,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     'Heat the soup with the water.',
     'Mix the tuna and mayonnaise.',
     'Butter one side of each slice. Build sandwiches with tuna and cheese, buttered sides out.',
-    'Cook over medium-low heat 3–4 minutes per side until golden and melted. Serve with the soup.'
+    'Cook in a skillet over medium-low heat 3–4 minutes per side until golden and melted. Serve with the soup.'
   ]);
 
   add('salmon-patties-and-corn', 15, 15, [
@@ -1037,14 +1037,14 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     'Make the mac and cheese and heat the corn.',
     'Flake the salmon, removing any large bones and skin. Mix with the eggs, breadcrumbs and salt.',
     'Shape into 8 patties.',
-    'Fry in the oil over medium heat 3–4 minutes per side until golden and hot through (160°F / 71°C with the egg).'
+    'Fry in the oil in a large skillet over medium heat 3–4 minutes per side until golden and hot through (160°F / 71°C with the egg).'
   ]);
 
   add('shrimp-and-sausage-jambalaya', 15, 35, [
     '1|lb|frozen shrimp|peeled, thawed', '1|lb|smoked sausage|sliced', '1|cup|long-grain rice|uncooked', '1|can|diced tomatoes', '1||bell pepper/bell peppers|diced',
     '1||onion/onions|diced', '2|cup|chicken broth', '2|tsp|Cajun seasoning', '!1|tbsp|vegetable oil'
   ], [
-    'Brown the sausage in the oil in a large pot 5 minutes.',
+    'Brown the sausage in the oil in a large pot over medium-high heat, 5 minutes.',
     'Add the onion and pepper and cook 5 minutes. Stir in the rice and seasoning for 1 minute.',
     'Add the tomatoes and broth. Bring to a boil, cover and simmer on low 20 minutes.',
     'Stir in the shrimp, cover and cook 4–5 minutes until pink and opaque and the rice is tender.'
@@ -1071,7 +1071,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '4|pkg|ramen noodles|use half the flavor packets', '1|bag|frozen stir-fry vegetables', '3||egg/eggs', '2|tbsp|soy sauce', '!1|tbsp|vegetable oil'
   ], [
     'Boil the noodles 2 minutes (no flavor packet yet) and drain.',
-    'Cook the vegetables in the oil over high heat 4 minutes.',
+    'Cook the vegetables in the oil in a large skillet over high heat 4 minutes.',
     'Push them aside and scramble the eggs until set.',
     'Add the noodles, soy sauce and 2 flavor packets. Toss until hot.'
   ], 'Using half the flavor packets keeps the salt down.');
@@ -1079,7 +1079,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
   add('egg-and-potato-hash', 5, 20, [
     '4|cup|frozen hash browns', '1||onion/onions|diced', '1||bell pepper/bell peppers|diced', '8||egg/eggs', '1|cup|shredded cheese', '2|tbsp|vegetable oil', '1/2|tsp|salt'
   ], [
-    'Cook the hash browns, onion and pepper in the oil in a large skillet 10–12 minutes until crisp.',
+    'Cook the hash browns, onion and pepper in the oil in a large skillet over medium-high heat 10–12 minutes until crisp.',
     'Make 8 wells and crack an egg into each. Season.',
     'Cover and cook on low 5–7 minutes until the whites are set and yolks are firm.',
     'Sprinkle with cheese and serve.'
@@ -1117,7 +1117,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
   ], [
     'Cook the sausage links in a skillet over medium heat 10–12 minutes, turning, until browned and 160°F (71°C).',
     'Stir the pancake mix and milk just until combined.',
-    'Cook ¼ cup batter per pancake on a buttered griddle, flipping when bubbles form.',
+    'Cook ¼ cup batter per pancake on a buttered griddle or skillet over medium heat, flipping when bubbles form (about 2 minutes) and cooking 1 minute more.',
     'Serve with the sausage and syrup.'
   ]);
 
@@ -1125,7 +1125,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1|lb|breakfast sausage|bulk roll', '1|can|refrigerated biscuits|8 count', '1/4|cup|flour', '3|cup|milk', '1/2|tsp|black pepper', '4||egg/eggs|optional, for serving'
   ], [
     'Bake the biscuits as the can directs.',
-    'Cook the sausage in a large skillet 7–9 minutes, breaking it up, until no pink remains (160°F / 71°C). Don\'t drain.',
+    'Cook the sausage in a large skillet over medium-high heat 7–9 minutes, breaking it up, until no pink remains (160°F / 71°C). Don\'t drain.',
     'Sprinkle in the flour and stir 1 minute. Slowly stir in the milk and simmer 3–5 minutes until thick. Add the pepper.',
     'Split the biscuits and cover with gravy. Serve with fried or scrambled eggs.'
   ]);
@@ -1143,7 +1143,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1|lb|breakfast sausage|bulk', '4|cup|frozen hash browns', '8||egg/eggs', '2|cup|milk', '1 1/2|cup|shredded cheese', '1/2|tsp|salt'
   ], [
     'Heat the oven to 350°F (175°C). Grease a 9×13 dish.',
-    'Cook the sausage 7–9 minutes until no pink remains (160°F / 71°C). Drain.',
+    'Cook the sausage in a large skillet over medium-high heat 7–9 minutes, breaking it up, until no pink remains (160°F / 71°C). Drain.',
     'Spread the hash browns in the dish, then the sausage and cheese.',
     'Whisk the eggs, milk and salt and pour over.',
     'Bake 45–50 minutes until set in the center (160°F / 71°C). Rest 10 minutes.'
@@ -1202,7 +1202,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '2|lb|ground beef', '1||onion/onions|diced', '2|can|kidney beans|drained', '2|can|diced tomatoes', '1|can|tomato sauce|15 oz', '3|tbsp|chili powder',
     '2|tsp|ground cumin', '1|tsp|salt'
   ], [
-    'Brown the beef and onion in a skillet 8–10 minutes until no pink remains (160°F / 71°C). Drain.',
+    'Brown the beef and onion in a skillet over medium-high heat 8–10 minutes until no pink remains (160°F / 71°C). Drain.',
     'Put everything in the slow cooker and stir.',
     'Cover and cook 6–8 hours on Low or 3–4 on High.'
   ], 'Always brown ground meat first — raw ground beef shouldn\'t go into a slow cooker.');
@@ -1270,7 +1270,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     'Heat the oven to 400°F (200°C). Line a baking sheet with foil.',
     'Mix the raw beef, egg, breadcrumbs, parmesan and salt. Roll into 16 balls.',
     'Bake 15–18 minutes until 160°F (71°C) inside.',
-    'Cook the spaghetti. Simmer the meatballs in the sauce 5 minutes.',
+    'Cook the spaghetti as the box directs. Simmer the meatballs in the sauce in a saucepan over low heat 5 minutes.',
     'Serve over spaghetti with parmesan.'
   ]);
 
@@ -1278,7 +1278,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1|lb|ground beef', '1|can|cream of mushroom soup', '1|bag|frozen green beans', '1 1/2|cup|shredded cheese', '1|bag|frozen tater tots|about 32 oz', '1/2|tsp|salt'
   ], [
     'Heat the oven to 375°F (190°C).',
-    'Cook the beef 7–9 minutes until no pink remains (160°F / 71°C). Drain and stir in the soup, green beans and salt.',
+    'Cook the beef in a large skillet over medium-high heat 7–9 minutes, breaking it up, until no pink remains (160°F / 71°C). Drain and stir in the soup, green beans and salt.',
     'Spread in a 9×13 dish, add the cheese and cover with tater tots in rows.',
     'Bake 35–40 minutes until the tots are crisp and golden.'
   ]);
@@ -1316,7 +1316,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1 1/2|lb|boneless skinless chicken breasts', '8|cup|chicken broth', '1|can|cream of chicken soup', '24|oz|frozen egg noodles', '3|lb|potatoes|for mashing',
     '4|tbsp|butter', '1/2|tsp|black pepper'
   ], [
-    'Simmer the chicken in the broth 18–20 minutes until 165°F (74°C). Lift it out and shred.',
+    'Simmer the raw chicken in the broth in a large pot over medium heat 18–20 minutes until 165°F (74°C). Lift it out and shred.',
     'Stir the soup into the broth and bring to a boil. Add the frozen noodles and simmer 20 minutes, stirring often, until tender and thick.',
     'Return the chicken and pepper.',
     'Meanwhile boil and mash the potatoes with butter. Serve the noodles over them, Midwest style.'
@@ -1326,7 +1326,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1 1/2|lb|beef stew meat', '1||onion/onions|sliced', '1|packet|brown gravy mix', '2|cup|water', '!1|tbsp|vegetable oil', '1|cup|rice|uncooked',
     '2|cup|water|for the rice', '1|bag|frozen green beans'
   ], [
-    'Brown the beef in the oil in a heavy pot, in two batches. Add the onion for 3 minutes.',
+    'Brown the beef in the oil in a heavy pot over medium-high heat, in two batches, 4–5 minutes each. Add the onion for 3 minutes.',
     'Whisk the gravy mix into the water and pour it over. Cover and simmer on low 75–90 minutes, until fork-tender (well past the safe 145°F / 63°C).',
     'Cook the rice in a separate pot (boil, cover, low 18 minutes) and heat the green beans.',
     'Serve the beef tips and gravy over rice.'
@@ -1336,7 +1336,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1|lb|ground beef', '2|tbsp|taco seasoning', '1/2|cup|water', '1||head romaine lettuce/heads romaine lettuce|chopped', '2||tomato/tomatoes|diced',
     '1|cup|shredded cheese', '3|cup|tortilla chips', '1/2|cup|salsa'
   ], [
-    'Cook the beef 7–9 minutes until no pink remains (160°F / 71°C). Drain, add the seasoning and water and simmer 3 minutes.',
+    'Cook the beef in a large skillet over medium-high heat 7–9 minutes, breaking it up, until no pink remains (160°F / 71°C). Drain, add the seasoning and water and simmer 3 minutes.',
     'Pile lettuce in bowls. Top with beef, tomatoes, cheese and crushed chips.',
     'Spoon salsa over as the dressing.'
   ]);
@@ -1371,8 +1371,8 @@ window.PP_RECIPES = { version: 1, recipes: {} };
   add('pierogies-and-kielbasa', 5, 20, [
     '1|box|frozen pierogies|about 16', '1|lb|kielbasa|sliced', '1||onion/onions|sliced', '2|tbsp|butter', '1/2|cup|sour cream', '1|bag|frozen green beans'
   ], [
-    'Brown the kielbasa in a large skillet 5 minutes. Move to a plate.',
-    'Melt the butter and cook the onion 5 minutes.',
+    'Brown the kielbasa in a large skillet over medium-high heat, 5 minutes. Move to a plate.',
+    'In the same skillet, melt the butter over medium heat and cook the onion 5 minutes.',
     'Add the frozen pierogies and cook 5–6 minutes per side until golden and hot through (or boil them first as the box directs).',
     'Return the kielbasa. Heat the green beans and serve with sour cream.'
   ]);
@@ -1381,7 +1381,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '24|oz|frozen meatballs|fully cooked', '12|oz|egg noodles', '1|packet|brown gravy mix', '1 1/2|cup|water', '1/2|cup|sour cream', '1|bag|frozen peas'
   ], [
     'Heat the meatballs as the bag directs, until 165°F (74°C).',
-    'Cook the noodles and the peas.',
+    'Cook the noodles as the bag directs, and heat the peas as their bag directs.',
     'Whisk the gravy mix and water in a skillet and simmer until thick. Turn off the heat and stir in the sour cream.',
     'Add the meatballs to the sauce and serve over noodles.'
   ]);
@@ -1411,7 +1411,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '2||tomato/tomatoes|diced', '1/2|cup|blue cheese dressing', '!1|tbsp|olive oil', '1/2|tsp|salt'
   ], [
     'Hard-boil the eggs (boil, cover off the heat 12 minutes), cool and chop.',
-    'Cook the bacon until crisp and crumble.',
+    'Cook the bacon in a skillet over medium heat until crisp, then crumble.',
     'Season the chicken and cook in the oil 5–7 minutes per side to 165°F (74°C). Rest and dice.',
     'Arrange the chicken, bacon, eggs, avocado and tomatoes in rows over the romaine. Serve with dressing.'
   ]);
@@ -1419,7 +1419,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
   add('tortellini-soup', 10, 25, [
     '1|lb|Italian sausage|casings removed', '20|oz|frozen cheese tortellini', '1|can|diced tomatoes', '8|cup|chicken broth', '4|cup|fresh spinach'
   ], [
-    'Brown the sausage in a large pot 7–9 minutes, breaking it up, until no pink remains (160°F / 71°C). Spoon off the fat.',
+    'Brown the sausage in a large pot over medium-high heat 7–9 minutes, breaking it up, until no pink remains (160°F / 71°C). Spoon off the fat.',
     'Add the broth and tomatoes and bring to a boil.',
     'Add the tortellini and simmer as the bag directs, about 5 minutes.',
     'Stir in the spinach until wilted.'
@@ -1430,7 +1430,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
   ], [
     'Heat the waffle iron. Mix the batter as the box directs.',
     'Cook the waffles until golden; keep them warm in a 200°F (95°C) oven.',
-    'Scramble or fry the eggs in the butter until set.',
+    'Scramble or fry the eggs in the butter in a skillet over medium heat until set.',
     'Serve with syrup and strawberries.'
   ]);
 
@@ -1438,8 +1438,8 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1|lb|frozen shrimp|peeled, thawed', '3|cup|cooked rice|cold', '1 1/2|cup|frozen peas and carrots', '3||egg/eggs|beaten', '3|tbsp|soy sauce', '2|tbsp|vegetable oil'
   ], [
     'If you don\'t have leftover rice, cook 1 cup rice in 2 cups water and spread it out to cool.',
-    'Cook the shrimp in 1 tablespoon oil 2–3 minutes until pink and opaque. Move to a plate.',
-    'Scramble the eggs until just set and move to the plate.',
+    'Heat 1 tablespoon oil in a large skillet over medium-high heat. Cook the shrimp 2–3 minutes until pink and opaque. Move to a plate.',
+    'Scramble the eggs in the same skillet until just set and move to the plate.',
     'Add the rest of the oil, the peas and carrots, then the rice. Let it sizzle 2–3 minutes.',
     'Stir in the shrimp, eggs and soy sauce until hot.'
   ], 'Times assume leftover rice; cooking it fresh adds about 25 minutes.');
@@ -1457,7 +1457,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
   add('turkey-sloppy-joes', 5, 15, [
     '1|lb|ground turkey', '1|can|sloppy joe sauce|15 oz', '4||hamburger bun/hamburger buns', '2|cup|baby carrots', '!1|tbsp|vegetable oil'
   ], [
-    'Cook the turkey in the oil 8–10 minutes, breaking it up, until no pink remains (165°F / 74°C).',
+    'Cook the turkey in the oil in a large skillet over medium-high heat 8–10 minutes, breaking it up, until no pink remains (165°F / 74°C).',
     'Stir in the sauce and simmer 5 minutes.',
     'Spoon onto buns and serve with carrots.'
   ]);
@@ -1484,7 +1484,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
   add('turkey-and-vegetable-rice-skillet', 5, 25, [
     '1|lb|ground turkey', '1|bag|frozen mixed vegetables', '1|cup|long-grain rice|uncooked', '2|cup|chicken broth', '2|tbsp|soy sauce', '!1|tbsp|vegetable oil'
   ], [
-    'Cook the turkey in the oil 8–10 minutes until no pink remains (165°F / 74°C).',
+    'Cook the turkey in the oil in a large skillet over medium-high heat 8–10 minutes until no pink remains (165°F / 74°C).',
     'Stir in the rice for 1 minute, then the broth and soy sauce. Bring to a boil.',
     'Cover and simmer on low 18 minutes.',
     'Stir in the vegetables, cover and cook 5 minutes more until hot and the rice is tender.'
@@ -1513,7 +1513,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '3|can|chopped clams|6.5 oz each, with juice', '3|lb|potatoes|peeled and diced', '4|slice|bacon|chopped', '1||onion/onions|diced', '2|cup|half-and-half',
     '2|tbsp|flour', '1|cup|water', '1/2|tsp|salt'
   ], [
-    'Cook the bacon in a large pot until crisp. Add the onion and cook 4 minutes.',
+    'Cook the bacon in a large pot over medium heat until crisp. Add the onion and cook 4 minutes.',
     'Stir in the flour for 1 minute. Add the clam juice (from the cans), water and potatoes.',
     'Simmer 15 minutes until the potatoes are tender.',
     'Stir in the clams and half-and-half and heat until steaming — don\'t boil.'
@@ -1524,7 +1524,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1/2|tsp|salt', '1/2|tsp|Cajun seasoning|optional'
   ], [
     'Bring the water and salt to a boil. Whisk in the grits, cover and cook on low 5–7 minutes, stirring now and then. Stir in the cheese.',
-    'Cook the bacon in a skillet until crisp. Move to a plate.',
+    'Cook the bacon in a skillet over medium heat until crisp. Move to a plate.',
     'Season the shrimp and cook in the bacon fat 2–3 minutes until pink and opaque.',
     'Spoon the shrimp over the grits and top with bacon and green onions.'
   ]);
