@@ -37,7 +37,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
   ], [
     'Heat the oven to 425°F (220°C). Line a large rimmed baking sheet with foil.',
     'Toss the potatoes and carrots with 2 tablespoons of the oil and half the garlic powder, salt and pepper. Spread them on the pan.',
-    'Pat the chicken dry. Rub with the rest of the oil and seasonings and the paprika. Nestle it skin-side up among the vegetables.',
+    'Pat the raw chicken dry (no need to cook it first). Rub with the rest of the oil and seasonings and the paprika. Nestle it skin-side up among the vegetables; it cooks through in the oven.',
     'Roast 35–40 minutes, until the potatoes are tender and the chicken reads 165°F (74°C) at the thickest part, away from the bone.',
     'Rest 5 minutes before serving.'
   ], 'For 6 or more servings use two pans so everything roasts instead of steaming.');
@@ -124,10 +124,10 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1|bag|frozen green beans|about 12 oz'
   ], [
     'Heat the oven to 400°F (200°C). Line a baking sheet with foil.',
-    'Stir together the honey, soy sauce and garlic powder. Toss the drumsticks in half of it and lay them on the pan.',
+    'Stir together the honey, soy sauce and garlic powder. Toss the raw drumsticks in half of the sauce and lay them on the pan. Keep the other half for brushing. (No need to cook the chicken first; it cooks in the oven.)',
     'Bake 40–45 minutes, turning once and brushing with the rest of the sauce for the last 10 minutes, until 165°F (74°C) near the bone.',
-    'Meanwhile cook the rice (boil, cover, low 18 minutes) and steam or microwave the green beans.',
-    'Serve the drumsticks with rice and green beans.'
+    'While the chicken bakes, cook the rice in a separate pot (boil, cover, low 18 minutes) and steam or microwave the green beans.',
+    'Serve the drumsticks with the rice and green beans on the side.'
   ], 'Honey burns easily; if the tops darken too fast, cover loosely with foil.');
 
   add('chicken-caesar-wraps', 10, 15, [
@@ -230,7 +230,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1|tsp|salt', '1/2|tsp|black pepper', '1|tsp|dried thyme|optional', '!1|tbsp|vegetable oil'
   ], [
     'Season the roast with salt, pepper and thyme. Brown it in the oil in a hot skillet, 3–4 minutes per side. (Optional, but it adds flavor.)',
-    'Put the potatoes, carrots and onion in the slow cooker. Set the roast on top and pour in the broth.',
+    'Put the potatoes, carrots and onion in the slow cooker. Set the roast on top (browned or raw) and pour in the broth.',
     'Cover and cook 8 hours on Low (or 5 hours on High) until the meat pulls apart easily with a fork.',
     'Lift out the roast and vegetables. Spoon the juices over to serve.'
   ], 'In the oven instead: covered pot, 300°F (150°C), about 3½ hours.');
@@ -293,7 +293,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '3|lb|pork shoulder', '1|tsp|salt', '1|tsp|paprika', '1/2|cup|water', '1|cup|BBQ sauce|plus more for serving', '8||hamburger bun/hamburger buns', '3|cup|coleslaw mix',
     '3|tbsp|mayonnaise|for the slaw', '1|tbsp|vinegar|for the slaw'
   ], [
-    'Rub the pork with salt and paprika and put it in the slow cooker with the water.',
+    'Rub the raw pork with salt and paprika and put it in the slow cooker with the water.',
     'Cover and cook 8 hours on Low (or 5–6 on High) until it pulls apart easily — that\'s well past the safe 145°F (63°C), around 195°F (90°C).',
     'Lift out the pork, discard the fat and shred with two forks. Pour off most of the liquid.',
     'Return the pork and stir in the BBQ sauce.',
@@ -333,10 +333,10 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '2|lb|pork shoulder', '1|tsp|salt', '1|tsp|ground cumin', '1|tsp|chili powder', '1/2|cup|orange juice or water', '1|cup|rice|uncooked', '2|cup|water|for the rice',
     '1|can|black beans|drained', '1|cup|salsa', '3||lime/limes'
   ], [
-    'Rub the pork with salt, cumin and chili powder. Put it in the slow cooker with the orange juice.',
+    'Rub the raw pork with salt, cumin and chili powder. Put it in the slow cooker with the orange juice.',
     'Cover and cook 8 hours on Low until it pulls apart easily (around 195°F / 90°C; safe from 145°F / 63°C). Shred and discard the fat.',
     'For crispy edges, spread the pork on a sheet pan and broil 3–5 minutes.',
-    'Cook the rice and warm the beans.',
+    'Cook the rice in a pot (boil, cover, low 18 minutes) and warm the beans.',
     'Build bowls with rice, beans, pork, salsa and a squeeze of lime.'
   ]);
 
@@ -356,7 +356,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     'Heat the oven to 425°F (220°C). Toss the pork in half the teriyaki sauce.',
     'Brown the pork in the oil in an oven-safe skillet, 2 minutes per side.',
     'Roast 18–22 minutes, brushing with more sauce halfway, until 145°F (63°C). Rest 5 minutes and slice.',
-    'Meanwhile cook the rice and steam the broccoli.',
+    'Meanwhile cook the rice in a separate pot (boil, cover, low 18 minutes) and steam the broccoli.',
     'Serve the slices over rice with broccoli.'
   ]);
 
@@ -385,7 +385,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1|lb|ground turkey', '1||egg/eggs', '1/2|cup|breadcrumbs', '1/2|tsp|salt', '1|tsp|Italian seasoning', '24|oz|pasta sauce', '12|oz|spaghetti'
   ], [
     'Heat the oven to 400°F (200°C). Line a baking sheet with foil.',
-    'Mix the turkey, egg, breadcrumbs, salt and seasoning. Roll into 1½-inch balls (about 16).',
+    'Mix the raw turkey, egg, breadcrumbs, salt and seasoning. Roll into 1½-inch balls (about 16).',
     'Bake 15–18 minutes until 165°F (74°C) inside.',
     'Meanwhile cook the spaghetti and warm the sauce. Add the meatballs to the sauce for a few minutes.',
     'Serve over the spaghetti.'
@@ -416,8 +416,8 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '2|clove|garlic|minced', '2|tbsp|olive oil', '1|tsp|salt', '1/2|tsp|black pepper'
   ], [
     'Heat the oven to 400°F (200°C) and line a baking sheet with foil.',
-    'Start the rice: boil rice, water and ½ teaspoon salt; cover, cook on low 18 minutes, rest 5.',
-    'Snap the woody ends off the asparagus. Put the salmon skin-side down and the asparagus on the pan. Drizzle with oil, add the garlic, salt and pepper, and lay lemon slices on the salmon.',
+    'Start the rice in a separate pot: boil rice, water and ½ teaspoon salt; cover, cook on low 18 minutes, rest 5.',
+    'Snap the woody ends off the asparagus. Put the raw salmon skin-side down and the asparagus on the pan. Drizzle with oil, add the garlic, salt and pepper, and lay lemon slices on the salmon.',
     'Bake 12–15 minutes until the salmon flakes easily and reads 145°F (63°C).',
     'Squeeze the other lemon over everything and serve with rice.'
   ]);
@@ -444,8 +444,8 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1 1/2|lb|tilapia fillets|thawed', '2||lemon/lemons', '2|tbsp|butter|melted', '1|tsp|garlic powder', '1/2|tsp|salt', '1|bag|frozen green beans',
     '1|cup|rice|uncooked', '2|cup|water|for the rice'
   ], [
-    'Heat the oven to 400°F (200°C). Cook the rice (boil, cover, low 18 minutes).',
-    'Lay the tilapia in a baking dish. Mix the butter, juice of 1 lemon, garlic powder and salt and pour over.',
+    'Heat the oven to 400°F (200°C). Cook the rice in a separate pot (boil, cover, low 18 minutes).',
+    'Lay the raw (thawed) tilapia in a baking dish. Mix the butter, juice of 1 lemon, garlic powder and salt and pour over.',
     'Bake 10–12 minutes until the fish flakes easily (145°F / 63°C).',
     'Heat the green beans. Serve with lemon wedges.'
   ], 'Thaw frozen fish overnight in the fridge, or in its sealed bag in cold water for 30 minutes.');
@@ -454,7 +454,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1|lb|frozen shrimp|peeled, thawed', '1|bag|frozen stir-fry vegetables', '1/3|cup|soy sauce', '1|tbsp|brown sugar', '1|tsp|cornstarch',
     '2|tbsp|vegetable oil', '1|cup|rice|uncooked', '2|cup|water|for the rice'
   ], [
-    'Cook the rice. Whisk the soy sauce, sugar, cornstarch and 2 tablespoons water.',
+    'Cook the rice in a pot: bring the rice and water to a boil, cover, turn to low and cook 18 minutes, then rest 5 minutes off the heat. Whisk the soy sauce, sugar, cornstarch and 2 tablespoons water.',
     'Heat 1 tablespoon oil over high heat. Cook the vegetables 4–5 minutes. Move them aside.',
     'Add the rest of the oil and the shrimp. Cook 2–3 minutes, turning, until pink and opaque.',
     'Pour in the sauce and toss 1 minute until glossy. Serve over rice.'
@@ -545,7 +545,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '2|can|pinto beans|drained', '1|cup|rice|uncooked', '2|cup|water|for the rice', '4||large flour tortilla/large flour tortillas', '1 1/2|cup|shredded cheese',
     '1/2|cup|salsa', '1|tsp|ground cumin'
   ], [
-    'Cook the rice.',
+    'Cook the rice in a pot: bring the rice and water to a boil, cover, turn to low and cook 18 minutes, then rest 5 minutes off the heat.',
     'Warm the beans with the cumin and a splash of water, mashing some of them.',
     'Warm the tortillas. Fill with rice, beans, cheese and salsa.',
     'Roll up. For crisp burritos, toast seam-side down in a dry skillet 2 minutes.'
@@ -594,7 +594,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '2|can|chickpeas|drained', '1|can|coconut milk|13.5 oz', '1|can|diced tomatoes', '1||onion/onions|diced', '2|tbsp|curry powder', '1|tsp|salt',
     '!1|tbsp|vegetable oil', '1|cup|rice|uncooked', '2|cup|water|for the rice'
   ], [
-    'Cook the rice.',
+    'Cook the rice in a pot: bring the rice and water to a boil, cover, turn to low and cook 18 minutes, then rest 5 minutes off the heat.',
     'Cook the onion in the oil 5 minutes. Add the curry powder for 1 minute.',
     'Add the chickpeas, tomatoes, coconut milk and salt. Simmer 15–20 minutes until thick.',
     'Serve over rice.'
@@ -604,7 +604,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '28|oz|firm tofu|2 blocks, pressed and cubed', '2|tbsp|cornstarch', '1|bag|frozen stir-fry vegetables', '1/3|cup|soy sauce', '1|tbsp|brown sugar',
     '3|tbsp|vegetable oil', '1|cup|rice|uncooked', '2|cup|water|for the rice'
   ], [
-    'Cook the rice. Press the tofu between towels for 10 minutes, then cube and toss with the cornstarch.',
+    'Cook the rice in a pot: bring the rice and water to a boil, cover, turn to low and cook 18 minutes, then rest 5 minutes off the heat. Press the tofu between towels for 10 minutes, then cube and toss with the cornstarch.',
     'Fry the tofu in 2 tablespoons oil over medium-high heat 8–10 minutes, turning, until golden. Move to a plate.',
     'Cook the vegetables in the rest of the oil 4–5 minutes.',
     'Add the tofu, soy sauce and sugar and toss 1 minute. Serve over rice.'
@@ -686,7 +686,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1 1/2|lb|ground beef', '1|tsp|salt', '1/2|tsp|black pepper', '2||onion/onions|sliced', '1|packet|brown gravy mix', '1|cup|water',
     '1|cup|rice|uncooked', '2|cup|water|for the rice', '1|bag|frozen corn'
   ], [
-    'Cook the rice.',
+    'Cook the rice in a pot: bring the rice and water to a boil, cover, turn to low and cook 18 minutes, then rest 5 minutes off the heat.',
     'Season the beef and shape into 4 patties. Brown in a skillet 4 minutes per side; move to a plate.',
     'Cook the onions in the drippings 6–8 minutes until soft.',
     'Whisk in the gravy mix and water. Return the patties, cover and simmer 8–10 minutes to 160°F (71°C).',
@@ -698,7 +698,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '3|tbsp|olive oil', '2|tsp|salt', '1|tsp|black pepper', '1|tsp|garlic powder'
   ], [
     'Heat the oven to 425°F (220°C). Toss the vegetables with 2 tablespoons oil and half the seasoning in a roasting pan.',
-    'Pat the chicken dry, rub with the rest of the oil and seasoning and set it breast-side up on the vegetables.',
+    'Pat the raw chicken dry, inside and out (remove any giblets packed inside). Rub with the rest of the oil and seasoning and set it breast-side up on the vegetables.',
     'Roast 75–90 minutes, until a thermometer in the thickest part of the thigh reads 165°F (74°C) and the juices run clear.',
     'Rest 15 minutes before carving. Serve with the vegetables and pan juices.'
   ], 'Plan about 20 minutes per pound. Wash hands and surfaces after handling raw chicken.');
@@ -708,7 +708,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1|bag|frozen broccoli|thawed', '2|cup|shredded cheese', '1|tsp|salt'
   ], [
     'Heat the oven to 375°F (190°C). Grease a 9×13 dish.',
-    'Stir together the rice, water, soup and salt in the dish. Scatter the chicken and broccoli on top.',
+    'Stir together the uncooked rice, water, soup and salt in the dish. Scatter the raw chicken and the broccoli on top; everything cooks together in the oven.',
     'Cover tightly with foil and bake 45 minutes.',
     'Uncover, stir, top with the cheese and bake 10–15 minutes more, until the rice is tender and the chicken reads 165°F (74°C).'
   ]);
@@ -728,7 +728,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '2|lb|boneless pork chops', '1|tsp|salt', '1/2|tsp|black pepper', '!1|tbsp|vegetable oil', '1||onion/onions|sliced', '1|can|cream of mushroom soup',
     '1/2|cup|milk', '1|cup|rice|uncooked', '2|cup|water|for the rice', '1|bag|frozen green beans'
   ], [
-    'Cook the rice.',
+    'Cook the rice in a pot: bring the rice and water to a boil, cover, turn to low and cook 18 minutes, then rest 5 minutes off the heat.',
     'Season the chops and brown them in the oil 3 minutes per side. Move to a plate.',
     'Cook the onion 5 minutes. Stir in the soup and milk.',
     'Return the chops, cover and simmer 10–12 minutes until 145°F (63°C). Rest 3 minutes.',
@@ -739,7 +739,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '3|lb|chicken drumsticks', '2|tbsp|olive oil', '1|tsp|salt', '1|tsp|paprika', '1|tsp|garlic powder', '3|lb|potatoes|cut into chunks',
     '4|tbsp|butter', '1/2|cup|milk', '1|bag|frozen corn'
   ], [
-    'Heat the oven to 425°F (220°C). Toss the drumsticks with oil and seasoning on a foil-lined pan.',
+    'Heat the oven to 425°F (220°C). Toss the raw drumsticks with the oil and seasoning on a foil-lined pan.',
     'Bake 40–45 minutes, turning once, until 165°F (74°C) near the bone.',
     'Meanwhile boil the potatoes until tender and mash with the butter and milk.',
     'Heat the corn and serve.'
@@ -767,7 +767,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1 1/2|lb|boneless skinless chicken breasts|cut into pieces', '2|tbsp|cornstarch', '2|tbsp|vegetable oil', '2||bell pepper/bell peppers|chopped',
     '1|can|pineapple chunks|20 oz, drained', '1|cup|sweet and sour sauce', '1|cup|rice|uncooked', '2|cup|water|for the rice'
   ], [
-    'Cook the rice.',
+    'Cook the rice in a pot: bring the rice and water to a boil, cover, turn to low and cook 18 minutes, then rest 5 minutes off the heat.',
     'Toss the chicken with the cornstarch. Cook in the oil over medium-high heat 6–7 minutes until golden and 165°F (74°C).',
     'Add the peppers for 3 minutes, then the pineapple and sauce.',
     'Simmer 2 minutes until glossy. Serve over rice.'
@@ -836,7 +836,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1 1/2|lb|boneless skinless chicken thighs', '1|tbsp|taco seasoning', '!1|tbsp|vegetable oil', '1|cup|rice|uncooked', '2|cup|water|for the rice',
     '1|can|black beans|drained', '1|can|corn|drained', '1|cup|salsa', '1|cup|shredded cheese'
   ], [
-    'Cook the rice.',
+    'Cook the rice in a pot: bring the rice and water to a boil, cover, turn to low and cook 18 minutes, then rest 5 minutes off the heat.',
     'Rub the chicken with the seasoning. Cook in the oil 5–6 minutes per side to 165°F (74°C). Rest 5 minutes and slice.',
     'Warm the beans and corn.',
     'Build bowls with rice, beans, corn, chicken, salsa and cheese.'
@@ -846,7 +846,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1|lb|boneless skinless chicken breasts', '1|tbsp|taco seasoning', '1|cup|rice|uncooked', '2|cup|water|for the rice', '1|can|refried beans',
     '4||large flour tortilla/large flour tortillas', '1|cup|shredded cheese', '1/2|cup|salsa', '!1|tbsp|vegetable oil'
   ], [
-    'Cook the rice. Warm the refried beans.',
+    'Cook the rice in a pot: bring the rice and water to a boil, cover, turn to low and cook 18 minutes, then rest 5 minutes off the heat. Warm the refried beans.',
     'Season the chicken and cook in the oil 5–7 minutes per side to 165°F (74°C). Rest and chop.',
     'Spread beans down each tortilla, then rice, chicken, cheese and salsa.',
     'Fold in the sides and roll up. Toast seam-side down in a dry skillet 2 minutes if you like.'
@@ -924,7 +924,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '24|oz|pasta sauce', '1 1/2|cup|shredded mozzarella', '12|oz|spaghetti', '3|tbsp|olive oil'
   ], [
     'Heat the oven to 425°F (220°C). Slice the breasts in half horizontally so they\'re thin and even.',
-    'Dip each piece in beaten egg, then the crumbs. Lay on an oiled baking sheet and drizzle with oil.',
+    'Dip each raw piece in beaten egg, then the crumbs. Lay on an oiled baking sheet and drizzle with oil.',
     'Bake 15 minutes. Spoon a little sauce and mozzarella on each and bake 5–8 minutes more, until 165°F (74°C) inside.',
     'Meanwhile cook the spaghetti and warm the rest of the sauce.',
     'Serve the chicken over spaghetti with sauce.'
@@ -954,7 +954,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1|lb|smoked sausage|sliced', '2|can|kidney beans|undrained', '1||onion/onions|diced', '1||bell pepper/bell peppers|diced', '2||celery stalk/celery stalks|diced',
     '2|tsp|Cajun seasoning', '1|cup|water', '1|cup|rice|uncooked', '2|cup|water|for the rice'
   ], [
-    'Cook the rice.',
+    'Cook the rice in a pot: bring the rice and water to a boil, cover, turn to low and cook 18 minutes, then rest 5 minutes off the heat.',
     'Brown the sausage in a large pot 5 minutes.',
     'Add the onion, pepper and celery and cook 6–8 minutes until soft.',
     'Add the beans, seasoning and water. Simmer 20–25 minutes, mashing some beans to thicken.',
@@ -998,7 +998,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1|bag|frozen broccoli', '1|tsp|garlic powder', '1|tsp|paprika', '1/2|tsp|salt'
   ], [
     'Heat the oven to 375°F (190°C).',
-    'Stir the rice, soup and broth together in a 9×13 dish. Lay the chicken on top and season.',
+    'Stir the uncooked rice, soup and broth together in a 9×13 dish. Lay the raw chicken on top and season it; it cooks with the rice.',
     'Cover tightly with foil and bake 50 minutes.',
     'Scatter the broccoli around the chicken, cover again and bake 10 minutes more, until the rice is tender and the chicken reads 165°F (74°C).'
   ]);
@@ -1054,7 +1054,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
   add('rice-and-bean-bowls', 5, 25, [
     '1|cup|rice|uncooked', '2|cup|water|for the rice', '2|can|black beans|drained', '1|can|corn|drained', '1|cup|salsa', '1|cup|shredded cheese', '1|tsp|ground cumin'
   ], [
-    'Cook the rice.',
+    'Cook the rice in a pot: bring the rice and water to a boil, cover, turn to low and cook 18 minutes, then rest 5 minutes off the heat.',
     'Warm the beans and corn with the cumin.',
     'Build bowls with rice, beans and corn, salsa and cheese.'
   ]);
@@ -1172,8 +1172,8 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '2|lb|boneless skinless chicken thighs', '1/2|cup|teriyaki sauce', '2||head broccoli/heads broccoli|cut into florets', '!1|tbsp|vegetable oil',
     '1|cup|rice|uncooked', '2|cup|water|for the rice'
   ], [
-    'Heat the oven to 425°F (220°C). Cook the rice.',
-    'Toss the chicken with half the sauce and lay it on a lined sheet pan. Roast 12 minutes.',
+    'Heat the oven to 425°F (220°C). Cook the rice in a separate pot.',
+    'Toss the raw chicken with half the sauce and lay it on a lined sheet pan. Roast 12 minutes.',
     'Add the broccoli tossed with the oil. Roast 10–12 minutes more, until the chicken reads 165°F (74°C).',
     'Brush with the rest of the sauce and serve over rice.'
   ]);
@@ -1183,7 +1183,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
   ], [
     'Heat the oven to 425°F (220°C).',
     'Toss the potatoes with a third of the dressing and roast 15 minutes.',
-    'Add the chicken and zucchini, tossed with the rest of the dressing.',
+    'Add the raw chicken and the zucchini, tossed with the rest of the dressing.',
     'Roast 20–25 minutes more, until the potatoes are tender and the chicken reads 165°F (74°C).'
   ]);
 
@@ -1191,8 +1191,8 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1 1/2|lb|boneless skinless chicken breasts|cut into chunks', '2||bell pepper/bell peppers|chopped', '2||zucchini/zucchini|chopped', '1||onion/onions|chopped',
     '2|tbsp|olive oil', '2|tsp|Cajun seasoning', '1|cup|rice|uncooked', '2|cup|water|for the rice'
   ], [
-    'Heat the oven to 425°F (220°C). Cook the rice.',
-    'Toss the chicken and vegetables with the oil and seasoning on a large sheet pan.',
+    'Heat the oven to 425°F (220°C). Cook the rice in a separate pot.',
+    'Toss the raw chicken and the vegetables with the oil and seasoning on a large sheet pan.',
     'Roast 20–25 minutes, stirring once, until the chicken reads 165°F (74°C).',
     'Serve over rice.'
   ]);
@@ -1210,7 +1210,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
   add('slow-cooker-bbq-chicken-and-potatoes', 10, '6 hr on Low', [
     '2|lb|boneless skinless chicken breasts', '1|cup|BBQ sauce', '4||large russet potato/large russet potatoes', '1|bag|frozen corn', '2|tbsp|butter'
   ], [
-    'Put the chicken in the slow cooker and pour the sauce over. Wrap the potatoes in foil and set them on top.',
+    'Put the raw chicken in the slow cooker and pour the sauce over. Wrap the potatoes in foil and set them on top.',
     'Cover and cook 6 hours on Low, until the chicken reads 165°F (74°C) and the potatoes are soft.',
     'Shred the chicken in the sauce.',
     'Heat the corn. Split the potatoes, add butter and top with chicken.'
@@ -1220,7 +1220,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '2|lb|boneless skinless chicken breasts', '1|packet|ranch seasoning', '1|packet|brown gravy mix', '6||pepperoncini pepper/pepperoncini peppers|plus a splash of the juice',
     '4|tbsp|butter', '3|lb|potatoes|for mashing', '1/2|cup|milk'
   ], [
-    'Put the chicken in the slow cooker. Sprinkle with both seasoning packets, then add the peppers, a splash of their juice and the butter.',
+    'Put the raw chicken in the slow cooker. Sprinkle with both seasoning packets, then add the peppers, a splash of their juice and the butter.',
     'Cover and cook 6 hours on Low, until the chicken reads 165°F (74°C) and shreds easily.',
     'Shred the chicken in the juices.',
     'Boil and mash the potatoes with milk. Serve the chicken over them.'
@@ -1230,7 +1230,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1 1/2|lb|boneless skinless chicken breasts', '2|can|white beans|drained', '1|can|diced green chiles|4 oz', '4|cup|chicken broth', '1||onion/onions|diced',
     '2|tsp|ground cumin', '1|tsp|salt', '1/2|cup|sour cream'
   ], [
-    'Put everything except the sour cream in the slow cooker.',
+    'Put everything except the sour cream in the slow cooker. The chicken goes in raw.',
     'Cover and cook 6 hours on Low (3 on High), until the chicken reads 165°F (74°C).',
     'Shred the chicken in the pot. Stir in the sour cream.',
     'Mash a few beans against the side to thicken if you like.'
@@ -1240,7 +1240,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1 1/2|lb|boneless skinless chicken breasts', '1|can|black beans|drained', '1|can|corn|drained', '2|can|diced tomatoes', '4|cup|chicken broth',
     '2|tbsp|taco seasoning', '2|cup|tortilla chips|for serving'
   ], [
-    'Put everything except the chips in the slow cooker.',
+    'Put everything except the chips in the slow cooker. The chicken goes in raw.',
     'Cover and cook 6 hours on Low, until the chicken reads 165°F (74°C).',
     'Shred the chicken in the pot.',
     'Serve topped with crushed chips.'
@@ -1249,7 +1249,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
   add('slow-cooker-beef-and-noodles', 15, '8 hr on Low', [
     '2|lb|beef stew meat', '4|cup|beef broth', '1|can|cream of mushroom soup', '1|tsp|salt', '1/2|tsp|black pepper', '12|oz|egg noodles', '1|bag|frozen peas'
   ], [
-    'Put the beef, broth, soup, salt and pepper in the slow cooker.',
+    'Put the raw beef, broth, soup, salt and pepper in the slow cooker.',
     'Cover and cook 8 hours on Low, until the beef is fork-tender (well past the safe 145°F / 63°C).',
     'Turn to High. Stir in the noodles and peas, cover and cook 20–30 minutes until the noodles are tender.'
   ]);
@@ -1258,7 +1258,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1 1/2|lb|boneless skinless chicken breasts', '1|can|cream of chicken soup', '4|cup|chicken broth', '1|bag|frozen mixed vegetables',
     '1|can|refrigerated biscuits|8 count, cut into quarters'
   ], [
-    'Put the chicken, soup and broth in the slow cooker. Cover and cook 4–5 hours on Low, until the chicken reads 165°F (74°C).',
+    'Put the raw chicken, soup and broth in the slow cooker. Cover and cook 4–5 hours on Low, until the chicken reads 165°F (74°C).',
     'Shred the chicken in the pot and stir in the vegetables.',
     'Turn to High. Scatter the biscuit pieces on top, cover and cook 45–60 minutes until the dumplings are cooked through (no doughy centers).'
   ]);
@@ -1268,7 +1268,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1|lb|ground beef', '1||egg/eggs', '1/2|cup|breadcrumbs', '1/4|cup|shredded parmesan|plus more for serving', '1/2|tsp|salt', '24|oz|pasta sauce', '12|oz|spaghetti'
   ], [
     'Heat the oven to 400°F (200°C). Line a baking sheet with foil.',
-    'Mix the beef, egg, breadcrumbs, parmesan and salt. Roll into 16 balls.',
+    'Mix the raw beef, egg, breadcrumbs, parmesan and salt. Roll into 16 balls.',
     'Bake 15–18 minutes until 160°F (71°C) inside.',
     'Cook the spaghetti. Simmer the meatballs in the sauce 5 minutes.',
     'Serve over spaghetti with parmesan.'
@@ -1308,7 +1308,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
   ], [
     'Heat the oven to 375°F (190°C).',
     'Toss the vegetables with half the oil and seasoning in a roasting pan.',
-    'Rub the pork with the rest and set it on the vegetables.',
+    'Rub the raw pork with the rest and set it on the vegetables.',
     'Roast 60–75 minutes, until 145°F (63°C) in the center. Rest 10 minutes before slicing.'
   ]);
 
@@ -1328,7 +1328,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
   ], [
     'Brown the beef in the oil in a heavy pot, in two batches. Add the onion for 3 minutes.',
     'Whisk the gravy mix into the water and pour it over. Cover and simmer on low 75–90 minutes, until fork-tender (well past the safe 145°F / 63°C).',
-    'Cook the rice and heat the green beans.',
+    'Cook the rice in a separate pot (boil, cover, low 18 minutes) and heat the green beans.',
     'Serve the beef tips and gravy over rice.'
   ]);
 
@@ -1390,7 +1390,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '3|lb|chicken wings', '1|tbsp|baking powder|for crisp skin', '1|tsp|salt', '1/2|cup|buffalo sauce', '4||celery stalk/celery stalks', '2|cup|baby carrots',
     '1/2|cup|ranch dressing', '1|bag|frozen fries'
   ], [
-    'Heat the oven to 425°F (220°C). Pat the wings very dry and toss with baking powder and salt.',
+    'Heat the oven to 425°F (220°C). Pat the raw wings very dry and toss with baking powder and salt.',
     'Bake on a rack over a foil-lined pan 45–50 minutes, turning once, until crisp and 165°F (74°C).',
     'Bake the fries on another rack.',
     'Toss the wings in the buffalo sauce. Serve with celery, carrots and ranch.'
@@ -1475,7 +1475,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '3|lb|bone-in turkey breast', '2|tbsp|butter|softened', '1|tsp|salt', '1/2|tsp|black pepper', '1|box|stuffing mix', '3|lb|potatoes|for mashing',
     '4|tbsp|butter|for the potatoes', '1|bag|frozen green beans', '1|can|cranberry sauce'
   ], [
-    'Heat the oven to 350°F (175°C). Rub the turkey with butter, salt and pepper and set it in a roasting pan.',
+    'Heat the oven to 350°F (175°C). Rub the raw turkey with butter, salt and pepper and set it in a roasting pan.',
     'Roast about 1½–1¾ hours, until 165°F (74°C) in the thickest part (not touching bone). Rest 15 minutes before slicing.',
     'Meanwhile make the stuffing as the box directs, mash the potatoes with butter and heat the green beans.',
     'Serve with cranberry sauce.'
