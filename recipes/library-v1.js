@@ -51,9 +51,9 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     'Add the rest of the oil. Pour in the eggs and scramble until just set, about 1 minute. Move them to the plate.',
     'Add the peas and carrots and cook 2 minutes. Add the rice, pressing it flat, and let it sizzle 2–3 minutes without stirring.',
     'Stir in the chicken, eggs and soy sauce and toss until hot. Top with green onions.'
-  ], 'Cold rice fries best; warm, fresh rice turns mushy.');
+  ], 'Cold rice fries best; warm, fresh rice turns mushy. Cooking rice fresh adds about 25 minutes.');
 
-  add('chicken-alfredo', 10, 20, [
+  add('chicken-alfredo', 10, 25, [
     '1 1/2|lb|boneless skinless chicken breasts', '12|oz|fettuccine', '15|oz|Alfredo sauce|1 jar', '3|cup|broccoli florets',
     '!1|tbsp|olive oil|for the pan', '1|tsp|salt|plus more for the pasta water', '1/2|tsp|black pepper'
   ], [
@@ -65,10 +65,10 @@ window.PP_RECIPES = { version: 1, recipes: {} };
   ], 'Thick breasts cook more evenly if you slice them in half horizontally first.');
 
   add('bbq-chicken-sandwiches', 5, 20, [
-    '1 1/2|lb|boneless skinless chicken breasts', '3/4|cup|BBQ sauce', '1/2|cup|water', '4||hamburger bun/hamburger buns', '3|cup|coleslaw mix',
+    '1 1/2|lb|boneless skinless chicken breasts', '3/4|cup|BBQ sauce', '4||hamburger bun/hamburger buns', '3|cup|coleslaw mix',
     '3|tbsp|mayonnaise|for the slaw', '1|tbsp|vinegar|for the slaw', '1|tsp|sugar|for the slaw'
   ], [
-    'Put the chicken and water in a saucepan, cover and simmer over medium heat 15–18 minutes, until it reads 165°F (74°C).',
+    'Put the chicken in a saucepan and add water to cover by an inch. Bring to a gentle simmer, cover and cook 15–18 minutes, until it reads 165°F (74°C).',
     'Meanwhile, stir the coleslaw mix with the mayonnaise, vinegar and sugar.',
     'Pour off the water. Shred the chicken with two forks right in the pan.',
     'Stir in the BBQ sauce and heat 2–3 minutes.',
@@ -86,7 +86,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     'Return the chicken, season with salt and pepper and serve.'
   ], 'Noodles keep soaking up broth; add a splash of water when reheating leftovers.');
 
-  add('chicken-stir-fry', 10, 15, [
+  add('chicken-stir-fry', 10, 25, [
     '1 1/2|lb|boneless skinless chicken breasts|cut into bite-size pieces', '1|bag|frozen stir-fry vegetables|about 16 oz', '1/2|cup|teriyaki sauce',
     '1|cup|rice|uncooked', '2|cup|water|for the rice', '2|tbsp|vegetable oil'
   ], [
@@ -110,7 +110,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
 
   add('chicken-enchiladas', 15, 25, [
     '1 1/2|lb|boneless skinless chicken breasts', '8||flour tortilla/flour tortillas|8-inch', '2|can|enchilada sauce|10 oz each',
-    '2|cup|shredded cheese', '1|can|black beans|rinsed and drained', '!1|tbsp|vegetable oil'
+    '2|cup|shredded cheese', '1|can|black beans|rinsed and drained'
   ], [
     'Heat the oven to 375°F (190°C).',
     'Simmer the chicken in a covered pan of water 15–18 minutes, until 165°F (74°C). Shred it with two forks.',
@@ -194,7 +194,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     'Serve with cheese, sour cream or crackers if you like.'
   ], 'Chili tastes even better the next day. It also works in a slow cooker: brown the beef first, then 6–8 hours on Low.');
 
-  add('beef-and-broccoli', 15, 15, [
+  add('beef-and-broccoli', 15, 25, [
     '1 1/2|lb|flank steak|sliced thin against the grain', '4|cup|broccoli florets', '1/3|cup|soy sauce', '2|tbsp|brown sugar', '1|tbsp|cornstarch',
     '1/2|cup|water', '2|tbsp|vegetable oil', '1|cup|rice|uncooked', '2|cup|water|for the rice'
   ], [
@@ -241,10 +241,10 @@ window.PP_RECIPES = { version: 1, recipes: {} };
   ], [
     'Heat the oven to 425°F (220°C). Scrub the potatoes, poke them with a fork and bake directly on the rack 50–60 minutes until soft.',
     'Take the steak out of the fridge 20 minutes before cooking. Pat dry and season.',
-    'Heat the oil in a heavy skillet over high heat. Cook the steak 4–5 minutes per side, to 145°F (63°C) for medium-rare.',
-    'Rest the steak 5 minutes, then slice against the grain.',
+    'Heat the oil in a heavy skillet over high heat. Cook the steak 4–5 minutes per side, until it reads at least 145°F (63°C) in the thickest part (medium; the USDA safe minimum).',
+    'Rest the steak at least 3 minutes (5 is better), then slice against the grain.',
     'Serve with the potatoes (split, with butter and sour cream) and the salad.'
-  ], 'USDA safe minimum for steak is 145°F (63°C) with a 3-minute rest.');
+  ], 'Like it less done? The USDA safe minimum for steak is 145°F (63°C) with a 3-minute rest.');
 
   add('beef-stroganoff', 10, 25, [
     '1|lb|ground beef', '8|oz|mushrooms|sliced', '1||small onion/small onions|diced', '1|cup|beef broth', '1|tbsp|flour', '3/4|cup|sour cream',
@@ -278,7 +278,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
   ]);
 
   // ---- Pork ----
-  add('pork-chops-and-applesauce', 10, 25, [
+  add('pork-chops-and-applesauce', 10, 35, [
     '2|lb|boneless pork chops|about 1 inch thick', '1|tsp|salt', '1/2|tsp|black pepper', '1|tsp|garlic powder', '!1|tbsp|vegetable oil',
     '1|cup|applesauce', '2|lb|potatoes|cut into chunks', '2|tbsp|butter', '1|bag|frozen green beans|about 12 oz'
   ], [
@@ -440,7 +440,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     'Serve together.'
   ]);
 
-  add('lemon-tilapia-and-green-beans', 10, 20, [
+  add('lemon-tilapia-and-green-beans', 10, 25, [
     '1 1/2|lb|tilapia fillets|thawed', '2||lemon/lemons', '2|tbsp|butter|melted', '1|tsp|garlic powder', '1/2|tsp|salt', '1|bag|frozen green beans',
     '1|cup|rice|uncooked', '2|cup|water|for the rice'
   ], [
@@ -450,7 +450,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     'Heat the green beans. Serve with lemon wedges.'
   ], 'Thaw frozen fish overnight in the fridge, or in its sealed bag in cold water for 30 minutes.');
 
-  add('shrimp-stir-fry', 10, 12, [
+  add('shrimp-stir-fry', 10, 25, [
     '1|lb|frozen shrimp|peeled, thawed', '1|bag|frozen stir-fry vegetables', '1/3|cup|soy sauce', '1|tbsp|brown sugar', '1|tsp|cornstarch',
     '2|tbsp|vegetable oil', '1|cup|rice|uncooked', '2|cup|water|for the rice'
   ], [
@@ -460,7 +460,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     'Pour in the sauce and toss 1 minute until glossy. Serve over rice.'
   ], 'Shrimp go rubbery fast — pull them as soon as they turn pink.');
 
-  add('shrimp-scampi', 10, 15, [
+  add('shrimp-scampi', 10, 25, [
     '1|lb|frozen shrimp|peeled, thawed', '12|oz|linguine', '4|tbsp|butter', '4|clove|garlic|minced', '2||lemon/lemons', '!2|tbsp|olive oil',
     '1/2|tsp|red pepper flakes|optional', '1/2|tsp|salt'
   ], [
@@ -507,8 +507,8 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     'If you don\'t have leftover rice, cook 1 cup rice in 2 cups water and spread it out to cool.',
     'Heat 1 tablespoon oil over medium-high heat. Scramble the eggs until just set and move them to a plate.',
     'Add the rest of the oil and the peas and carrots for 2 minutes.',
-    'Add the rice and let it sizzle 2–3 minutes. Stir in the eggs and soy sauce until hot.'
-  ]);
+    'Add the rice and let it sizzle 2–3 minutes. Stir in the eggs and soy sauce until hot. Top with green onions if you have them.'
+  ], 'Times assume leftover rice; cooking it fresh adds about 25 minutes.');
 
   add('spinach-quiche-and-salad', 15, 45, [
     '1||refrigerated pie crust/refrigerated pie crusts', '6||egg/eggs', '1|cup|milk', '1 1/2|cup|shredded cheese', '2|cup|fresh spinach|chopped',
@@ -551,7 +551,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     'Roll up. For crisp burritos, toast seam-side down in a dry skillet 2 minutes.'
   ]);
 
-  add('pasta-primavera', 10, 20, [
+  add('pasta-primavera', 10, 25, [
     '12|oz|penne', '2||zucchini/zucchini|sliced', '2||bell pepper/bell peppers|sliced', '1|pint|cherry tomatoes|halved', '3|clove|garlic|minced',
     '3|tbsp|olive oil', '1/2|cup|shredded parmesan', '1/2|tsp|salt'
   ], [
@@ -600,7 +600,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     'Serve over rice.'
   ]);
 
-  add('tofu-veggie-stir-fry', 15, 15, [
+  add('tofu-veggie-stir-fry', 15, 25, [
     '28|oz|firm tofu|2 blocks, pressed and cubed', '2|tbsp|cornstarch', '1|bag|frozen stir-fry vegetables', '1/3|cup|soy sauce', '1|tbsp|brown sugar',
     '3|tbsp|vegetable oil', '1|cup|rice|uncooked', '2|cup|water|for the rice'
   ], [
@@ -671,7 +671,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     'Scatter the peas on top, cover again and rest 5 minutes off the heat. Check the chicken reads 165°F (74°C), then fluff and serve.'
   ]);
 
-  add('salisbury-steak-and-mashed-potatoes', 15, 30, [
+  add('salisbury-steak-and-mashed-potatoes', 15, 35, [
     '1 1/2|lb|ground beef', '1/2|cup|breadcrumbs', '1||egg/eggs', '1|tsp|salt', '8|oz|mushrooms|sliced', '1|packet|brown gravy mix', '1|cup|water',
     '3|lb|potatoes|cut into chunks', '4|tbsp|butter', '1/2|cup|milk', '1|bag|frozen green beans'
   ], [
@@ -713,7 +713,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     'Uncover, stir, top with the cheese and bake 10–15 minutes more, until the rice is tender and the chicken reads 165°F (74°C).'
   ]);
 
-  add('country-fried-steak', 15, 30, [
+  add('country-fried-steak', 15, 40, [
     '1 1/2|lb|cube steak|4 pieces', '1|cup|flour', '1|tsp|salt', '1/2|tsp|black pepper', '2||egg/eggs', '1/2|cup|milk', '1/2|cup|vegetable oil',
     '1|packet|country gravy mix', '3|lb|potatoes|for mashing', '4|tbsp|butter', '1|bag|frozen corn'
   ], [
@@ -745,10 +745,11 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     'Heat the corn and serve.'
   ]);
 
-  add('stuffed-peppers', 20, 50, [
+  add('stuffed-peppers', 20, 70, [
     '4||large bell pepper/large bell peppers', '1|lb|ground beef', '1|cup|cooked rice', '24|oz|pasta sauce', '1|cup|shredded mozzarella', '1/2|tsp|salt'
   ], [
-    'Heat the oven to 375°F (190°C). Cut the tops off the peppers and remove the seeds.',
+    'Heat the oven to 375°F (190°C). Cook ⅓ cup rice in ⅔ cup water (boil, cover, low 18 minutes) to get about 1 cup cooked, or use leftover rice.',
+    'Cut the tops off the peppers and remove the seeds.',
     'Cook the beef 7–9 minutes until no pink remains (160°F / 71°C). Drain, then stir in the rice, salt and 1 cup of sauce.',
     'Stand the peppers in a baking dish, fill them and pour the rest of the sauce around them.',
     'Cover with foil and bake 35 minutes. Uncover, top with cheese and bake 10–15 minutes more until the peppers are tender.'
@@ -762,7 +763,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     'Serve with carrots and ranch.'
   ]);
 
-  add('sweet-and-sour-chicken', 15, 20, [
+  add('sweet-and-sour-chicken', 15, 25, [
     '1 1/2|lb|boneless skinless chicken breasts|cut into pieces', '2|tbsp|cornstarch', '2|tbsp|vegetable oil', '2||bell pepper/bell peppers|chopped',
     '1|can|pineapple chunks|20 oz, drained', '1|cup|sweet and sour sauce', '1|cup|rice|uncooked', '2|cup|water|for the rice'
   ], [
@@ -889,7 +890,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
   ]);
 
   // ---- Pasta ----
-  add('lasagna', 25, 70, [
+  add('lasagna', 25, 80, [
     '1|lb|ground beef', '12||lasagna noodle/lasagna noodles', '48|oz|pasta sauce|2 jars', '15|oz|ricotta cheese', '1||egg/eggs', '4|cup|shredded mozzarella',
     '1|tsp|Italian seasoning', '1||frozen garlic bread loaf/frozen garlic bread loaves'
   ], [
@@ -964,11 +965,12 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     '1|lb|dried navy beans|soaked overnight', '1||ham hock/ham hocks', '1||onion/onions|diced', '8|cup|water', '1|tsp|salt|add at the end',
     '1|box|cornbread mix', '1||egg/eggs|for the cornbread', '1/3|cup|milk|for the cornbread'
   ], [
+    'The night before, cover the beans with water by 2 inches and leave them to soak. (Short on time? See the tip.)',
     'Drain the soaked beans. Put them in a large pot with the ham hock, onion and water.',
     'Bring to a boil, then simmer partly covered 1½–2 hours until the beans are creamy.',
     'Pull the meat off the hock, chop it and return it. Season with salt.',
     'Bake the cornbread as the box directs while the beans finish.'
-  ], 'No time to soak? Boil the beans 2 minutes, then let them sit covered 1 hour.');
+  ], 'No time to soak overnight? Boil the beans 2 minutes, then let them sit covered 1 hour, drain and go on.');
 
   add('potato-soup', 15, 30, [
     '3|lb|potatoes|peeled and diced', '1||onion/onions|diced', '4|cup|chicken broth', '2|cup|milk', '1 1/2|cup|shredded cheese', '6|slice|bacon',
@@ -1281,13 +1283,13 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     'Bake 35–40 minutes until the tots are crisp and golden.'
   ]);
 
-  add('fried-chicken', 20, 40, [
+  add('fried-chicken', 50, 60, [
     '3|lb|bone-in chicken pieces', '2|cup|buttermilk', '2|cup|flour', '2|tsp|salt', '1|tsp|paprika', '1|tsp|garlic powder', '!3|cup|vegetable oil|for frying',
     '3|lb|potatoes|for mashing', '4|tbsp|butter', '1|bag|frozen corn'
   ], [
-    'Soak the chicken in the buttermilk at least 30 minutes (or overnight in the fridge).',
+    'Soak the chicken in the buttermilk in the fridge at least 30 minutes (or overnight).',
     'Mix the flour and seasonings. Lift each piece from the buttermilk and coat well.',
-    'Heat about ½ inch of oil in a heavy skillet to 325–350°F (165–175°C). Fry the chicken in batches, 12–15 minutes per side, until deep golden and 165°F (74°C) near the bone.',
+    'Heat about ½ inch of oil in a heavy skillet to 325–350°F (165–175°C). Fry in two batches without crowding, turning every few minutes, 20–25 minutes per batch, until deep golden and 165°F (74°C) near the bone.',
     'Drain on a rack. Meanwhile boil and mash the potatoes and heat the corn.'
   ], 'Hot oil is dangerous: never leave it, keep a lid nearby, and never use water on an oil fire. For less mess, finish browned pieces in a 375°F (190°C) oven.');
 
@@ -1440,7 +1442,7 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     'Scramble the eggs until just set and move to the plate.',
     'Add the rest of the oil, the peas and carrots, then the rice. Let it sizzle 2–3 minutes.',
     'Stir in the shrimp, eggs and soy sauce until hot.'
-  ]);
+  ], 'Times assume leftover rice; cooking it fresh adds about 25 minutes.');
 
   add('oven-baked-fish-fillets', 10, 30, [
     '1|bag|frozen fish fillets|breaded, about 8', '2|lb|potatoes|cut into wedges', '2|tbsp|olive oil', '1/2|tsp|salt', '1|bag|frozen peas', '2||lemon/lemons|cut into wedges'
