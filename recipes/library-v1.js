@@ -1526,4 +1526,53 @@ window.PP_RECIPES = { version: 1, recipes: {} };
     'Season the shrimp and cook in the bacon fat 2–3 minutes until pink and opaque.',
     'Spoon the shrimp over the grits and top with bacon and green onions.'
   ]);
+
+  // ---- Recommended sides ----
+  // Which ingredients (by position) and steps belong to a dinner's
+  // recommended side. Picking another side (or No side) leaves these out,
+  // replacing a step with the text given, or dropping it (null).
+  const side = (id, ing, steps) => { R[id].side = { ing, steps }; };
+  side('honey-garlic-drumsticks', [4, 5, 6], { 3: null, 4: "Serve the drumsticks." });
+  side('spaghetti-and-meat-sauce', [7], { 3: null, 4: "Cook the spaghetti as the box directs and drain. Serve with the sauce." });
+  side('cheeseburgers-and-fries', [7], { 0: null });
+  side('sloppy-joes', [3], { 3: null });
+  side('steak-and-baked-potatoes', [1, 5, 6, 7], { 0: null, 4: "Serve the steak." });
+  side('meatloaf-and-green-beans', [7, 8, 9], { 3: null });
+  side('pork-chops-and-applesauce', [5, 6, 7, 8], { 0: null, 3: null, 4: "Serve the chops." });
+  side('ham-and-cheese-sliders', [5], { 4: "Bake 12–15 minutes until the cheese melts." });
+  side('teriyaki-pork-tenderloin', [2, 3, 4], { 3: null, 4: "Serve the slices." });
+  side('turkey-burgers', [8], { 0: null });
+  side('baked-salmon-and-rice', [1, 2], { 1: null, 4: "Squeeze the other lemon over everything and serve." });
+  side('fish-sticks-and-mac-and-cheese', [1, 2], { 1: null, 2: null });
+  side('lemon-tilapia-and-green-beans', [5, 6, 7], { 0: "Heat the oven to 400°F (200°C).", 3: "Serve with lemon wedges." });
+  side('spinach-quiche-and-salad', [6, 7], { 4: null });
+  side('homemade-cheese-pizza', [4, 5], { 3: null });
+  side('baked-mac-and-cheese', [6], { 4: null });
+  side('salisbury-steak-and-mashed-potatoes', [7, 8, 9, 10], { 0: null, 4: "Return the patties, cover and simmer 10 minutes until they reach 160°F (71°C)." });
+  side('hamburger-steak-and-gravy', [6, 7, 8], { 0: null, 4: "Serve the patties with the gravy." });
+  side('country-fried-steak', [8, 9, 10], { 0: null });
+  side('smothered-pork-chops', [7, 8, 9], { 0: null, 4: "Serve the chops with the gravy." });
+  side('baked-chicken-and-mashed-potatoes', [5, 6, 7, 8], { 2: null, 3: null });
+  side('chicken-tenders-and-fries', [1, 2], { 1: "Bake the tenders, turning halfway, until crisp. Uncooked frozen tenders must reach 165°F (74°C) — check the package.", 2: "Serve with ranch." });
+  side('lasagna', [7], { 4: "Cover with foil and bake 45 minutes; uncover for 15 more. Rest 15 minutes before cutting." });
+  side('ravioli-bake', [3, 4], { 3: null });
+  side('salmon-patties-and-corn', [5, 6], { 0: null });
+  side('hot-dogs-and-baked-beans', [3], { 2: "Serve in buns with the beans." });
+  side('egg-salad-sandwiches', [5], { 3: "Make the sandwiches." });
+  side('scrambled-eggs-and-toast', [5], { 3: null });
+  side('slow-cooker-bbq-chicken-and-potatoes', [3], { 3: "Split the potatoes, add butter and top with chicken." });
+  side('mississippi-chicken', [5, 6], { 3: "Serve the chicken with its juices." });
+  side('fried-chicken', [7, 8, 9], { 3: "Drain on a rack before serving." });
+  side('baked-ham-dinner', [3, 4, 5, 6], { 3: null });
+  side('chicken-and-noodles', [4, 5], { 3: null });
+  side('beef-tips-and-rice', [5, 6, 7], { 2: null, 3: "Serve the beef tips with the gravy." });
+  side('pepperoni-pizza', [4], { 3: null });
+  side('pierogies-and-kielbasa', [5], { 3: "Return the kielbasa and serve with sour cream." });
+  side('swedish-meatballs', [5], { 1: "Cook the noodles." });
+  side('chicken-wings', [7], { 2: null });
+  side('oven-baked-fish-fillets', [4], { 2: null });
+  side('turkey-sloppy-joes', [3], { 2: "Spoon onto buns." });
+  side('roast-turkey-breast-dinner', [5, 6, 7], { 2: "Meanwhile make the stuffing as the box directs." });
+  side('tuna-salad-sandwiches', [5], { 2: null });
+  side('cornmeal-fried-catfish', [5, 6, 7], { 0: null, 3: "Drain on paper towels and serve." });
 })(window.PP_RECIPES.recipes);
