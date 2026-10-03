@@ -3982,7 +3982,9 @@
         savedRecipes: [],
         recipeFavorites: [],
         recipeNotes: [],
-        cookLog: []
+        cookLog: [],
+        // How each person liked a dinner (Loved it / It was OK / Not again).
+        recipeRatings: []
       };
     }
 
@@ -5271,7 +5273,7 @@
     // With no base yet (first sync after this update) nothing is ever
     // dropped, so existing data needs no migration.
     // =====================================================================
-    const SYNCED_COLLECTIONS = ['accounts', 'bills', 'transactions', 'goals', 'householdPaychecks', 'activityLog', 'importHistory', 'groceryPrefs', 'groceryTrips', 'groceryItems', 'groceryEvents', 'savedRecipes', 'recipeFavorites', 'recipeNotes', 'cookLog'];
+    const SYNCED_COLLECTIONS = ['accounts', 'bills', 'transactions', 'goals', 'householdPaychecks', 'activityLog', 'importHistory', 'groceryPrefs', 'groceryTrips', 'groceryItems', 'groceryEvents', 'savedRecipes', 'recipeFavorites', 'recipeNotes', 'cookLog', 'recipeRatings'];
     // Money amounts that combine when two members change them concurrently.
     const ACCUMULATOR_FIELDS = { accounts: ['balance'], goals: ['current'] };
 
@@ -14687,6 +14689,7 @@
       const leave = ((prefs && prefs.leaveOut) || []).map(groceryNormTerm).filter(Boolean);
       return groceryMeals().filter(m => {
         if (m.retired) return false;
+        if (recipeHiddenFromSuggestions(m.id)) return false;
         if (tier === 'low' && m.cost !== 'low') return false;
         if (tier === 'medium' && m.cost === 'high') return false;
         return !leave.some(term => groceryMealHas(m, term));
@@ -14711,8 +14714,11 @@
     }
     function pickGroceryMeals(count, prefs, tier, exclude, placed) {
       const pool = groceryMealPool(prefs, tier).filter(m => !(exclude && exclude.has(m.id)));
-      const pref = groceryShuffle(pool.filter(m => groceryPreferred(m, prefs)));
-      const rest = groceryShuffle(pool.filter(m => !groceryPreferred(m, prefs)));
+      // Dinners someone loved (or saved as a favorite) come up more often.
+      const weight = m => (recipeIsLoved(m.id) || recipeIsFav(m.id, 'mine') || recipeIsFav(m.id, 'family')) ? 3 : 1;
+      const weighted = list => list.map(m => [Math.pow(Math.random(), 1 / weight(m)), m]).sort((x, y) => y[0] - x[0]).map(x => x[1]);
+      const pref = weighted(pool.filter(m => groceryPreferred(m, prefs)));
+      const rest = weighted(pool.filter(m => !groceryPreferred(m, prefs)));
       const order = [...pref, ...rest];
       const slots = (placed || []).map(p => groceryMealById(p.id)).filter(Boolean);
       const offset = slots.length;
@@ -14824,6 +14830,7 @@
         lastModifiedAt: nowIso, lastModifiedBy: actor, lastModifiedById: me
       };
       if (groceryUI.pendingMeals) { trip.meals = groceryUI.pendingMeals; groceryUI.pendingMeals = null; }
+      if (groceryUI.pendingWeeks) { trip.weeks = Math.min(4, Math.max(1, Number(groceryUI.pendingWeeks) || trip.weeks)); groceryUI.pendingWeeks = null; }
       if (!state.groceryTrips) state.groceryTrips = [];
       state.groceryTrips.push(trip);
       addGroceryEvent(trip, 'started');
@@ -15253,7 +15260,9 @@
         ${groceryDinnersHtml(trip, groceryTripStatus(trip) === 'completed')}
         ${group('purchased', 'Purchased')}${group('skipped', 'Skipped')}${group('have', 'Already had')}${group('needed', 'Not bought')}
         ${groceryHistoryHtml(trip, true)}`,
-        `<button type="button" onclick="openGroceryRun('home')" class="${GR_SECONDARY}">Back</button>`);
+        `<button type="button" onclick="startRunFromPast(${jsArg(trip.id)})" class="${GR_PRIMARY}">Start a run from this list</button>
+         ${(trip.meals || []).length ? `<button type="button" onclick="openDinnerCheckin(${jsArg(trip.id)}, ${Math.max(1, Number(trip.weeks) || 1)})" class="${GR_SECONDARY}">How were the dinners?</button>` : ''}
+         <button type="button" onclick="openGroceryRun('home')" class="${GR_SECONDARY}">Back</button>`);
     }
 
     // ---- Preferences (saved once, shared with the household) ----
@@ -15425,7 +15434,7 @@
       const key = `${trip.weeks}|${trip.tier}|${JSON.stringify([prefs.proteins, prefs.leaveOut, prefs.picky])}`;
       if (!trip.meals || trip.mealsKey !== key) {
         // Dinners added from Saved Recipes stay; suggestions fill the rest.
-        const saved = (trip.meals || []).filter(m => m.source === 'saved' && m.keep !== false);
+        const saved = (trip.meals || []).filter(m => (m.source === 'saved' || m.source === 'repeat') && m.keep !== false);
         const need = Math.max(0, count - saved.length);
         const pick = pickGroceryMeals(need, prefs, trip.tier, new Set(saved.map(m => m.id)), saved);
         trip.meals = [...saved, ...pick.ids.map(id => groceryDinnerEntry(id))];
@@ -15476,7 +15485,7 @@
         const header = i % GROCERY_DINNERS_PER_WEEK === 0 && trip.meals.length > GROCERY_DINNERS_PER_WEEK ? `<li class="pt-2 text-[11px] font-bold uppercase tracking-wider text-slate-500" aria-hidden="true">Week ${week}</li>` : '';
         const tags = meal.tags ? groceryMealLabels(meal).slice(0, 3).join(' · ') : '';
         return `${header}<li class="p-3 rounded-2xl border space-y-2 ${on ? 'border-slate-800 bg-slate-900/80' : 'border-dashed border-slate-800 bg-transparent opacity-60'}"><div class="flex items-center gap-2">
-          <button type="button" id="gr-view-${i}" onclick="openRecipe(${jsArg(m.id)}, 'meals')" aria-label="View recipe for ${escapeHtml(meal.name)}" class="flex-1 min-w-0 min-h-[44px] text-left rounded-xl hover:bg-slate-800/60 px-1"><span class="block text-sm font-semibold text-white">${recipeIsFav(m.id, 'mine') ? '<span class="text-rose-300" aria-hidden="true">♥ </span>' : ''}${escapeHtml(meal.name)}</span><span class="block text-[11px] text-slate-500">${[m.source === 'saved' ? 'from Saved Recipes' : '', tags].filter(Boolean).join(' · ')}${tags || m.source === 'saved' ? ' · ' : ''}<span class="text-brand-400">View recipe ›</span></span></button>
+          <button type="button" id="gr-view-${i}" onclick="openRecipe(${jsArg(m.id)}, 'meals')" aria-label="View recipe for ${escapeHtml(meal.name)}" class="flex-1 min-w-0 min-h-[44px] text-left rounded-xl hover:bg-slate-800/60 px-1"><span class="block text-sm font-semibold text-white">${recipeIsFav(m.id, 'mine') ? '<span class="text-rose-300" aria-hidden="true">♥ </span>' : ''}${escapeHtml(meal.name)}</span><span class="block text-[11px] text-slate-500">${[m.source === 'saved' ? 'from Saved Recipes' : m.source === 'repeat' ? 'from a past list' : '', tags].filter(Boolean).join(' · ')}${tags || m.source === 'saved' || m.source === 'repeat' ? ' · ' : ''}<span class="text-brand-400">View recipe ›</span></span></button>
           <button type="button" id="gr-keep-${i}" aria-pressed="${on}" aria-label="Keep ${escapeHtml(meal.name)}" onclick="groceryToggleKeep(${i})" class="min-h-[44px] px-3 rounded-xl text-xs font-bold ${on ? 'bg-brand-500/20 text-brand-300' : 'bg-slate-800 text-slate-400'}">${on ? '✓ Keep' : 'Keep'}</button>
           <button type="button" id="gr-swap-${i}" aria-label="Swap ${escapeHtml(meal.name)} for another meal" onclick="grocerySwapMeal(${i})" class="min-h-[44px] px-3 rounded-xl text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-200">Swap</button>
           </div>
@@ -15953,7 +15962,8 @@
         ${step('draft', 1, '✏️', 'Draft', 'Build your grocery plan.', bullets(['Choose meals', 'Add or remove items', 'Mark pantry items as "Have it already"', 'Collaborate with household members']) + '<p class="text-sm text-slate-300">Everyone can edit during Draft.</p>')}
         ${step('ready', 2, '🔒', 'Ready To Order', 'The grocery plan is complete.', `<p class="text-sm text-slate-300">The list becomes locked so accidental edits don't happen.</p>
           <p class="text-sm text-slate-300">You can still:</p>${bullets(['Share', 'Copy', 'Print'])}
-          <p class="text-sm text-slate-300">If changes are needed, unlock the run and return to Draft.</p>`)}
+          <p class="text-sm text-slate-300">If changes are needed, unlock the run and return to Draft.</p>
+          <p class="text-sm text-slate-300">Still Ready after a day? The app asks once whether you placed the order.</p>`)}
         ${step('ordered', 3, '🛒', 'Ordered', 'Someone placed the grocery order or started shopping.', `<p class="text-sm text-slate-300">Track grocery items as:</p>
           <div class="grid grid-cols-2 gap-2 text-sm">
             <div class="flex items-center gap-2 p-2 rounded-xl bg-slate-800/70"><span class="w-6 text-center" aria-hidden="true">□</span><span class="text-slate-200">Needed</span></div>
@@ -15966,7 +15976,8 @@
           <div class="rounded-xl bg-slate-800/70 p-3 space-y-1">
             <p class="text-sm font-bold text-white">💵 Only the actual total changes your forecast.</p>
             <p class="text-sm text-slate-300">Planning, editing, sharing, and ordering do not affect your money.</p>
-          </div>`)}
+          </div>
+          <p class="text-sm text-slate-300">A week after you order (and at the end of a longer run), the app asks which dinners you made and how they were. Your list stays under Past runs, where you can start a new run from it.</p>`)}
         <section class="rounded-2xl border border-indigo-500/40 bg-indigo-500/10 p-4 space-y-2" aria-labelledby="gh-household">
           <div class="flex items-center gap-3">
             <span class="shrink-0 w-11 h-11 rounded-2xl bg-slate-800 flex items-center justify-center text-xl" aria-hidden="true">👥</span>
@@ -15992,6 +16003,8 @@
                ['🔢 Times Cooked', 'How many different days you made it. Two taps on the same day count once.'],
                ['📅 Last Cooked', 'The most recent day anyone made it.'],
                ['🛒 Add To Grocery Run', "Puts the dinner and its ingredients on your grocery list. If the list is locked, you'll be asked to unlock it first."],
+               ['😋 How was it?', 'Rate a dinner Loved it, It was OK or Not again, on the recipe or when the app asks about a run\'s dinners. Loved dinners come up more often; Not again stops suggesting it to you.'],
+               ['🔁 Start a run from this list', 'Open a past run under Past runs to start a new run with the same dinners, sides and added items.'],
                ['🥔 Sides', 'Each dinner comes with recommended sides. Use the Side menu to swap them or choose No side, and "+ Add a side" to add up to 3 more. The recipe and the grocery list update to match, and your choice is remembered on saved recipes.']]
               .map(([t, d]) => `<div class="rounded-xl bg-slate-800/60 p-3"><dt class="font-bold text-white">${t}</dt><dd class="text-slate-300">${escapeHtml(d)}</dd></div>`).join('')}
           </dl>
@@ -16050,36 +16063,325 @@
       groceryHelpReturnFocus = null;
     }
 
-    // Asked once per app open while an Ordered run waits for its total (and
-    // it wasn't ordered in this same session). Never stacked on another open
-    // dialog (e.g. an overdue-bill reminder): it waits.
-    let groceryPromptShown = false, groceryPromptTimer = null;
-    function maybeAskGroceryTotal() {
-      if (groceryPromptShown || groceryPromptTimer || state.isDemo) return;
+    // =====================================================================
+    // AFTER THE ORDER -- check-ins that follow a run, dinner ratings, and
+    // starting a new run from a past list.
+    //  - Ready To Order for 20+ hours: "Did you place the order?"
+    //  - Ordered: "How much did groceries come to?" (unchanged)
+    //  - A week after ordering, and at the end of the run: "How were this
+    //    week's dinners?" -- Made it (logged with its day) and Loved it /
+    //    It was OK / Not again, each person for themselves.
+    // One question per app open, never on top of another dialog, always
+    // dismissible. Ratings never touch money.
+    // =====================================================================
+    const GROCERY_READY_ASK_AFTER_MS = 20 * 3600e3;
+    const RECIPE_RATINGS = { love: '😋 Loved it', ok: '👌 It was OK', no: '👎 Not again' };
+    const RECIPE_RATING_WORDS = { love: 'Loved it', ok: 'It was OK', no: 'Not again' };
+    function groceryLocalKey(suffix) { return 'pp_grocery_' + suffix + '_' + (state.user ? state.user.id : 'anon'); }
+    function groceryLocalGet(suffix) { try { return JSON.parse(localStorage.getItem(groceryLocalKey(suffix)) || 'null'); } catch (e) { return null; } }
+    function groceryLocalSet(suffix, v) { try { localStorage.setItem(groceryLocalKey(suffix), JSON.stringify(v)); } catch (e) {} }
+
+    // ---- Ratings: one record per person per dinner ----
+    function recipeRatingId(mealId, userId) { return `rr_${mealId}::${userId || recipeMe() || 'me'}`; }
+    function recipeRatingsFor(mealId) {
+      return recipeColl('recipeRatings').filter(r => r && r.recipeKey === mealId && r.rating && isVisibleToCurrentUser(r));
+    }
+    function recipeMyRating(mealId) {
+      const r = recipeColl('recipeRatings').find(x => x && x.id === recipeRatingId(mealId));
+      return r && r.rating ? r.rating : null;
+    }
+    function setRecipeRating(mealId, rating, runId, quiet) {
+      if (!groceryMealById(mealId)) return;
+      const list = recipeColl('recipeRatings');
+      const id = recipeRatingId(mealId);
+      let r = list.find(x => x && x.id === id);
+      if (!r) { r = { id, recipeKey: mealId, ownerId: recipeMe(), createdAt: new Date().toISOString() }; list.push(r); }
+      const nowIso = new Date().toISOString();
+      Object.assign(r, { rating: rating || null, runId: runId || r.runId || null, at: nowIso, by: currentOwnerLabel(), byId: recipeMe(),
+        scope: inHouseholdMode() ? 'household' : 'personal', lastModifiedAt: nowIso });
+      if (!quiet) {
+        saveStateToStorage();
+        groceryPushNow();
+        const name = groceryMealById(mealId).name;
+        showToast(!rating ? `Rating cleared for ${name}.` : rating === 'no' ? `Got it. ${name} won't be suggested to you.` : `Saved: ${RECIPE_RATING_WORDS[rating]}.`, 'success');
+        renderGroceries();
+      }
+    }
+    // "Not again": hidden from your suggestions; from everyone's only when
+    // everyone who rated it (two or more people) said so.
+    function recipeHiddenFromSuggestions(mealId) {
+      if (recipeMyRating(mealId) === 'no') return true;
+      const rs = recipeRatingsFor(mealId);
+      const people = new Set(rs.map(r => r.byId));
+      return people.size >= 2 && rs.every(r => r.rating === 'no');
+    }
+    function recipeIsLoved(mealId) { return recipeRatingsFor(mealId).some(r => r.rating === 'love'); }
+    function recipeRatingsSummary(mealId) {
+      const rs = recipeRatingsFor(mealId).sort((a, b) => (a.byId === recipeMe() ? 1 : 0) - (b.byId === recipeMe() ? 1 : 0));
+      return rs.map(r => `${groceryPersonName(r.byId, r.by)}: ${RECIPE_RATING_WORDS[r.rating]}`).join(' · ');
+    }
+    function recipeRatingHtml(meal) {
+      const mine = recipeMyRating(meal.id);
+      const summary = recipeRatingsSummary(meal.id);
+      return `<div class="space-y-1.5">
+        <div class="flex flex-wrap items-center gap-2" role="group" aria-label="How was it?">
+          <span class="text-xs font-semibold text-slate-400">How was it?</span>
+          ${Object.entries(RECIPE_RATINGS).map(([k, l]) => `<button type="button" id="rc-rate-${k}" aria-pressed="${mine === k}" onclick="setRecipeRating(${jsArg(meal.id)}, ${mine === k ? 'null' : jsArg(k)})" class="${GR_SMALL} ${mine === k ? 'bg-brand-500/25 text-brand-200' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}"><span aria-hidden="true">${l.split(' ')[0]} </span>${escapeHtml(RECIPE_RATING_WORDS[k])}</button>`).join('')}
+        </div>
+        ${summary ? `<p class="text-[11px] text-slate-400">${escapeHtml(summary)}</p>` : ''}
+        ${mine === 'no' ? '<p class="text-[11px] text-slate-500">Not suggested to you. Tap Not again to clear it.</p>' : ''}
+      </div>`;
+    }
+
+    // ---- Start a new run from a past list ----
+    function startRunFromPast(tripId) {
+      const old = groceryTripById(tripId);
+      if (!old) return;
+      if (openGroceryTrip()) { showToast('Finish or cancel the current grocery run first, then start one from this list.', 'info'); return; }
+      const meals = (old.meals || []).filter(m => m.keep !== false && groceryMealById(m.id) && !groceryMealById(m.id).retired)
+        .map(m => { const e = { id: m.id, name: groceryMealById(m.id).name, keep: true, source: 'repeat' }; if (m.side) e.side = m.side; if (m.extraSides && m.extraSides.length) e.extraSides = m.extraSides.slice(); return e; });
+      const added = (state.groceryItems || []).filter(i => i && i.tripId === old.id && i.source === 'added' && !i.removed).map(i => ({ name: i.name, aisle: i.aisle }));
+      groceryUI.pendingMeals = meals;
+      groceryUI.pendingWeeks = old.weeks;
+      startGroceryRun();
       const trip = openGroceryTrip();
-      if (!trip || groceryTripStatus(trip) !== 'ordered') return;
-      const orderedAt = (trip.order && trip.order.placedAt) || (groceryLastTransition(trip.id) || {}).at || trip.createdAt;
-      if (String(orderedAt) >= GROCERY_SESSION_START) return;
+      if (trip && added.length) {
+        added.forEach((a, k) => state.groceryItems.push(groceryNewItem(trip, { key: 'added|' + Date.now().toString(36) + k + Math.random().toString(36).slice(2, 5), name: a.name, qty: 0, unit: '', aisle: a.aisle || 'O' }, 'added', 'needed')));
+        saveStateToStorage();
+        groceryPushNow();
+      }
+      showToast(`New run started with ${meals.length} dinner${meals.length === 1 ? '' : 's'} from your ${friendlyDate(localDateStr(new Date(old.createdAt)))} list.`, 'success');
+    }
+
+    // ---- Check-ins ----
+    function groceryOrderedAt(trip) { return (trip.order && trip.order.placedAt) || trip.completedAt || trip.createdAt; }
+    // Dinner check-in k (1..weeks) is due 7*k days after ordering and covers
+    // weeks 1..k. Done (or skipped) check-ins are remembered per person.
+    function groceryDinnerCheckinDue(now) {
+      if (groceryLocalGet('noDinnerAsk')) return null;
+      const done = groceryLocalGet('dinnerCheckins') || {};
+      const runs = (state.groceryTrips || []).filter(t => t && isVisibleToCurrentUser(t) && !t.mergedInto && ['ordered', 'completed'].includes(groceryTripStatus(t)) && (t.meals || []).length)
+        .sort((a, b) => String(groceryOrderedAt(b)).localeCompare(String(groceryOrderedAt(a))));
+      for (const t of runs.slice(0, 3)) {
+        const start = new Date(groceryOrderedAt(t)).getTime();
+        const weeks = Math.max(1, Number(t.weeks) || 1);
+        if (now - start > (weeks * 7 + 14) * 864e5) continue; // too old to ask about
+        for (let k = weeks; k >= 1; k--) {
+          if (now < start + k * 7 * 864e5) continue;
+          if ((done[t.id] || 0) >= k) break;
+          const dinners = groceryCheckinDinners(t, k);
+          if (dinners.length) return { trip: t, week: k, dinners };
+          break;
+        }
+      }
+      return null;
+    }
+    function groceryCheckinDinners(trip, upToWeek) {
+      const seen = new Set();
+      return (trip.meals || []).slice(0, upToWeek * GROCERY_DINNERS_PER_WEEK).filter(m => m.keep !== false && groceryMealById(m.id))
+        .filter(m => { if (seen.has(m.id)) return false; seen.add(m.id); return true; });
+    }
+    // One question per app open, on the Dashboard, never stacked.
+    let groceryPromptShown = false, groceryPromptTimer = null;
+    function maybeAskGroceryTotal() { maybeAskGroceryCheckin(); }
+    function groceryCheckinChoice() {
+      const now = Date.now();
+      const trip = openGroceryTrip();
+      if (trip && groceryTripStatus(trip) === 'ready' && trip.readyAt && now - new Date(trip.readyAt).getTime() >= GROCERY_READY_ASK_AFTER_MS) {
+        const snooze = groceryLocalGet('readySnooze') || {};
+        if (snooze[trip.id] !== localDateStr(new Date())) return { kind: 'ready', trip };
+      }
+      if (trip && groceryTripStatus(trip) === 'ordered') {
+        const orderedAt = groceryOrderedAt(trip);
+        if (String(orderedAt) < GROCERY_SESSION_START) return { kind: 'total', trip, orderedAt };
+      }
+      const dc = groceryDinnerCheckinDue(now);
+      return dc ? { kind: 'dinners', ...dc } : null;
+    }
+    function maybeAskGroceryCheckin() {
+      if (groceryPromptShown || groceryPromptTimer || state.isDemo) return;
+      if (!groceryCheckinChoice()) return;
       let tries = 0;
       const attempt = () => {
         groceryPromptTimer = null;
         const backdrop = document.getElementById('modal-backdrop');
         if (groceryPromptShown || getCurrentPageId() !== 'dashboard') return;
-        if (backdrop && !backdrop.classList.contains('hidden')) {
+        if ((backdrop && !backdrop.classList.contains('hidden')) || document.getElementById('grocery-checkin') || document.getElementById('grocery-help')) {
           if (++tries < 60) groceryPromptTimer = setTimeout(attempt, 2000);
           return;
         }
-        const t = openGroceryTrip();
-        if (!t || groceryTripStatus(t) !== 'ordered') return;
+        const c = groceryCheckinChoice();
+        if (!c) return;
         groceryPromptShown = true;
-        openCustomModal('How much did groceries come to?',
-          `Your grocery order from ${friendlyDate(localDateStr(new Date(orderedAt)))} is waiting for its total. Nothing has been added to your balance yet — enter the exact total and it's recorded once.`, [
-            { label: 'Enter the total', onclick: `openGroceryTotal(${jsArg(t.id)})`, primary: true },
-            { label: 'Not yet', onclick: 'groceryNotYet()' },
-            { label: 'Cancel run', onclick: `confirmCancelGroceryTrip(${jsArg(t.id)})` }
-          ]);
+        if (c.kind === 'ready') {
+          openCustomModal('Did you place the order?',
+            `Your grocery list has been ready to order since ${friendlyDate(localDateStr(new Date(c.trip.readyAt)))}. If you've ordered or shopped, mark it so your household knows. Nothing is recorded until someone enters the total.`, [
+              { label: 'Yes, I ordered', onclick: `closeModals(); openGroceryRun('order', ${jsArg(c.trip.id)})`, primary: true },
+              { label: 'Not yet', onclick: `groceryReadyNotYet(${jsArg(c.trip.id)})` },
+              { label: 'Cancel run', onclick: `confirmCancelGroceryTrip(${jsArg(c.trip.id)})` }
+            ]);
+        } else if (c.kind === 'total') {
+          openCustomModal('How much did groceries come to?',
+            `Your grocery order from ${friendlyDate(localDateStr(new Date(c.orderedAt)))} is waiting for its total. Nothing has been added to your balance yet — enter the exact total and it's recorded once.`, [
+              { label: 'Enter the total', onclick: `openGroceryTotal(${jsArg(c.trip.id)})`, primary: true },
+              { label: 'Not yet', onclick: 'groceryNotYet()' },
+              { label: 'Cancel run', onclick: `confirmCancelGroceryTrip(${jsArg(c.trip.id)})` }
+            ]);
+        } else openDinnerCheckin(c.trip.id, c.week);
       };
       groceryPromptTimer = setTimeout(attempt, 1200);
+    }
+    function groceryReadyNotYet(tripId) {
+      closeModals();
+      const snooze = groceryLocalGet('readySnooze') || {};
+      snooze[tripId] = localDateStr(new Date());
+      groceryLocalSet('readySnooze', snooze);
+      showToast("OK — we'll ask again tomorrow.", 'info');
+    }
+
+    // ---- "How were this week's dinners?" ----
+    let dinnerCheckin = null, dinnerCheckinReturnFocus = null;
+    function dinnerCheckinDays(trip, week) {
+      // The days of that week, up to today (newest first).
+      const start = new Date(groceryOrderedAt(trip)); start.setHours(12, 0, 0, 0);
+      const out = [];
+      for (let d = 0; d < 7; d++) {
+        const day = new Date(start.getTime() + ((week - 1) * 7 + d) * 864e5);
+        if (day.getTime() > Date.now() + 36e5) break;
+        out.push(localDateStr(day));
+      }
+      return out.reverse();
+    }
+    function openDinnerCheckin(tripId, week) {
+      const trip = groceryTripById(tripId);
+      if (!trip) return;
+      const dinners = groceryCheckinDinners(trip, week);
+      dinnerCheckin = { tripId, week, step: 'rate', rows: dinners.map(m => {
+        const made = recipeCookEntries(m.id).find(c => c.runId === tripId && c.byId === recipeMe());
+        return { id: m.id, made: !!made, day: made ? made.cookedOn : '', rating: recipeMyRating(m.id) };
+      }) };
+      dinnerCheckinReturnFocus = document.activeElement;
+      closeDinnerCheckin(true);
+      const wrap = document.createElement('div');
+      wrap.id = 'grocery-checkin';
+      wrap.className = 'fixed inset-0 z-[400] flex items-end sm:items-center justify-center bg-slate-950/80 p-0 sm:p-6';
+      wrap.innerHTML = `<div role="dialog" aria-modal="true" aria-labelledby="dc-title" class="w-full sm:max-w-xl max-h-[92vh] overflow-y-auto overscroll-contain bg-[#0b1324] border border-slate-800 rounded-t-3xl sm:rounded-3xl p-5 sm:p-6 space-y-4" id="dc-body"></div>`;
+      wrap.addEventListener('keydown', e => {
+        if (e.key === 'Escape') { e.preventDefault(); skipDinnerCheckin(); return; }
+        if (e.key !== 'Tab') return;
+        const f = [...wrap.querySelectorAll('button, input, select')].filter(x => !x.disabled);
+        if (!f.length) return;
+        if (e.shiftKey && document.activeElement === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
+        else if (!e.shiftKey && document.activeElement === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
+      });
+      document.body.appendChild(wrap);
+      document.body.style.overflow = 'hidden';
+      renderDinnerCheckin();
+      const h = document.getElementById('dc-title'); if (h) h.focus({ preventScroll: true });
+    }
+    function renderDinnerCheckin(focusId) {
+      const body = document.getElementById('dc-body');
+      if (!body || !dinnerCheckin) return;
+      const trip = groceryTripById(dinnerCheckin.tripId);
+      const days = dinnerCheckinDays(trip, dinnerCheckin.week);
+      const dayLabel = d => d === localDateStr(new Date()) ? 'Today' : d === localDateStr(new Date(Date.now() - 864e5)) ? 'Yesterday' : friendlyDate(d);
+      const weeks = Math.max(1, Number(trip.weeks) || 1);
+      if (dinnerCheckin.step === 'favorites') {
+        const loved = dinnerCheckin.rows.filter(r => r.rating === 'love');
+        const hh = inHouseholdMode();
+        body.innerHTML = `<h2 id="dc-title" tabindex="-1" class="text-xl font-extrabold text-white outline-none">😋 Make them favorites?</h2>
+          <p class="text-sm text-slate-300">You loved ${loved.length === 1 ? 'this dinner' : 'these dinners'}. Favorites come up more often in suggestions.</p>
+          <ul class="space-y-2">${loved.map(r => { const m = groceryMealById(r.id); const mine = recipeIsFav(r.id, 'mine'); const fam = recipeIsFav(r.id, 'family'); return `<li class="p-3 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-2">
+            <p class="text-sm font-semibold text-white">${escapeHtml(m.name)}</p>
+            <div class="flex flex-wrap gap-2">
+              <button type="button" id="dc-fav-${r.id}" aria-pressed="${mine}" onclick="toggleRecipeFav(${jsArg(r.id)}, 'mine'); renderDinnerCheckin('dc-fav-${r.id}')" class="${GR_SMALL} ${mine ? 'bg-rose-500/25 text-rose-200' : 'bg-slate-800 text-slate-200'}">${mine ? '♥' : '♡'} My Favorite</button>
+              ${hh ? `<button type="button" id="dc-famfav-${r.id}" aria-pressed="${fam}" onclick="toggleRecipeFav(${jsArg(r.id)}, 'family'); renderDinnerCheckin('dc-famfav-${r.id}')" class="${GR_SMALL} ${fam ? 'bg-amber-500/25 text-amber-200' : 'bg-slate-800 text-slate-200'}">🏠 Family Favorite</button>` : ''}
+            </div></li>`; }).join('')}</ul>
+          <button type="button" id="dc-done" onclick="closeDinnerCheckin()" class="w-full ${GR_PRIMARY}">Done</button>`;
+      } else {
+        body.innerHTML = `<div class="flex items-start justify-between gap-3">
+            <h2 id="dc-title" tabindex="-1" class="text-xl font-extrabold text-white outline-none">How were ${dinnerCheckin.week === weeks && weeks > 1 ? "the run's" : "this week's"} dinners?</h2>
+            <button type="button" onclick="skipDinnerCheckin()" aria-label="Close" class="shrink-0 w-11 h-11 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-lg">×</button>
+          </div>
+          <p class="text-sm text-slate-300">From your grocery run on ${escapeHtml(friendlyDate(localDateStr(new Date(groceryOrderedAt(trip)))))}. Tick what you made and say how it was. Only you rate for you.</p>
+          <ul class="space-y-2">${dinnerCheckin.rows.map((r, i) => { const m = groceryMealById(r.id); return `<li class="p-3 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-2">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <label class="flex items-center gap-3 min-h-[44px] cursor-pointer min-w-0"><input type="checkbox" id="dc-made-${i}" ${r.made ? 'checked' : ''} onchange="dinnerCheckinSet(${i}, 'made', this.checked)" class="w-5 h-5 shrink-0 accent-emerald-500" /><span class="text-sm font-semibold text-white">${escapeHtml(m.name)}</span></label>
+              ${r.made ? `<span class="flex items-center gap-2"><label for="dc-day-${i}" class="text-xs text-slate-400">When?</label><select id="dc-day-${i}" onchange="dinnerCheckinSet(${i}, 'day', this.value)" class="min-h-[44px] bg-slate-900 border border-slate-700 rounded-xl px-2 text-xs text-slate-200">${days.map(d => `<option value="${d}" ${(r.day || days[0]) === d ? 'selected' : ''}>${escapeHtml(dayLabel(d))}</option>`).join('')}</select></span>` : ''}
+            </div>
+            <div class="flex flex-wrap gap-2" role="group" aria-label="How was ${escapeHtml(m.name)}?">${Object.entries(RECIPE_RATINGS).map(([k, l]) => `<button type="button" id="dc-rate-${i}-${k}" aria-pressed="${r.rating === k}" onclick="dinnerCheckinSet(${i}, 'rating', ${jsArg(k)})" class="${GR_SMALL} ${r.rating === k ? 'bg-brand-500/25 text-brand-200' : 'bg-slate-800 text-slate-300 hover:bg-slate-700'}"><span aria-hidden="true">${l.split(' ')[0]} </span>${escapeHtml(RECIPE_RATING_WORDS[k])}</button>`).join('')}</div>
+          </li>`; }).join('')}</ul>
+          <div class="flex flex-wrap gap-2">
+            <button type="button" id="dc-save" onclick="saveDinnerCheckin()" class="${GR_PRIMARY}">Save</button>
+            <button type="button" onclick="skipDinnerCheckin()" class="${GR_SECONDARY}">Skip this time</button>
+          </div>
+          <label class="min-h-[44px] flex items-center gap-3 text-xs text-slate-400 cursor-pointer"><input type="checkbox" id="dc-noask" ${dinnerCheckin.noask ? 'checked' : ''} onchange="dinnerCheckin.noask = this.checked" class="w-5 h-5 accent-emerald-500" />Don't ask about dinners again</label>`;
+      }
+      if (focusId) { const f = document.getElementById(focusId); if (f) f.focus({ preventScroll: true }); }
+    }
+    function dinnerCheckinSet(i, field, value) {
+      const r = dinnerCheckin && dinnerCheckin.rows[i];
+      if (!r) return;
+      if (field === 'rating') r.rating = r.rating === value ? null : value;
+      else r[field] = value;
+      // Rating something means you had it.
+      if (field === 'rating' && r.rating && !r.made) r.made = true;
+      renderDinnerCheckin(field === 'made' ? `dc-made-${i}` : field === 'day' ? `dc-day-${i}` : `dc-rate-${i}-${value}`);
+    }
+    function dinnerCheckinFinish() {
+      const done = groceryLocalGet('dinnerCheckins') || {};
+      done[dinnerCheckin.tripId] = Math.max(done[dinnerCheckin.tripId] || 0, dinnerCheckin.week);
+      groceryLocalSet('dinnerCheckins', done);
+      if (dinnerCheckin.noask) groceryLocalSet('noDinnerAsk', true);
+    }
+    function saveDinnerCheckin() {
+      if (!dinnerCheckin) return;
+      const trip = groceryTripById(dinnerCheckin.tripId);
+      const days = dinnerCheckinDays(trip, dinnerCheckin.week);
+      let made = 0;
+      dinnerCheckin.rows.forEach(r => {
+        const existing = recipeCookEntries(r.id).find(c => c.runId === trip.id && c.byId === recipeMe());
+        if (r.made && !existing) {
+          const nowIso = new Date().toISOString();
+          const saved = recipeSavedFor(r.id);
+          recipeColl('cookLog').push({
+            id: 'ck_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8), recipeKey: r.id, savedRecipeId: saved ? saved.id : null, runId: trip.id,
+            cookedOn: r.day || days[0] || localDateStr(new Date()), loggedAt: nowIso, byId: recipeMe(), by: currentOwnerLabel(), deviceId: state.syncLineage || null,
+            voided: false, scope: trip.scope === 'household' && inHouseholdMode() ? 'household' : 'personal', ownerId: recipeMe(), lastModifiedAt: nowIso
+          });
+          made++;
+        } else if (!r.made && existing) {
+          existing.voided = true; existing.voidedAt = new Date().toISOString(); existing.lastModifiedAt = existing.voidedAt;
+        } else if (r.made && existing && r.day && existing.cookedOn !== r.day) {
+          existing.voided = true; existing.voidedAt = new Date().toISOString(); existing.lastModifiedAt = existing.voidedAt;
+          const nowIso = new Date().toISOString();
+          recipeColl('cookLog').push({ ...existing, id: 'ck_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8), cookedOn: r.day, loggedAt: nowIso, voided: false, voidedAt: undefined, lastModifiedAt: nowIso });
+        }
+        if (r.rating !== recipeMyRating(r.id)) setRecipeRating(r.id, r.rating, trip.id, true);
+      });
+      dinnerCheckinFinish();
+      saveStateToStorage();
+      groceryPushNow();
+      const loved = dinnerCheckin.rows.filter(r => r.rating === 'love');
+      showToast(`Thanks! ${made ? `Logged ${made} dinner${made === 1 ? '' : 's'}. ` : ''}Your ratings shape future suggestions.`, 'success');
+      if (getCurrentPageId() === 'groceries') renderGroceries();
+      if (loved.length) { dinnerCheckin.step = 'favorites'; renderDinnerCheckin('dc-title'); return; }
+      closeDinnerCheckin();
+    }
+    function skipDinnerCheckin() {
+      if (dinnerCheckin && dinnerCheckin.step === 'rate') dinnerCheckinFinish();
+      closeDinnerCheckin();
+    }
+    function closeDinnerCheckin(silent) {
+      const el = document.getElementById('grocery-checkin');
+      if (!el) return;
+      el.remove();
+      if (!document.getElementById('grocery-help') && !document.getElementById('grocery-scene')) document.body.style.overflow = '';
+      if (!silent) {
+        dinnerCheckin = null;
+        if (dinnerCheckinReturnFocus && document.contains(dinnerCheckinReturnFocus)) dinnerCheckinReturnFocus.focus({ preventScroll: true });
+        if (getCurrentPageId() === 'groceries') renderGroceries();
+      }
     }
 
     // The same card on the Dashboard (bottom) and the Bills page.
@@ -16797,6 +17099,7 @@
         <p class="text-xs text-slate-400">${escapeHtml(facts)}</p>
         ${recipeBadges(meal.id)}
         <p class="text-sm font-semibold text-white" aria-live="polite">${escapeHtml(recipeCookedText(meal.id))}</p>
+        ${recipeRatingHtml(meal)}
         <div class="flex flex-wrap gap-2">
           <button type="button" id="rc-fav-mine" aria-pressed="${mineFav}" onclick="toggleRecipeFav(${jsArg(meal.id)}, 'mine')" class="${GR_SMALL} ${mineFav ? 'bg-rose-500/25 text-rose-200' : 'bg-slate-800 text-slate-200 hover:bg-slate-700'}">${mineFav ? '♥' : '♡'} My Favorite</button>
           ${hh ? `<button type="button" id="rc-fav-family" aria-pressed="${famFav}" onclick="toggleRecipeFav(${jsArg(meal.id)}, 'family')" class="${GR_SMALL} ${famFav ? 'bg-amber-500/25 text-amber-200' : 'bg-slate-800 text-slate-200 hover:bg-slate-700'}">🏠 Family Favorite</button>` : ''}
